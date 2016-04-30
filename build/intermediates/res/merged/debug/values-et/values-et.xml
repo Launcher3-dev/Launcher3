@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <string msgid="217823393239365967" name="activity_not_found">"Rakendus pole installitud."</string>
+    <string msgid="2578400570124163469" name="all_apps_button_label">"Rakendused"</string>
+    <string msgid="1022222300329398558" name="all_apps_home_button_label">"Kodu"</string>
+    <string msgid="8424725141379931883" name="application_name">"Käivitaja"</string>
+    <string msgid="4057140866420001240" name="default_scroll_format">"Leht %1$d/%2$d"</string>
+    <string msgid="665300185123139530" name="delete_target_label">"Eemalda"</string>
+    <string msgid="748894921183769150" name="delete_target_uninstall_label">"Desinstalli"</string>
+    <string msgid="3130534551370511932" name="folder_closed">"Kaust suletud"</string>
+    <string msgid="8633351560105748141" name="folder_hint_text">"Nimeta kaust"</string>
+    <string msgid="8551881338202938211" name="folder_name"/>
+    <string msgid="3051680259794759037" name="folder_name_format">"<ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="1262064100943801533" name="folder_opened">"Kaust on avatud, <ns1:g id="WIDTH">%1$d</ns1:g> x <ns1:g id="HEIGHT">%2$d</ns1:g>"</string>
+    <string msgid="7951233572858053642" name="folder_renamed">"Kausta uus nimi: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="1335478160661137579" name="folder_tap_to_close">"Puudutage kausta sulgemiseks"</string>
+    <string msgid="5201612989905472442" name="folder_tap_to_rename">"Puudutage uue nime salvestamiseks"</string>
+    <string msgid="8359351016167075858" name="gadget_error_text">"Probleem vidina laadimisel"</string>
+    <string msgid="6304886797358479361" name="hotseat_out_of_space">"Kohandataval dokialal pole rohkem ruumi."</string>
+    <string msgid="4019495079517426980" name="info_target_label">"Rakenduse teave"</string>
+    <string msgid="7395697462851217506" name="long_press_widget_to_add">"Vidina valimiseks puudutage seda pikalt."</string>
+    <string msgid="8365249326091984698" name="out_of_space">"Sellel avalehel pole enam ruumi."</string>
+    <string msgid="8634424803272077038" name="permdesc_install_shortcut">"Võimaldab rakendusel lisada otseteid kasutaja sekkumiseta."</string>
+    <string msgid="5788109303585403679" name="permdesc_read_settings">"Võimaldab rakendusel lugeda avalehe seadeid ja otseteid."</string>
+    <string msgid="8530105489115785531" name="permdesc_write_settings">"Võimaldab rakendusel muuta avalehel seadeid ja otseteid."</string>
+    <string msgid="1201690825493376489" name="permlab_install_shortcut">"otseteede installimine"</string>
+    <string msgid="3452408290738106747" name="permlab_read_settings">"avalehe seadete ja otseteede lugemine"</string>
+    <string msgid="1360567537236705628" name="permlab_write_settings">"avalehe seadete ja otseteede kirjutamine"</string>
+    <string msgid="5630222540525626723" name="pick_wallpaper">"Taustapildid"</string>
+    <string msgid="6429814133777046491" name="uninstall_system_app_text">"See on süsteemirakendus ja seda ei saa desinstallida."</string>
+    <string msgid="4215640646180727542" name="wallpaper_instructions">"Määra taustapilt"</string>
+    <string msgid="1386418557719032947" name="widget_dims_format">"%1$d × %2$d"</string>
+    <string msgid="1704767047951143301" name="workspace_scroll_format">"Avakuva %1$d/%2$d"</string>
+</resources>

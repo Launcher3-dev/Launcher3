@@ -1,0 +1,26 @@
+[
+    {
+        "outputFile": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/values-be/values-be.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 55,
+                    "endColumn": 60,
+                    "endOffset": 111
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-be/strings.xml",
+                    "position": {
+                        "startLine": 27,
+                        "startColumn": 4,
+                        "startOffset": 1038,
+                        "endColumn": 68,
+                        "endOffset": 1102
+                    }
+                }
+            }
+        ]
+    }
+]

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <string msgid="217823393239365967" name="activity_not_found">"Aplikasi tidak dipasang."</string>
+    <string msgid="2578400570124163469" name="all_apps_button_label">"Apl"</string>
+    <string msgid="1022222300329398558" name="all_apps_home_button_label">"Laman Utama"</string>
+    <string msgid="8424725141379931883" name="application_name">"Pelancar"</string>
+    <string msgid="4057140866420001240" name="default_scroll_format">"Halaman %1$d dari %2$d"</string>
+    <string msgid="665300185123139530" name="delete_target_label">"Alih keluar"</string>
+    <string msgid="748894921183769150" name="delete_target_uninstall_label">"Nyahpasang"</string>
+    <string msgid="3130534551370511932" name="folder_closed">"Folder ditutup"</string>
+    <string msgid="8633351560105748141" name="folder_hint_text">"Folder Tanpa Nama"</string>
+    <string msgid="8551881338202938211" name="folder_name"/>
+    <string msgid="3051680259794759037" name="folder_name_format">"Folder: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="1262064100943801533" name="folder_opened">"Folder dibuka, <ns1:g id="WIDTH">%1$d</ns1:g> kali <ns1:g id="HEIGHT">%2$d</ns1:g>"</string>
+    <string msgid="7951233572858053642" name="folder_renamed">"Folder dinamakan semula kepada <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="1335478160661137579" name="folder_tap_to_close">"Sentuh untuk menutup folder"</string>
+    <string msgid="5201612989905472442" name="folder_tap_to_rename">"Sentuh untuk menyimpan penamaan semula"</string>
+    <string msgid="8359351016167075858" name="gadget_error_text">"Masalah memuatkan widget"</string>
+    <string msgid="6304886797358479361" name="hotseat_out_of_space">"Tiada lagi ruang pada kerusi panas."</string>
+    <string msgid="4019495079517426980" name="info_target_label">"Maklumat apl"</string>
+    <string msgid="7395697462851217506" name="long_press_widget_to_add">"Sentuh &amp; tahan untuk mengambil widget."</string>
+    <string msgid="8365249326091984698" name="out_of_space">"Tiada lagi ruang pada skrin Utama ini"</string>
+    <string msgid="8634424803272077038" name="permdesc_install_shortcut">"Membenarkan aplikasi menambah pintasan tanpa campur tangan pengguna."</string>
+    <string msgid="5788109303585403679" name="permdesc_read_settings">"Membenarkan apl membaca tetapan dan pintasan di Laman Utama."</string>
+    <string msgid="8530105489115785531" name="permdesc_write_settings">"Membenarkan apl menukar tetapan dan pintasan di Laman Utama."</string>
+    <string msgid="1201690825493376489" name="permlab_install_shortcut">"pasang pintasan"</string>
+    <string msgid="3452408290738106747" name="permlab_read_settings">"membaca tetapan dan pintasan Laman Utama"</string>
+    <string msgid="1360567537236705628" name="permlab_write_settings">"menulis tetapan dan pintasan Laman Utama"</string>
+    <string msgid="5630222540525626723" name="pick_wallpaper">"Kertas dinding"</string>
+    <string msgid="6429814133777046491" name="uninstall_system_app_text">"Ini adalah aplikasi sistem dan tidak boleh dinyahpasang."</string>
+    <string msgid="4215640646180727542" name="wallpaper_instructions">"Tetapkan kertas dinding"</string>
+    <string msgid="1386418557719032947" name="widget_dims_format">"%1$d × %2$d"</string>
+    <string msgid="1704767047951143301" name="workspace_scroll_format">"Skrin utama %1$d dari %2$d"</string>
+</resources>

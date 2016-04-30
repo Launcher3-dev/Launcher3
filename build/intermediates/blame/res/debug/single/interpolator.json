@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/interpolator/decelerate_quint.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/interpolator/decelerate_quint.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/interpolator/decelerate_quart.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/interpolator/decelerate_quart.xml"
+    }
+]

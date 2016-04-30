@@ -1,0 +1,146 @@
+[
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/overview_panel.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/overview_panel.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/longpress_cling_content.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/longpress_cling_content.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/widgets_list_row_view.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/widgets_list_row_view.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/widgets_view.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/widgets_view.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/wallpaper_picker_live_wallpaper_item.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/layout/wallpaper_picker_live_wallpaper_item.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/user_folder.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/user_folder.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/page_indicator.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/page_indicator.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_icon.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_icon.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_empty_search.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_empty_search.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/workspace_screen.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/workspace_screen.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_button.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_button.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_search_bar.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_search_bar.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_prediction_bar_icon.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_prediction_bar_icon.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/wallpaper_picker_image_picker_item.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/layout/wallpaper_picker_image_picker_item.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/folder_icon.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/folder_icon.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/app_icon.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/app_icon.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/launcher_overlay_example.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/launcher_overlay_example.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/hotseat.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/hotseat.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_search_market_divider.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_search_market_divider.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/page_indicator_marker.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/page_indicator_marker.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/widget_cell.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/widget_cell.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/folder_application.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/folder_application.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/actionbar_set_wallpaper.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/layout/actionbar_set_wallpaper.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/appwidget_error.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/appwidget_error.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/wallpaper_picker_third_party_item.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/layout/wallpaper_picker_third_party_item.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/search_drop_target_bar.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/search_drop_target_bar.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/launcher_overlay.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/launcher_overlay.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/appwidget_not_ready.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/appwidget_not_ready.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_search_market.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_search_market.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/wallpaper_cropper.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/layout/wallpaper_cropper.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/dummy_widget.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/dummy_widget.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/wallpaper_picker_item.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/layout/wallpaper_picker_item.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/all_apps_container.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/all_apps_container.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/longpress_cling_welcome_content.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout/longpress_cling_welcome_content.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout/wallpaper_picker.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/layout/wallpaper_picker.xml"
+    }
+]

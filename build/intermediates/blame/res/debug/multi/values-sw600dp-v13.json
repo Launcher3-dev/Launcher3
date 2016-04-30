@@ -1,0 +1,273 @@
+[
+    {
+        "outputFile": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/values-sw600dp-v13/values-sw600dp-v13.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 55,
+                    "endColumn": 43,
+                    "endOffset": 94
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/config.xml",
+                    "position": {
+                        "startLine": 2,
+                        "startColumn": 4,
+                        "startOffset": 55,
+                        "endColumn": 43,
+                        "endOffset": 94
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 3,
+                    "startColumn": 4,
+                    "startOffset": 99,
+                    "endColumn": 38,
+                    "endOffset": 133
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/config.xml",
+                    "position": {
+                        "startLine": 1,
+                        "startColumn": 4,
+                        "startOffset": 16,
+                        "endColumn": 38,
+                        "endOffset": 50
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 4,
+                    "startColumn": 4,
+                    "startOffset": 138,
+                    "endColumn": 65,
+                    "endOffset": 199
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 22,
+                        "startColumn": 4,
+                        "startOffset": 959,
+                        "endColumn": 65,
+                        "endOffset": 1020
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 5,
+                    "startColumn": 4,
+                    "startOffset": 204,
+                    "endColumn": 64,
+                    "endOffset": 264
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 21,
+                        "startColumn": 4,
+                        "startOffset": 894,
+                        "endColumn": 64,
+                        "endOffset": 954
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 6,
+                    "startColumn": 4,
+                    "startOffset": 269,
+                    "endColumn": 62,
+                    "endOffset": 327
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 19,
+                        "startColumn": 4,
+                        "startOffset": 767,
+                        "endColumn": 62,
+                        "endOffset": 825
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 7,
+                    "startColumn": 4,
+                    "startOffset": 332,
+                    "endColumn": 61,
+                    "endOffset": 389
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 18,
+                        "startColumn": 4,
+                        "startOffset": 705,
+                        "endColumn": 61,
+                        "endOffset": 762
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 8,
+                    "startColumn": 4,
+                    "startOffset": 394,
+                    "endColumn": 63,
+                    "endOffset": 453
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 830,
+                        "endColumn": 63,
+                        "endOffset": 889
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 9,
+                    "startColumn": 4,
+                    "startOffset": 458,
+                    "endColumn": 57,
+                    "endOffset": 511
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 28,
+                        "startColumn": 4,
+                        "startOffset": 1216,
+                        "endColumn": 57,
+                        "endOffset": 1269
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 10,
+                    "startColumn": 4,
+                    "startOffset": 516,
+                    "endColumn": 55,
+                    "endOffset": 567
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 27,
+                        "startColumn": 4,
+                        "startOffset": 1160,
+                        "endColumn": 55,
+                        "endOffset": 1211
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 11,
+                    "startColumn": 4,
+                    "startOffset": 572,
+                    "endColumn": 61,
+                    "endOffset": 629
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 29,
+                        "startColumn": 4,
+                        "startOffset": 1274,
+                        "endColumn": 61,
+                        "endOffset": 1331
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 12,
+                    "startColumn": 4,
+                    "startOffset": 634,
+                    "endColumn": 61,
+                    "endOffset": 691
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 30,
+                        "startColumn": 4,
+                        "startOffset": 1336,
+                        "endColumn": 61,
+                        "endOffset": 1393
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 13,
+                    "startColumn": 4,
+                    "startOffset": 696,
+                    "endColumn": 59,
+                    "endOffset": 751
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 25,
+                        "startColumn": 4,
+                        "startOffset": 1041,
+                        "endColumn": 59,
+                        "endOffset": 1096
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 14,
+                    "startColumn": 4,
+                    "startOffset": 756,
+                    "endColumn": 58,
+                    "endOffset": 810
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/dimens.xml",
+                    "position": {
+                        "startLine": 26,
+                        "startColumn": 4,
+                        "startOffset": 1101,
+                        "endColumn": 58,
+                        "endOffset": 1155
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 15,
+                    "startColumn": 4,
+                    "startOffset": 815,
+                    "endColumn": 67,
+                    "endOffset": 878
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/values-sw600dp/config.xml",
+                    "position": {
+                        "startLine": 5,
+                        "startColumn": 4,
+                        "startOffset": 124,
+                        "endColumn": 67,
+                        "endOffset": 187
+                    }
+                }
+            }
+        ]
+    }
+]

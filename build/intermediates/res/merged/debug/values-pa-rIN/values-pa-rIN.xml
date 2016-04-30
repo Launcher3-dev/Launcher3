@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="number_of_items_selected">
+    <item msgid="9015111147509924344" quantity="zero">"%1$d ਚੁਣਿਆ ਗਿਆ"</item>
+    <item msgid="8409622005831789373" quantity="one">"%1$d ਚੁਣਿਆ ਗਿਆ"</item>
+    <item msgid="479468347731745357" quantity="other">"%1$d ਚੁਣਿਆ ਗਿਆ"</item>
+  </plurals>
+    <string msgid="7610119707847920412" name="abandoned_clean_this">"ਹਟਾਓ"</string>
+    <string msgid="3990027586878167529" name="abandoned_promise_explanation">"ਇਸ ਆਈਕਨ ਲਈ ਐਪ ਇੰਸਟੌਲ ਨਹੀਂ ਕੀਤਾ ਹੋਇਆ ਹੈ। ਤੁਸੀਂ ਇਸਨੂੰ ਹਟਾ ਸਕਦੇ ਹੋ ਜਾਂ ਐਪ ਖੋਜ ਸਕਦੇ ਹੋ ਅਤੇ ਇਸਨੂੰ ਮੈਨੂਅਲੀ ਇੰਸਟੌਲ ਕਰ ਸਕਦੇ ਹੋ।"</string>
+    <string msgid="7096178467971716750" name="abandoned_promises_title">"ਇਹ ਐਪ ਇੰਸਟੌਲ ਨਹੀਂ ਕੀਤਾ ਹੋਇਆ ਹੈ।"</string>
+    <string msgid="891119232568284442" name="abandoned_search">"ਖੋਜੋ"</string>
+    <string msgid="8902165848117513641" name="action_add_to_workspace">"ਹੋਮ ਸਕ੍ਰੀਨ ਵਿੱਚ ਜੋੜੋ"</string>
+    <string msgid="282377193880900022" name="action_decrease_height">"ਉਂਚਾਈ ਘਟਾਓ"</string>
+    <string msgid="1374549771083094654" name="action_decrease_width">"ਚੌੜਾਈ ਘਟਾਓ"</string>
+    <string msgid="459390020612501122" name="action_increase_height">"ਉਂਚਾਈ ਵਧਾਓ"</string>
+    <string msgid="8773715375078513326" name="action_increase_width">"ਚੌੜਾਈ ਵਧਾਓ"</string>
+    <string msgid="4339390619886385032" name="action_move">"ਆਈਟਮ ਨੂੰ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="2170188780612570250" name="action_move_here">"ਆਈਟਮ ਨੂੰ ਇੱਥੇ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="8854216831569401665" name="action_move_screen_left">"ਸਕ੍ਰੀਨ ਨੂੰ ਖੱਬੇ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="329334910274311123" name="action_move_screen_right">"ਸਕ੍ਰੀਨ ਨੂੰ ਸੱਜੇ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="1603837886334246317" name="action_move_to_workspace">"ਮੁੱਖ ਸਕ੍ਰੀਨ ਵਿੱਚ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="1802976324781771067" name="action_resize">"ਮੁੜ ਆਕਾਰ ਦਿਓ"</string>
+    <string msgid="7456344436509528827" name="activity_not_available">"ਐਪ ਉਪਲਬਧ ਨਹੀਂ ਹੈ"</string>
+    <string msgid="8071924732094499514" name="activity_not_found">"ਐਪ ਇੰਸਟੌਲ ਨਹੀਂ ਕੀਤਾ ਹੋਇਆ ਹੈ।"</string>
+    <string msgid="9040534766770853243" name="add_to_folder">"ਇਸ ਫੋਲਡਰ ਵਿੱਚ ਜੋੜੋ: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4534929978967147231" name="add_to_folder_with_app">"<ns1:g id="NAME">%1$s</ns1:g> ਦੇ ਨਾਲ ਫੋਲਡਰ ਵਿੱਚ ਜੋੜੋ"</string>
+    <string msgid="4793259502305558003" name="added_to_folder">"ਆਈਟਮ ਨੂੰ ਫੋਲਡਰ ਵਿੱਚ ਜੋੜਿਆ ਗਿਆ"</string>
+    <string msgid="9110807029020582876" name="all_apps_button_label">"ਐਪਸ"</string>
+    <string msgid="252062713717058851" name="all_apps_home_button_label">"ਹੋਮ"</string>
+    <string msgid="7557140873644765180" name="all_apps_loading_message">"ਐਪਸ ਲੋਡ ਕਰ ਰਿਹਾ ਹੈ..."</string>
+    <string msgid="6332185285860416787" name="all_apps_no_search_results">"\"<ns1:g id="QUERY">%1$s</ns1:g>\" ਨਾਲ ਮਿਲਦੀ ਕੋਈ ਵੀ ਐਪਸ ਨਹੀਂ ਲੱਭੀਆਂ"</string>
+    <string msgid="7084713969757597256" name="all_apps_search_bar_hint">"ਐਪਸ ਖੋਜੋ"</string>
+    <string msgid="5470761048755751471" name="all_apps_search_market_message">"<ns1:g id="QUERY">%1$s</ns1:g> ਤੇ ਜਾਓ"</string>
+    <string msgid="2118706734511831751" name="allow_rotation_title">"ਰੋਟੇਸ਼ਨ ਦੀ ਆਗਿਆ ਦਿਓ"</string>
+    <string msgid="123723511662250539" name="announce_selection">"<ns1:g id="LABEL">%1$s</ns1:g> ਚੁਣਿਆ ਗਿਆ"</string>
+    <string msgid="5181331383435256801" name="application_name">"ਲਾਂਚਰ3"</string>
+    <string msgid="4050141361160214248" name="create_folder_with">"ਇਸਦੇ ਨਾਲ ਫੋਲਡਰ ਬਣਾਓ: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4882870800623585836" name="crop_wallpaper">"ਵਾਲਪੇਪਰ ਕੱਟੋ"</string>
+    <string msgid="7475544710230993317" name="default_scroll_format">"ਸਫ਼ਾ %2$d ਦਾ %1$d"</string>
+    <string msgid="1822697352535677073" name="delete_target_label">"ਹਟਾਓ"</string>
+    <string msgid="5100785476250872595" name="delete_target_uninstall_label">"ਅਣਇੰਸਟੌਲ ਕਰੋ"</string>
+    <string msgid="2459738000155917941" name="first_run_cling_title">"ਸੁਆਗਤ ਹੈ"</string>
+    <string msgid="4100806530910930934" name="folder_closed">"ਫੋਲਡਰ ਬੰਦ ਕੀਤਾ"</string>
+    <string msgid="6409794597405184510" name="folder_created">"ਫੋਲਡਰ ਬਣਾਇਆ ਗਿਆ"</string>
+    <string msgid="6617836969016293992" name="folder_hint_text">"ਬਿਨਾਂ ਨਾਮ ਦਿੱਤਾ ਫੋਲਡਰ"</string>
+    <string msgid="7371454440695724752" name="folder_name"/>
+    <string msgid="6629239338071103179" name="folder_name_format">"ਫੋਲਡਰ: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="94695026776264709" name="folder_opened">"ਫੋਲਡਰ ਖੋਲ੍ਹਿਆ, <ns1:g id="WIDTH">%1$d</ns1:g> ਬਾਇ <ns1:g id="HEIGHT">%2$d</ns1:g>"</string>
+    <string msgid="1794088362165669656" name="folder_renamed">"ਫੋਲਡਰ ਨੂੰ <ns1:g id="NAME">%1$s</ns1:g> ਮੁੜ ਨਾਮ ਦਿੱਤਾ ਗਿਆ"</string>
+    <string msgid="1884479294466410023" name="folder_tap_to_close">"ਫੋਲਡਰ ਬੰਦ ਕਰਨ ਲਈ ਛੋਹਵੋ"</string>
+    <string msgid="9191075570492871147" name="folder_tap_to_rename">"ਮੁੜ ਨਾਮ ਦਿਓ ਨੂੰ ਸੁਰੱਖਿਅਤ ਕਰਨ ਲਈ ਛੋਹਵੋ"</string>
+    <string msgid="6081085226050792095" name="gadget_error_text">"ਵਿਜੇਟ ਲੋਡ ਕਰਨ ਵਿੱਚ ਸਮੱਸਿਆ"</string>
+    <string msgid="8274003207686040488" name="gadget_setup_text">"ਸੈਟਅਪ"</string>
+    <string msgid="7448809638125333693" name="hotseat_out_of_space">"ਮਨਪਸੰਦ ਟ੍ਰੇ ਵਿੱਚ ਹੋਰ ਖਾਲੀ ਸਥਾਨ ਨਹੀਂ।"</string>
+    <string msgid="7538534580694411837" name="image_load_fail">"ਚਿੱਤਰ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕਿਆ"</string>
+    <string msgid="8053346143994679532" name="info_target_label">"ਐਪ ਜਾਣਕਾਰੀ"</string>
+    <string msgid="4211073925752213539" name="item_added_to_workspace">"ਆਈਟਮ ਨੂੰ ਮੁੱਖ ਸਕ੍ਰੀਨ ਵਿੱਚ ਜੋੜਿਆ ਗਿਆ"</string>
+    <string msgid="4606538322571412879" name="item_moved">"ਆਈਟਮ ਮੂਵ ਕੀਤੀ ਗਈ"</string>
+    <string msgid="851119963877842327" name="item_removed">"ਅਈਟਮ ਹਟਾਈ ਗਈ"</string>
+    <string msgid="7699152356777458215" name="long_press_widget_to_add">"ਇੱਕ ਵਿਜੇਟ ਚੁਣਨ ਲਈ ਛੋਹਵੋT &amp; ਹੋਲਡ ਕਰੋ।"</string>
+    <string msgid="946331230090919440" name="migration_cling_copy_apps">"ਆਈਕਨਾਂ ਨੂੰ ਕਾਪੀ ਕਰੋ"</string>
+    <string msgid="2752413805582227644" name="migration_cling_description">"ਕੀ ਆਪਣੀਆਂ ਪੁਰਾਣੀਆਂ ਹੋਮ ਸਕ੍ਰੀਨਾਂ ਤੋਂ ਆਈਕਨਾਂ ਅਤੇ ਫੋਲਡਰ ਆਯਾਤ ਕਰਨੇ ਹਨ?"</string>
+    <string msgid="9181776667882933767" name="migration_cling_title">"ਆਪਣੇ ਐਪ ਆਈਕਨਾਂ ਨੂੰ ਕਾਪੀ ਕਰੋ"</string>
+    <string msgid="2626475813981258626" name="migration_cling_use_default">"ਤਾਜ਼ਾ ਸ਼ੁਰੂ ਕਰੋ"</string>
+    <string msgid="2833711483015685619" name="move_to_empty_cell">"ਕਤਾਰ <ns1:g id="NUMBER_0">%1$s</ns1:g> ਕਾਲਮ <ns1:g id="NUMBER_1">%2$s</ns1:g> ਵਿੱਚ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="6295412897075147808" name="move_to_hotseat_position">"ਮਨਪਸੰਦ ਸਥਿਤੀ <ns1:g id="NUMBER">%1$s</ns1:g> ਵਿੱਚ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="6750008980455459790" name="move_to_position">"ਸਥਿਤੀ <ns1:g id="NUMBER">%1$s</ns1:g> ਵਿੱਚ ਮੂਵ ਕਰੋ"</string>
+    <string msgid="4691004494942118364" name="out_of_space">"ਇਸ ਹੋਮ ਸਕ੍ਰੀਨ ਲਈ ਹੋਰ ਖਾਲੀ ਸਥਾਨ ਨਹੀਂ ਹੈ।"</string>
+    <string msgid="7592128424511031410" name="package_state_unknown">"ਅਗਿਆਤ"</string>
+    <string msgid="923466509822011139" name="permdesc_install_shortcut">"ਇੱਕ ਐਪ ਨੂੰ ਉਪਭੋਗਤਾ ਦੇ ਦਖ਼ਲ ਤੋਂ ਬਿਨਾਂ ਸ਼ੌਰਟਕਟ ਜੋੜਨ ਦੀ ਆਗਿਆ ਦਿੰਦਾ ਹੈ।"</string>
+    <string msgid="5833423719057558387" name="permdesc_read_settings">"ਐਪ ਨੂੰ ਹੋਮ ਵਿੱਚ ਸੈਟਿੰਗਾਂ ਅਤੇ ਸ਼ੌਰਟਕਟ ਪੜ੍ਹਨ ਦੀ ਆਗਿਆ ਦਿੰਦਾ ਹੈ।"</string>
+    <string msgid="5440712911516509985" name="permdesc_write_settings">"ਐਪ ਨੂੰ ਹੋਮ ਵਿੱਚ ਸੈਟਿੰਗਾਂ ਅਤੇ ਸ਼ੌਰਟਕਟ ਬਦਲਣ ਦੀ ਆਗਿਆ ਦਿੰਦਾ ਹੈ।"</string>
+    <string msgid="5632423390354674437" name="permlab_install_shortcut">"ਸ਼ੌਰਟਕਟ ਇੰਸਟੌਲ ਕਰੋ"</string>
+    <string msgid="1941457408239617576" name="permlab_read_settings">"ਹੋਮ ਸੈਟਿੰਗਾਂ ਅਤੇ ਸ਼ੌਰਟਕਟ ਪੜ੍ਹੋ"</string>
+    <string msgid="3574213698004620587" name="permlab_write_settings">"ਹੋਮ ਸੈਟਿੰਗਾਂ ਅਤੇ ਸ਼ੌਰਟਕਟ ਲਿਖੋ"</string>
+    <string msgid="3189640419551368385" name="pick_image">"ਮੇਰੀਆਂ ਫੋਟੋਆਂ"</string>
+    <string msgid="4628969645948454559" name="pick_wallpaper">"ਵਾਲਪੇਪਰ"</string>
+    <string msgid="9160126848219158407" name="safemode_shortcut_error">"ਡਾਊਨਲੋਡ ਕੀਤਾ ਐਪ ਸੁਰੱਖਿਅਤ ਮੋਡ ਵਿੱਚ ਅਸਮਰਥਿਤ"</string>
+    <string msgid="4863470563535682004" name="safemode_widget_error">"ਵਿਜੇਟਸ ਸੁਰੱਖਿਅਤ ਮੋਡ ਵਿੱਚ ਅਸਮਰਥਿਤ"</string>
+    <string msgid="266230079505650577" name="screen_moved">"ਸਕ੍ਰੀਨ ਨੂੰ ਮੂਵ ਕੀਤਾ ਗਿਆ"</string>
+    <string msgid="8119458837558863227" name="settings_button_text">"ਸੈਟਿੰਗਾਂ"</string>
+    <string msgid="5645299835184636119" name="toggle_weight_watcher">"ਮੈਮ ਦਿਖਾਓ"</string>
+    <string msgid="4172046090762920660" name="uninstall_system_app_text">"ਇਹ ਇੱਕ ਸਿਸਟਮ ਐਪ ਹੈ ਅਤੇ ਇਸਨੂੰ ਅਣਇੰਸਟੌਲ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।"</string>
+    <string msgid="4093221025304876354" name="wallpaper_accessibility_name">"ਵਾਲਪੇਪਰ %2$d ਦਾ %1$d"</string>
+    <string msgid="8404103075899945851" name="wallpaper_button_text">"ਵਾਲਪੇਪਰ"</string>
+    <string msgid="1459353972739215344" name="wallpaper_delete">"ਮਿਟਾਓ"</string>
+    <string msgid="3524143401182707094" name="wallpaper_instructions">"ਵਾਲਪੇਪਰ ਸੈਟ ਕਰੋ"</string>
+    <string msgid="4800700444605404650" name="wallpaper_load_fail">"ਵਾਲਪੇਪਰ ਦੇ ਤੌਰ ਤੇ ਚਿੱਤਰ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕਿਆ"</string>
+    <string msgid="2880537293434387943" name="widget_button_text">"ਵਿਜੇਟਸ"</string>
+    <string msgid="2370757736025621599" name="widget_dims_format">"%1$d × %2$d"</string>
+    <string msgid="9130327887929620" name="widget_resized">"ਵਿਜੈਟ ਨੂੰ ਚੌੜਾਈ <ns1:g id="NUMBER_0">%1$s</ns1:g> ਉਂਚਾਈ <ns1:g id="NUMBER_1">%2$s</ns1:g> ਨੂੰ ਮੁੜ ਆਕਾਰ ਦਿੱਤਾ"</string>
+    <string msgid="3753320833950115786" name="work_folder_name">"ਦਫ਼ਤਰ"</string>
+    <string msgid="4119994475505235248" name="workspace_cling_longpress_description">"ਅਨੁਕੂਲ ਕਰਨ ਲਈ ਪਿਛੋਕੜ ਛੋਹਵੋ &amp; ਹੋਲਡ ਕਰੋ"</string>
+    <string msgid="368660286867640874" name="workspace_cling_longpress_dismiss">"ਸਮਝ ਗਿਆ"</string>
+    <string msgid="9173998993909018310" name="workspace_cling_longpress_title">"ਵਾਲਪੇਪਰ, ਵਿਜੇਟ, &amp; ਸੈਟਿੰਗਾਂ"</string>
+    <string msgid="8458889198184077399" name="workspace_scroll_format">"ਹੋਮ ਸਕ੍ਰੀਨ %2$d ਦੀ %1$d"</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="toolbar_button_horizontal_padding">20dip</dimen>
+    <dimen name="toolbar_button_vertical_padding">12dip</dimen>
+</resources>

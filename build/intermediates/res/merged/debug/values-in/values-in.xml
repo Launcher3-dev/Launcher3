@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="number_of_items_selected">
+    <item msgid="9015111147509924344" quantity="zero">"%1$d dipilih"</item>
+    <item msgid="8409622005831789373" quantity="one">"%1$d dipilih"</item>
+    <item msgid="479468347731745357" quantity="other">"%1$d dipilih"</item>
+  </plurals>
+    <string msgid="7610119707847920412" name="abandoned_clean_this">"Buang"</string>
+    <string msgid="3990027586878167529" name="abandoned_promise_explanation">"Aplikasi untuk ikon ini belum dipasang. Anda dapat membuangnya, atau menelusuri aplikasi dan memasangnya secara manual."</string>
+    <string msgid="7096178467971716750" name="abandoned_promises_title">"Aplikasi ini belum terpasang"</string>
+    <string msgid="891119232568284442" name="abandoned_search">"Telusuri"</string>
+    <string msgid="8902165848117513641" name="action_add_to_workspace">"Tambahkan ke layar Utama"</string>
+    <string msgid="282377193880900022" name="action_decrease_height">"Kurangi tinggi"</string>
+    <string msgid="1374549771083094654" name="action_decrease_width">"Kurangi lebar"</string>
+    <string msgid="459390020612501122" name="action_increase_height">"Tambahi tinggi"</string>
+    <string msgid="8773715375078513326" name="action_increase_width">"Tambahi lebar"</string>
+    <string msgid="4339390619886385032" name="action_move">"Pindahkan item"</string>
+    <string msgid="2170188780612570250" name="action_move_here">"Pindahkan item ke sini"</string>
+    <string msgid="8854216831569401665" name="action_move_screen_left">"Pindahkan layar ke kiri"</string>
+    <string msgid="329334910274311123" name="action_move_screen_right">"Pindahkan layar ke kanan"</string>
+    <string msgid="1603837886334246317" name="action_move_to_workspace">"Pindahkan ke layar Utama"</string>
+    <string msgid="1802976324781771067" name="action_resize">"Ubah ukuran"</string>
+    <string msgid="7456344436509528827" name="activity_not_available">"Aplikasi tidak tersedia"</string>
+    <string msgid="8071924732094499514" name="activity_not_found">"Aplikasi tidak dipasang."</string>
+    <string msgid="9040534766770853243" name="add_to_folder">"Tambahkan ke folder: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4534929978967147231" name="add_to_folder_with_app">"Tambahkan ke folder dengan <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4793259502305558003" name="added_to_folder">"Item ditambahkan ke folder"</string>
+    <string msgid="9110807029020582876" name="all_apps_button_label">"Aplikasi"</string>
+    <string msgid="252062713717058851" name="all_apps_home_button_label">"Layar Utama"</string>
+    <string msgid="7557140873644765180" name="all_apps_loading_message">"Memuat Aplikasi..."</string>
+    <string msgid="6332185285860416787" name="all_apps_no_search_results">"Tidak ditemukan Aplikasi yang cocok dengan \"<ns1:g id="QUERY">%1$s</ns1:g>\""</string>
+    <string msgid="7084713969757597256" name="all_apps_search_bar_hint">"Telusuri Apps"</string>
+    <string msgid="5470761048755751471" name="all_apps_search_market_message">"Buka <ns1:g id="QUERY">%1$s</ns1:g>"</string>
+    <string msgid="2118706734511831751" name="allow_rotation_title">"Izinkan putaran"</string>
+    <string msgid="123723511662250539" name="announce_selection">"<ns1:g id="LABEL">%1$s</ns1:g> terpilih"</string>
+    <string msgid="5181331383435256801" name="application_name">"Launcher3"</string>
+    <string msgid="4050141361160214248" name="create_folder_with">"Buat folder dengan: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4882870800623585836" name="crop_wallpaper">"Pangkas wallpaper"</string>
+    <string msgid="7475544710230993317" name="default_scroll_format">"Laman %1$d dari %2$d"</string>
+    <string msgid="1822697352535677073" name="delete_target_label">"Hapus"</string>
+    <string msgid="5100785476250872595" name="delete_target_uninstall_label">"Copot pemasangan"</string>
+    <string msgid="2459738000155917941" name="first_run_cling_title">"Selamat Datang"</string>
+    <string msgid="4100806530910930934" name="folder_closed">"Folder ditutup"</string>
+    <string msgid="6409794597405184510" name="folder_created">"Folder dibuat"</string>
+    <string msgid="6617836969016293992" name="folder_hint_text">"Folder Tanpa Nama"</string>
+    <string msgid="7371454440695724752" name="folder_name"/>
+    <string msgid="6629239338071103179" name="folder_name_format">"Folder: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="94695026776264709" name="folder_opened">"Folder dibuka, <ns1:g id="WIDTH">%1$d</ns1:g> x <ns1:g id="HEIGHT">%2$d</ns1:g>"</string>
+    <string msgid="1794088362165669656" name="folder_renamed">"Folder diganti namanya menjadi <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="1884479294466410023" name="folder_tap_to_close">"Sentuh untuk menutup folder"</string>
+    <string msgid="9191075570492871147" name="folder_tap_to_rename">"Sentuh untuk menyimpan ganti nama"</string>
+    <string msgid="6081085226050792095" name="gadget_error_text">"Masalah memuat widget"</string>
+    <string msgid="8274003207686040488" name="gadget_setup_text">"Siapkan"</string>
+    <string msgid="7448809638125333693" name="hotseat_out_of_space">"Tidak ada ruang tersisa di baki Favorit"</string>
+    <string msgid="7538534580694411837" name="image_load_fail">"Tidak dapat memuat gambar"</string>
+    <string msgid="8053346143994679532" name="info_target_label">"Info aplikasi"</string>
+    <string msgid="4211073925752213539" name="item_added_to_workspace">"Item ditambahkan ke layar utama"</string>
+    <string msgid="4606538322571412879" name="item_moved">"Item dipindahkan"</string>
+    <string msgid="851119963877842327" name="item_removed">"Item dihapus"</string>
+    <string msgid="7699152356777458215" name="long_press_widget_to_add">"Sentuh lama untuk memilih widget."</string>
+    <string msgid="946331230090919440" name="migration_cling_copy_apps">"IKON SALIN"</string>
+    <string msgid="2752413805582227644" name="migration_cling_description">"Impor ikon dan folder dari layar Utama lama Anda?"</string>
+    <string msgid="9181776667882933767" name="migration_cling_title">"Salin ikon aplikasi Anda"</string>
+    <string msgid="2626475813981258626" name="migration_cling_use_default">"MULAI DARI AWAL"</string>
+    <string msgid="2833711483015685619" name="move_to_empty_cell">"Pindahkan ke baris <ns1:g id="NUMBER_0">%1$s</ns1:g> kolom <ns1:g id="NUMBER_1">%2$s</ns1:g>"</string>
+    <string msgid="6295412897075147808" name="move_to_hotseat_position">"Pindahkan ke posisi favorit <ns1:g id="NUMBER">%1$s</ns1:g>"</string>
+    <string msgid="6750008980455459790" name="move_to_position">"PIndahkan ke posisi <ns1:g id="NUMBER">%1$s</ns1:g>"</string>
+    <string msgid="4691004494942118364" name="out_of_space">"Tidak ada ruang lagi pada layar Utama ini."</string>
+    <string msgid="7592128424511031410" name="package_state_unknown">"Tidak dikenal"</string>
+    <string msgid="923466509822011139" name="permdesc_install_shortcut">"Mengizinkan aplikasi menambahkan pintasan tanpa campur tangan pengguna."</string>
+    <string msgid="5833423719057558387" name="permdesc_read_settings">"Mengizinkan aplikasi membaca setelan dan pintasan di layar Utama."</string>
+    <string msgid="5440712911516509985" name="permdesc_write_settings">"Mengizinkan aplikasi mengubah setelan dan pintasan di layar Utama."</string>
+    <string msgid="5632423390354674437" name="permlab_install_shortcut">"memasang pintasan"</string>
+    <string msgid="1941457408239617576" name="permlab_read_settings">"membaca setelan dan pintasan layar Utama"</string>
+    <string msgid="3574213698004620587" name="permlab_write_settings">"menulis setelan dan pintasan layar Utama"</string>
+    <string msgid="3189640419551368385" name="pick_image">"Foto saya"</string>
+    <string msgid="4628969645948454559" name="pick_wallpaper">"Wallpaper"</string>
+    <string msgid="9160126848219158407" name="safemode_shortcut_error">"Aplikasi yang diunduh dinonaktifkan dalam mode Aman"</string>
+    <string msgid="4863470563535682004" name="safemode_widget_error">"Widget dinonaktifkan dalam mode Aman"</string>
+    <string msgid="266230079505650577" name="screen_moved">"Layar dipindahkan"</string>
+    <string msgid="8119458837558863227" name="settings_button_text">"Setelan"</string>
+    <string msgid="5645299835184636119" name="toggle_weight_watcher">"Tampilkan Memori"</string>
+    <string msgid="4172046090762920660" name="uninstall_system_app_text">"Ini adalah aplikasi sistem dan tidak dapat dicopot pemasangannya."</string>
+    <string msgid="4093221025304876354" name="wallpaper_accessibility_name">"Wallpaper %1$d dari %2$d"</string>
+    <string msgid="8404103075899945851" name="wallpaper_button_text">"Wallpaper"</string>
+    <string msgid="1459353972739215344" name="wallpaper_delete">"Hapus"</string>
+    <string msgid="3524143401182707094" name="wallpaper_instructions">"Setel wallpaper"</string>
+    <string msgid="4800700444605404650" name="wallpaper_load_fail">"Tidak dapat memuat gambar sebagai wallpaper"</string>
+    <string msgid="2880537293434387943" name="widget_button_text">"Widget"</string>
+    <string msgid="2370757736025621599" name="widget_dims_format">"%1$d × %2$d"</string>
+    <string msgid="9130327887929620" name="widget_resized">"Widget diubah ukurannya menjadi lebar <ns1:g id="NUMBER_0">%1$s</ns1:g> tinggi <ns1:g id="NUMBER_1">%2$s</ns1:g>"</string>
+    <string msgid="3753320833950115786" name="work_folder_name">"Kantor"</string>
+    <string msgid="4119994475505235248" name="workspace_cling_longpress_description">"Sentuh &amp; tahan latar belakang untuk menyesuaikan"</string>
+    <string msgid="368660286867640874" name="workspace_cling_longpress_dismiss">"MENGERTI"</string>
+    <string msgid="9173998993909018310" name="workspace_cling_longpress_title">"Wallpaper, widget, &amp; setelan"</string>
+    <string msgid="8458889198184077399" name="workspace_scroll_format">"Layar utama %1$d dari %2$d"</string>
+</resources>

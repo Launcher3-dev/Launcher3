@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout-port/migration_cling.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout-port/migration_cling.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout-port/launcher.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout-port/launcher.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout-port/longpress_cling.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout-port/longpress_cling.xml"
+    }
+]

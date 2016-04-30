@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<instant-run
+    abi="armeabi-v7a,armeabi"
+    api-level="19"
+    density="xhdpi"
+    format="7"
+    timestamp="46323337122814" >
+
+    <task
+        name="javac"
+        duration="5182" />
+    <task
+        name="instant-run-dex"
+        duration="0" />
+    <task
+        name="instant-run-transform"
+        duration="193" />
+    <task
+        name="verifier"
+        duration="54" />
+
+    <artifact
+        location="/Users/yuchuan/GitHub_MX/Launcher3-mx/build/outputs/apk/Launcher3-mx-debug.apk"
+        type="MAIN" />
+
+    <build timestamp="46323337122814" >
+        <artifact
+            location="/Users/yuchuan/GitHub_MX/Launcher3-mx/build/outputs/apk/Launcher3-mx-debug.apk"
+            type="MAIN" />
+    </build>
+
+</instant-run>

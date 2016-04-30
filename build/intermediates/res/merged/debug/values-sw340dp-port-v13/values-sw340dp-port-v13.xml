@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="SearchButton">
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:paddingTop">@dimen/toolbar_button_vertical_padding</item>
+        <item name="android:paddingBottom">@dimen/toolbar_button_vertical_padding</item>
+    </style>
+</resources>

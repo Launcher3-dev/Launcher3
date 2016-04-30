@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme" parent="@style/BaseWallpaperTheme">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+    <style name="Theme.WallpaperCropper" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:actionBarStyle">@style/WallpaperCropperActionBar</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+</resources>

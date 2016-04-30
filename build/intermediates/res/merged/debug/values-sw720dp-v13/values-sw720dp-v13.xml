@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_largeHeap">true</bool>
+    <bool name="hotseat_transpose_layout_with_orientation">false</bool>
+    <bool name="is_large_tablet">true</bool>
+    <dimen name="all_apps_empty_search_bg_top_offset">180dp</dimen>
+    <dimen name="all_apps_empty_search_message_top_offset">64dp</dimen>
+    <dimen name="all_apps_icon_top_bottom_padding">14dp</dimen>
+    <dimen name="all_apps_search_bar_height">54dp</dimen>
+    <dimen name="cling_migration_content_margin">96dp</dimen>
+    <dimen name="cling_migration_content_width">320dp</dimen>
+    <dimen name="toolbar_button_horizontal_padding">8dip</dimen>
+    <dimen name="toolbar_button_vertical_padding">8dip</dimen>
+    <integer name="config_workspaceSpringLoadShrinkPercentage">90</integer>
+    <style name="DropTargetButton" parent="DropTargetButtonBase">
+        <item name="android:paddingLeft">60dp</item>
+        <item name="android:paddingRight">60dp</item>
+        <item name="android:shadowColor">#393939</item>
+        <item name="android:shadowDx">0.0</item>
+        <item name="android:shadowDy">0.0</item>
+        <item name="android:shadowRadius">2.0</item>
+    </style>
+    <style name="DropTargetButtonContainer">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+    <style name="SearchButton"/>
+    <style name="Theme" parent="@android:style/Theme.DeviceDefault.Wallpaper.NoTitleBar">
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>

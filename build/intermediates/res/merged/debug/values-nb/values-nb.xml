@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="number_of_items_selected">
+    <item msgid="9015111147509924344" quantity="zero">"%1$d valgt"</item>
+    <item msgid="8409622005831789373" quantity="one">"%1$d valgt"</item>
+    <item msgid="479468347731745357" quantity="other">"%1$d valgt"</item>
+  </plurals>
+    <string msgid="7610119707847920412" name="abandoned_clean_this">"Fjern"</string>
+    <string msgid="3990027586878167529" name="abandoned_promise_explanation">"Appen for dette ikonet er ikke installert. Du kan fjerne det, eller prøve å søke etter appen og installere den manuelt."</string>
+    <string msgid="7096178467971716750" name="abandoned_promises_title">"Denne appen er ikke installert"</string>
+    <string msgid="891119232568284442" name="abandoned_search">"Søk"</string>
+    <string msgid="8902165848117513641" name="action_add_to_workspace">"Legg til på startskjermen"</string>
+    <string msgid="282377193880900022" name="action_decrease_height">"Reduser høyden"</string>
+    <string msgid="1374549771083094654" name="action_decrease_width">"Reduser bredden"</string>
+    <string msgid="459390020612501122" name="action_increase_height">"Øk høyden"</string>
+    <string msgid="8773715375078513326" name="action_increase_width">"Øk bredden"</string>
+    <string msgid="4339390619886385032" name="action_move">"Flytt elementet"</string>
+    <string msgid="2170188780612570250" name="action_move_here">"Flytt elementet hit"</string>
+    <string msgid="8854216831569401665" name="action_move_screen_left">"Flytt skjermen til venstre"</string>
+    <string msgid="329334910274311123" name="action_move_screen_right">"Flytt skjermen til høyre"</string>
+    <string msgid="1603837886334246317" name="action_move_to_workspace">"Flytt til startskjermen"</string>
+    <string msgid="1802976324781771067" name="action_resize">"Endre størrelse"</string>
+    <string msgid="7456344436509528827" name="activity_not_available">"Appen er ikke tilgjengelig"</string>
+    <string msgid="8071924732094499514" name="activity_not_found">"Appen er ikke installert."</string>
+    <string msgid="9040534766770853243" name="add_to_folder">"Legg til i mappe: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4534929978967147231" name="add_to_folder_with_app">"Legg til mappen med <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4793259502305558003" name="added_to_folder">"Elementet er lagt til i mappen"</string>
+    <string msgid="9110807029020582876" name="all_apps_button_label">"Apper"</string>
+    <string msgid="252062713717058851" name="all_apps_home_button_label">"Startside"</string>
+    <string msgid="7557140873644765180" name="all_apps_loading_message">"Laster inn apper …"</string>
+    <string msgid="6332185285860416787" name="all_apps_no_search_results">"Fant ingen apper som samsvarer med «<ns1:g id="QUERY">%1$s</ns1:g>»"</string>
+    <string msgid="7084713969757597256" name="all_apps_search_bar_hint">"Søk i apper"</string>
+    <string msgid="5470761048755751471" name="all_apps_search_market_message">"Gå til <ns1:g id="QUERY">%1$s</ns1:g>"</string>
+    <string msgid="2118706734511831751" name="allow_rotation_title">"Tillat rotasjon"</string>
+    <string msgid="123723511662250539" name="announce_selection">"Valgt <ns1:g id="LABEL">%1$s</ns1:g>"</string>
+    <string msgid="5181331383435256801" name="application_name">"Launcher3"</string>
+    <string msgid="4050141361160214248" name="create_folder_with">"Opprett mappe med: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="4882870800623585836" name="crop_wallpaper">"Beskjær bakgrunnen"</string>
+    <string msgid="7475544710230993317" name="default_scroll_format">"Side %1$d av %2$d"</string>
+    <string msgid="1822697352535677073" name="delete_target_label">"Fjern"</string>
+    <string msgid="5100785476250872595" name="delete_target_uninstall_label">"Avinstaller"</string>
+    <string msgid="2459738000155917941" name="first_run_cling_title">"Velkommen"</string>
+    <string msgid="4100806530910930934" name="folder_closed">"Mappen ble lukket"</string>
+    <string msgid="6409794597405184510" name="folder_created">"Mappen er opprettet"</string>
+    <string msgid="6617836969016293992" name="folder_hint_text">"Mappe uten navn"</string>
+    <string msgid="7371454440695724752" name="folder_name"/>
+    <string msgid="6629239338071103179" name="folder_name_format">"Mappe: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="94695026776264709" name="folder_opened">"Mappen er åpnet – <ns1:g id="WIDTH">%1$d</ns1:g> ganger <ns1:g id="HEIGHT">%2$d</ns1:g>"</string>
+    <string msgid="1794088362165669656" name="folder_renamed">"Mappen heter nå <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="1884479294466410023" name="folder_tap_to_close">"Trykk for å lukke mappen"</string>
+    <string msgid="9191075570492871147" name="folder_tap_to_rename">"Trykk for å lagre det nye navnet"</string>
+    <string msgid="6081085226050792095" name="gadget_error_text">"Problem ved innlasting av modul"</string>
+    <string msgid="8274003207686040488" name="gadget_setup_text">"Konfigurering"</string>
+    <string msgid="7448809638125333693" name="hotseat_out_of_space">"Favoritter-skuffen er full"</string>
+    <string msgid="7538534580694411837" name="image_load_fail">"Kunne ikke laste inn bildet"</string>
+    <string msgid="8053346143994679532" name="info_target_label">"App-info"</string>
+    <string msgid="4211073925752213539" name="item_added_to_workspace">"Elementet er lagt til på startskjermen"</string>
+    <string msgid="4606538322571412879" name="item_moved">"Elementet er flyttet"</string>
+    <string msgid="851119963877842327" name="item_removed">"Elementet er fjernet"</string>
+    <string msgid="7699152356777458215" name="long_press_widget_to_add">"Trykk og hold inne for å plukke opp en modul."</string>
+    <string msgid="946331230090919440" name="migration_cling_copy_apps">"KOPIÉR IKONENE"</string>
+    <string msgid="2752413805582227644" name="migration_cling_description">"Vil du importere ikoner og mapper fra dine gamle startsider?"</string>
+    <string msgid="9181776667882933767" name="migration_cling_title">"Kopiér appikonene dine"</string>
+    <string msgid="2626475813981258626" name="migration_cling_use_default">"START PÅ NYTT"</string>
+    <string msgid="2833711483015685619" name="move_to_empty_cell">"Flytt til rad <ns1:g id="NUMBER_0">%1$s</ns1:g>, kolonne <ns1:g id="NUMBER_1">%2$s</ns1:g>"</string>
+    <string msgid="6295412897075147808" name="move_to_hotseat_position">"Flytt til posisjonen for favoritter <ns1:g id="NUMBER">%1$s</ns1:g>"</string>
+    <string msgid="6750008980455459790" name="move_to_position">"Flytt til posisjon <ns1:g id="NUMBER">%1$s</ns1:g>"</string>
+    <string msgid="4691004494942118364" name="out_of_space">"Denne startsiden er full."</string>
+    <string msgid="7592128424511031410" name="package_state_unknown">"Ukjent"</string>
+    <string msgid="923466509822011139" name="permdesc_install_shortcut">"Gir apper tillatelse til å legge til snarveier uten innblanding fra brukeren."</string>
+    <string msgid="5833423719057558387" name="permdesc_read_settings">"Lar appen lese innstillingene og snarveiene på startsiden."</string>
+    <string msgid="5440712911516509985" name="permdesc_write_settings">"Lar appen endre innstillingene og snarveiene på startsiden."</string>
+    <string msgid="5632423390354674437" name="permlab_install_shortcut">"installere snarveier"</string>
+    <string msgid="1941457408239617576" name="permlab_read_settings">"lese startsideinnstillinger og -snarveier"</string>
+    <string msgid="3574213698004620587" name="permlab_write_settings">"angi startsideinnstillinger og -snarveier"</string>
+    <string msgid="3189640419551368385" name="pick_image">"Mine bilder"</string>
+    <string msgid="4628969645948454559" name="pick_wallpaper">"Bakgrunner"</string>
+    <string msgid="9160126848219158407" name="safemode_shortcut_error">"En nedlastet app er deaktivert i sikker modus"</string>
+    <string msgid="4863470563535682004" name="safemode_widget_error">"Moduler er deaktivert i sikker modus"</string>
+    <string msgid="266230079505650577" name="screen_moved">"Skjermen er flyttet"</string>
+    <string msgid="8119458837558863227" name="settings_button_text">"Innstillinger"</string>
+    <string msgid="5645299835184636119" name="toggle_weight_watcher">"Vis minne"</string>
+    <string msgid="4172046090762920660" name="uninstall_system_app_text">"Dette er en systemapp som ikke kan avinstalleres."</string>
+    <string msgid="4093221025304876354" name="wallpaper_accessibility_name">"Bakgrunn %1$d av %2$d"</string>
+    <string msgid="8404103075899945851" name="wallpaper_button_text">"Bakgrunner"</string>
+    <string msgid="1459353972739215344" name="wallpaper_delete">"Slett"</string>
+    <string msgid="3524143401182707094" name="wallpaper_instructions">"Angi bakgrunn"</string>
+    <string msgid="4800700444605404650" name="wallpaper_load_fail">"Kunne ikke laste inn bildet som bakgrunn"</string>
+    <string msgid="2880537293434387943" name="widget_button_text">"Moduler"</string>
+    <string msgid="2370757736025621599" name="widget_dims_format">"%1$d × %2$d"</string>
+    <string msgid="9130327887929620" name="widget_resized">"Størrelsen på modulen er endret til bredde <ns1:g id="NUMBER_0">%1$s</ns1:g> og høyde <ns1:g id="NUMBER_1">%2$s</ns1:g>"</string>
+    <string msgid="3753320833950115786" name="work_folder_name">"Jobb"</string>
+    <string msgid="4119994475505235248" name="workspace_cling_longpress_description">"Trykk og hold på bakgrunnen for å tilpasse den"</string>
+    <string msgid="368660286867640874" name="workspace_cling_longpress_dismiss">"SKJØNNER"</string>
+    <string msgid="9173998993909018310" name="workspace_cling_longpress_title">"Bakgrunner, moduler og innstillinger"</string>
+    <string msgid="8458889198184077399" name="workspace_scroll_format">"Startside %1$d av %2$d"</string>
+</resources>

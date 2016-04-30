@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="number_of_items_selected">
+    <item msgid="9015111147509924344" quantity="zero">"%1$d個選択済み"</item>
+    <item msgid="8409622005831789373" quantity="one">"%1$d個選択済み"</item>
+    <item msgid="479468347731745357" quantity="other">"%1$d個選択済み"</item>
+  </plurals>
+    <string msgid="7610119707847920412" name="abandoned_clean_this">"削除"</string>
+    <string msgid="3990027586878167529" name="abandoned_promise_explanation">"このアイコンのアプリはインストールされていません。このアイコンは削除できます。または、手動でアプリを検索してインストールしください。"</string>
+    <string msgid="7096178467971716750" name="abandoned_promises_title">"このアプリはインストールされていません"</string>
+    <string msgid="891119232568284442" name="abandoned_search">"検索"</string>
+    <string msgid="8902165848117513641" name="action_add_to_workspace">"ホーム画面に追加"</string>
+    <string msgid="282377193880900022" name="action_decrease_height">"高さを低くする"</string>
+    <string msgid="1374549771083094654" name="action_decrease_width">"幅を狭くする"</string>
+    <string msgid="459390020612501122" name="action_increase_height">"高さを高くする"</string>
+    <string msgid="8773715375078513326" name="action_increase_width">"幅を広くする"</string>
+    <string msgid="4339390619886385032" name="action_move">"アイテムを移動"</string>
+    <string msgid="2170188780612570250" name="action_move_here">"アイテムをここに移動"</string>
+    <string msgid="8854216831569401665" name="action_move_screen_left">"画面を左に移動"</string>
+    <string msgid="329334910274311123" name="action_move_screen_right">"画面を右に移動"</string>
+    <string msgid="1603837886334246317" name="action_move_to_workspace">"ホーム画面に移動"</string>
+    <string msgid="1802976324781771067" name="action_resize">"サイズを変更"</string>
+    <string msgid="7456344436509528827" name="activity_not_available">"このアプリは使用できません"</string>
+    <string msgid="8071924732094499514" name="activity_not_found">"このアプリはインストールされていません。"</string>
+    <string msgid="9040534766770853243" name="add_to_folder">"フォルダ「<ns1:g id="NAME">%1$s</ns1:g>」に追加"</string>
+    <string msgid="4534929978967147231" name="add_to_folder_with_app">"<ns1:g id="NAME">%1$s</ns1:g>のあるフォルダに追加"</string>
+    <string msgid="4793259502305558003" name="added_to_folder">"アイテムをフォルダに追加しました"</string>
+    <string msgid="9110807029020582876" name="all_apps_button_label">"アプリ"</string>
+    <string msgid="252062713717058851" name="all_apps_home_button_label">"ホーム"</string>
+    <string msgid="7557140873644765180" name="all_apps_loading_message">"アプリを読み込んでいます…"</string>
+    <string msgid="6332185285860416787" name="all_apps_no_search_results">"「<ns1:g id="QUERY">%1$s</ns1:g>」に一致するアプリは見つかりませんでした"</string>
+    <string msgid="7084713969757597256" name="all_apps_search_bar_hint">"アプリを検索"</string>
+    <string msgid="5470761048755751471" name="all_apps_search_market_message">"<ns1:g id="QUERY">%1$s</ns1:g>にアクセス"</string>
+    <string msgid="2118706734511831751" name="allow_rotation_title">"回転を許可"</string>
+    <string msgid="123723511662250539" name="announce_selection">"選択: <ns1:g id="LABEL">%1$s</ns1:g>"</string>
+    <string msgid="5181331383435256801" name="application_name">"Launcher3"</string>
+    <string msgid="4050141361160214248" name="create_folder_with">"「<ns1:g id="NAME">%1$s</ns1:g>」フォルダを作成"</string>
+    <string msgid="4882870800623585836" name="crop_wallpaper">"壁紙のトリミング"</string>
+    <string msgid="7475544710230993317" name="default_scroll_format">"%1$d/%2$dページ"</string>
+    <string msgid="1822697352535677073" name="delete_target_label">"削除"</string>
+    <string msgid="5100785476250872595" name="delete_target_uninstall_label">"アンインストール"</string>
+    <string msgid="2459738000155917941" name="first_run_cling_title">"ようこそ"</string>
+    <string msgid="4100806530910930934" name="folder_closed">"フォルダは閉じています"</string>
+    <string msgid="6409794597405184510" name="folder_created">"フォルダを作成しました"</string>
+    <string msgid="6617836969016293992" name="folder_hint_text">"名前のないフォルダ"</string>
+    <string msgid="7371454440695724752" name="folder_name"/>
+    <string msgid="6629239338071103179" name="folder_name_format">"フォルダ: <ns1:g id="NAME">%1$s</ns1:g>"</string>
+    <string msgid="94695026776264709" name="folder_opened">"フォルダが開いています。<ns1:g id="WIDTH">%1$d</ns1:g>x<ns1:g id="HEIGHT">%2$d</ns1:g>の大きさです"</string>
+    <string msgid="1794088362165669656" name="folder_renamed">"フォルダの名前を「<ns1:g id="NAME">%1$s</ns1:g>」に変更しました"</string>
+    <string msgid="1884479294466410023" name="folder_tap_to_close">"タップしてフォルダを閉じます"</string>
+    <string msgid="9191075570492871147" name="folder_tap_to_rename">"タップして名前の変更を保存します"</string>
+    <string msgid="6081085226050792095" name="gadget_error_text">"ウィジェットを表示できません"</string>
+    <string msgid="8274003207686040488" name="gadget_setup_text">"セットアップ"</string>
+    <string msgid="7448809638125333693" name="hotseat_out_of_space">"お気に入りトレイに空きスペースがありません"</string>
+    <string msgid="7538534580694411837" name="image_load_fail">"画像を読み込めませんでした"</string>
+    <string msgid="8053346143994679532" name="info_target_label">"アプリ情報"</string>
+    <string msgid="4211073925752213539" name="item_added_to_workspace">"アイテムをホーム画面に追加しました"</string>
+    <string msgid="4606538322571412879" name="item_moved">"アイテムを移動しました"</string>
+    <string msgid="851119963877842327" name="item_removed">"アイテムを削除しました"</string>
+    <string msgid="7699152356777458215" name="long_press_widget_to_add">"ウィジェットを追加するには押し続けます。"</string>
+    <string msgid="946331230090919440" name="migration_cling_copy_apps">"アイコンをコピー"</string>
+    <string msgid="2752413805582227644" name="migration_cling_description">"古いホーム画面からアイコンとフォルダをインポートしますか？"</string>
+    <string msgid="9181776667882933767" name="migration_cling_title">"アプリのアイコンをコピー"</string>
+    <string msgid="2626475813981258626" name="migration_cling_use_default">"初期状態にリセットする"</string>
+    <string msgid="2833711483015685619" name="move_to_empty_cell">"行<ns1:g id="NUMBER_0">%1$s</ns1:g>、列<ns1:g id="NUMBER_1">%2$s</ns1:g>に移動"</string>
+    <string msgid="6295412897075147808" name="move_to_hotseat_position">"お気に入りの位置<ns1:g id="NUMBER">%1$s</ns1:g>に移動"</string>
+    <string msgid="6750008980455459790" name="move_to_position">"位置<ns1:g id="NUMBER">%1$s</ns1:g>に移動"</string>
+    <string msgid="4691004494942118364" name="out_of_space">"このホーム画面に空きスペースがありません。"</string>
+    <string msgid="7592128424511031410" name="package_state_unknown">"不明"</string>
+    <string msgid="923466509822011139" name="permdesc_install_shortcut">"ユーザー操作なしでショートカットを追加することをアプリに許可します。"</string>
+    <string msgid="5833423719057558387" name="permdesc_read_settings">"ホームの設定とショートカットの読み取りをアプリに許可します。"</string>
+    <string msgid="5440712911516509985" name="permdesc_write_settings">"ホームの設定とショートカットの変更をアプリに許可します。"</string>
+    <string msgid="5632423390354674437" name="permlab_install_shortcut">"ショートカットのインストール"</string>
+    <string msgid="1941457408239617576" name="permlab_read_settings">"ホームの設定とショートカットの読み取り"</string>
+    <string msgid="3574213698004620587" name="permlab_write_settings">"ホームの設定とショートカットの書き込み"</string>
+    <string msgid="3189640419551368385" name="pick_image">"マイフォト"</string>
+    <string msgid="4628969645948454559" name="pick_wallpaper">"壁紙"</string>
+    <string msgid="9160126848219158407" name="safemode_shortcut_error">"ダウンロードしたアプリは、セーフモードでは無効です"</string>
+    <string msgid="4863470563535682004" name="safemode_widget_error">"セーフモードではウィジェットは無効です"</string>
+    <string msgid="266230079505650577" name="screen_moved">"画面を移動しました"</string>
+    <string msgid="8119458837558863227" name="settings_button_text">"設定"</string>
+    <string msgid="5645299835184636119" name="toggle_weight_watcher">"メモリーを表示"</string>
+    <string msgid="4172046090762920660" name="uninstall_system_app_text">"このシステムアプリはアンインストールできません。"</string>
+    <string msgid="4093221025304876354" name="wallpaper_accessibility_name">"壁紙: %1$d/%2$d"</string>
+    <string msgid="8404103075899945851" name="wallpaper_button_text">"壁紙"</string>
+    <string msgid="1459353972739215344" name="wallpaper_delete">"削除"</string>
+    <string msgid="3524143401182707094" name="wallpaper_instructions">"壁紙を設定"</string>
+    <string msgid="4800700444605404650" name="wallpaper_load_fail">"画像を壁紙として読み込めませんでした"</string>
+    <string msgid="2880537293434387943" name="widget_button_text">"ウィジェット"</string>
+    <string msgid="2370757736025621599" name="widget_dims_format">"%1$dx%2$d"</string>
+    <string msgid="9130327887929620" name="widget_resized">"ウィジェットのサイズを幅<ns1:g id="NUMBER_0">%1$s</ns1:g>、高さ<ns1:g id="NUMBER_1">%2$s</ns1:g>に変更しました"</string>
+    <string msgid="3753320833950115786" name="work_folder_name">"仕事用"</string>
+    <string msgid="4119994475505235248" name="workspace_cling_longpress_description">"カスタマイズするには背景を押し続けます"</string>
+    <string msgid="368660286867640874" name="workspace_cling_longpress_dismiss">"OK"</string>
+    <string msgid="9173998993909018310" name="workspace_cling_longpress_title">"壁紙、ウィジェット、設定"</string>
+    <string msgid="8458889198184077399" name="workspace_scroll_format">"ホーム画面: %1$d/%2$d"</string>
+</resources>

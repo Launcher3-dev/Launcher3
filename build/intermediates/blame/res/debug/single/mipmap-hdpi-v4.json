@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/mipmap-hdpi-v4/ic_launcher_wallpaper.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/mipmap-hdpi/ic_launcher_wallpaper.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/mipmap-hdpi-v4/ic_launcher_home.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/mipmap-hdpi/ic_launcher_home.png"
+    }
+]

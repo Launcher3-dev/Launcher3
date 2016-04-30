@@ -1,0 +1,71 @@
+-keep class com.android.launcher3.allapps.AllAppsBackgroundDrawable {
+  public void setAlpha(int);
+  public int getAlpha();
+}
+
+-keep class com.android.launcher3.BaseRecyclerViewFastScrollBar {
+  public void setThumbWidth(int);
+  public int getThumbWidth();
+  public void setTrackWidth(int);
+  public int getTrackWidth();
+}
+
+-keep class com.android.launcher3.BaseRecyclerViewFastScrollPopup {
+  public void setAlpha(float);
+  public float getAlpha();
+}
+
+-keep class com.android.launcher3.BubbleTextView {
+  public void setFastScrollFocus(float);
+  public float getFastScrollFocus();
+}
+
+-keep class com.android.launcher3.ButtonDropTarget {
+  public int getTextColor();
+}
+
+-keep class com.android.launcher3.CellLayout {
+  public float getBackgroundAlpha();
+  public void setBackgroundAlpha(float);
+}
+
+-keep class com.android.launcher3.CellLayout$LayoutParams {
+  public void setWidth(int);
+  public int getWidth();
+  public void setHeight(int);
+  public int getHeight();
+  public void setX(int);
+  public int getX();
+  public void setY(int);
+  public int getY();
+}
+
+-keep class com.android.launcher3.DragLayer$LayoutParams {
+  public void setWidth(int);
+  public int getWidth();
+  public void setHeight(int);
+  public int getHeight();
+  public void setX(int);
+  public int getX();
+  public void setY(int);
+  public int getY();
+}
+
+-keep class com.android.launcher3.FastBitmapDrawable {
+  public int getBrightness();
+  public void setBrightness(int);
+}
+
+-keep class com.android.launcher3.MemoryDumpActivity {
+  *;
+}
+
+-keep class com.android.launcher3.PreloadIconDrawable {
+  public float getAnimationProgress();
+  public void setAnimationProgress(float);
+}
+
+-keep class com.android.launcher3.Workspace {
+  public float getBackgroundAlpha();
+  public void setBackgroundAlpha(float);
+}
