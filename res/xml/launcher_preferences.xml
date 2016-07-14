@@ -22,4 +22,10 @@
         android:persistent="true"
         android:title="@string/allow_rotation_title"/>
 
+    <SwitchPreference
+        android:defaultValue="@bool/set_default"
+        android:key="pref_setDefault"
+        android:persistent="true"
+        android:title="@string/set_default_title"/>
+
 </PreferenceScreen>

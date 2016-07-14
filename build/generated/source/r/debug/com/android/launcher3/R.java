@@ -352,6 +352,7 @@ containing a value of this type.
         public static final int hotseat_transpose_layout_with_orientation=0x7f0d0003;
         public static final int is_large_tablet=0x7f0d0004;
         public static final int is_tablet=0x7f0d0001;
+        public static final int set_default=0x7f0d0008;
     }
     public static final class color {
         public static final int all_apps_grid_section_text_color=0x7f0f0000;
@@ -368,13 +369,14 @@ containing a value of this type.
         public static final int quantum_panel_bg_color=0x7f0f000b;
         public static final int quantum_panel_bg_color_dark=0x7f0f000c;
         public static final int quantum_panel_text_color=0x7f0f000d;
-        public static final int uninstall_target_hover_tint=0x7f0f000e;
-        public static final int wallpaper_picker_translucent_gray=0x7f0f000f;
-        public static final int widgets_cell_color=0x7f0f0010;
-        public static final int widgets_view_item_text_color=0x7f0f0011;
-        public static final int widgets_view_section_text_color=0x7f0f0012;
-        public static final int workspace_edge_effect_color=0x7f0f0013;
-        public static final int workspace_icon_text_color=0x7f0f0014;
+        public static final int transparent=0x7f0f000e;
+        public static final int uninstall_target_hover_tint=0x7f0f000f;
+        public static final int wallpaper_picker_translucent_gray=0x7f0f0010;
+        public static final int widgets_cell_color=0x7f0f0011;
+        public static final int widgets_view_item_text_color=0x7f0f0012;
+        public static final int widgets_view_section_text_color=0x7f0f0013;
+        public static final int workspace_edge_effect_color=0x7f0f0014;
+        public static final int workspace_icon_text_color=0x7f0f0015;
     }
     public static final class dimen {
         public static final int all_apps_background_canvas_height=0x7f0a0004;
@@ -774,9 +776,15 @@ containing a value of this type.
         public static final int safemode_shortcut_error=0x7f090046;
         public static final int safemode_widget_error=0x7f090047;
         public static final int screen_moved=0x7f090048;
+        public static final int set_default_title=0x7f090061;
         public static final int settings_button_text=0x7f090049;
+        public static final int soft_update_title_text=0x7f090062;
+        public static final int soft_upgrade_current_progress_text=0x7f090063;
+        public static final int soft_upgrade_download_completed_text=0x7f090064;
+        public static final int soft_upgrade_ready_to_download_text=0x7f090065;
         public static final int toggle_weight_watcher=0x7f09004a;
         public static final int uninstall_system_app_text=0x7f09004b;
+        public static final int upgradle_version_text=0x7f090066;
         public static final int wallpaper_accessibility_name=0x7f09004c;
         public static final int wallpaper_button_text=0x7f09004d;
         public static final int wallpaper_delete=0x7f09004e;
@@ -809,6 +817,9 @@ containing a value of this type.
         public static final int Theme_WallpaperCropper=0x7f0b0004;
         public static final int Theme_WallpaperPicker=0x7f0b0010;
         public static final int WallpaperCropperActionBar=0x7f0b0006;
+        /** 模糊
+         */
+        public static final int ad_dialog=0x7f0b0011;
     }
     public static final class xml {
         public static final int app_target_browser=0x7f070000;
@@ -1511,12 +1522,14 @@ containing a value of this type.
            <colgroup align="left" />
            <colgroup align="left" />
            <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #RecyclerView_android_descendantFocusability android:descendantFocusability}</code></td><td></td></tr>
            <tr><td><code>{@link #RecyclerView_android_orientation android:orientation}</code></td><td></td></tr>
            <tr><td><code>{@link #RecyclerView_layoutManager com.codemx.launcher3:layoutManager}</code></td><td></td></tr>
            <tr><td><code>{@link #RecyclerView_reverseLayout com.codemx.launcher3:reverseLayout}</code></td><td></td></tr>
            <tr><td><code>{@link #RecyclerView_spanCount com.codemx.launcher3:spanCount}</code></td><td></td></tr>
            <tr><td><code>{@link #RecyclerView_stackFromEnd com.codemx.launcher3:stackFromEnd}</code></td><td></td></tr>
            </table>
+           @see #RecyclerView_android_descendantFocusability
            @see #RecyclerView_android_orientation
            @see #RecyclerView_layoutManager
            @see #RecyclerView_reverseLayout
@@ -1524,9 +1537,15 @@ containing a value of this type.
            @see #RecyclerView_stackFromEnd
          */
         public static final int[] RecyclerView = {
-            0x010100c4, 0x7f010021, 0x7f010022, 0x7f010023,
-            0x7f010024
+            0x010100c4, 0x010100f1, 0x7f010021, 0x7f010022,
+            0x7f010023, 0x7f010024
         };
+        /**
+          <p>This symbol is the offset where the {@link android.R.attr#descendantFocusability}
+          attribute's value can be found in the {@link #RecyclerView} array.
+          @attr name android:descendantFocusability
+        */
+        public static final int RecyclerView_android_descendantFocusability = 1;
         /**
           <p>This symbol is the offset where the {@link android.R.attr#orientation}
           attribute's value can be found in the {@link #RecyclerView} array.
@@ -1546,7 +1565,7 @@ theme attribute (in the form
 containing a value of this type.
           @attr name com.codemx.launcher3:layoutManager
         */
-        public static final int RecyclerView_layoutManager = 1;
+        public static final int RecyclerView_layoutManager = 2;
         /**
           <p>This symbol is the offset where the {@link com.codemx.launcher3.R.attr#reverseLayout}
           attribute's value can be found in the {@link #RecyclerView} array.
@@ -1560,7 +1579,7 @@ theme attribute (in the form
 containing a value of this type.
           @attr name com.codemx.launcher3:reverseLayout
         */
-        public static final int RecyclerView_reverseLayout = 3;
+        public static final int RecyclerView_reverseLayout = 4;
         /**
           <p>This symbol is the offset where the {@link com.codemx.launcher3.R.attr#spanCount}
           attribute's value can be found in the {@link #RecyclerView} array.
@@ -1574,7 +1593,7 @@ theme attribute (in the form
 containing a value of this type.
           @attr name com.codemx.launcher3:spanCount
         */
-        public static final int RecyclerView_spanCount = 2;
+        public static final int RecyclerView_spanCount = 3;
         /**
           <p>This symbol is the offset where the {@link com.codemx.launcher3.R.attr#stackFromEnd}
           attribute's value can be found in the {@link #RecyclerView} array.
@@ -1588,7 +1607,7 @@ theme attribute (in the form
 containing a value of this type.
           @attr name com.codemx.launcher3:stackFromEnd
         */
-        public static final int RecyclerView_stackFromEnd = 4;
+        public static final int RecyclerView_stackFromEnd = 5;
         /** Attributes that can be used with a Workspace.
            <p>Includes the following attributes:</p>
            <table>

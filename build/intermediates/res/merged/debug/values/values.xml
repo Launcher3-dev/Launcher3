@@ -8,6 +8,7 @@
     <bool name="hotseat_transpose_layout_with_orientation">true</bool>
     <bool name="is_large_tablet">false</bool>
     <bool name="is_tablet">false</bool>
+    <bool name="set_default">false</bool>
     <color name="all_apps_grid_section_text_color">#009688</color>
     <color name="all_apps_search_market_button_focused_bg_color">#DDDDDD</color>
     <color name="cling_scrim_background">#80000000</color>
@@ -22,6 +23,7 @@
     <color name="quantum_panel_bg_color">#FFF5F5F5</color>
     <color name="quantum_panel_bg_color_dark">#FF374248</color>
     <color name="quantum_panel_text_color">#FF666666</color>
+    <color name="transparent">#00000000</color>
     <color name="uninstall_target_hover_tint">#FFF0592B</color>
     <color name="wallpaper_picker_translucent_gray">#66000000</color>
     <color name="widgets_cell_color">#263238</color>
@@ -39,7 +41,7 @@
     <declare-styleable name="PageIndicator"><attr format="integer" name="windowSize"/></declare-styleable>
     <declare-styleable name="PagedView"><attr format="dimension" name="pageLayoutWidthGap"/><attr format="dimension" name="pageLayoutHeightGap"/><attr format="reference" name="pageIndicator"/></declare-styleable>
     <declare-styleable name="PreloadIconDrawable"><attr format="reference" name="background"/><attr format="dimension" name="ringOutset"/><attr format="dimension" name="indicatorSize"/></declare-styleable>
-    <declare-styleable name="RecyclerView"><attr format="string" name="layoutManager"/><attr name="android:orientation"/><attr format="integer" name="spanCount"/><attr format="boolean" name="reverseLayout"/><attr format="boolean" name="stackFromEnd"/></declare-styleable>
+    <declare-styleable name="RecyclerView"><attr format="string" name="layoutManager"/><attr name="android:orientation"/><attr name="android:descendantFocusability"/><attr format="integer" name="spanCount"/><attr format="boolean" name="reverseLayout"/><attr format="boolean" name="stackFromEnd"/></declare-styleable>
     <declare-styleable name="Workspace"><attr format="integer" name="defaultScreen"/><attr format="integer" name="cellCountX"/><attr format="integer" name="cellCountY"/></declare-styleable>
     <dimen name="all_apps_background_canvas_height">475dp</dimen>
     <dimen name="all_apps_background_canvas_width">700dp</dimen>
@@ -244,9 +246,15 @@
     <string name="safemode_shortcut_error">Downloaded app disabled in Safe mode</string>
     <string name="safemode_widget_error">Widgets disabled in Safe mode</string>
     <string name="screen_moved">Screen moved</string>
+    <string name="set_default_title">设置默认桌面</string>
     <string name="settings_button_text">Settings</string>
+    <string name="soft_update_title_text">Upgrading</string>
+    <string name="soft_upgrade_current_progress_text">Current progress</string>
+    <string name="soft_upgrade_download_completed_text">Download completed</string>
+    <string name="soft_upgrade_ready_to_download_text">Ready to download</string>
     <string name="toggle_weight_watcher">Show Mem</string>
     <string name="uninstall_system_app_text">This is a system app and can\'t be uninstalled.</string>
+    <string name="upgradle_version_text">Found a new version can be updated!</string>
     <string name="wallpaper_accessibility_name">Wallpaper %1$d of %2$d</string>
     <string name="wallpaper_button_text">Wallpapers</string>
     <string name="wallpaper_delete">Delete</string>
@@ -348,5 +356,14 @@
     <style name="WallpaperCropperActionBar" parent="@android:style/Widget.DeviceDefault.ActionBar">
         <item name="android:displayOptions">showCustom</item>
         <item name="android:background">#88000000</item>
+    </style>
+    <style name="ad_dialog" parent="@android:style/Theme.Dialog">
+        <item name="android:windowFrame">@null</item><!--边框-->
+        <item name="android:windowIsFloating">true</item><!--是否浮现在activity之上-->
+        <item name="android:windowFullscreen">true</item><!--是否全屏-->
+        <item name="android:windowIsTranslucent">false</item><!--半透明-->
+        <item name="android:windowNoTitle">true</item><!--无标题-->
+        <item name="android:windowBackground">@color/transparent</item><!--背景透明-->
+        <item name="android:backgroundDimEnabled">true</item><!--模糊-->
     </style>
 </resources>

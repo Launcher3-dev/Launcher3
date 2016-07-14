@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">LeagooLibs</string>
+    <string name="soft_update_title_text">Upgrading</string>
+
+
+    <string name="soft_upgrade_current_progress_text">Current progress</string>
+    <string name="soft_upgrade_download_completed_text">Download completed</string>
+    <string name="soft_upgrade_ready_to_download_text">Ready to download</string>
+
+    <string name="upgradle_version_text">Found a new version can be updated!</string>
+</resources>

@@ -1529,9 +1529,99 @@ public class Workspace extends PagedView
     }
 
     @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+
+        boolean restore = false;
+        int restoreCount = 0;
+        boolean fastDraw = mTouchState != TOUCH_STATE_SCROLLING && mNextPage == EXTRA_EMPTY_SCREEN_ID;
+        if (fastDraw) {
+            drawChild(canvas, getChildAt(getNextPage()), getDrawingTime());
+            //在非滑动中、非临界条件的正常情况下绘制屏幕
+        } else {
+            long drawingTime = getDrawingTime();
+            int width = getWidth();
+            float scrollPos = (float) getScrollX() / width;
+            boolean endlessScrolling = true;
+
+            int leftScreen;
+            int rightScreen;
+            boolean isScrollToRight = false;
+            int childCount = getChildCount();//其值为1、2、3----
+            if (scrollPos < 0 && endlessScrolling) {
+                //屏幕是向左滑到临界
+                leftScreen = childCount - 1;
+                rightScreen = 0;
+            } else {//屏幕向右滑动到临界
+                leftScreen = Math.min( (int) scrollPos, childCount - 1 );
+                rightScreen = leftScreen + 1;
+                if (endlessScrolling) {
+                    rightScreen = rightScreen % childCount;
+                    isScrollToRight = true;
+                }
+            }
+
+            if (isScreenNoValid(leftScreen)) {
+                if (rightScreen == 0 && !isScrollToRight) { // 向左滑动，如果rightScreen为0
+                    int offset = childCount * width;
+                    canvas.translate(-offset, 0);
+                    drawChild(canvas, getChildAt(leftScreen), drawingTime);
+                    canvas.translate(+offset, 0);
+                } else {
+                    drawChild(canvas, getChildAt(leftScreen), drawingTime);
+                }
+            }
+            if (scrollPos != leftScreen && isScreenNoValid(rightScreen)) {//向右滑动
+                if (endlessScrolling && rightScreen == 0  && isScrollToRight) {
+                    int offset = childCount * width;
+                    canvas.translate(+offset, 0);
+                    drawChild(canvas, getChildAt(rightScreen), drawingTime);
+                    canvas.translate(-offset, 0);
+                } else {
+                    drawChild(canvas, getChildAt(rightScreen), drawingTime);
+                }
+            }
+
+        }
+
+    }
+
+    private boolean isScreenNoValid(int screen) {    //判断非临界条件下所在的屏幕，如果是//临界则返回false
+        return screen >= 0 && screen < getChildCount();
+
+    }
+
+
+    @Override
     public void computeScroll() {
         super.computeScroll();
         mWallpaperOffset.syncWithScroll();
+
+//        //重写了父类的computeScroll()；主要功能是计算拖动的位移量、更新背景、设置要显示的屏幕 //（setCurrentScreen(mCurrentScreen);
+//        if (mNextScreen != INVALID_SCREEN) {
+//            if (mNextScreen == -1 && true) {   //向左滑动到最左cellLayout屏幕边界
+//                mCurrentScreen = getChildCount() - 1;
+//                scrollTo(mCurrentScreen * getWidth(), getScrollY());
+//                int n = 0;
+//// mScroller.getCurrX()获取的最大值 TOATLE_NUMBER为所有（cellLyout屏幕的总数+1）*每个屏幕的跨度值
+//                while (n <= TOATLE_NUMBER) { //壁纸循环向右滑动
+//                    updateWallpaperOffsetNew(n);
+//                    n += 180;
+//                }
+//
+//            } else if (mNextScreen == getChildCount() && true) {
+//// //向右滑动到最左cellLayout屏幕边界
+//                mCurrentScreen = 0;
+//                scrollTo(0, getScrollY());
+//                // updateWallpaperOffset();
+//                int m = TOATLE_NUMBER;
+//                while (m >= 0) {//壁纸循环向左滑动
+//                    updateWallpaperOffsetNew(m);
+//                    m -= 180;
+//                }
+//
+//            }
+//        }
     }
 
     @Override

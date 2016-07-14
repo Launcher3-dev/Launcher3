@@ -15,9 +15,12 @@ ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:20:1-224:12
 		INJECTED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml
 uses-sdk
 ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:23:5-73
-MERGED from [com.android.support:support-v4:23.3.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/23.3.0/AndroidManifest.xml:20:5-43
-MERGED from [com.android.support:recyclerview-v7:23.3.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/23.3.0/AndroidManifest.xml:20:5-43
-MERGED from [com.android.support:support-v4:23.3.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/23.3.0/AndroidManifest.xml:20:5-43
+MERGED from [com.android.support:support-v4:24.0.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/24.0.0/AndroidManifest.xml:21:5-23:54
+MERGED from [com.android.support:recyclerview-v7:24.0.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/24.0.0/AndroidManifest.xml:20:5-43
+MERGED from [com.android.support:support-v4:24.0.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/24.0.0/AndroidManifest.xml:21:5-23:54
+MERGED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:7:5-9:41
+	tools:overrideLibrary
+		ADDED from [com.android.support:support-v4:24.0.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/24.0.0/AndroidManifest.xml:23:9-51
 	android:targetSdkVersion
 		ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:23:15-44
 		INJECTED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml
@@ -132,8 +135,9 @@ ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:64:5-100
 		ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:64:22-97
 application
 ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:66:5-223:19
-MERGED from [com.android.support:support-v4:23.3.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/23.3.0/AndroidManifest.xml:22:5-20
-MERGED from [com.android.support:support-v4:23.3.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/23.3.0/AndroidManifest.xml:22:5-20
+MERGED from [com.android.support:support-v4:24.0.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/24.0.0/AndroidManifest.xml:25:5-20
+MERGED from [com.android.support:support-v4:24.0.0] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/com.android.support/support-v4/24.0.0/AndroidManifest.xml:25:5-20
+MERGED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:17:5-20:19
 	android:backupAgent
 		ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:68:9-77
 	android:label
@@ -314,3 +318,23 @@ ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:221:9-222:4
 		ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:222:24-44
 	android:name
 		ADDED from /Users/yuchuan/GitHub_MX/Launcher3-mx/AndroidManifest.xml:221:20-67
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:11:5-79
+	android:name
+		ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:11:22-76
+uses-permission#android.permission.CHANGE_WIFI_STATE
+ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:12:5-76
+	android:name
+		ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:12:22-73
+uses-permission#android.permission.ACCESS_WIFI_STATE
+ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:13:5-76
+	android:name
+		ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:13:22-73
+uses-permission#android.permission.CHANGE_WIFI_MULTICAST_STATE
+ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:14:5-86
+	android:name
+		ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:14:22-83
+uses-permission#android.permission.INTERNET
+ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:15:5-67
+	android:name
+		ADDED from [Launcher3-mx:mxlibrary:unspecified] /Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/exploded-aar/Launcher3-mx/mxlibrary/unspecified/AndroidManifest.xml:15:22-64

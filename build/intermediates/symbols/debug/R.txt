@@ -49,6 +49,7 @@ int bool enable_backup 0x7f0d0007
 int bool hotseat_transpose_layout_with_orientation 0x7f0d0003
 int bool is_large_tablet 0x7f0d0004
 int bool is_tablet 0x7f0d0001
+int bool set_default 0x7f0d0008
 int color all_apps_grid_section_text_color 0x7f0f0000
 int color all_apps_search_market_button_focused_bg_color 0x7f0f0001
 int color cling_scrim_background 0x7f0f0002
@@ -63,13 +64,14 @@ int color outline_color 0x7f0f000a
 int color quantum_panel_bg_color 0x7f0f000b
 int color quantum_panel_bg_color_dark 0x7f0f000c
 int color quantum_panel_text_color 0x7f0f000d
-int color uninstall_target_hover_tint 0x7f0f000e
-int color wallpaper_picker_translucent_gray 0x7f0f000f
-int color widgets_cell_color 0x7f0f0010
-int color widgets_view_item_text_color 0x7f0f0011
-int color widgets_view_section_text_color 0x7f0f0012
-int color workspace_edge_effect_color 0x7f0f0013
-int color workspace_icon_text_color 0x7f0f0014
+int color transparent 0x7f0f000e
+int color uninstall_target_hover_tint 0x7f0f000f
+int color wallpaper_picker_translucent_gray 0x7f0f0010
+int color widgets_cell_color 0x7f0f0011
+int color widgets_view_item_text_color 0x7f0f0012
+int color widgets_view_section_text_color 0x7f0f0013
+int color workspace_edge_effect_color 0x7f0f0014
+int color workspace_icon_text_color 0x7f0f0015
 int dimen all_apps_background_canvas_height 0x7f0a0004
 int dimen all_apps_background_canvas_width 0x7f0a0005
 int dimen all_apps_empty_search_bg_top_offset 0x7f0a0010
@@ -449,9 +451,15 @@ int string receive_launch_broadcasts_permission 0x7f090060
 int string safemode_shortcut_error 0x7f090046
 int string safemode_widget_error 0x7f090047
 int string screen_moved 0x7f090048
+int string set_default_title 0x7f090061
 int string settings_button_text 0x7f090049
+int string soft_update_title_text 0x7f090062
+int string soft_upgrade_current_progress_text 0x7f090063
+int string soft_upgrade_download_completed_text 0x7f090064
+int string soft_upgrade_ready_to_download_text 0x7f090065
 int string toggle_weight_watcher 0x7f09004a
 int string uninstall_system_app_text 0x7f09004b
+int string upgradle_version_text 0x7f090066
 int string wallpaper_accessibility_name 0x7f09004c
 int string wallpaper_button_text 0x7f09004d
 int string wallpaper_delete 0x7f09004e
@@ -482,6 +490,7 @@ int style Theme_Light_CustomOverscroll 0x7f0b000f
 int style Theme_WallpaperCropper 0x7f0b0004
 int style Theme_WallpaperPicker 0x7f0b0010
 int style WallpaperCropperActionBar 0x7f0b0006
+int style ad_dialog 0x7f0b0011
 int[] styleable BubbleTextView { 0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003, 0x7f010004 }
 int styleable BubbleTextView_customShadows 4
 int styleable BubbleTextView_deferShadowGeneration 3
@@ -527,12 +536,13 @@ int[] styleable PreloadIconDrawable { 0x7f01001e, 0x7f01001f, 0x7f010020 }
 int styleable PreloadIconDrawable_background 0
 int styleable PreloadIconDrawable_indicatorSize 2
 int styleable PreloadIconDrawable_ringOutset 1
-int[] styleable RecyclerView { 0x010100c4, 0x7f010021, 0x7f010022, 0x7f010023, 0x7f010024 }
+int[] styleable RecyclerView { 0x010100c4, 0x010100f1, 0x7f010021, 0x7f010022, 0x7f010023, 0x7f010024 }
+int styleable RecyclerView_android_descendantFocusability 1
 int styleable RecyclerView_android_orientation 0
-int styleable RecyclerView_layoutManager 1
-int styleable RecyclerView_reverseLayout 3
-int styleable RecyclerView_spanCount 2
-int styleable RecyclerView_stackFromEnd 4
+int styleable RecyclerView_layoutManager 2
+int styleable RecyclerView_reverseLayout 4
+int styleable RecyclerView_spanCount 3
+int styleable RecyclerView_stackFromEnd 5
 int[] styleable Workspace { 0x7f010025, 0x7f010026, 0x7f010027 }
 int styleable Workspace_cellCountX 1
 int styleable Workspace_cellCountY 2

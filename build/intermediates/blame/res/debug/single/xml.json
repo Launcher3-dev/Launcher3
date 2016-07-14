@@ -28,12 +28,12 @@
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/xml/dw_tablet_hotseat.xml"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/xml/default_workspace_5x5.xml",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/xml/default_workspace_5x5.xml"
-    },
-    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/xml/app_target_email.xml",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/xml/app_target_email.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/xml/default_workspace_5x5.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/xml/default_workspace_5x5.xml"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/xml/app_target_messenger.xml",

@@ -72,7 +72,7 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
 
     private static void addToInstallQueue(
             SharedPreferences sharedPrefs, PendingInstallShortcutInfo info) {
-        synchronized(sLock) {
+        synchronized (sLock) {
             String encoded = info.encodeToString();
             if (encoded != null) {
                 Set<String> strings = sharedPrefs.getStringSet(APPS_PENDING_INSTALL, null);
@@ -88,13 +88,13 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
     }
 
     public static void removeFromInstallQueue(Context context, ArrayList<String> packageNames,
-            UserHandleCompat user) {
+                                              UserHandleCompat user) {
         if (packageNames.isEmpty()) {
             return;
         }
         String spKey = LauncherAppState.getSharedPreferencesKey();
         SharedPreferences sp = context.getSharedPreferences(spKey, Context.MODE_PRIVATE);
-        synchronized(sLock) {
+        synchronized (sLock) {
             Set<String> strings = sp.getStringSet(APPS_PENDING_INSTALL, null);
             if (DBG) {
                 Log.d(TAG, "APPS_PENDING_INSTALL: " + strings
@@ -118,14 +118,14 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
 
     private static ArrayList<PendingInstallShortcutInfo> getAndClearInstallQueue(
             SharedPreferences sharedPrefs, Context context) {
-        synchronized(sLock) {
+        synchronized (sLock) {
             Set<String> strings = sharedPrefs.getStringSet(APPS_PENDING_INSTALL, null);
             if (DBG) Log.d(TAG, "Getting and clearing APPS_PENDING_INSTALL: " + strings);
             if (strings == null) {
                 return new ArrayList<PendingInstallShortcutInfo>();
             }
             ArrayList<PendingInstallShortcutInfo> infos =
-                new ArrayList<PendingInstallShortcutInfo>();
+                    new ArrayList<PendingInstallShortcutInfo>();
             for (String encoded : strings) {
                 PendingInstallShortcutInfo info = decode(encoded, context);
                 if (info != null) {
@@ -187,10 +187,12 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
     static void enableInstallQueue() {
         mUseInstallQueue = true;
     }
+
     static void disableAndFlushInstallQueue(Context context) {
         mUseInstallQueue = false;
         flushInstallQueue(context);
     }
+
     static void flushInstallQueue(Context context) {
         String spKey = LauncherAppState.getSharedPreferencesKey();
         SharedPreferences sp = context.getSharedPreferences(spKey, Context.MODE_PRIVATE);
@@ -228,7 +230,8 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
      * Ensures that we have a valid, non-null name.  If the provided name is null, we will return
      * the application name instead.
      */
-    @Thunk static CharSequence ensureValidName(Context context, Intent intent, CharSequence name) {
+    @Thunk
+    static CharSequence ensureValidName(Context context, Intent intent, CharSequence name) {
         if (name == null) {
             try {
                 PackageManager pm = context.getPackageManager();
@@ -283,12 +286,12 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
                     // If it a launcher target, we only need component name, and user to
                     // recreate this.
                     return new JSONStringer()
-                        .object()
-                        .key(LAUNCH_INTENT_KEY).value(launchIntent.toUri(0))
-                        .key(APP_SHORTCUT_TYPE_KEY).value(true)
-                        .key(USER_HANDLE_KEY).value(UserManagerCompat.getInstance(mContext)
-                                .getSerialNumberForUser(user))
-                        .endObject().toString();
+                            .object()
+                            .key(LAUNCH_INTENT_KEY).value(launchIntent.toUri(0))
+                            .key(APP_SHORTCUT_TYPE_KEY).value(true)
+                            .key(USER_HANDLE_KEY).value(UserManagerCompat.getInstance(mContext)
+                                    .getSerialNumberForUser(user))
+                            .endObject().toString();
                 } catch (JSONException e) {
                     Log.d(TAG, "Exception when adding shortcut: " + e);
                     return null;
@@ -309,14 +312,14 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
             String name = ensureValidName(mContext, launchIntent, label).toString();
             Bitmap icon = data.getParcelableExtra(Intent.EXTRA_SHORTCUT_ICON);
             Intent.ShortcutIconResource iconResource =
-                data.getParcelableExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE);
+                    data.getParcelableExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE);
 
             // Only encode the parameters which are supported by the API.
             try {
                 JSONStringer json = new JSONStringer()
-                    .object()
-                    .key(LAUNCH_INTENT_KEY).value(launchIntent.toUri(0))
-                    .key(NAME_KEY).value(name);
+                        .object()
+                        .key(LAUNCH_INTENT_KEY).value(launchIntent.toUri(0))
+                        .key(NAME_KEY).value(name);
                 if (icon != null) {
                     byte[] iconByteArray = Utilities.flattenBitmap(icon);
                     json = json.key(ICON_KEY).value(
@@ -347,7 +350,7 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
             String packageName = launchIntent.getPackage();
             if (packageName == null) {
                 packageName = launchIntent.getComponent() == null ? null :
-                    launchIntent.getComponent().getPackageName();
+                        launchIntent.getComponent().getPackageName();
             }
             return packageName;
         }
@@ -388,7 +391,7 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
                 data.putExtra(Intent.EXTRA_SHORTCUT_ICON, b);
             } else if (iconResourceName != null && !iconResourceName.isEmpty()) {
                 Intent.ShortcutIconResource iconResource =
-                    new Intent.ShortcutIconResource();
+                        new Intent.ShortcutIconResource();
                 iconResource.resourceName = iconResourceName;
                 iconResource.packageName = iconResourcePackageName;
                 data.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
@@ -406,6 +409,7 @@ public class InstallShortcutReceiver extends BroadcastReceiver {
     /**
      * Tries to create a new PendingInstallShortcutInfo which represents the same target,
      * but is an app target and not a shortcut.
+     *
      * @return the newly created info or the original one.
      */
     private static PendingInstallShortcutInfo convertToLauncherActivityIfPossible(
