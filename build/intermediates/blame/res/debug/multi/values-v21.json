@@ -1,5 +1,73 @@
 [
     {
+        "outputFile": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/values-v21/values-v21.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 55,
+                    "endLine": 5,
+                    "endColumn": 12,
+                    "endOffset": 319
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values-v21/styles.xml",
+                    "position": {
+                        "startLine": 30,
+                        "startColumn": 4,
+                        "startOffset": 1193,
+                        "endLine": 33,
+                        "endColumn": 12,
+                        "endOffset": 1457
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 6,
+                    "startColumn": 4,
+                    "startOffset": 324,
+                    "endLine": 12,
+                    "endColumn": 12,
+                    "endOffset": 768
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values-v21/styles.xml",
+                    "position": {
+                        "startLine": 35,
+                        "startColumn": 4,
+                        "startOffset": 1463,
+                        "endLine": 41,
+                        "endColumn": 12,
+                        "endOffset": 1907
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 13,
+                    "startColumn": 4,
+                    "startOffset": 773,
+                    "endLine": 20,
+                    "endColumn": 12,
+                    "endOffset": 1229
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values-v21/styles.xml",
+                    "position": {
+                        "startLine": 21,
+                        "startColumn": 4,
+                        "startOffset": 731,
+                        "endLine": 28,
+                        "endColumn": 12,
+                        "endOffset": 1187
+                    }
+                }
+            }
+        ]
+    },
+    {
         "outputFile": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/values-v21/values-v21.xml",
         "map": [
             {

@@ -313,5 +313,320 @@
                 }
             }
         ]
+    },
+    {
+        "outputFile": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/values-sw720dp-v13/values-sw720dp-v13.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 55,
+                    "endColumn": 45,
+                    "endOffset": 96
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/config.xml",
+                    "position": {
+                        "startLine": 1,
+                        "startColumn": 4,
+                        "startOffset": 16,
+                        "endColumn": 45,
+                        "endOffset": 57
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 3,
+                    "startColumn": 4,
+                    "startOffset": 101,
+                    "endColumn": 71,
+                    "endOffset": 168
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/config.xml",
+                    "position": {
+                        "startLine": 9,
+                        "startColumn": 4,
+                        "startOffset": 318,
+                        "endColumn": 71,
+                        "endOffset": 385
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 4,
+                    "startColumn": 4,
+                    "startOffset": 173,
+                    "endColumn": 44,
+                    "endOffset": 213
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/config.xml",
+                    "position": {
+                        "startLine": 2,
+                        "startColumn": 4,
+                        "startOffset": 62,
+                        "endColumn": 44,
+                        "endOffset": 102
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 5,
+                    "startColumn": 4,
+                    "startOffset": 218,
+                    "endColumn": 67,
+                    "endOffset": 281
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 21,
+                        "startColumn": 4,
+                        "startOffset": 899,
+                        "endColumn": 67,
+                        "endOffset": 962
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 6,
+                    "startColumn": 4,
+                    "startOffset": 286,
+                    "endColumn": 71,
+                    "endOffset": 353
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 827,
+                        "endColumn": 71,
+                        "endOffset": 894
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 7,
+                    "startColumn": 4,
+                    "startOffset": 358,
+                    "endColumn": 63,
+                    "endOffset": 417
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 19,
+                        "startColumn": 4,
+                        "startOffset": 763,
+                        "endColumn": 63,
+                        "endOffset": 822
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 8,
+                    "startColumn": 4,
+                    "startOffset": 422,
+                    "endColumn": 57,
+                    "endOffset": 475
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 18,
+                        "startColumn": 4,
+                        "startOffset": 705,
+                        "endColumn": 57,
+                        "endOffset": 758
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 9,
+                    "startColumn": 4,
+                    "startOffset": 480,
+                    "endColumn": 61,
+                    "endOffset": 537
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 28,
+                        "startColumn": 4,
+                        "startOffset": 1125,
+                        "endColumn": 61,
+                        "endOffset": 1182
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 10,
+                    "startColumn": 4,
+                    "startOffset": 542,
+                    "endColumn": 61,
+                    "endOffset": 599
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 29,
+                        "startColumn": 4,
+                        "startOffset": 1187,
+                        "endColumn": 61,
+                        "endOffset": 1244
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 11,
+                    "startColumn": 4,
+                    "startOffset": 604,
+                    "endColumn": 64,
+                    "endOffset": 664
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 25,
+                        "startColumn": 4,
+                        "startOffset": 1044,
+                        "endColumn": 64,
+                        "endOffset": 1104
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 12,
+                    "startColumn": 4,
+                    "startOffset": 669,
+                    "endColumn": 62,
+                    "endOffset": 727
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/dimens.xml",
+                    "position": {
+                        "startLine": 24,
+                        "startColumn": 4,
+                        "startOffset": 981,
+                        "endColumn": 62,
+                        "endOffset": 1039
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 13,
+                    "startColumn": 4,
+                    "startOffset": 732,
+                    "endColumn": 75,
+                    "endOffset": 803
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/config.xml",
+                    "position": {
+                        "startLine": 6,
+                        "startColumn": 4,
+                        "startOffset": 224,
+                        "endColumn": 75,
+                        "endOffset": 295
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 14,
+                    "startColumn": 4,
+                    "startOffset": 808,
+                    "endLine": 21,
+                    "endColumn": 12,
+                    "endOffset": 1196
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/styles.xml",
+                    "position": {
+                        "startLine": 29,
+                        "startColumn": 4,
+                        "startOffset": 911,
+                        "endLine": 36,
+                        "endColumn": 12,
+                        "endOffset": 1299
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 22,
+                    "startColumn": 4,
+                    "startOffset": 1201,
+                    "endLine": 25,
+                    "endColumn": 12,
+                    "endOffset": 1370
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/styles.xml",
+                    "position": {
+                        "startLine": 24,
+                        "startColumn": 4,
+                        "startOffset": 736,
+                        "endLine": 27,
+                        "endColumn": 12,
+                        "endOffset": 905
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 26,
+                    "startColumn": 4,
+                    "startOffset": 1375,
+                    "endColumn": 32,
+                    "endOffset": 1403
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values-sw720dp/styles.xml",
+                    "position": {
+                        "startLine": 22,
+                        "startColumn": 4,
+                        "startOffset": 695,
+                        "endColumn": 39,
+                        "endOffset": 730
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 27,
+                    "startColumn": 4,
+                    "startOffset": 1408,
+                    "endLine": 29,
+                    "endColumn": 12,
+                    "endOffset": 1571
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values-sw720dp/styles.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 671,
+                        "endLine": 22,
+                        "endColumn": 12,
+                        "endOffset": 834
+                    }
+                }
+            }
+        ]
     }
 ]

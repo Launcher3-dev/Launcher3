@@ -4,11 +4,23 @@
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout-land/longpress_cling.xml"
     },
     {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/layout-land/longpress_cling.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/layout-land/longpress_cling.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/layout-land/migration_cling.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/layout-land/migration_cling.xml"
+    },
+    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout-land/migration_cling.xml",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout-land/migration_cling.xml"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout-land/launcher.xml",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout-land/launcher.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/layout-land/launcher.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/layout-land/launcher.xml"
     }
 ]

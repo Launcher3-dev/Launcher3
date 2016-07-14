@@ -1,5 +1,5085 @@
 [
     {
+        "outputFile": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/values/values.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 105,
+                    "endColumn": 44,
+                    "endOffset": 145
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 9,
+                        "startColumn": 4,
+                        "startOffset": 373,
+                        "endColumn": 44,
+                        "endOffset": 413
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 3,
+                    "startColumn": 4,
+                    "startOffset": 150,
+                    "endColumn": 41,
+                    "endOffset": 187
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/config.xml",
+                    "position": {
+                        "startLine": 18,
+                        "startColumn": 4,
+                        "startOffset": 798,
+                        "endColumn": 41,
+                        "endOffset": 835
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 4,
+                    "startColumn": 4,
+                    "startOffset": 192,
+                    "endColumn": 46,
+                    "endOffset": 234
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 6,
+                        "startColumn": 4,
+                        "startOffset": 240,
+                        "endColumn": 46,
+                        "endOffset": 282
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 5,
+                    "startColumn": 4,
+                    "startOffset": 239,
+                    "endColumn": 50,
+                    "endOffset": 285
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 71,
+                        "startColumn": 4,
+                        "startOffset": 3425,
+                        "endColumn": 50,
+                        "endOffset": 3471
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 6,
+                    "startColumn": 4,
+                    "startOffset": 290,
+                    "endColumn": 43,
+                    "endOffset": 329
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 17,
+                        "startColumn": 4,
+                        "startOffset": 763,
+                        "endColumn": 43,
+                        "endOffset": 802
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 7,
+                    "startColumn": 4,
+                    "startOffset": 334,
+                    "endColumn": 70,
+                    "endOffset": 400
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 68,
+                        "startColumn": 4,
+                        "startOffset": 3293,
+                        "endColumn": 70,
+                        "endOffset": 3359
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 8,
+                    "startColumn": 4,
+                    "startOffset": 405,
+                    "endColumn": 45,
+                    "endOffset": 446
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 8,
+                        "startColumn": 4,
+                        "startOffset": 327,
+                        "endColumn": 45,
+                        "endOffset": 368
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 9,
+                    "startColumn": 4,
+                    "startOffset": 451,
+                    "endColumn": 39,
+                    "endOffset": 486
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 7,
+                        "startColumn": 4,
+                        "startOffset": 287,
+                        "endColumn": 39,
+                        "endOffset": 322
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 10,
+                    "startColumn": 4,
+                    "startOffset": 491,
+                    "endColumn": 41,
+                    "endOffset": 528
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 10,
+                        "startColumn": 4,
+                        "startOffset": 418,
+                        "endColumn": 41,
+                        "endOffset": 455
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 11,
+                    "startColumn": 4,
+                    "startOffset": 533,
+                    "endColumn": 66,
+                    "endOffset": 595
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 45,
+                        "startColumn": 4,
+                        "startOffset": 1783,
+                        "endColumn": 66,
+                        "endOffset": 1845
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 12,
+                    "startColumn": 4,
+                    "startOffset": 600,
+                    "endColumn": 80,
+                    "endOffset": 676
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 46,
+                        "startColumn": 4,
+                        "startOffset": 1850,
+                        "endColumn": 80,
+                        "endOffset": 1926
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 13,
+                    "startColumn": 4,
+                    "startOffset": 681,
+                    "endColumn": 58,
+                    "endOffset": 735
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 25,
+                        "startColumn": 4,
+                        "startOffset": 1050,
+                        "endColumn": 58,
+                        "endOffset": 1104
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 14,
+                    "startColumn": 4,
+                    "startOffset": 740,
+                    "endColumn": 73,
+                    "endOffset": 809
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 42,
+                        "startColumn": 4,
+                        "startOffset": 1686,
+                        "endColumn": 73,
+                        "endOffset": 1755
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 15,
+                    "startColumn": 4,
+                    "startOffset": 814,
+                    "endColumn": 75,
+                    "endOffset": 885
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 41,
+                        "startColumn": 4,
+                        "startOffset": 1610,
+                        "endColumn": 75,
+                        "endOffset": 1681
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 16,
+                    "startColumn": 4,
+                    "startOffset": 890,
+                    "endColumn": 60,
+                    "endOffset": 946
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 22,
+                        "startColumn": 4,
+                        "startOffset": 866,
+                        "endColumn": 60,
+                        "endOffset": 922
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 17,
+                    "startColumn": 4,
+                    "startOffset": 951,
+                    "endColumn": 54,
+                    "endOffset": 1001
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 27,
+                        "startColumn": 4,
+                        "startOffset": 1110,
+                        "endColumn": 54,
+                        "endOffset": 1160
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 18,
+                    "startColumn": 4,
+                    "startOffset": 1006,
+                    "endColumn": 60,
+                    "endOffset": 1062
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 32,
+                        "startColumn": 4,
+                        "startOffset": 1288,
+                        "endColumn": 60,
+                        "endOffset": 1344
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 19,
+                    "startColumn": 4,
+                    "startOffset": 1067,
+                    "endColumn": 58,
+                    "endOffset": 1121
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 24,
+                        "startColumn": 4,
+                        "startOffset": 991,
+                        "endColumn": 58,
+                        "endOffset": 1045
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 20,
+                    "startColumn": 4,
+                    "startOffset": 1126,
+                    "endColumn": 57,
+                    "endOffset": 1179
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/colors.xml",
+                    "position": {
+                        "startLine": 22,
+                        "startColumn": 4,
+                        "startOffset": 808,
+                        "endColumn": 57,
+                        "endOffset": 861
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 21,
+                    "startColumn": 4,
+                    "startOffset": 1184,
+                    "endColumn": 49,
+                    "endOffset": 1229
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 38,
+                        "startColumn": 4,
+                        "startOffset": 1535,
+                        "endColumn": 49,
+                        "endOffset": 1580
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 22,
+                    "startColumn": 4,
+                    "startOffset": 1234,
+                    "endColumn": 58,
+                    "endOffset": 1288
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 35,
+                        "startColumn": 4,
+                        "startOffset": 1411,
+                        "endColumn": 58,
+                        "endOffset": 1465
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 23,
+                    "startColumn": 4,
+                    "startOffset": 1293,
+                    "endColumn": 63,
+                    "endOffset": 1352
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 36,
+                        "startColumn": 4,
+                        "startOffset": 1470,
+                        "endColumn": 63,
+                        "endOffset": 1529
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 24,
+                    "startColumn": 4,
+                    "startOffset": 1357,
+                    "endColumn": 60,
+                    "endOffset": 1413
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 34,
+                        "startColumn": 4,
+                        "startOffset": 1350,
+                        "endColumn": 60,
+                        "endOffset": 1406
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 25,
+                    "startColumn": 4,
+                    "startOffset": 1418,
+                    "endColumn": 47,
+                    "endOffset": 1461
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/Launcher3_mx/mxlibrary/unspecified/res/values/values.xml",
+                    "position": {
+                        "startLine": 2,
+                        "startColumn": 4,
+                        "startOffset": 55,
+                        "endColumn": 47,
+                        "endOffset": 98
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 26,
+                    "startColumn": 4,
+                    "startOffset": 1466,
+                    "endColumn": 63,
+                    "endOffset": 1525
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 23,
+                        "startColumn": 4,
+                        "startOffset": 927,
+                        "endColumn": 63,
+                        "endOffset": 986
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 27,
+                    "startColumn": 4,
+                    "startOffset": 1530,
+                    "endColumn": 69,
+                    "endOffset": 1595
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/colors.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 737,
+                        "endColumn": 69,
+                        "endOffset": 802
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 28,
+                    "startColumn": 4,
+                    "startOffset": 1600,
+                    "endColumn": 52,
+                    "endOffset": 1648
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 51,
+                        "startColumn": 4,
+                        "startOffset": 2087,
+                        "endColumn": 52,
+                        "endOffset": 2135
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 29,
+                    "startColumn": 4,
+                    "startOffset": 1653,
+                    "endColumn": 62,
+                    "endOffset": 1711
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 50,
+                        "startColumn": 4,
+                        "startOffset": 2024,
+                        "endColumn": 62,
+                        "endOffset": 2082
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 30,
+                    "startColumn": 4,
+                    "startOffset": 1716,
+                    "endColumn": 65,
+                    "endOffset": 1777
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 49,
+                        "startColumn": 4,
+                        "startOffset": 1958,
+                        "endColumn": 65,
+                        "endOffset": 2019
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 31,
+                    "startColumn": 4,
+                    "startOffset": 1782,
+                    "endColumn": 63,
+                    "endOffset": 1841
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 31,
+                        "startColumn": 4,
+                        "startOffset": 1224,
+                        "endColumn": 63,
+                        "endOffset": 1283
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 32,
+                    "startColumn": 4,
+                    "startOffset": 1846,
+                    "endColumn": 56,
+                    "endOffset": 1898
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/colors.xml",
+                    "position": {
+                        "startLine": 29,
+                        "startColumn": 4,
+                        "startOffset": 1166,
+                        "endColumn": 56,
+                        "endOffset": 1218
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 45,
+                    "startColumn": 4,
+                    "startOffset": 4607,
+                    "endColumn": 65,
+                    "endOffset": 4668
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 79,
+                        "startColumn": 4,
+                        "startOffset": 3872,
+                        "endColumn": 65,
+                        "endOffset": 3933
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 46,
+                    "startColumn": 4,
+                    "startOffset": 4673,
+                    "endColumn": 64,
+                    "endOffset": 4733
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 78,
+                        "startColumn": 4,
+                        "startOffset": 3807,
+                        "endColumn": 64,
+                        "endOffset": 3867
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 47,
+                    "startColumn": 4,
+                    "startOffset": 4738,
+                    "endColumn": 67,
+                    "endOffset": 4801
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 77,
+                        "startColumn": 4,
+                        "startOffset": 3739,
+                        "endColumn": 67,
+                        "endOffset": 3802
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 48,
+                    "startColumn": 4,
+                    "startOffset": 4806,
+                    "endColumn": 71,
+                    "endOffset": 4873
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 76,
+                        "startColumn": 4,
+                        "startOffset": 3667,
+                        "endColumn": 71,
+                        "endOffset": 3734
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 49,
+                    "startColumn": 4,
+                    "startOffset": 4878,
+                    "endColumn": 62,
+                    "endOffset": 4936
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 67,
+                        "startColumn": 4,
+                        "startOffset": 3060,
+                        "endColumn": 62,
+                        "endOffset": 3118
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 50,
+                    "startColumn": 4,
+                    "startOffset": 4941,
+                    "endColumn": 60,
+                    "endOffset": 4997
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 66,
+                        "startColumn": 4,
+                        "startOffset": 2999,
+                        "endColumn": 60,
+                        "endOffset": 3055
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 51,
+                    "startColumn": 4,
+                    "startOffset": 5002,
+                    "endColumn": 61,
+                    "endOffset": 5059
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 65,
+                        "startColumn": 4,
+                        "startOffset": 2937,
+                        "endColumn": 61,
+                        "endOffset": 2994
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 52,
+                    "startColumn": 4,
+                    "startOffset": 5064,
+                    "endColumn": 62,
+                    "endOffset": 5122
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 70,
+                        "startColumn": 4,
+                        "startOffset": 3254,
+                        "endColumn": 62,
+                        "endOffset": 3312
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 53,
+                    "startColumn": 4,
+                    "startOffset": 5127,
+                    "endColumn": 54,
+                    "endOffset": 5177
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 71,
+                        "startColumn": 4,
+                        "startOffset": 3317,
+                        "endColumn": 54,
+                        "endOffset": 3367
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 54,
+                    "startColumn": 4,
+                    "startOffset": 5182,
+                    "endColumn": 62,
+                    "endOffset": 5240
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 75,
+                        "startColumn": 4,
+                        "startOffset": 3604,
+                        "endColumn": 62,
+                        "endOffset": 3662
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 55,
+                    "startColumn": 4,
+                    "startOffset": 5245,
+                    "endColumn": 70,
+                    "endOffset": 5311
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 74,
+                        "startColumn": 4,
+                        "startOffset": 3533,
+                        "endColumn": 70,
+                        "endOffset": 3599
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 56,
+                    "startColumn": 4,
+                    "startOffset": 5316,
+                    "endColumn": 66,
+                    "endOffset": 5378
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 73,
+                        "startColumn": 4,
+                        "startOffset": 3466,
+                        "endColumn": 66,
+                        "endOffset": 3528
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 57,
+                    "startColumn": 4,
+                    "startOffset": 5383,
+                    "endColumn": 57,
+                    "endOffset": 5436
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 68,
+                        "startColumn": 4,
+                        "startOffset": 3123,
+                        "endColumn": 57,
+                        "endOffset": 3176
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 58,
+                    "startColumn": 4,
+                    "startOffset": 5441,
+                    "endColumn": 72,
+                    "endOffset": 5509
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 69,
+                        "startColumn": 4,
+                        "startOffset": 3181,
+                        "endColumn": 72,
+                        "endOffset": 3249
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 59,
+                    "startColumn": 4,
+                    "startOffset": 5514,
+                    "endColumn": 44,
+                    "endOffset": 5554
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 17,
+                        "startColumn": 4,
+                        "startOffset": 691,
+                        "endColumn": 44,
+                        "endOffset": 731
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 60,
+                    "startColumn": 4,
+                    "startOffset": 5559,
+                    "endColumn": 52,
+                    "endOffset": 5607
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 132,
+                        "startColumn": 4,
+                        "startOffset": 6096,
+                        "endColumn": 52,
+                        "endOffset": 6144
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 61,
+                    "startColumn": 4,
+                    "startOffset": 5612,
+                    "endColumn": 54,
+                    "endOffset": 5662
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 131,
+                        "startColumn": 4,
+                        "startOffset": 6041,
+                        "endColumn": 54,
+                        "endOffset": 6091
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 62,
+                    "startColumn": 4,
+                    "startOffset": 5667,
+                    "endColumn": 52,
+                    "endOffset": 5715
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 130,
+                        "startColumn": 4,
+                        "startOffset": 5988,
+                        "endColumn": 52,
+                        "endOffset": 6036
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 63,
+                    "startColumn": 4,
+                    "startOffset": 5720,
+                    "endColumn": 53,
+                    "endOffset": 5769
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 133,
+                        "startColumn": 4,
+                        "startOffset": 6149,
+                        "endColumn": 53,
+                        "endOffset": 6198
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 64,
+                    "startColumn": 4,
+                    "startOffset": 5774,
+                    "endColumn": 57,
+                    "endOffset": 5827
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 40,
+                        "startColumn": 4,
+                        "startOffset": 1819,
+                        "endColumn": 57,
+                        "endOffset": 1872
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 65,
+                    "startColumn": 4,
+                    "startOffset": 5832,
+                    "endColumn": 55,
+                    "endOffset": 5883
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 39,
+                        "startColumn": 4,
+                        "startOffset": 1763,
+                        "endColumn": 55,
+                        "endOffset": 1814
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 66,
+                    "startColumn": 4,
+                    "startOffset": 5888,
+                    "endColumn": 61,
+                    "endOffset": 5945
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 41,
+                        "startColumn": 4,
+                        "startOffset": 1877,
+                        "endColumn": 61,
+                        "endOffset": 1934
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 67,
+                    "startColumn": 4,
+                    "startOffset": 5950,
+                    "endColumn": 61,
+                    "endOffset": 6007
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 42,
+                        "startColumn": 4,
+                        "startOffset": 1939,
+                        "endColumn": 61,
+                        "endOffset": 1996
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 68,
+                    "startColumn": 4,
+                    "startOffset": 6012,
+                    "endColumn": 59,
+                    "endOffset": 6067
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 37,
+                        "startColumn": 4,
+                        "startOffset": 1644,
+                        "endColumn": 59,
+                        "endOffset": 1699
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 69,
+                    "startColumn": 4,
+                    "startOffset": 6072,
+                    "endColumn": 58,
+                    "endOffset": 6126
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 38,
+                        "startColumn": 4,
+                        "startOffset": 1704,
+                        "endColumn": 58,
+                        "endOffset": 1758
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 70,
+                    "startColumn": 4,
+                    "startOffset": 6131,
+                    "endColumn": 52,
+                    "endOffset": 6179
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 53,
+                        "startColumn": 4,
+                        "startOffset": 2309,
+                        "endColumn": 52,
+                        "endOffset": 2357
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 71,
+                    "startColumn": 4,
+                    "startOffset": 6184,
+                    "endColumn": 80,
+                    "endOffset": 6260
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 55,
+                        "startColumn": 4,
+                        "startOffset": 2435,
+                        "endColumn": 80,
+                        "endOffset": 2511
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 72,
+                    "startColumn": 4,
+                    "startOffset": 6265,
+                    "endColumn": 62,
+                    "endOffset": 6323
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 61,
+                        "startColumn": 4,
+                        "startOffset": 2787,
+                        "endColumn": 62,
+                        "endOffset": 2845
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 73,
+                    "startColumn": 4,
+                    "startOffset": 6328,
+                    "endColumn": 67,
+                    "endOffset": 6391
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 62,
+                        "startColumn": 4,
+                        "startOffset": 2850,
+                        "endColumn": 67,
+                        "endOffset": 2913
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 74,
+                    "startColumn": 4,
+                    "startOffset": 6396,
+                    "endColumn": 64,
+                    "endOffset": 6456
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 59,
+                        "startColumn": 4,
+                        "startOffset": 2651,
+                        "endColumn": 64,
+                        "endOffset": 2711
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 75,
+                    "startColumn": 4,
+                    "startOffset": 6461,
+                    "endColumn": 66,
+                    "endOffset": 6523
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 58,
+                        "startColumn": 4,
+                        "startOffset": 2584,
+                        "endColumn": 66,
+                        "endOffset": 2646
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 76,
+                    "startColumn": 4,
+                    "startOffset": 6528,
+                    "endColumn": 66,
+                    "endOffset": 6590
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 57,
+                        "startColumn": 4,
+                        "startOffset": 2517,
+                        "endColumn": 66,
+                        "endOffset": 2579
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 77,
+                    "startColumn": 4,
+                    "startOffset": 6595,
+                    "endColumn": 70,
+                    "endOffset": 6661
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 60,
+                        "startColumn": 4,
+                        "startOffset": 2716,
+                        "endColumn": 70,
+                        "endOffset": 2782
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 78,
+                    "startColumn": 4,
+                    "startOffset": 6666,
+                    "endColumn": 52,
+                    "endOffset": 6714
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 32,
+                        "startColumn": 4,
+                        "startOffset": 1460,
+                        "endColumn": 52,
+                        "endOffset": 1508
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 79,
+                    "startColumn": 4,
+                    "startOffset": 6719,
+                    "endColumn": 44,
+                    "endOffset": 6759
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 111,
+                        "startColumn": 4,
+                        "startOffset": 5277,
+                        "endColumn": 44,
+                        "endOffset": 5317
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 80,
+                    "startColumn": 4,
+                    "startOffset": 6764,
+                    "endColumn": 45,
+                    "endOffset": 6805
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 115,
+                        "startColumn": 4,
+                        "startOffset": 5478,
+                        "endColumn": 45,
+                        "endOffset": 5519
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 81,
+                    "startColumn": 4,
+                    "startOffset": 6810,
+                    "endColumn": 55,
+                    "endOffset": 6861
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 102,
+                        "startColumn": 4,
+                        "startOffset": 4864,
+                        "endColumn": 55,
+                        "endOffset": 4915
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 82,
+                    "startColumn": 4,
+                    "startOffset": 6866,
+                    "endColumn": 52,
+                    "endOffset": 6914
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 103,
+                        "startColumn": 4,
+                        "startOffset": 4920,
+                        "endColumn": 52,
+                        "endOffset": 4968
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 83,
+                    "startColumn": 4,
+                    "startOffset": 6919,
+                    "endColumn": 54,
+                    "endOffset": 6969
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 759,
+                        "endColumn": 54,
+                        "endOffset": 809
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 84,
+                    "startColumn": 4,
+                    "startOffset": 6974,
+                    "endColumn": 64,
+                    "endOffset": 7034
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 24,
+                        "startColumn": 4,
+                        "startOffset": 1008,
+                        "endColumn": 64,
+                        "endOffset": 1068
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 85,
+                    "startColumn": 4,
+                    "startOffset": 7039,
+                    "endColumn": 67,
+                    "endOffset": 7102
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 28,
+                        "startColumn": 4,
+                        "startOffset": 1288,
+                        "endColumn": 67,
+                        "endOffset": 1351
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 86,
+                    "startColumn": 4,
+                    "startOffset": 7107,
+                    "endColumn": 69,
+                    "endOffset": 7172
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 29,
+                        "startColumn": 4,
+                        "startOffset": 1356,
+                        "endColumn": 69,
+                        "endOffset": 1421
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 87,
+                    "startColumn": 4,
+                    "startOffset": 7177,
+                    "endColumn": 74,
+                    "endOffset": 7247
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 27,
+                        "startColumn": 4,
+                        "startOffset": 1213,
+                        "endColumn": 74,
+                        "endOffset": 1283
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 88,
+                    "startColumn": 4,
+                    "startOffset": 7252,
+                    "endColumn": 73,
+                    "endOffset": 7321
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 26,
+                        "startColumn": 4,
+                        "startOffset": 1139,
+                        "endColumn": 73,
+                        "endOffset": 1208
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 89,
+                    "startColumn": 4,
+                    "startOffset": 7326,
+                    "endColumn": 65,
+                    "endOffset": 7387
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 23,
+                        "startColumn": 4,
+                        "startOffset": 942,
+                        "endColumn": 65,
+                        "endOffset": 1003
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 90,
+                    "startColumn": 4,
+                    "startOffset": 7392,
+                    "endColumn": 61,
+                    "endOffset": 7449
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 22,
+                        "startColumn": 4,
+                        "startOffset": 880,
+                        "endColumn": 61,
+                        "endOffset": 937
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 91,
+                    "startColumn": 4,
+                    "startOffset": 7454,
+                    "endColumn": 65,
+                    "endOffset": 7515
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 21,
+                        "startColumn": 4,
+                        "startOffset": 814,
+                        "endColumn": 65,
+                        "endOffset": 875
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 92,
+                    "startColumn": 4,
+                    "startOffset": 7520,
+                    "endColumn": 65,
+                    "endOffset": 7581
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 25,
+                        "startColumn": 4,
+                        "startOffset": 1073,
+                        "endColumn": 65,
+                        "endOffset": 1134
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 93,
+                    "startColumn": 4,
+                    "startOffset": 7586,
+                    "endColumn": 52,
+                    "endOffset": 7634
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 122,
+                        "startColumn": 4,
+                        "startOffset": 5704,
+                        "endColumn": 52,
+                        "endOffset": 5752
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 94,
+                    "startColumn": 4,
+                    "startOffset": 7639,
+                    "endColumn": 74,
+                    "endOffset": 7709
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/24.0.0/res/values/values.xml",
+                    "position": {
+                        "startLine": 3,
+                        "startColumn": 4,
+                        "startOffset": 372,
+                        "endColumn": 74,
+                        "endOffset": 442
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 95,
+                    "startColumn": 4,
+                    "startOffset": 7714,
+                    "endColumn": 75,
+                    "endOffset": 7785
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/24.0.0/res/values/values.xml",
+                    "position": {
+                        "startLine": 4,
+                        "startColumn": 4,
+                        "startOffset": 447,
+                        "endColumn": 75,
+                        "endOffset": 518
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 96,
+                    "startColumn": 4,
+                    "startOffset": 7790,
+                    "endColumn": 71,
+                    "endOffset": 7857
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/24.0.0/res/values/values.xml",
+                    "position": {
+                        "startLine": 5,
+                        "startColumn": 4,
+                        "startOffset": 523,
+                        "endColumn": 71,
+                        "endOffset": 590
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 97,
+                    "startColumn": 4,
+                    "startOffset": 7862,
+                    "endColumn": 54,
+                    "endOffset": 7912
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 137,
+                        "startColumn": 4,
+                        "startOffset": 6285,
+                        "endColumn": 54,
+                        "endOffset": 6335
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 98,
+                    "startColumn": 4,
+                    "startOffset": 7917,
+                    "endColumn": 56,
+                    "endOffset": 7969
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 136,
+                        "startColumn": 4,
+                        "startOffset": 6228,
+                        "endColumn": 56,
+                        "endOffset": 6280
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 99,
+                    "startColumn": 4,
+                    "startOffset": 7974,
+                    "endColumn": 50,
+                    "endOffset": 8020
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 126,
+                        "startColumn": 4,
+                        "startOffset": 5850,
+                        "endColumn": 50,
+                        "endOffset": 5896
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 100,
+                    "startColumn": 4,
+                    "startOffset": 8025,
+                    "endColumn": 55,
+                    "endOffset": 8076
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 127,
+                        "startColumn": 4,
+                        "startOffset": 5901,
+                        "endColumn": 55,
+                        "endOffset": 5952
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 101,
+                    "startColumn": 4,
+                    "startOffset": 8081,
+                    "endColumn": 49,
+                    "endOffset": 8126
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 125,
+                        "startColumn": 4,
+                        "startOffset": 5800,
+                        "endColumn": 49,
+                        "endOffset": 5845
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 102,
+                    "startColumn": 4,
+                    "startOffset": 8131,
+                    "endColumn": 57,
+                    "endOffset": 8184
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 118,
+                        "startColumn": 4,
+                        "startOffset": 5540,
+                        "endColumn": 57,
+                        "endOffset": 5593
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 103,
+                    "startColumn": 4,
+                    "startOffset": 8189,
+                    "endColumn": 62,
+                    "endOffset": 8247
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 34,
+                        "startColumn": 4,
+                        "startOffset": 1565,
+                        "endColumn": 62,
+                        "endOffset": 1623
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 104,
+                    "startColumn": 4,
+                    "startOffset": 8252,
+                    "endColumn": 42,
+                    "endOffset": 8290
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 107,
+                        "startColumn": 4,
+                        "startOffset": 5096,
+                        "endColumn": 42,
+                        "endOffset": 5134
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 105,
+                    "startColumn": 4,
+                    "startOffset": 8295,
+                    "endColumn": 59,
+                    "endOffset": 8350
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 96,
+                        "startColumn": 4,
+                        "startOffset": 4602,
+                        "endColumn": 59,
+                        "endOffset": 4657
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 106,
+                    "startColumn": 4,
+                    "startOffset": 8355,
+                    "endColumn": 60,
+                    "endOffset": 8411
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 97,
+                        "startColumn": 4,
+                        "startOffset": 4662,
+                        "endColumn": 60,
+                        "endOffset": 4718
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 107,
+                    "startColumn": 4,
+                    "startOffset": 8416,
+                    "endColumn": 58,
+                    "endOffset": 8470
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 98,
+                        "startColumn": 4,
+                        "startOffset": 4723,
+                        "endColumn": 58,
+                        "endOffset": 4777
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 108,
+                    "startColumn": 4,
+                    "startOffset": 8475,
+                    "endColumn": 65,
+                    "endOffset": 8536
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 49,
+                        "startColumn": 4,
+                        "startOffset": 2147,
+                        "endColumn": 65,
+                        "endOffset": 2208
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 109,
+                    "startColumn": 4,
+                    "startOffset": 8541,
+                    "endColumn": 62,
+                    "endOffset": 8599
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 48,
+                        "startColumn": 4,
+                        "startOffset": 2084,
+                        "endColumn": 62,
+                        "endOffset": 2142
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 110,
+                    "startColumn": 4,
+                    "startOffset": 8604,
+                    "endColumn": 52,
+                    "endOffset": 8652
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 833,
+                        "endColumn": 52,
+                        "endOffset": 881
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 111,
+                    "startColumn": 4,
+                    "startOffset": 8657,
+                    "endColumn": 57,
+                    "endOffset": 8710
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 19,
+                        "startColumn": 4,
+                        "startOffset": 775,
+                        "endColumn": 57,
+                        "endOffset": 828
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 112,
+                    "startColumn": 4,
+                    "startOffset": 8715,
+                    "endColumn": 57,
+                    "endOffset": 8768
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 18,
+                        "startColumn": 4,
+                        "startOffset": 717,
+                        "endColumn": 57,
+                        "endOffset": 770
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 113,
+                    "startColumn": 4,
+                    "startOffset": 8773,
+                    "endColumn": 52,
+                    "endOffset": 8821
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 82,
+                        "startColumn": 4,
+                        "startOffset": 3960,
+                        "endColumn": 52,
+                        "endOffset": 4008
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 114,
+                    "startColumn": 4,
+                    "startOffset": 8826,
+                    "endColumn": 51,
+                    "endOffset": 8873
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 33,
+                        "startColumn": 4,
+                        "startOffset": 1513,
+                        "endColumn": 51,
+                        "endOffset": 1560
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 115,
+                    "startColumn": 4,
+                    "startOffset": 8878,
+                    "endColumn": 63,
+                    "endOffset": 8937
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 85,
+                        "startColumn": 4,
+                        "startOffset": 4151,
+                        "endColumn": 63,
+                        "endOffset": 4210
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 116,
+                    "startColumn": 4,
+                    "startOffset": 8942,
+                    "endColumn": 69,
+                    "endOffset": 9007
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 84,
+                        "startColumn": 4,
+                        "startOffset": 4081,
+                        "endColumn": 69,
+                        "endOffset": 4146
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 117,
+                    "startColumn": 4,
+                    "startOffset": 9012,
+                    "endColumn": 67,
+                    "endOffset": 9075
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 83,
+                        "startColumn": 4,
+                        "startOffset": 4013,
+                        "endColumn": 67,
+                        "endOffset": 4076
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 118,
+                    "startColumn": 4,
+                    "startOffset": 9080,
+                    "endColumn": 48,
+                    "endOffset": 9124
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 93,
+                        "startColumn": 4,
+                        "startOffset": 4502,
+                        "endColumn": 48,
+                        "endOffset": 4546
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 119,
+                    "startColumn": 4,
+                    "startOffset": 9129,
+                    "endColumn": 48,
+                    "endOffset": 9173
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 92,
+                        "startColumn": 4,
+                        "startOffset": 4453,
+                        "endColumn": 48,
+                        "endOffset": 4497
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 120,
+                    "startColumn": 4,
+                    "startOffset": 9178,
+                    "endColumn": 52,
+                    "endOffset": 9226
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 87,
+                        "startColumn": 4,
+                        "startOffset": 4216,
+                        "endColumn": 52,
+                        "endOffset": 4264
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 121,
+                    "startColumn": 4,
+                    "startOffset": 9231,
+                    "endColumn": 64,
+                    "endOffset": 9291
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 90,
+                        "startColumn": 4,
+                        "startOffset": 4387,
+                        "endColumn": 64,
+                        "endOffset": 4447
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 122,
+                    "startColumn": 4,
+                    "startOffset": 9296,
+                    "endColumn": 55,
+                    "endOffset": 9347
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 88,
+                        "startColumn": 4,
+                        "startOffset": 4269,
+                        "endColumn": 55,
+                        "endOffset": 4320
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 123,
+                    "startColumn": 4,
+                    "startOffset": 9352,
+                    "endColumn": 61,
+                    "endOffset": 9409
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 89,
+                        "startColumn": 4,
+                        "startOffset": 4325,
+                        "endColumn": 61,
+                        "endOffset": 4382
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 124,
+                    "startColumn": 4,
+                    "startOffset": 9414,
+                    "endColumn": 48,
+                    "endOffset": 9458
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/dimens.xml",
+                    "position": {
+                        "startLine": 45,
+                        "startColumn": 4,
+                        "startOffset": 2021,
+                        "endColumn": 48,
+                        "endOffset": 2065
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 125,
+                    "startColumn": 4,
+                    "startOffset": 9463,
+                    "endColumn": 52,
+                    "endOffset": 9511
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 88,
+                        "startColumn": 4,
+                        "startOffset": 4082,
+                        "endColumn": 53,
+                        "endOffset": 4131
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 126,
+                    "startColumn": 4,
+                    "startOffset": 9516,
+                    "endColumn": 40,
+                    "endOffset": 9552
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 87,
+                        "startColumn": 4,
+                        "startOffset": 4040,
+                        "endColumn": 41,
+                        "endOffset": 4077
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 127,
+                    "startColumn": 4,
+                    "startOffset": 9557,
+                    "endColumn": 40,
+                    "endOffset": 9593
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 89,
+                        "startColumn": 4,
+                        "startOffset": 4136,
+                        "endColumn": 41,
+                        "endOffset": 4173
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 128,
+                    "startColumn": 4,
+                    "startOffset": 9598,
+                    "endColumn": 57,
+                    "endOffset": 9651
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 91,
+                        "startColumn": 4,
+                        "startOffset": 4233,
+                        "endColumn": 58,
+                        "endOffset": 4287
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 129,
+                    "startColumn": 4,
+                    "startOffset": 9656,
+                    "endColumn": 56,
+                    "endOffset": 9708
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 92,
+                        "startColumn": 4,
+                        "startOffset": 4292,
+                        "endColumn": 57,
+                        "endOffset": 4345
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 130,
+                    "startColumn": 4,
+                    "startOffset": 9713,
+                    "endColumn": 53,
+                    "endOffset": 9762
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 90,
+                        "startColumn": 4,
+                        "startOffset": 4178,
+                        "endColumn": 54,
+                        "endOffset": 4228
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 131,
+                    "startColumn": 4,
+                    "startOffset": 9767,
+                    "endColumn": 42,
+                    "endOffset": 9805
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 85,
+                        "startColumn": 4,
+                        "startOffset": 3949,
+                        "endColumn": 43,
+                        "endOffset": 3988
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 132,
+                    "startColumn": 4,
+                    "startOffset": 9810,
+                    "endColumn": 42,
+                    "endOffset": 9848
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 93,
+                        "startColumn": 4,
+                        "startOffset": 4350,
+                        "endColumn": 43,
+                        "endOffset": 4389
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 133,
+                    "startColumn": 4,
+                    "startOffset": 9853,
+                    "endColumn": 45,
+                    "endOffset": 9894
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 86,
+                        "startColumn": 4,
+                        "startOffset": 3993,
+                        "endColumn": 46,
+                        "endOffset": 4035
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 134,
+                    "startColumn": 4,
+                    "startOffset": 9899,
+                    "endColumn": 46,
+                    "endOffset": 9941
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 21,
+                        "startColumn": 4,
+                        "startOffset": 900,
+                        "endColumn": 47,
+                        "endOffset": 943
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 135,
+                    "startColumn": 4,
+                    "startOffset": 9946,
+                    "endColumn": 65,
+                    "endOffset": 10007
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/24.0.0/res/values/values.xml",
+                    "position": {
+                        "startLine": 6,
+                        "startColumn": 4,
+                        "startOffset": 595,
+                        "endColumn": 65,
+                        "endOffset": 656
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 136,
+                    "startColumn": 4,
+                    "startOffset": 10012,
+                    "endColumn": 39,
+                    "endOffset": 10047
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 82,
+                        "startColumn": 4,
+                        "startOffset": 3876,
+                        "endColumn": 40,
+                        "endOffset": 3912
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 137,
+                    "startColumn": 4,
+                    "startOffset": 10052,
+                    "endColumn": 67,
+                    "endOffset": 10115
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 42,
+                        "startColumn": 4,
+                        "startOffset": 2066,
+                        "endColumn": 67,
+                        "endOffset": 2129
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 138,
+                    "startColumn": 4,
+                    "startOffset": 10120,
+                    "endColumn": 62,
+                    "endOffset": 10178
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 26,
+                        "startColumn": 4,
+                        "startOffset": 1118,
+                        "endColumn": 62,
+                        "endOffset": 1176
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 139,
+                    "startColumn": 4,
+                    "startOffset": 10183,
+                    "endColumn": 60,
+                    "endOffset": 10239
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 49,
+                        "startColumn": 4,
+                        "startOffset": 2367,
+                        "endColumn": 60,
+                        "endOffset": 2423
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 140,
+                    "startColumn": 4,
+                    "startOffset": 10244,
+                    "endColumn": 60,
+                    "endOffset": 10300
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 52,
+                        "startColumn": 4,
+                        "startOffset": 2519,
+                        "endColumn": 60,
+                        "endOffset": 2575
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 141,
+                    "startColumn": 4,
+                    "startOffset": 10305,
+                    "endColumn": 56,
+                    "endOffset": 10357
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 65,
+                        "startColumn": 4,
+                        "startOffset": 3218,
+                        "endColumn": 56,
+                        "endOffset": 3270
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 142,
+                    "startColumn": 4,
+                    "startOffset": 10362,
+                    "endColumn": 60,
+                    "endOffset": 10418
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 57,
+                        "startColumn": 4,
+                        "startOffset": 2803,
+                        "endColumn": 60,
+                        "endOffset": 2859
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 143,
+                    "startColumn": 4,
+                    "startOffset": 10423,
+                    "endColumn": 60,
+                    "endOffset": 10479
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 56,
+                        "startColumn": 4,
+                        "startOffset": 2742,
+                        "endColumn": 60,
+                        "endOffset": 2798
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 144,
+                    "startColumn": 4,
+                    "startOffset": 10484,
+                    "endColumn": 82,
+                    "endOffset": 10562
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 3,
+                        "startColumn": 4,
+                        "startOffset": 133,
+                        "endColumn": 82,
+                        "endOffset": 211
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 145,
+                    "startColumn": 4,
+                    "startOffset": 10567,
+                    "endColumn": 67,
+                    "endOffset": 10630
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 832,
+                        "endColumn": 67,
+                        "endOffset": 895
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 146,
+                    "startColumn": 4,
+                    "startOffset": 10635,
+                    "endColumn": 61,
+                    "endOffset": 10692
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 60,
+                        "startColumn": 4,
+                        "startOffset": 2939,
+                        "endColumn": 61,
+                        "endOffset": 2996
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 147,
+                    "startColumn": 4,
+                    "startOffset": 10697,
+                    "endColumn": 69,
+                    "endOffset": 10762
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 61,
+                        "startColumn": 4,
+                        "startOffset": 3001,
+                        "endColumn": 69,
+                        "endOffset": 3066
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 148,
+                    "startColumn": 4,
+                    "startOffset": 10767,
+                    "endColumn": 67,
+                    "endOffset": 10830
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 62,
+                        "startColumn": 4,
+                        "startOffset": 3071,
+                        "endColumn": 67,
+                        "endOffset": 3134
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 149,
+                    "startColumn": 4,
+                    "startOffset": 10835,
+                    "endColumn": 71,
+                    "endOffset": 10902
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 13,
+                        "startColumn": 4,
+                        "startOffset": 512,
+                        "endColumn": 71,
+                        "endOffset": 579
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 150,
+                    "startColumn": 4,
+                    "startOffset": 10907,
+                    "endColumn": 64,
+                    "endOffset": 10967
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 38,
+                        "startColumn": 4,
+                        "startOffset": 1869,
+                        "endColumn": 64,
+                        "endOffset": 1929
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 151,
+                    "startColumn": 4,
+                    "startOffset": 10972,
+                    "endColumn": 58,
+                    "endOffset": 11026
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 36,
+                        "startColumn": 4,
+                        "startOffset": 1747,
+                        "endColumn": 58,
+                        "endOffset": 1801
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 152,
+                    "startColumn": 4,
+                    "startOffset": 11031,
+                    "endColumn": 62,
+                    "endOffset": 11089
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 37,
+                        "startColumn": 4,
+                        "startOffset": 1806,
+                        "endColumn": 62,
+                        "endOffset": 1864
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 153,
+                    "startColumn": 4,
+                    "startOffset": 11094,
+                    "endColumn": 63,
+                    "endOffset": 11153
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 27,
+                        "startColumn": 4,
+                        "startOffset": 1181,
+                        "endColumn": 63,
+                        "endOffset": 1240
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 154,
+                    "startColumn": 4,
+                    "startOffset": 11158,
+                    "endColumn": 61,
+                    "endOffset": 11215
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 44,
+                        "startColumn": 4,
+                        "startOffset": 2135,
+                        "endColumn": 61,
+                        "endOffset": 2192
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 155,
+                    "startColumn": 4,
+                    "startOffset": 11220,
+                    "endColumn": 73,
+                    "endOffset": 11289
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 32,
+                        "startColumn": 4,
+                        "startOffset": 1493,
+                        "endColumn": 73,
+                        "endOffset": 1562
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 156,
+                    "startColumn": 4,
+                    "startOffset": 11294,
+                    "endColumn": 59,
+                    "endOffset": 11349
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 25,
+                        "startColumn": 4,
+                        "startOffset": 1058,
+                        "endColumn": 59,
+                        "endOffset": 1113
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 157,
+                    "startColumn": 4,
+                    "startOffset": 11354,
+                    "endColumn": 75,
+                    "endOffset": 11425
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 30,
+                        "startColumn": 4,
+                        "startOffset": 1334,
+                        "endColumn": 75,
+                        "endOffset": 1405
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 158,
+                    "startColumn": 4,
+                    "startOffset": 11430,
+                    "endLine": 162,
+                    "endColumn": 14,
+                    "endOffset": 11639
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 33,
+                        "startColumn": 4,
+                        "startOffset": 1577,
+                        "endLine": 37,
+                        "endColumn": 14,
+                        "endOffset": 1786
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 163,
+                    "startColumn": 4,
+                    "startOffset": 11644,
+                    "endColumn": 55,
+                    "endOffset": 11695
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 184,
+                        "startColumn": 4,
+                        "startOffset": 9862,
+                        "endColumn": 55,
+                        "endOffset": 9913
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 164,
+                    "startColumn": 4,
+                    "startOffset": 11700,
+                    "endLine": 166,
+                    "endColumn": 13,
+                    "endOffset": 11872
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 191,
+                        "startColumn": 4,
+                        "startOffset": 10336,
+                        "endLine": 193,
+                        "endColumn": 13,
+                        "endOffset": 10508
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 167,
+                    "startColumn": 4,
+                    "startOffset": 11877,
+                    "endColumn": 78,
+                    "endOffset": 11951
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 188,
+                        "startColumn": 4,
+                        "startOffset": 10118,
+                        "endColumn": 78,
+                        "endOffset": 10192
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 168,
+                    "startColumn": 4,
+                    "startOffset": 11956,
+                    "endColumn": 51,
+                    "endOffset": 12003
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 186,
+                        "startColumn": 4,
+                        "startOffset": 10017,
+                        "endColumn": 51,
+                        "endOffset": 10064
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 169,
+                    "startColumn": 4,
+                    "startOffset": 12008,
+                    "endColumn": 70,
+                    "endOffset": 12074
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 197,
+                        "startColumn": 4,
+                        "startOffset": 10635,
+                        "endColumn": 70,
+                        "endOffset": 10701
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 170,
+                    "startColumn": 4,
+                    "startOffset": 12079,
+                    "endColumn": 66,
+                    "endOffset": 12141
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 263,
+                        "startColumn": 4,
+                        "startOffset": 14064,
+                        "endColumn": 66,
+                        "endOffset": 14126
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 171,
+                    "startColumn": 4,
+                    "startOffset": 12146,
+                    "endColumn": 64,
+                    "endOffset": 12206
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 260,
+                        "startColumn": 4,
+                        "startOffset": 13916,
+                        "endColumn": 64,
+                        "endOffset": 13976
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 172,
+                    "startColumn": 4,
+                    "startOffset": 12211,
+                    "endColumn": 66,
+                    "endOffset": 12273
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 257,
+                        "startColumn": 4,
+                        "startOffset": 13767,
+                        "endColumn": 66,
+                        "endOffset": 13829
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 173,
+                    "startColumn": 4,
+                    "startOffset": 12278,
+                    "endColumn": 64,
+                    "endOffset": 12338
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 254,
+                        "startColumn": 4,
+                        "startOffset": 13619,
+                        "endColumn": 64,
+                        "endOffset": 13679
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 174,
+                    "startColumn": 4,
+                    "startOffset": 12343,
+                    "endColumn": 49,
+                    "endOffset": 12388
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 209,
+                        "startColumn": 4,
+                        "startOffset": 11201,
+                        "endColumn": 49,
+                        "endOffset": 11246
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 175,
+                    "startColumn": 4,
+                    "startOffset": 12393,
+                    "endColumn": 59,
+                    "endOffset": 12448
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 200,
+                        "startColumn": 4,
+                        "startOffset": 10795,
+                        "endColumn": 59,
+                        "endOffset": 10850
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 176,
+                    "startColumn": 4,
+                    "startOffset": 12453,
+                    "endColumn": 71,
+                    "endOffset": 12520
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 242,
+                        "startColumn": 4,
+                        "startOffset": 13064,
+                        "endColumn": 71,
+                        "endOffset": 13131
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 177,
+                    "startColumn": 4,
+                    "startOffset": 12525,
+                    "endColumn": 73,
+                    "endOffset": 12594
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 245,
+                        "startColumn": 4,
+                        "startOffset": 13223,
+                        "endColumn": 73,
+                        "endOffset": 13292
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 178,
+                    "startColumn": 4,
+                    "startOffset": 12599,
+                    "endColumn": 72,
+                    "endOffset": 12667
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 239,
+                        "startColumn": 4,
+                        "startOffset": 12905,
+                        "endColumn": 72,
+                        "endOffset": 12973
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 179,
+                    "startColumn": 4,
+                    "startOffset": 12672,
+                    "endColumn": 48,
+                    "endOffset": 12716
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 251,
+                        "startColumn": 4,
+                        "startOffset": 13488,
+                        "endColumn": 48,
+                        "endOffset": 13532
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 180,
+                    "startColumn": 4,
+                    "startOffset": 12721,
+                    "endColumn": 71,
+                    "endOffset": 12788
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 41,
+                        "startColumn": 4,
+                        "startOffset": 1989,
+                        "endColumn": 71,
+                        "endOffset": 2056
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 181,
+                    "startColumn": 4,
+                    "startOffset": 12793,
+                    "endColumn": 68,
+                    "endOffset": 12857
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 39,
+                        "startColumn": 4,
+                        "startOffset": 1810,
+                        "endColumn": 68,
+                        "endOffset": 1874
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 182,
+                    "startColumn": 4,
+                    "startOffset": 12862,
+                    "endColumn": 102,
+                    "endOffset": 12960
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 224,
+                        "startColumn": 4,
+                        "startOffset": 12042,
+                        "endColumn": 106,
+                        "endOffset": 12144
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 183,
+                    "startColumn": 4,
+                    "startOffset": 12965,
+                    "endColumn": 119,
+                    "endOffset": 13080
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 227,
+                        "startColumn": 4,
+                        "startOffset": 12245,
+                        "endColumn": 123,
+                        "endOffset": 12364
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 184,
+                    "startColumn": 4,
+                    "startOffset": 13085,
+                    "endColumn": 64,
+                    "endOffset": 13145
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 230,
+                        "startColumn": 4,
+                        "startOffset": 12436,
+                        "endColumn": 64,
+                        "endOffset": 12496
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 185,
+                    "startColumn": 4,
+                    "startOffset": 13150,
+                    "endColumn": 54,
+                    "endOffset": 13200
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 75,
+                        "startColumn": 4,
+                        "startOffset": 3960,
+                        "endColumn": 54,
+                        "endOffset": 4010
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 186,
+                    "startColumn": 4,
+                    "startOffset": 13205,
+                    "endColumn": 59,
+                    "endOffset": 13260
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 78,
+                        "startColumn": 4,
+                        "startOffset": 4179,
+                        "endColumn": 59,
+                        "endOffset": 4234
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 187,
+                    "startColumn": 4,
+                    "startOffset": 13265,
+                    "endColumn": 66,
+                    "endOffset": 13327
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 60,
+                        "startColumn": 4,
+                        "startOffset": 2994,
+                        "endColumn": 72,
+                        "endOffset": 3062
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 188,
+                    "startColumn": 4,
+                    "startOffset": 13332,
+                    "endColumn": 130,
+                    "endOffset": 13458
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 62,
+                        "startColumn": 4,
+                        "startOffset": 3120,
+                        "endColumn": 134,
+                        "endOffset": 3250
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 189,
+                    "startColumn": 4,
+                    "startOffset": 13463,
+                    "endColumn": 64,
+                    "endOffset": 13523
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 58,
+                        "startColumn": 4,
+                        "startOffset": 2881,
+                        "endColumn": 64,
+                        "endOffset": 2941
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 190,
+                    "startColumn": 4,
+                    "startOffset": 13528,
+                    "endColumn": 116,
+                    "endOffset": 13640
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 65,
+                        "startColumn": 4,
+                        "startOffset": 3480,
+                        "endColumn": 120,
+                        "endOffset": 3596
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 191,
+                    "startColumn": 4,
+                    "startOffset": 13645,
+                    "endColumn": 63,
+                    "endOffset": 13704
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 176,
+                        "startColumn": 4,
+                        "startOffset": 9409,
+                        "endColumn": 63,
+                        "endOffset": 9468
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 192,
+                    "startColumn": 4,
+                    "startOffset": 13709,
+                    "endColumn": 114,
+                    "endOffset": 13819
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 42,
+                        "startColumn": 4,
+                        "startOffset": 2099,
+                        "endColumn": 118,
+                        "endOffset": 2213
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 193,
+                    "startColumn": 4,
+                    "startOffset": 13824,
+                    "endColumn": 58,
+                    "endOffset": 13878
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 75,
+                        "startColumn": 4,
+                        "startOffset": 3598,
+                        "endColumn": 66,
+                        "endOffset": 3660
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 194,
+                    "startColumn": 4,
+                    "startOffset": 13883,
+                    "endColumn": 46,
+                    "endOffset": 13925
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 33,
+                        "startColumn": 4,
+                        "startOffset": 1508,
+                        "endColumn": 46,
+                        "endOffset": 1550
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 195,
+                    "startColumn": 4,
+                    "startOffset": 13930,
+                    "endColumn": 58,
+                    "endOffset": 13984
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/config.xml",
+                    "position": {
+                        "startLine": 79,
+                        "startColumn": 4,
+                        "startOffset": 3765,
+                        "endColumn": 66,
+                        "endOffset": 3827
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 196,
+                    "startColumn": 4,
+                    "startOffset": 13989,
+                    "endColumn": 111,
+                    "endOffset": 14096
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 233,
+                        "startColumn": 4,
+                        "startOffset": 12577,
+                        "endColumn": 115,
+                        "endOffset": 12688
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 197,
+                    "startColumn": 4,
+                    "startOffset": 14101,
+                    "endColumn": 57,
+                    "endOffset": 14154
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 51,
+                        "startColumn": 4,
+                        "startOffset": 2605,
+                        "endColumn": 57,
+                        "endOffset": 2658
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 198,
+                    "startColumn": 4,
+                    "startOffset": 14159,
+                    "endColumn": 57,
+                    "endOffset": 14212
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 164,
+                        "startColumn": 4,
+                        "startOffset": 8906,
+                        "endColumn": 57,
+                        "endOffset": 8959
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 199,
+                    "startColumn": 4,
+                    "startOffset": 14217,
+                    "endColumn": 67,
+                    "endOffset": 14280
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 127,
+                        "startColumn": 4,
+                        "startOffset": 6404,
+                        "endColumn": 67,
+                        "endOffset": 6467
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 200,
+                    "startColumn": 4,
+                    "startOffset": 14285,
+                    "endColumn": 54,
+                    "endOffset": 14335
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 81,
+                        "startColumn": 4,
+                        "startOffset": 4299,
+                        "endColumn": 54,
+                        "endOffset": 4349
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 201,
+                    "startColumn": 4,
+                    "startOffset": 14340,
+                    "endColumn": 67,
+                    "endOffset": 14403
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 83,
+                        "startColumn": 4,
+                        "startOffset": 4415,
+                        "endColumn": 67,
+                        "endOffset": 4478
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 202,
+                    "startColumn": 4,
+                    "startOffset": 14408,
+                    "endColumn": 57,
+                    "endOffset": 14461
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 133,
+                        "startColumn": 4,
+                        "startOffset": 6718,
+                        "endColumn": 57,
+                        "endOffset": 6771
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 203,
+                    "startColumn": 4,
+                    "startOffset": 14466,
+                    "endColumn": 55,
+                    "endOffset": 14517
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 157,
+                        "startColumn": 4,
+                        "startOffset": 8508,
+                        "endColumn": 55,
+                        "endOffset": 8559
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 204,
+                    "startColumn": 4,
+                    "startOffset": 14522,
+                    "endColumn": 57,
+                    "endOffset": 14575
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 236,
+                        "startColumn": 4,
+                        "startOffset": 12754,
+                        "endColumn": 57,
+                        "endOffset": 12807
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 205,
+                    "startColumn": 4,
+                    "startOffset": 14580,
+                    "endColumn": 59,
+                    "endOffset": 14635
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 121,
+                        "startColumn": 4,
+                        "startOffset": 6224,
+                        "endColumn": 59,
+                        "endOffset": 6279
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 206,
+                    "startColumn": 4,
+                    "startOffset": 14640,
+                    "endColumn": 32,
+                    "endOffset": 14668
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 35,
+                        "startColumn": 4,
+                        "startOffset": 1588,
+                        "endColumn": 40,
+                        "endOffset": 1624
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 207,
+                    "startColumn": 4,
+                    "startOffset": 14673,
+                    "endColumn": 100,
+                    "endOffset": 14769
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 161,
+                        "startColumn": 4,
+                        "startOffset": 8742,
+                        "endColumn": 104,
+                        "endOffset": 8842
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 208,
+                    "startColumn": 4,
+                    "startOffset": 14774,
+                    "endColumn": 146,
+                    "endOffset": 14916
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 151,
+                        "startColumn": 4,
+                        "startOffset": 8032,
+                        "endColumn": 154,
+                        "endOffset": 8182
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 209,
+                    "startColumn": 4,
+                    "startOffset": 14921,
+                    "endColumn": 106,
+                    "endOffset": 15023
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 159,
+                        "startColumn": 4,
+                        "startOffset": 8599,
+                        "endColumn": 110,
+                        "endOffset": 8705
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 210,
+                    "startColumn": 4,
+                    "startOffset": 15028,
+                    "endColumn": 69,
+                    "endOffset": 15093
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 153,
+                        "startColumn": 4,
+                        "startOffset": 8252,
+                        "endColumn": 69,
+                        "endOffset": 8317
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 211,
+                    "startColumn": 4,
+                    "startOffset": 15098,
+                    "endColumn": 69,
+                    "endOffset": 15163
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 155,
+                        "startColumn": 4,
+                        "startOffset": 8395,
+                        "endColumn": 69,
+                        "endOffset": 8460
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 212,
+                    "startColumn": 4,
+                    "startOffset": 15168,
+                    "endColumn": 68,
+                    "endOffset": 15232
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 112,
+                        "startColumn": 4,
+                        "startOffset": 5796,
+                        "endColumn": 68,
+                        "endOffset": 5860
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 213,
+                    "startColumn": 4,
+                    "startOffset": 15237,
+                    "endColumn": 51,
+                    "endOffset": 15284
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 115,
+                        "startColumn": 4,
+                        "startOffset": 5950,
+                        "endColumn": 51,
+                        "endOffset": 5997
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 214,
+                    "startColumn": 4,
+                    "startOffset": 15289,
+                    "endColumn": 83,
+                    "endOffset": 15368
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 72,
+                        "startColumn": 4,
+                        "startOffset": 3839,
+                        "endColumn": 83,
+                        "endOffset": 3918
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 215,
+                    "startColumn": 4,
+                    "startOffset": 15373,
+                    "endColumn": 63,
+                    "endOffset": 15432
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 24,
+                        "startColumn": 4,
+                        "startOffset": 1013,
+                        "endColumn": 63,
+                        "endOffset": 1072
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 216,
+                    "startColumn": 4,
+                    "startOffset": 15437,
+                    "endColumn": 54,
+                    "endOffset": 15487
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 85,
+                        "startColumn": 4,
+                        "startOffset": 4537,
+                        "endColumn": 54,
+                        "endOffset": 4587
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 217,
+                    "startColumn": 4,
+                    "startOffset": 15492,
+                    "endColumn": 77,
+                    "endOffset": 15565
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 203,
+                        "startColumn": 4,
+                        "startOffset": 10925,
+                        "endColumn": 77,
+                        "endOffset": 10998
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 218,
+                    "startColumn": 4,
+                    "startOffset": 15570,
+                    "endColumn": 49,
+                    "endOffset": 15615
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 221,
+                        "startColumn": 4,
+                        "startOffset": 11914,
+                        "endColumn": 49,
+                        "endOffset": 11959
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 219,
+                    "startColumn": 4,
+                    "startOffset": 15620,
+                    "endColumn": 53,
+                    "endOffset": 15669
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 206,
+                        "startColumn": 4,
+                        "startOffset": 11062,
+                        "endColumn": 53,
+                        "endOffset": 11111
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 220,
+                    "startColumn": 4,
+                    "startOffset": 15674,
+                    "endColumn": 90,
+                    "endOffset": 15760
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 51,
+                        "startColumn": 4,
+                        "startOffset": 2492,
+                        "endColumn": 90,
+                        "endOffset": 2578
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 221,
+                    "startColumn": 4,
+                    "startOffset": 15765,
+                    "endColumn": 64,
+                    "endOffset": 15825
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 139,
+                        "startColumn": 4,
+                        "startOffset": 7188,
+                        "endColumn": 64,
+                        "endOffset": 7248
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 222,
+                    "startColumn": 4,
+                    "startOffset": 15830,
+                    "endColumn": 108,
+                    "endOffset": 15934
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 137,
+                        "startColumn": 4,
+                        "startOffset": 6982,
+                        "endColumn": 108,
+                        "endOffset": 7086
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 223,
+                    "startColumn": 4,
+                    "startOffset": 15939,
+                    "endColumn": 69,
+                    "endOffset": 16004
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 135,
+                        "startColumn": 4,
+                        "startOffset": 6844,
+                        "endColumn": 69,
+                        "endOffset": 6909
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 224,
+                    "startColumn": 4,
+                    "startOffset": 16009,
+                    "endColumn": 67,
+                    "endOffset": 16072
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 141,
+                        "startColumn": 4,
+                        "startOffset": 7347,
+                        "endColumn": 67,
+                        "endOffset": 7410
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 225,
+                    "startColumn": 4,
+                    "startOffset": 16077,
+                    "endColumn": 153,
+                    "endOffset": 16226
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 212,
+                        "startColumn": 4,
+                        "startOffset": 11319,
+                        "endColumn": 161,
+                        "endOffset": 11476
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 226,
+                    "startColumn": 4,
+                    "startOffset": 16231,
+                    "endColumn": 123,
+                    "endOffset": 16350
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 218,
+                        "startColumn": 4,
+                        "startOffset": 11730,
+                        "endColumn": 127,
+                        "endOffset": 11853
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 227,
+                    "startColumn": 4,
+                    "startOffset": 16355,
+                    "endColumn": 105,
+                    "endOffset": 16456
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 215,
+                        "startColumn": 4,
+                        "startOffset": 11551,
+                        "endColumn": 109,
+                        "endOffset": 11656
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 228,
+                    "startColumn": 4,
+                    "startOffset": 16461,
+                    "endColumn": 140,
+                    "endOffset": 16597
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 106,
+                        "startColumn": 4,
+                        "startOffset": 5524,
+                        "endColumn": 144,
+                        "endOffset": 5664
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 229,
+                    "startColumn": 4,
+                    "startOffset": 16602,
+                    "endColumn": 137,
+                    "endOffset": 16735
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 24,
+                        "startColumn": 4,
+                        "startOffset": 824,
+                        "endColumn": 137,
+                        "endOffset": 957
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 230,
+                    "startColumn": 4,
+                    "startOffset": 16740,
+                    "endColumn": 74,
+                    "endOffset": 16810
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 70,
+                        "startColumn": 4,
+                        "startOffset": 3704,
+                        "endColumn": 74,
+                        "endOffset": 3774
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 231,
+                    "startColumn": 4,
+                    "startOffset": 16815,
+                    "endColumn": 57,
+                    "endOffset": 16868
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 181,
+                        "startColumn": 4,
+                        "startOffset": 9712,
+                        "endColumn": 57,
+                        "endOffset": 9765
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 232,
+                    "startColumn": 4,
+                    "startOffset": 16873,
+                    "endLine": 233,
+                    "endColumn": 53,
+                    "endOffset": 16988
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 92,
+                        "startColumn": 4,
+                        "startOffset": 4775,
+                        "endLine": 93,
+                        "endColumn": 53,
+                        "endOffset": 4890
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 234,
+                    "startColumn": 4,
+                    "startOffset": 16993,
+                    "endLine": 235,
+                    "endColumn": 35,
+                    "endOffset": 17106
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 97,
+                        "startColumn": 4,
+                        "startOffset": 5050,
+                        "endLine": 98,
+                        "endColumn": 35,
+                        "endOffset": 5163
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 236,
+                    "startColumn": 4,
+                    "startOffset": 17111,
+                    "endLine": 237,
+                    "endColumn": 35,
+                    "endOffset": 17227
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 102,
+                        "startColumn": 4,
+                        "startOffset": 5325,
+                        "endLine": 103,
+                        "endColumn": 35,
+                        "endOffset": 5441
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 238,
+                    "startColumn": 4,
+                    "startOffset": 17232,
+                    "endColumn": 70,
+                    "endOffset": 17298
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 90,
+                        "startColumn": 4,
+                        "startOffset": 4668,
+                        "endColumn": 70,
+                        "endOffset": 4734
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 239,
+                    "startColumn": 4,
+                    "startOffset": 17303,
+                    "endColumn": 82,
+                    "endOffset": 17381
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 95,
+                        "startColumn": 4,
+                        "startOffset": 4931,
+                        "endColumn": 82,
+                        "endOffset": 5009
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 240,
+                    "startColumn": 4,
+                    "startOffset": 17386,
+                    "endColumn": 84,
+                    "endOffset": 17466
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 100,
+                        "startColumn": 4,
+                        "startOffset": 5204,
+                        "endColumn": 84,
+                        "endOffset": 5284
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 241,
+                    "startColumn": 4,
+                    "startOffset": 17471,
+                    "endColumn": 48,
+                    "endOffset": 17515
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 47,
+                        "startColumn": 4,
+                        "startOffset": 2389,
+                        "endColumn": 48,
+                        "endOffset": 2433
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 242,
+                    "startColumn": 4,
+                    "startOffset": 17520,
+                    "endColumn": 53,
+                    "endOffset": 17569
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 49,
+                        "startColumn": 4,
+                        "startOffset": 2496,
+                        "endColumn": 53,
+                        "endOffset": 2545
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 243,
+                    "startColumn": 4,
+                    "startOffset": 17574,
+                    "endColumn": 150,
+                    "endOffset": 17720
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 30,
+                        "startColumn": 4,
+                        "startOffset": 1326,
+                        "endColumn": 150,
+                        "endOffset": 1472
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 244,
+                    "startColumn": 4,
+                    "startOffset": 17725,
+                    "endColumn": 144,
+                    "endOffset": 17865
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 27,
+                        "startColumn": 4,
+                        "startOffset": 1065,
+                        "endColumn": 144,
+                        "endOffset": 1205
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 245,
+                    "startColumn": 4,
+                    "startOffset": 17870,
+                    "endColumn": 88,
+                    "endOffset": 17954
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 43,
+                        "startColumn": 4,
+                        "startOffset": 2105,
+                        "endColumn": 88,
+                        "endOffset": 2189
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 246,
+                    "startColumn": 4,
+                    "startOffset": 17959,
+                    "endColumn": 79,
+                    "endOffset": 18034
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 45,
+                        "startColumn": 4,
+                        "startOffset": 2236,
+                        "endColumn": 79,
+                        "endOffset": 2311
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 247,
+                    "startColumn": 4,
+                    "startOffset": 18039,
+                    "endColumn": 53,
+                    "endOffset": 18088
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 248,
+                        "startColumn": 4,
+                        "startOffset": 13363,
+                        "endColumn": 53,
+                        "endOffset": 13412
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 248,
+                    "startColumn": 4,
+                    "startOffset": 18093,
+                    "endColumn": 52,
+                    "endOffset": 18141
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 178,
+                        "startColumn": 4,
+                        "startOffset": 9505,
+                        "endColumn": 52,
+                        "endOffset": 9553
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 249,
+                    "startColumn": 4,
+                    "startOffset": 18146,
+                    "endColumn": 57,
+                    "endOffset": 18199
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 172,
+                        "startColumn": 4,
+                        "startOffset": 9253,
+                        "endColumn": 57,
+                        "endOffset": 9306
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 250,
+                    "startColumn": 4,
+                    "startOffset": 18204,
+                    "endColumn": 60,
+                    "endOffset": 18260
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/Launcher3_mx/mxlibrary/unspecified/res/values/values.xml",
+                    "position": {
+                        "startLine": 4,
+                        "startColumn": 4,
+                        "startOffset": 151,
+                        "endColumn": 60,
+                        "endOffset": 207
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 251,
+                    "startColumn": 4,
+                    "startOffset": 18265,
+                    "endColumn": 79,
+                    "endOffset": 18340
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/Launcher3_mx/mxlibrary/unspecified/res/values/values.xml",
+                    "position": {
+                        "startLine": 5,
+                        "startColumn": 4,
+                        "startOffset": 212,
+                        "endColumn": 79,
+                        "endOffset": 287
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 252,
+                    "startColumn": 4,
+                    "startOffset": 18345,
+                    "endColumn": 83,
+                    "endOffset": 18424
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/Launcher3_mx/mxlibrary/unspecified/res/values/values.xml",
+                    "position": {
+                        "startLine": 6,
+                        "startColumn": 4,
+                        "startOffset": 292,
+                        "endColumn": 83,
+                        "endOffset": 371
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 253,
+                    "startColumn": 4,
+                    "startOffset": 18429,
+                    "endColumn": 81,
+                    "endOffset": 18506
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/Launcher3_mx/mxlibrary/unspecified/res/values/values.xml",
+                    "position": {
+                        "startLine": 7,
+                        "startColumn": 4,
+                        "startOffset": 376,
+                        "endColumn": 81,
+                        "endOffset": 453
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 254,
+                    "startColumn": 4,
+                    "startOffset": 18511,
+                    "endColumn": 58,
+                    "endOffset": 18565
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 47,
+                        "startColumn": 4,
+                        "startOffset": 2317,
+                        "endColumn": 58,
+                        "endOffset": 2371
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 255,
+                    "startColumn": 4,
+                    "startOffset": 18570,
+                    "endColumn": 101,
+                    "endOffset": 18667
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 118,
+                        "startColumn": 4,
+                        "startOffset": 6087,
+                        "endColumn": 101,
+                        "endOffset": 6184
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 256,
+                    "startColumn": 4,
+                    "startOffset": 18672,
+                    "endColumn": 85,
+                    "endOffset": 18753
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/Launcher3_mx/mxlibrary/unspecified/res/values/values.xml",
+                    "position": {
+                        "startLine": 8,
+                        "startColumn": 4,
+                        "startOffset": 458,
+                        "endColumn": 85,
+                        "endOffset": 539
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 257,
+                    "startColumn": 4,
+                    "startOffset": 18758,
+                    "endColumn": 79,
+                    "endOffset": 18833
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 40,
+                        "startColumn": 4,
+                        "startOffset": 1932,
+                        "endColumn": 79,
+                        "endOffset": 2007
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 258,
+                    "startColumn": 4,
+                    "startOffset": 18838,
+                    "endColumn": 60,
+                    "endOffset": 18894
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 170,
+                        "startColumn": 4,
+                        "startOffset": 9154,
+                        "endColumn": 60,
+                        "endOffset": 9210
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 259,
+                    "startColumn": 4,
+                    "startOffset": 18899,
+                    "endColumn": 51,
+                    "endOffset": 18946
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 45,
+                        "startColumn": 4,
+                        "startOffset": 2271,
+                        "endColumn": 51,
+                        "endOffset": 2318
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 260,
+                    "startColumn": 4,
+                    "startOffset": 18951,
+                    "endColumn": 64,
+                    "endOffset": 19011
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 21,
+                        "startColumn": 4,
+                        "startOffset": 830,
+                        "endColumn": 64,
+                        "endOffset": 890
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 261,
+                    "startColumn": 4,
+                    "startOffset": 19016,
+                    "endColumn": 81,
+                    "endOffset": 19093
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/strings.xml",
+                    "position": {
+                        "startLine": 29,
+                        "startColumn": 4,
+                        "startOffset": 1313,
+                        "endColumn": 81,
+                        "endOffset": 1390
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 262,
+                    "startColumn": 4,
+                    "startOffset": 19098,
+                    "endColumn": 54,
+                    "endOffset": 19148
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 168,
+                        "startColumn": 4,
+                        "startOffset": 9053,
+                        "endColumn": 54,
+                        "endOffset": 9103
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 263,
+                    "startColumn": 4,
+                    "startOffset": 19153,
+                    "endColumn": 63,
+                    "endOffset": 19212
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 54,
+                        "startColumn": 4,
+                        "startOffset": 2731,
+                        "endColumn": 63,
+                        "endOffset": 2790
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 264,
+                    "startColumn": 4,
+                    "startOffset": 19217,
+                    "endColumn": 161,
+                    "endOffset": 19374
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 266,
+                        "startColumn": 4,
+                        "startOffset": 14191,
+                        "endColumn": 169,
+                        "endOffset": 14356
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 265,
+                    "startColumn": 4,
+                    "startOffset": 19379,
+                    "endColumn": 49,
+                    "endOffset": 19424
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 37,
+                        "startColumn": 4,
+                        "startOffset": 1659,
+                        "endColumn": 49,
+                        "endOffset": 1704
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 266,
+                    "startColumn": 4,
+                    "startOffset": 19429,
+                    "endColumn": 106,
+                    "endOffset": 19531
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 145,
+                        "startColumn": 4,
+                        "startOffset": 7659,
+                        "endColumn": 106,
+                        "endOffset": 7761
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 267,
+                    "startColumn": 4,
+                    "startOffset": 19536,
+                    "endColumn": 68,
+                    "endOffset": 19600
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 147,
+                        "startColumn": 4,
+                        "startOffset": 7846,
+                        "endColumn": 68,
+                        "endOffset": 7910
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 268,
+                    "startColumn": 4,
+                    "startOffset": 19605,
+                    "endColumn": 95,
+                    "endOffset": 19696
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 143,
+                        "startColumn": 4,
+                        "startOffset": 7490,
+                        "endColumn": 95,
+                        "endOffset": 7581
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 269,
+                    "startColumn": 4,
+                    "startOffset": 19701,
+                    "endColumn": 76,
+                    "endOffset": 19773
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/strings.xml",
+                    "position": {
+                        "startLine": 129,
+                        "startColumn": 4,
+                        "startOffset": 6552,
+                        "endColumn": 76,
+                        "endOffset": 6624
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 270,
+                    "startColumn": 4,
+                    "startOffset": 19778,
+                    "endLine": 273,
+                    "endColumn": 12,
+                    "endOffset": 20032
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/styles.xml",
+                    "position": {
+                        "startLine": 46,
+                        "startColumn": 4,
+                        "startOffset": 2010,
+                        "endLine": 49,
+                        "endColumn": 12,
+                        "endOffset": 2264
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 274,
+                    "startColumn": 4,
+                    "startOffset": 20037,
+                    "endLine": 279,
+                    "endColumn": 12,
+                    "endOffset": 20408
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/styles.xml",
+                    "position": {
+                        "startLine": 37,
+                        "startColumn": 4,
+                        "startOffset": 1564,
+                        "endLine": 42,
+                        "endColumn": 12,
+                        "endOffset": 1935
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 280,
+                    "startColumn": 4,
+                    "startOffset": 20413,
+                    "endColumn": 66,
+                    "endOffset": 20475
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 81,
+                        "startColumn": 4,
+                        "startOffset": 3464,
+                        "endColumn": 67,
+                        "endOffset": 3527
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 281,
+                    "startColumn": 4,
+                    "startOffset": 20480,
+                    "endLine": 297,
+                    "endColumn": 12,
+                    "endOffset": 21377
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 63,
+                        "startColumn": 4,
+                        "startOffset": 2561,
+                        "endLine": 79,
+                        "endColumn": 12,
+                        "endOffset": 3458
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 298,
+                    "startColumn": 4,
+                    "startOffset": 21382,
+                    "endLine": 301,
+                    "endColumn": 12,
+                    "endOffset": 21551
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 58,
+                        "startColumn": 4,
+                        "startOffset": 2386,
+                        "endLine": 61,
+                        "endColumn": 12,
+                        "endOffset": 2555
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 302,
+                    "startColumn": 4,
+                    "startOffset": 21556,
+                    "endLine": 313,
+                    "endColumn": 12,
+                    "endOffset": 22197
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 28,
+                        "startColumn": 4,
+                        "startOffset": 1053,
+                        "endLine": 39,
+                        "endColumn": 12,
+                        "endOffset": 1694
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 314,
+                    "startColumn": 4,
+                    "startOffset": 22202,
+                    "endLine": 320,
+                    "endColumn": 12,
+                    "endOffset": 22566
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 41,
+                        "startColumn": 4,
+                        "startOffset": 1700,
+                        "endLine": 47,
+                        "endColumn": 12,
+                        "endOffset": 2064
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 321,
+                    "startColumn": 4,
+                    "startOffset": 22571,
+                    "endLine": 326,
+                    "endColumn": 12,
+                    "endOffset": 22840
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 49,
+                        "startColumn": 4,
+                        "startOffset": 2070,
+                        "endLine": 54,
+                        "endColumn": 12,
+                        "endOffset": 2339
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 327,
+                    "startColumn": 4,
+                    "startOffset": 22845,
+                    "endLine": 331,
+                    "endColumn": 12,
+                    "endOffset": 23038
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 83,
+                        "startColumn": 4,
+                        "startOffset": 3533,
+                        "endLine": 87,
+                        "endColumn": 12,
+                        "endOffset": 3726
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 332,
+                    "startColumn": 4,
+                    "startOffset": 23043,
+                    "endLine": 336,
+                    "endColumn": 12,
+                    "endOffset": 23250
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 89,
+                        "startColumn": 4,
+                        "startOffset": 3732,
+                        "endLine": 93,
+                        "endColumn": 12,
+                        "endOffset": 3939
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 337,
+                    "startColumn": 4,
+                    "startOffset": 23255,
+                    "endColumn": 32,
+                    "endOffset": 23283
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 56,
+                        "startColumn": 4,
+                        "startOffset": 2345,
+                        "endColumn": 39,
+                        "endOffset": 2380
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 338,
+                    "startColumn": 4,
+                    "startOffset": 23288,
+                    "endColumn": 60,
+                    "endOffset": 23344
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/styles.xml",
+                    "position": {
+                        "startLine": 44,
+                        "startColumn": 4,
+                        "startOffset": 1941,
+                        "endColumn": 67,
+                        "endOffset": 2004
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 339,
+                    "startColumn": 4,
+                    "startOffset": 23349,
+                    "endLine": 341,
+                    "endColumn": 12,
+                    "endOffset": 23535
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 24,
+                        "startColumn": 4,
+                        "startOffset": 861,
+                        "endLine": 26,
+                        "endColumn": 12,
+                        "endOffset": 1047
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 342,
+                    "startColumn": 4,
+                    "startOffset": 23540,
+                    "endLine": 344,
+                    "endColumn": 12,
+                    "endOffset": 23724
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/values/styles.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 671,
+                        "endLine": 22,
+                        "endColumn": 12,
+                        "endOffset": 855
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 345,
+                    "startColumn": 4,
+                    "startOffset": 23729,
+                    "endLine": 349,
+                    "endColumn": 12,
+                    "endOffset": 24029
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/styles.xml",
+                    "position": {
+                        "startLine": 20,
+                        "startColumn": 4,
+                        "startOffset": 730,
+                        "endLine": 24,
+                        "endColumn": 12,
+                        "endOffset": 1030
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 350,
+                    "startColumn": 4,
+                    "startOffset": 24034,
+                    "endLine": 354,
+                    "endColumn": 12,
+                    "endOffset": 24323
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/styles.xml",
+                    "position": {
+                        "startLine": 26,
+                        "startColumn": 4,
+                        "startOffset": 1036,
+                        "endLine": 30,
+                        "endColumn": 12,
+                        "endOffset": 1325
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 355,
+                    "startColumn": 4,
+                    "startOffset": 24328,
+                    "endLine": 358,
+                    "endColumn": 12,
+                    "endOffset": 24555
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/values/styles.xml",
+                    "position": {
+                        "startLine": 32,
+                        "startColumn": 4,
+                        "startOffset": 1331,
+                        "endLine": 35,
+                        "endColumn": 12,
+                        "endOffset": 1558
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 359,
+                    "startColumn": 4,
+                    "startOffset": 24560,
+                    "endLine": 367,
+                    "endColumn": 12,
+                    "endOffset": 25137
+                },
+                "from": {
+                    "file": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/exploded-aar/Launcher3_mx/mxlibrary/unspecified/res/values/values.xml",
+                    "position": {
+                        "startLine": 9,
+                        "startColumn": 4,
+                        "startOffset": 544,
+                        "endLine": 17,
+                        "endColumn": 12,
+                        "endOffset": 1121
+                    }
+                }
+            }
+        ]
+    },
+    {
         "outputFile": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/values/values.xml",
         "map": [
             {

@@ -1,39 +1,39 @@
 [
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_widget.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_widget.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_1.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_all_apps_bg_icon_1.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_setting.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_setting.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/virtual_preload_folder.9.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/virtual_preload_folder.9.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_hand.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_all_apps_bg_hand.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_search_grey.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_search_grey.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/virtual_preload_folder.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/virtual_preload_folder.9.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/widget_resize_shadow.9.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/widget_resize_shadow.9.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_2.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_all_apps_bg_icon_2.png"
-    },
-    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_rest.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/portal_ring_rest.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_setting_pressed.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_setting_pressed.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/screenpanel_hover.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/screenpanel_hover.9.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_outer.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/portal_ring_outer.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_inner.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/portal_ring_inner.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_4.png",
@@ -48,24 +48,32 @@
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/workspace_bg.9.png"
     },
     {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/quantum_panel_bitmap.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/quantum_panel_bitmap.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/cling_bg.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/cling_bg.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/widget_resize_shadow.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/widget_resize_shadow.9.png"
+    },
+    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_add.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_pageindicator_add.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_actionbar_accept.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/drawable-mdpi/ic_actionbar_accept.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_outer.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/portal_ring_outer.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_allapps.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_allapps.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/tile_shadow_bottom.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/drawable-mdpi/tile_shadow_bottom.9.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_1.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_all_apps_bg_icon_1.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_remove_launcher.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_remove_launcher.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_inner_nolip.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/portal_ring_inner_nolip.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_inner_nolip.png",
@@ -76,72 +84,40 @@
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_widget_pressed.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/virtual_preload.9.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/virtual_preload.9.png"
-    },
-    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_right.9.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/page_hover_right.9.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/widget_tile.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/widget_tile.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_left.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/page_hover_left.9.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/screenpanel_hover.9.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/screenpanel_hover.9.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_right_active.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/page_hover_right_active.9.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_widget_resize_handle.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_widget_resize_handle.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_wallpaper.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_wallpaper.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_default.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_pageindicator_default.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_uninstall_launcher.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_uninstall_launcher.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/screenpanel.9.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/screenpanel.9.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_current_folder.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_pageindicator_current_folder.png"
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_images.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/drawable-mdpi/ic_images.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_left_active.9.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/page_hover_left_active.9.png"
     },
     {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_current_folder.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_pageindicator_current_folder.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_widget_pressed.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_widget_pressed.png"
+    },
+    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/quantum_panel_dark_bitmap.9.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/quantum_panel_dark_bitmap.9.png"
     },
     {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/cling_bg.9.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/cling_bg.9.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_info_launcher.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_info_launcher.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_right_active.9.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/page_hover_right_active.9.png"
-    },
-    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/widget_resize_frame.9.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/widget_resize_frame.9.png"
-    },
-    {
-        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_inner.png",
-        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/portal_ring_inner.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/tile_shadow_top.9.png",
@@ -164,8 +140,216 @@
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/drawable-mdpi/tile_shadow_bottom.9.png"
     },
     {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/quantum_panel_dark_bitmap.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/quantum_panel_dark_bitmap.9.png"
+    },
+    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_default_folder.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_pageindicator_default_folder.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_info_launcher.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_info_launcher.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_4.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_all_apps_bg_icon_4.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_left_active.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/page_hover_left_active.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_rest.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/portal_ring_rest.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_default_folder.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_pageindicator_default_folder.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_widget.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_widget.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_search_grey.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_search_grey.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_2.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_all_apps_bg_icon_2.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_setting_pressed.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_setting_pressed.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_wallpaper_pressed.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_wallpaper_pressed.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_widget.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_widget.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_setting_pressed.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_setting_pressed.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_3.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_all_apps_bg_icon_3.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_actionbar_accept.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/drawable-mdpi/ic_actionbar_accept.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_allapps.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_allapps.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_allapps.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_allapps.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_1.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_all_apps_bg_icon_1.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_remove_launcher.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_remove_launcher.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_actionbar_accept.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/drawable-mdpi/ic_actionbar_accept.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/widget_resize_frame.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/widget_resize_frame.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/virtual_preload.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/virtual_preload.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_arrow_back_grey.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_arrow_back_grey.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_wallpaper.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_wallpaper.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/widget_tile.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/widget_tile.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/tile_shadow_top.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/drawable-mdpi/tile_shadow_top.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_uninstall_launcher.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_uninstall_launcher.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_search_grey.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_search_grey.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_setting.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_setting.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/screenpanel_hover.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/screenpanel_hover.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_allapps_pressed.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_allapps_pressed.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_widget_resize_handle.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_widget_resize_handle.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_wallpaper.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_wallpaper.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_2.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_all_apps_bg_icon_2.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_default.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_pageindicator_default.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_uninstall_launcher.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_uninstall_launcher.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/workspace_bg.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/workspace_bg.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/screenpanel.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/screenpanel.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_remove_launcher.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_remove_launcher.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_current_folder.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_pageindicator_current_folder.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_current.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_pageindicator_current.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/cling_bg.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/cling_bg.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_widget_resize_handle.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_widget_resize_handle.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_info_launcher.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_info_launcher.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_right_active.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/page_hover_right_active.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/portal_ring_inner.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/portal_ring_inner.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_default.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_pageindicator_default.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/screenpanel.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/screenpanel.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/virtual_preload_folder.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/virtual_preload_folder.9.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_add.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/ic_pageindicator_add.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/widget_tile.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/widget_tile.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/virtual_preload.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/virtual_preload.9.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_hand.png",
@@ -174,6 +358,10 @@
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_all_apps_bg_icon_3.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/drawable-mdpi/ic_all_apps_bg_icon_3.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/page_hover_right.9.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/drawable-mdpi/page_hover_right.9.png"
     },
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/drawable-mdpi-v4/ic_pageindicator_current.png",

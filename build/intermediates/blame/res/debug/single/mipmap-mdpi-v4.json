@@ -4,6 +4,14 @@
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/mipmap-mdpi/ic_launcher_home.png"
     },
     {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/mipmap-mdpi-v4/ic_launcher_wallpaper.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/WallpaperPicker/res/mipmap-mdpi/ic_launcher_wallpaper.png"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/mipmap-mdpi-v4/ic_launcher_home.png",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/mipmap-mdpi/ic_launcher_home.png"
+    },
+    {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/mipmap-mdpi-v4/ic_launcher_wallpaper.png",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/WallpaperPicker/res/mipmap-mdpi/ic_launcher_wallpaper.png"
     }

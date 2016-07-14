@@ -2,5 +2,9 @@
     {
         "merged": "/Users/yuchuan/GitHub_MX/Launcher3-mx/build/intermediates/res/merged/debug/layout-sw720dp-v13/launcher.xml",
         "source": "/Users/yuchuan/GitHub_MX/Launcher3-mx/res/layout-sw720dp/launcher.xml"
+    },
+    {
+        "merged": "/Users/yuchuan/GitHub_MX/Launcher3_mx/build/intermediates/res/merged/debug/layout-sw720dp-v13/launcher.xml",
+        "source": "/Users/yuchuan/GitHub_MX/Launcher3_mx/res/layout-sw720dp/launcher.xml"
     }
 ]
