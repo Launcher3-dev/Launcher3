@@ -1555,7 +1555,7 @@ public class Workspace extends PagedView
             } else {//屏幕向右滑动到临界
                 leftScreen = Math.min( (int) scrollPos, childCount - 1 );
                 rightScreen = leftScreen + 1;
-                if (endlessScrolling) {
+                if (endlessScrolling && childCount > 0) {
                     rightScreen = rightScreen % childCount;
                     isScrollToRight = true;
                 }
