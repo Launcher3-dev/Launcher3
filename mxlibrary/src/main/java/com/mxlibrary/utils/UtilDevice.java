@@ -57,15 +57,16 @@ public class UtilDevice {
         try {
             TelephonyManager TelephonyMgr = (TelephonyManager) context
                     .getSystemService(Context.TELEPHONY_SERVICE);
-            String deviceid = TelephonyMgr.getDeviceId();
-            if (deviceid == null) {
+            String deviceId = TelephonyMgr.getDeviceId();
+            if (deviceId == null) {
                 String s = getSelfId(context);
-                if (s == null)
+                if (s == null) {
                     return "";
-                else
+                } else {
                     return s;
+                }
             } else
-                return deviceid;
+                return deviceId;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -683,12 +684,10 @@ public class UtilDevice {
     }
 
 
-
     /**
      * 从系统内存信息文件中读取总的内存
-     *
      */
-    public static int  getTotalMemory(Context context) {
+    public static int getTotalMemory(Context context) {
         String dir = "/proc/meminfo";
         try {
             FileReader fr = new FileReader(dir);

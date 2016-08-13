@@ -1916,8 +1916,10 @@ public class LauncherModel extends BroadcastReceiver
                                         intent = Intent.parseUri(intentDescription, 0);
                                         ComponentName cn = intent.getComponent();
                                         if (cn != null && cn.getPackageName() != null) {
+                                            //检测数据库(从xml文件解析出来存入数据库的)中取出来的app包是否存在
                                             boolean validPkg = launcherApps.isPackageEnabledForProfile(
                                                     cn.getPackageName(), user);
+                                            //检测数据库(从xml文件解析出来存入数据库的)中取出来的app组件是否存在
                                             boolean validComponent = validPkg &&
                                                     launcherApps.isActivityEnabledForProfile(cn, user);
 
