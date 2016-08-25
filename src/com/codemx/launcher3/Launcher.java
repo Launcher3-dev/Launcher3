@@ -3410,7 +3410,7 @@ public class Launcher extends Activity
     }
 
     /**
-     * Shows the apps view.
+     * Shows the all apps view.
      */
     void showAppsView(boolean animated, boolean resetListToTop, boolean updatePredictedApps,
                       boolean focusSearchBar) {
