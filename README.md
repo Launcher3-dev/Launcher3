@@ -67,7 +67,7 @@ loadAndBindAllApps
 
 ## 六.拖拽(应用拖拽到桌面,合成文件夹,桌面上图标和widget的拖拽)
 
-Launcher:
+1.Launcher:
 
 -->onLongClick
 
@@ -84,6 +84,30 @@ Launcher:
 -->dropTarget.onDragEnter
 
 -->dropTarget.onDragOver(-->ButtonDropTarget&Folder&Workspace)
+
+2.WidgetsContainerView:
+
+-->onLongClick
+
+-->beginDragging
+
+-->beginDraggingWidget
+
+-->mDragController.startDrag
+
+-->startDrag
+
+-->DragListener.onDragStart
+
+-->handleMoveEvent
+
+-->checkTouchMove
+
+-->DropTarget.onDragExit
+
+-->DropTarget.onDragEnter
+
+-->DropTarget.onDragOver
 
 
 ## 七.小部件的加载和添加
