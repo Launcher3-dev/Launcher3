@@ -49,6 +49,7 @@ public class PageIndicator extends LinearLayout {
             activeId = R.drawable.ic_pageindicator_current;
             inactiveId = R.drawable.ic_pageindicator_default;
         }
+
         public PageMarkerResources(int aId, int iaId) {
             activeId = aId;
             inactiveId = iaId;
@@ -99,7 +100,7 @@ public class PageIndicator extends LinearLayout {
             new Throwable().printStackTrace();
         }
         int windowSize = Math.min(mMarkers.size(), mMaxWindowSize);
-        int hWindowSize = (int) windowSize / 2;
+        int hWindowSize = windowSize / 2;
         float hfWindowSize = windowSize / 2f;
         int windowStart = Math.max(0, activeIndex - hWindowSize);
         int windowEnd = Math.min(mMarkers.size(), windowStart + mMaxWindowSize);
@@ -125,7 +126,7 @@ public class PageIndicator extends LinearLayout {
 
         // Add all the new children that belong in the window
         for (int i = 0; i < mMarkers.size(); ++i) {
-            PageIndicatorMarker marker = (PageIndicatorMarker) mMarkers.get(i);
+            PageIndicatorMarker marker = mMarkers.get(i);
             if (windowStart <= i && i < windowEnd) {
                 if (indexOfChild(marker) < 0) {
                     addView(marker, i - windowStart);
@@ -144,8 +145,8 @@ public class PageIndicator extends LinearLayout {
                 float alpha = 1f;
                 if (mMarkers.size() > windowSize) {
                     if ((windowAtStart && i > hWindowSize) ||
-                        (windowAtEnd && i < (mMarkers.size() - hWindowSize)) ||
-                        (!windowAtStart && !windowAtEnd)) {
+                            (windowAtEnd && i < (mMarkers.size() - hWindowSize)) ||
+                            (!windowAtStart && !windowAtEnd)) {
                         alpha = 1f - Math.abs((i - windowMid) / hfWindowSize);
                     }
                 }
@@ -165,13 +166,14 @@ public class PageIndicator extends LinearLayout {
         index = Math.max(0, Math.min(index, mMarkers.size()));
 
         PageIndicatorMarker m =
-            (PageIndicatorMarker) mLayoutInflater.inflate(R.layout.page_indicator_marker,
-                    this, false);
+                (PageIndicatorMarker) mLayoutInflater.inflate(R.layout.page_indicator_marker,
+                        this, false);
         m.setMarkerDrawables(marker.activeId, marker.inactiveId);
 
         mMarkers.add(index, m);
         offsetWindowCenterTo(mActiveMarkerIndex, allowAnimations);
     }
+
     void addMarkers(ArrayList<PageMarkerResources> markers, boolean allowAnimations) {
         for (int i = 0; i < markers.size(); ++i) {
             addMarker(Integer.MAX_VALUE, markers.get(i), allowAnimations);
@@ -190,6 +192,7 @@ public class PageIndicator extends LinearLayout {
             offsetWindowCenterTo(mActiveMarkerIndex, allowAnimations);
         }
     }
+
     void removeAllMarkers(boolean allowAnimations) {
         while (mMarkers.size() > 0) {
             removeMarker(Integer.MAX_VALUE, allowAnimations);

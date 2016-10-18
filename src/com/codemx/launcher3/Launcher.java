@@ -4336,7 +4336,8 @@ public class Launcher extends Activity
      */
     @Override
     public void bindComponentsRemoved(final ArrayList<String> packageNames,
-                                      final ArrayList<AppInfo> appInfos, final UserHandleCompat user, final int reason) {
+                                      final ArrayList<AppInfo> appInfos,
+                                      final UserHandleCompat user, final int reason) {
         Runnable r = new Runnable() {
             public void run() {
                 bindComponentsRemoved(packageNames, appInfos, user, reason);

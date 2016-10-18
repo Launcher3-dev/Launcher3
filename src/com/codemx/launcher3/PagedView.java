@@ -206,6 +206,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
     private static final Rect sTmpRect = new Rect();
 
     protected final Rect mInsets = new Rect();
+    //布局反方向，从右到左，比如阿拉伯语情况下
     protected final boolean mIsRtl;
 
     // Edge effect
@@ -752,13 +753,14 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
         // NOTE: We multiply by 2f to account for the fact that depending on the offset of the
         // viewport, we can be at most one and a half screens offset once we scale down
+        //mx:mInsets = Rect(0,50,0,0);(720x1280，状态栏高度)
         DisplayMetrics dm = getResources().getDisplayMetrics();
         int maxSize = Math.max(dm.widthPixels + mInsets.left + mInsets.right,
                 dm.heightPixels + mInsets.top + mInsets.bottom);
-
         int parentWidthSize = (int) (2f * maxSize);
         int parentHeightSize = (int) (2f * maxSize);
         int scaledWidthSize, scaledHeightSize;
+        //mx:mUseMinScale = true; mMinScale = 0.7;
         if (mUseMinScale) {
             scaledWidthSize = (int) (parentWidthSize / mMinScale);
             scaledHeightSize = (int) (parentHeightSize / mMinScale);
@@ -806,8 +808,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
                 int childHeightMode;
                 int childWidth;
                 int childHeight;
-
-                if (!lp.isFullScreenPage) {
+                if (!lp.isFullScreenPage) {//mx:false
                     if (lp.width == LayoutParams.WRAP_CONTENT) {
                         childWidthMode = MeasureSpec.AT_MOST;
                     } else {
@@ -843,6 +844,8 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
                 child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
             }
         }
+        //mx:720x1280屏幕下scaledWidthSize和scaledHeightSize均为3800,目的是为保证在长按桌面缩小状态下,
+        //可操作范围较大,单个CellLayout可以自由拖动,并且多个CellLayout可以完整显示。
         setMeasuredDimension(scaledWidthSize, scaledHeightSize);
     }
 
@@ -1004,14 +1007,14 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
         // This ensures that when children are added, they get the correct transforms / alphas
         // in accordance with any scroll effects.
         mForceScreenScrolled = true;
-        updateFreescrollBounds();
+        updateFreeScrollBounds();
         invalidate();
     }
 
     @Override
     public void onChildViewRemoved(View parent, View child) {
         mForceScreenScrolled = true;
-        updateFreescrollBounds();
+        updateFreeScrollBounds();
         invalidate();
     }
 
@@ -1562,7 +1565,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
         setEnableFreeScroll(false);
     }
 
-    void updateFreescrollBounds() {
+    void updateFreeScrollBounds() {
         getFreeScrollPageRange(mTempVisiblePagesRange);
         if (mIsRtl) {
             mFreeScrollMinScrollX = getScrollForPage(mTempVisiblePagesRange[1]);
@@ -1577,7 +1580,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
         mFreeScroll = freeScroll;
 
         if (mFreeScroll) {
-            updateFreescrollBounds();
+            updateFreeScrollBounds();
             getFreeScrollPageRange(mTempVisiblePagesRange);
             if (getCurrentPage() < mTempVisiblePagesRange[0]) {
                 setCurrentPage(mTempVisiblePagesRange[0]);
@@ -1586,10 +1589,10 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
             }
         }
 
-        setEnableOverscroll(!freeScroll);
+        setEnableOverScroll(!freeScroll);
     }
 
-    protected void setEnableOverscroll(boolean enable) {
+    protected void setEnableOverScroll(boolean enable) {
         mAllowOverScroll = enable;
     }
 
@@ -1653,7 +1656,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                if (mTouchState == TOUCH_STATE_SCROLLING) {
+                if (mTouchState == TOUCH_STATE_SCROLLING) {//滚动
                     // Scroll to follow the motion event
                     final int pointerIndex = ev.findPointerIndex(mActivePointerId);
 
@@ -1676,7 +1679,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
                     } else {
                         awakenScrollBars();
                     }
-                } else if (mTouchState == TOUCH_STATE_REORDERING) {
+                } else if (mTouchState == TOUCH_STATE_REORDERING) {//拖动重新排序
                     // Update the last motion position
                     mLastMotionX = ev.getX();
                     mLastMotionY = ev.getY();
@@ -1772,6 +1775,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
                     int velocityX = (int) velocityTracker.getXVelocity(activePointerId);
                     final int deltaX = (int) (x - mDownMotionX);
                     final int pageWidth = getPageAt(mCurrentPage).getMeasuredWidth();
+                    //是否是有效的移动，也就是如果移动距离超过页面宽度的40%抬起手指，则会继续完成该页滑动，否则返回初始页面
                     boolean isSignificantMove = Math.abs(deltaX) > pageWidth *
                             SIGNIFICANT_MOVE_THRESHOLD;
 
@@ -1782,7 +1786,7 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
 
                     if (!mFreeScroll) {
                         // In the case that the page is moved far to one direction and then is flung
-                        // in the opposite direction, we use a threshold to determine whether we should
+                        // in the opposite direction, we use a threshold（临界值） to determine whether we should
                         // just return to the starting page, or if we should skip one further.
                         boolean returnToOriginalPage = false;
                         if (Math.abs(deltaX) > pageWidth * RETURN_TO_ORIGINAL_PAGE_THRESHOLD &&
@@ -2227,10 +2231,12 @@ public abstract class PagedView extends ViewGroup implements ViewGroup.OnHierarc
         }
     }
 
+    //停止桌面排序
     public void onEndReordering() {
         mIsReordering = false;
     }
 
+    //开始桌面排序
     public boolean startReordering(View v) {
         int dragViewIndex = indexOfChild(v);
 

@@ -552,6 +552,7 @@ public class DragLayer extends InsettableFrameLayout {
         return mCurrentResizeFrame != null;
     }
 
+    // 添加调整widget的框
     public void addResizeFrame(ItemInfo itemInfo, LauncherAppWidgetHostView widget,
             CellLayout cellLayout) {
         AppWidgetResizeFrame resizeFrame = new AppWidgetResizeFrame(getContext(),

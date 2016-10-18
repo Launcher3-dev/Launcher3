@@ -349,7 +349,7 @@ public class FolderPagedView extends PagedView {
             setCurrentPage(0);
         }
 
-        setEnableOverscroll(getPageCount() > 1);
+        setEnableOverScroll(getPageCount() > 1);
 
         // Update footer
         mPageIndicator.setVisibility(getPageCount() > 1 ? View.VISIBLE : View.GONE);

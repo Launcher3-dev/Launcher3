@@ -62,7 +62,6 @@ import com.codemx.launcher3.util.CursorIconInfo;
 import com.codemx.launcher3.util.LongArrayMap;
 import com.codemx.launcher3.util.ManagedProfileHeuristic;
 import com.codemx.launcher3.util.Thunk;
-import com.mxlibrary.utils.XLog;
 
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
@@ -1775,6 +1774,7 @@ public class LauncherModel extends BroadcastReceiver
             }
         }
 
+        // 加载xml文件中默认配置的应用图标
         private void loadWorkspace() {
             final long t = DEBUG_LOADERS ? SystemClock.uptimeMillis() : 0;
 
@@ -3408,19 +3408,15 @@ public class LauncherModel extends BroadcastReceiver
                     LauncherAppWidgetProviderInfo info;
 
                     List<AppWidgetProviderInfo> widgets = wm.getAllProviders();
-                    XLog.e(XLog.getTag(), XLog.TAG_GU + widgets.size());
                     for (AppWidgetProviderInfo pInfo : widgets) {
                         info = LauncherAppWidgetProviderInfo.fromProviderInfo(context, pInfo);
-                        XLog.e(XLog.getTag(), XLog.TAG_GU + info.provider.getClassName());
                         UserHandleCompat user = wm.getUser(info);
                         tmpWidgetProviders.put(new ComponentKey(info.provider, user), info);
                     }
 
                     Collection<CustomAppWidget> customWidgets = Launcher.getCustomAppWidgets().values();
-                    XLog.e(XLog.getTag(), XLog.TAG_GU + customWidgets.size());
                     for (CustomAppWidget widget : customWidgets) {
                         info = new LauncherAppWidgetProviderInfo(context, widget);
-                        XLog.e(XLog.getTag(), XLog.TAG_GU + info.provider.getClassName());
                         UserHandleCompat user = wm.getUser(info);
                         tmpWidgetProviders.put(new ComponentKey(info.provider, user), info);
                     }

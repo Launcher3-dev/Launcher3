@@ -33,9 +33,10 @@ public class LgClient {
         OkHttpClient client;
         OkHttpClient.Builder okBuilder;
         Retrofit.Builder retrofitBuilder;
-        private Map<String, Retrofit.Builder> map = new HashMap<>();
+        private Map<String, Retrofit.Builder> map;
 
         public LgBuilder() {
+            map = new HashMap<>();
         }
 
         /**

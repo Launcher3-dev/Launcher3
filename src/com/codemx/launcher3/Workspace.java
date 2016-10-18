@@ -2054,12 +2054,14 @@ public class Workspace extends PagedView
         range[1] = Math.max(0, end);
     }
 
+    //开始排序
     public void onStartReordering() {
         super.onStartReordering();
         // Reordering handles its own animations, disable the automatic ones.
         disableLayoutTransitions();
     }
 
+    //排序结束
     public void onEndReordering() {
         super.onEndReordering();
 
