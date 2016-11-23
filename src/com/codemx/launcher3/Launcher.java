@@ -1503,7 +1503,7 @@ public class Launcher extends Activity
         }
 
         // Setup the drag controller (drop targets have to be added in reverse order in priority)
-        dragController.setDragScoller(mWorkspace);
+        dragController.setDragScroller(mWorkspace);
         dragController.setScrollView(mDragLayer);
         dragController.setMoveTarget(mWorkspace);
         dragController.addDropTarget(mWorkspace);

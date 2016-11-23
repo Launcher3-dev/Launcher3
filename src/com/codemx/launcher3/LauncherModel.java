@@ -62,6 +62,7 @@ import com.codemx.launcher3.util.CursorIconInfo;
 import com.codemx.launcher3.util.LongArrayMap;
 import com.codemx.launcher3.util.ManagedProfileHeuristic;
 import com.codemx.launcher3.util.Thunk;
+import com.mxlibrary.utils.XLog;
 
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
@@ -1393,6 +1394,7 @@ public class LauncherModel extends BroadcastReceiver
     }
 
     public void startLoader(int synchronousBindPage, int loadFlags) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU + "  startLoader---loadFlags=  " + loadFlags);
         // Enable queue before starting loader. It will get disabled in Launcher#finishBindingItems
         InstallShortcutReceiver.enableInstallQueue();
         synchronized (mLock) {
@@ -1791,6 +1793,7 @@ public class LauncherModel extends BroadcastReceiver
             int countX = profile.numColumns;
             int countY = profile.numRows;
 
+            // MigrateFromRestoreTask.ENABLED == false
             if (MigrateFromRestoreTask.ENABLED && MigrateFromRestoreTask.shouldRunTask(mContext)) {
                 long migrationStartTime = System.currentTimeMillis();
                 Log.v(TAG, "Starting workspace migration after restore");
@@ -1810,11 +1813,15 @@ public class LauncherModel extends BroadcastReceiver
                         + (System.currentTimeMillis() - migrationStartTime));
             }
 
+            // mFlags == 0 || mFlag == -1001; LOADER_FLAG_CLEAR_WORKSPACE == 1
+            XLog.e(XLog.getTag(),XLog.TAG_GU + "   loadWorkspace-WORKSPACE-   " + (mFlags & LOADER_FLAG_CLEAR_WORKSPACE));
             if ((mFlags & LOADER_FLAG_CLEAR_WORKSPACE) != 0) {
                 Launcher.addDumpLog(TAG, "loadWorkspace: resetting launcher database", true);
                 LauncherAppState.getLauncherProvider().deleteDatabase();
             }
 
+            // mFlags == 0 || mFlag == -1001; LOADER_FLAG_MIGRATE_SHORTCUTS == 2 (二进制：10)
+            XLog.e(XLog.getTag(),XLog.TAG_GU + "   loadWorkspace-SHORTCUTS-   " + (mFlags & LOADER_FLAG_MIGRATE_SHORTCUTS));
             if ((mFlags & LOADER_FLAG_MIGRATE_SHORTCUTS) != 0) {
                 // append the user's Launcher2 shortcuts
                 Launcher.addDumpLog(TAG, "loadWorkspace: migrating from launcher2", true);
@@ -1822,6 +1829,7 @@ public class LauncherModel extends BroadcastReceiver
             } else {
                 // Make sure the default workspace is loaded
                 Launcher.addDumpLog(TAG, "loadWorkspace: loading default favorites", false);
+                // 解析xml中的默认桌面图标配置，并且保存到数据库中
                 LauncherAppState.getLauncherProvider().loadDefaultFavoritesIfNecessary();
             }
 

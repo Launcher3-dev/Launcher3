@@ -54,6 +54,7 @@ import com.codemx.launcher3.accessibility.DragAndDropAccessibilityDelegate;
 import com.codemx.launcher3.accessibility.FolderAccessibilityHelper;
 import com.codemx.launcher3.accessibility.WorkspaceAccessibilityHelper;
 import com.codemx.launcher3.util.Thunk;
+import com.mxlibrary.utils.XLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2622,6 +2623,7 @@ public class CellLayout extends ViewGroup implements BubbleTextShadowHandler {
      * or it may have begun on another layout.
      */
     void onDragEnter() {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         mDragging = true;
     }
 
@@ -2629,6 +2631,7 @@ public class CellLayout extends ViewGroup implements BubbleTextShadowHandler {
      * Called when drag has left this CellLayout or has been completed (successfully or not)
      */
     void onDragExit() {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         // This can actually be called when we aren't in a drag, e.g. when adding a new
         // item to this layout via the customize drawer.
         // Guard against that case.

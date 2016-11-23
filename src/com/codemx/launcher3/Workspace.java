@@ -41,6 +41,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Region.Op;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -69,6 +70,7 @@ import com.codemx.launcher3.util.Thunk;
 import com.codemx.launcher3.util.WallpaperUtils;
 import com.codemx.launcher3.widget.PendingAddShortcutInfo;
 import com.codemx.launcher3.widget.PendingAddWidgetInfo;
+import com.mxlibrary.utils.XLog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -407,7 +409,7 @@ public class Workspace extends PagedView
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragStart", 0, 0);
         }
-
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         mIsDragOccuring = true;
         updateChildrenLayersEnabled(false);
         mLauncher.lockScreenOrientation();
@@ -434,7 +436,7 @@ public class Workspace extends PagedView
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragEnd", 0, 0);
         }
-
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         if (!mDeferRemoveExtraEmptyScreen) {
             removeExtraEmptyScreen(true, mDragSourceInternal != null);
         }
@@ -2360,12 +2362,20 @@ public class Workspace extends PagedView
         beginDragShared(child, this, accessible);
     }
 
+    /**
+     * 开始拖拽CellLayout
+     *
+     * @param child      CellLayout
+     * @param source     拖拽view的来源
+     * @param accessible 是否可访问
+     */
     public void beginDragShared(View child, DragSource source, boolean accessible) {
         beginDragShared(child, new Point(), source, accessible);
     }
 
     public void beginDragShared(View child, Point relativeTouchPos, DragSource source,
                                 boolean accessible) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         child.clearFocus();
         child.setPressed(false);
 
@@ -2417,7 +2427,7 @@ public class Workspace extends PagedView
                     padding.get() / 2 - child.getPaddingTop());
             dragRect = new Rect(0, child.getPaddingTop(), child.getWidth(), previewSize);
         }
-
+        XLog.e(XLog.getTag(),XLog.TAG_GU + dragLayerX + "    " + dragLayerY );
         // Clear the pressed state if necessary
         if (child instanceof BubbleTextView) {
             BubbleTextView icon = (BubbleTextView) child;
@@ -2435,6 +2445,7 @@ public class Workspace extends PagedView
             mDragSourceInternal = (ShortcutAndWidgetContainer) child.getParent();
         }
 
+        // start a drag
         DragView dv = mDragController.startDrag(b, dragLayerX, dragLayerY, source, child.getTag(),
                 DragController.DRAG_ACTION_MOVE, dragVisualizeOffset, dragRect, scale, accessible);
         dv.setIntrinsicIconScaleFactor(source.getIntrinsicIconScaleFactor());
@@ -2497,6 +2508,7 @@ public class Workspace extends PagedView
      * {@inheritDoc}
      */
     public boolean acceptDrop(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         // If it's an external drop (e.g. from All Apps), check if it should be accepted
         CellLayout dropTargetLayout = mDropToLayout;
         if (d.dragSource != this) {
@@ -2712,6 +2724,7 @@ public class Workspace extends PagedView
     }
 
     public void onDrop(final DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         mDragViewVisualCenter = d.getVisualCenter(mDragViewVisualCenter);
         CellLayout dropTargetLayout = mDropToLayout;
 
@@ -2936,6 +2949,7 @@ public class Workspace extends PagedView
 
     @Override
     public void onDragEnter(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragEnter", 1, 1);
         }
@@ -2996,6 +3010,7 @@ public class Workspace extends PagedView
 
     @Override
     public void onDragExit(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragExit", -1, 0);
         }
@@ -3255,6 +3270,7 @@ public class Workspace extends PagedView
     }
 
     public void onDragOver(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         // Skip drag over events while we are dragging over side pages
         if (mInScrollArea || !transitionStateShouldAllowDrop()) return;
 

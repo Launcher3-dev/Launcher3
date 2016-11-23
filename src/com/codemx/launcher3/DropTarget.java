@@ -21,54 +21,74 @@ import android.graphics.Rect;
 
 /**
  * Interface defining an object that can receive a drag.
- *
+ * 可放置拖动对象的容器
  */
 public interface DropTarget {
 
-    public static final String TAG = "DropTarget";
+    String TAG = "DropTarget";
 
-    public static class DragObject {
+    // 被拖拽的对象
+    class DragObject {
         public int x = -1;
         public int y = -1;
 
-        /** X offset from the upper-left corner of the cell to where we touched.  */
+        /**
+         * X offset from the upper-left corner of the cell to where we touched.
+         */
         public int xOffset = -1;
 
-        /** Y offset from the upper-left corner of the cell to where we touched.  */
+        /**
+         * Y offset from the upper-left corner of the cell to where we touched.
+         */
         public int yOffset = -1;
 
-        /** This indicates whether a drag is in final stages, either drop or cancel. It
+        /**
+         * This indicates whether a drag is in final stages, either drop or cancel. It
          * differentiates onDragExit, since this is called when the drag is ending, above
          * the current drag target, or when the drag moves off the current drag object.
          */
         public boolean dragComplete = false;
 
-        /** The view that moves around while you drag.  */
+        /**
+         * The view that moves around while you drag.
+         */
         public DragView dragView = null;
 
-        /** The data associated with the object being dragged */
+        /**
+         * The data associated with the object being dragged
+         */
         public Object dragInfo = null;
 
-        /** Where the drag originated */
+        /**
+         * Where the drag originated
+         */
         public DragSource dragSource = null;
 
-        /** The object is part of an accessible drag operation */
+        /**
+         * The object is part of an accessible drag operation
+         */
         public boolean accessibleDrag;
 
-        /** Post drag animation runnable */
+        /**
+         * Post drag animation runnable
+         */
         public Runnable postAnimationRunnable = null;
 
-        /** Indicates that the drag operation was cancelled */
+        /**
+         * Indicates that the drag operation was cancelled
+         */
         public boolean cancelled = false;
 
-        /** Defers removing the DragView from the DragLayer until after the drop animation. */
+        /**
+         * Defers removing the DragView from the DragLayer until after the drop animation.
+         */
         public boolean deferDragViewCleanupPostAnimation = true;
 
         public DragObject() {
         }
 
         /**
-         * This is used to compute the visual center of the dragView. This point is then
+         * This is used to compute the visual（视觉） center of the dragView. This point is then
          * used to visualize drop locations and determine where to drop an item. The idea is that
          * the visual center represents the user's interpretation of where the item is, and hence
          * is the appropriate point to use when determining drop location.
@@ -100,16 +120,31 @@ public interface DropTarget {
 
     /**
      * Handle an object being dropped on the DropTarget
+     * dragObject被放置到dropTarget时的回调。
      *
      * @param dragObject The data associated with the object being dragged
-     *
      */
     void onDrop(DragObject dragObject);
 
+    /**
+     * dragObject被拖动进入到一个dropTarget的时候的回调。
+     *
+     * @param dragObject The data associated with the object being dragged
+     */
     void onDragEnter(DragObject dragObject);
 
+    /**
+     * dragObject在上一次位置和这一次位置所处的dropTarget相同的时候的回调。
+     *
+     * @param dragObject The data associated with the object being dragged
+     */
     void onDragOver(DragObject dragObject);
 
+    /**
+     * dragObject被拖出dropTarget时的回调。
+     *
+     * @param dragObject The data associated with the object being dragged
+     */
     void onDragExit(DragObject dragObject);
 
     /**
@@ -131,7 +166,10 @@ public interface DropTarget {
 
     // These methods are implemented in Views
     void getHitRectRelativeToDragLayer(Rect outRect);
+
     void getLocationInDragLayer(int[] loc);
+
     int getLeft();
+
     int getTop();
 }

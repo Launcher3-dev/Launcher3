@@ -23,48 +23,7 @@
 
 ## 六.拖拽(应用拖拽到桌面,合成文件夹,桌面上图标和widget的拖拽)
 
-1.Launcher:
-
--->onLongClick
-
--->mWorkspace.startDrag
-
--->beginDragShared
-
--->mDragController.startDrag
-
--->handleMoveEvent
-
--->checkTouchMove
-
--->dropTarget.onDragEnter
-
--->dropTarget.onDragOver(-->ButtonDropTarget&Folder&Workspace)
-
-2.WidgetsContainerView:
-
--->onLongClick
-
--->beginDragging
-
--->beginDraggingWidget
-
--->mDragController.startDrag
-
--->startDrag
-
--->DragListener.onDragStart
-
--->handleMoveEvent
-
--->checkTouchMove
-
--->DropTarget.onDragExit
-
--->DropTarget.onDragEnter
-
--->DropTarget.onDragOver
-
+详解:[墨香带你学Launcher之（六）--拖拽](http://www.codemx.cn/2016/11/21/Launcher06/)
 
 ## 七.小部件的加载和添加
 

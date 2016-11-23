@@ -20,6 +20,7 @@ import android.view.View;
 
 /**
  * Interface defining an object that can originate a drag.
+ * 可拖动的对象来源的容器
  */
 public interface DragSource {
 

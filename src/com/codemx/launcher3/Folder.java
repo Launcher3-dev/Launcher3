@@ -58,6 +58,7 @@ import com.codemx.launcher3.Workspace.ItemOperator;
 import com.codemx.launcher3.accessibility.LauncherAccessibilityDelegate.AccessibilityDragSource;
 import com.codemx.launcher3.util.Thunk;
 import com.codemx.launcher3.util.UiThreadCircularReveal;
+import com.mxlibrary.utils.XLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -606,10 +607,13 @@ public class Folder extends LinearLayout implements DragSource, View.OnClickList
     }
 
     @Override
-    public void onDragStart(DragSource source, Object info, int dragAction) { }
+    public void onDragStart(DragSource source, Object info, int dragAction) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
+    }
 
     @Override
     public void onDragEnd() {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         if (mIsExternalDrag && mDragInProgress) {
             completeDragExit();
         }
@@ -654,7 +658,9 @@ public class Folder extends LinearLayout implements DragSource, View.OnClickList
         oa.start();
     }
 
+    @Override
     public boolean acceptDrop(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         final ItemInfo item = (ItemInfo) d.dragInfo;
         final int itemType = item.itemType;
         return ((itemType == LauncherSettings.Favorites.ITEM_TYPE_APPLICATION ||
@@ -662,7 +668,9 @@ public class Folder extends LinearLayout implements DragSource, View.OnClickList
                     !isFull());
     }
 
+    @Override
     public void onDragEnter(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         mPrevTargetRank = -1;
         mOnExitAlarm.cancelAlarm();
         // Get the area offset such that the folder only closes if half the drag icon width
@@ -684,6 +692,7 @@ public class Folder extends LinearLayout implements DragSource, View.OnClickList
 
     @Override
     public void onDragOver(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         onDragOver(d, REORDER_DELAY);
     }
 
@@ -694,6 +703,7 @@ public class Folder extends LinearLayout implements DragSource, View.OnClickList
     }
 
     @Thunk void onDragOver(DragObject d, int reorderDelay) {
+
         if (mScrollPauseAlarm.alarmPending()) {
             return;
         }
@@ -774,6 +784,7 @@ public class Folder extends LinearLayout implements DragSource, View.OnClickList
     }
 
     public void onDragExit(DragObject d) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU);
         // We only close the folder if this is a true drag exit, ie. not because
         // a drop has occurred above the folder.
         if (!d.dragComplete) {
