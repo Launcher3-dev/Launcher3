@@ -325,7 +325,8 @@ public class WidgetPreviewLoader {
         return null;
     }
 
-    @Thunk Bitmap generatePreview(Launcher launcher, Object info, Bitmap recycle,
+    @Thunk
+    Bitmap generatePreview(Launcher launcher, Object info, Bitmap recycle,
             int previewWidth, int previewHeight) {
         if (info instanceof LauncherAppWidgetProviderInfo) {
             return generateWidgetPreview(launcher, (LauncherAppWidgetProviderInfo) info,

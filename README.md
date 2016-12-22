@@ -1,34 +1,19 @@
 # Launcher代码分析
 ---
 
-## 一.概述
+#### 一.[墨香带你学Launcher之（一）--概述](http://www.codemx.cn/2016/07/30/Launcher01/)
 
-概述:[墨香带你学Launcher之（一）--概述](http://www.codemx.cn/2016/07/30/Launcher01/)
+#### 二.[墨香带你学Launcher之（二）-数据加载流程](http://www.codemx.cn/2016/08/05/Launcher02/)
 
-## 二.数据加载流程分析:
+#### 三.[墨香带你学Launcher之（三）-绑定屏幕、图标、文件夹和Widget](http://www.codemx.cn/2016/08/14/Launcher03/)
 
-详解:[墨香带你学Launcher之（二）-数据加载流程](http://www.codemx.cn/2016/08/05/Launcher02/)
+#### 四.[墨香带你学Launcher之(四)-应用安装、更新、卸载时的数据加载](http://www.codemx.cn/2016/08/21/Launcher04/)
 
-## 三.绑定屏幕、图标、小部件以及文件夹:
+#### 五.[墨香带你学Launcher之（五）-Workspace滑动](http://www.codemx.cn/2016/10/16/Launcher05/)
 
-详解:[墨香带你学Launcher之（三）-绑定屏幕、图标、文件夹和Widget](http://www.codemx.cn/2016/08/14/Launcher03/)
+#### 六.[墨香带你学Launcher之（六）--拖拽](http://www.codemx.cn/2016/11/21/Launcher06/)
 
-## 四.安装,更新,卸载应用数据加载
+#### 七.[墨香带你学Launcher之（七）--小部件的加载、添加以及大小调节](http://www.codemx.cn/2016/12/18/Launcher07/)
 
-详解:[墨香带你学Launcher之(四)-应用安装、更新、卸载时的数据加载](http://www.codemx.cn/2016/08/21/Launcher04/)
+#### 八.更换壁纸,更改icon以及界面布局
 
-## 五.Workspace的滑动
-
-详解:[墨香带你学Launcher之（五）-Workspace滑动](http://www.codemx.cn/2016/10/16/Launcher05/)
-
-## 六.拖拽(应用拖拽到桌面,合成文件夹,桌面上图标和widget的拖拽)
-
-详解:[墨香带你学Launcher之（六）--拖拽](http://www.codemx.cn/2016/11/21/Launcher06/)
-
-## 七.小部件的加载和添加
-
-## 八.更换壁纸,更改icon以及界面布局
-
-## 九.Widget大小调节:
-
-DragLayer-->addResizeFrame

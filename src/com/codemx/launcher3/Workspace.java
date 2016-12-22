@@ -3804,7 +3804,6 @@ public class Workspace extends PagedView
                 endStyle = DragLayer.ANIMATION_END_REMAIN_VISIBLE;
             } else {
                 endStyle = DragLayer.ANIMATION_END_DISAPPEAR;
-                ;
             }
 
             Runnable onComplete = new Runnable() {
