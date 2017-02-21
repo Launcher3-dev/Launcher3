@@ -750,7 +750,8 @@ public class CellLayout extends ViewGroup implements BubbleTextShadowHandler {
     }
 
     /**
-     * Given a cell coordinate and span return the point that represents the center of the regio
+     * Given a cell coordinate and span return the point that represents the center of the region
+     * 计算所给View的中心位置
      *
      * @param cellX X coordinate of the cell
      * @param cellY Y coordinate of the cell

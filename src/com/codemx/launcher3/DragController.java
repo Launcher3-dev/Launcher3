@@ -461,7 +461,6 @@ public class DragController {
      * Call this from a drag source view.
      */
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
         @SuppressWarnings("all") // suppress dead code warning
         final boolean debug = false;
         if (debug) {
@@ -612,7 +611,6 @@ public class DragController {
      */
     public boolean onTouchEvent(MotionEvent ev) {
 
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
         if (!mDragging || mIsAccessibleDrag) {
             return false;
         }

@@ -51,6 +51,7 @@ import com.codemx.photos.BitmapRegionTileSource;
 import com.codemx.photos.BitmapRegionTileSource.BitmapSource;
 import com.codemx.photos.BitmapRegionTileSource.BitmapSource.InBitmapProvider;
 import com.codemx.photos.views.TiledImageRenderer;
+import com.mxlibrary.utils.XLog;
 
 import java.util.Collections;
 import java.util.Set;
@@ -90,7 +91,7 @@ public class WallpaperCropActivity extends BaseActivity implements Handler.Callb
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        XLog.e(XLog.getTag(),XLog.TAG_GU + "wallpaper----");
         mLoaderThread = new HandlerThread("wallpaper_loader");
         mLoaderThread.start();
         mLoaderHandler = new Handler(mLoaderThread.getLooper(), this);

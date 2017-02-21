@@ -41,7 +41,6 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Region.Op;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -177,6 +176,7 @@ public class Workspace extends PagedView
     private int[] mTempCell = new int[2];
     private int[] mTempPt = new int[2];
     private int[] mTempEstimate = new int[2];
+    //被拖拽View的中心位置
     @Thunk
     float[] mDragViewVisualCenter = new float[2];
     private float[] mTempCellLayoutCenterCoordinates = new float[2];
@@ -409,7 +409,7 @@ public class Workspace extends PagedView
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragStart", 0, 0);
         }
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
+        XLog.e(XLog.getTag(), XLog.TAG_GU);
         mIsDragOccuring = true;
         updateChildrenLayersEnabled(false);
         mLauncher.lockScreenOrientation();
@@ -436,7 +436,7 @@ public class Workspace extends PagedView
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragEnd", 0, 0);
         }
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
+        XLog.e(XLog.getTag(), XLog.TAG_GU);
         if (!mDeferRemoveExtraEmptyScreen) {
             removeExtraEmptyScreen(true, mDragSourceInternal != null);
         }
@@ -2375,7 +2375,7 @@ public class Workspace extends PagedView
 
     public void beginDragShared(View child, Point relativeTouchPos, DragSource source,
                                 boolean accessible) {
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
+        XLog.e(XLog.getTag(), XLog.TAG_GU);
         child.clearFocus();
         child.setPressed(false);
 
@@ -2427,7 +2427,7 @@ public class Workspace extends PagedView
                     padding.get() / 2 - child.getPaddingTop());
             dragRect = new Rect(0, child.getPaddingTop(), child.getWidth(), previewSize);
         }
-        XLog.e(XLog.getTag(),XLog.TAG_GU + dragLayerX + "    " + dragLayerY );
+        XLog.e(XLog.getTag(), XLog.TAG_GU + dragLayerX + "    " + dragLayerY);
         // Clear the pressed state if necessary
         if (child instanceof BubbleTextView) {
             BubbleTextView icon = (BubbleTextView) child;
@@ -2508,7 +2508,7 @@ public class Workspace extends PagedView
      * {@inheritDoc}
      */
     public boolean acceptDrop(DragObject d) {
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
+        XLog.e(XLog.getTag(), XLog.TAG_GU);
         // If it's an external drop (e.g. from All Apps), check if it should be accepted
         CellLayout dropTargetLayout = mDropToLayout;
         if (d.dragSource != this) {
@@ -2593,14 +2593,28 @@ public class Workspace extends PagedView
         return true;
     }
 
+    /**
+     * 是否要创建文件夹
+     *
+     * @param info            拖拽对象信息
+     * @param target          目标CellLayout
+     * @param targetCell      最近位置的坐标
+     * @param distance        拖拽对象到最近位置的距离
+     * @param considerTimeout 是否超时
+     *
+     * @return 是否可以创建文件夹
+     */
     boolean willCreateUserFolder(ItemInfo info, CellLayout target, int[] targetCell, float
             distance, boolean considerTimeout) {
+        XLog.e(XLog.getTag(),XLog.TAG_GU + distance);
         if (distance > mMaxDistanceForFolderCreation) return false;
+        //最近位置的view
         View dropOverView = target.getChildAt(targetCell[0], targetCell[1]);
 
         if (dropOverView != null) {
             CellLayout.LayoutParams lp = (CellLayout.LayoutParams) dropOverView.getLayoutParams();
-            if (lp.useTmpCoords && (lp.tmpCellX != lp.cellX || lp.tmpCellY != lp.tmpCellY)) {
+//            XLog.e(XLog.getTag(),XLog.TAG_GU + lp.useTmpCoords + "   "+ lp.tmpCellX + "   "+lp.cellX);
+            if (lp.useTmpCoords && (lp.tmpCellX != lp.cellX || lp.tmpCellY != lp.cellY)) {
                 return false;
             }
         }
@@ -2724,7 +2738,7 @@ public class Workspace extends PagedView
     }
 
     public void onDrop(final DragObject d) {
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
+        XLog.e(XLog.getTag(), XLog.TAG_GU);
         mDragViewVisualCenter = d.getVisualCenter(mDragViewVisualCenter);
         CellLayout dropTargetLayout = mDropToLayout;
 
@@ -2949,7 +2963,7 @@ public class Workspace extends PagedView
 
     @Override
     public void onDragEnter(DragObject d) {
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
+        XLog.e(XLog.getTag(), XLog.TAG_GU);
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragEnter", 1, 1);
         }
@@ -3010,7 +3024,7 @@ public class Workspace extends PagedView
 
     @Override
     public void onDragExit(DragObject d) {
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
+        XLog.e(XLog.getTag(), XLog.TAG_GU);
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enfoceDragParity("onDragExit", -1, 0);
         }
@@ -3270,7 +3284,6 @@ public class Workspace extends PagedView
     }
 
     public void onDragOver(DragObject d) {
-        XLog.e(XLog.getTag(),XLog.TAG_GU);
         // Skip drag over events while we are dragging over side pages
         if (mInScrollArea || !transitionStateShouldAllowDrop()) return;
 
@@ -3354,12 +3367,13 @@ public class Workspace extends PagedView
 
             setCurrentDropOverCell(mTargetCell[0], mTargetCell[1]);
 
+            // 计算拖拽View和最近View的中心位置
             float targetCellDistance = mDragTargetLayout.getDistanceFromCell(
                     mDragViewVisualCenter[0], mDragViewVisualCenter[1], mTargetCell);
 
             final View dragOverView = mDragTargetLayout.getChildAt(mTargetCell[0],
                     mTargetCell[1]);
-
+            //文件夹管理反馈：（1）在拖动图标过程中是否合成文件夹（2）在拖动图标过程中是否添加已存在的文件夹
             manageFolderFeedback(info, mDragTargetLayout, mTargetCell,
                     targetCellDistance, dragOverView, d.accessibleDrag);
 
@@ -3398,8 +3412,19 @@ public class Workspace extends PagedView
         }
     }
 
+    /**
+     * 文件夹管理反馈：（1）在拖动图标过程中是否合成文件夹（2）在拖动图标过程中是否添加已存在的文件夹
+     *
+     * @param info           拖动的对象信息
+     * @param targetLayout   目标CellLayout
+     * @param targetCell     图标拖动某一位置最近的可放置图标的站位坐标（可能被占用）
+     * @param distance       拖动图标到最近位置的距离
+     * @param dragOverView   拖动图标最近位置的图标
+     * @param accessibleDrag 是否接受放置
+     */
     private void manageFolderFeedback(ItemInfo info, CellLayout targetLayout,
                                       int[] targetCell, float distance, View dragOverView, boolean accessibleDrag) {
+        //是否可以创建文件夹，如果可以则会显示文件夹的背景
         boolean userFolderPending = willCreateUserFolder(info, targetLayout, targetCell, distance,
                 false);
         if (mDragMode == DRAG_MODE_NONE && userFolderPending &&
@@ -3417,6 +3442,7 @@ public class Workspace extends PagedView
             return;
         }
 
+        //是否可以添加到存在的文件夹里面
         boolean willAddToFolder =
                 willAddToExistingUserFolder(info, targetLayout, targetCell, distance);
 
