@@ -13,9 +13,9 @@
 ### 4.预览图
 
 <img width="320" src="/art/launcher1.jpg"/>
-<img width="320" src="/art/launcher2.jpg"/>
+<img width="320" src="/art/launcher2.jpg"/style='float:left>
 <img width="320" src="/art/launcher3.jpg"/>
-<img width="320" src="/art/launcher4.jpg"/>
+<img width="320" src="/art/launcher4.jpg"/style='float:left>
 <img width="320" src="/art/launcher5.jpg"/>
 
 
