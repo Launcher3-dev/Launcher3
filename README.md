@@ -14,17 +14,6 @@
 
 #### 3.如果不能安装，修改包名以及provider的设置名称
 
-#### 4.预览图
-
-<img width="320" src="/art/launcher1.jpg"/>    <img width="320" src="/art/launcher2.jpg"/>
-
-<img width="320" src="/art/launcher3.jpg"/>    <img width="320" src="/art/launcher4.jpg"/>
-
-<img width="320" src="/art/launcher5.jpg"/>
-
-
-#### 5.修改包名：
-
 * build.gradle中的 applicationId 'com.android.launcher3'改成对应包名
 
 * AndroidManifest.xml中的所有"com.android.launcher3"的改成对应的包名
@@ -56,3 +45,13 @@ provider中的android:authorities="com.android.launcher3.settings"以及 android
 中的"com.android.launcher3"改成对应包名
 
 * 其实就是所有"com.android.launcher3"的都改，没有"3"的都不改
+
+#### 4.预览图
+
+<img width="320" src="/art/launcher1.jpg"/>    <img width="320" src="/art/launcher2.jpg"/>
+
+<img width="320" src="/art/launcher3.jpg"/>    <img width="320" src="/art/launcher4.jpg"/>
+
+<img width="320" src="/art/launcher5.jpg"/>
+
+
