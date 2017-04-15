@@ -14,21 +14,14 @@
 #
 
 LOCAL_PATH := $(call my-dir)
-
-src_dirs := src
-res_dirs := res
-
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_RESOURCE_DIR := $(addprefix $(LOCAL_PATH)/, $(res_dirs))
-LOCAL_AAPT_FLAGS := --auto-add-overlay
 
-LOCAL_SDK_VERSION := 21
+LOCAL_SDK_VERSION := current
 
 LOCAL_PACKAGE_NAME := Launcher3Tests
 

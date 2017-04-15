@@ -16,14 +16,15 @@
 <TextView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/search_market_text"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="48dp"
-    android:gravity="start|center_vertical"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
+    android:gravity="center"
+    android:paddingLeft="@dimen/container_fastscroll_thumb_max_width"
+    android:paddingRight="@dimen/container_fastscroll_thumb_max_width"
     android:fontFamily="sans-serif-medium"
     android:textSize="14sp"
-    android:textColor="@color/launcher_accent_color"
+    android:textColor="?android:attr/colorAccent"
+    android:text="@string/all_apps_search_market_message"
     android:textAllCaps="true"
-    android:focusable="false"
-    android:background="@drawable/all_apps_search_market_bg" />
+    android:focusable="true"
+    android:background="?android:selectableItemBackground" />

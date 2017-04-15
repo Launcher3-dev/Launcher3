@@ -3,43 +3,54 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.0'
+        classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
     }
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion '25.0.0'
+    compileSdkVersion 25
+    buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId "com.codemx.launcher3"
-        minSdkVersion 16
-        targetSdkVersion 23
+        minSdkVersion 21
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         debug {
             minifyEnabled false
         }
     }
-    sourceSets {
-        main {
-            res.srcDirs = ['res', 'WallpaperPicker/res']
-            main.java.srcDirs = ['src', 'WallpaperPicker/src']
-            manifest.srcFile 'AndroidManifest.xml'
 
+    productFlavors {
+        aosp {
+            applicationId 'com.android.launcher3'
+            testApplicationId 'com.android.launcher3.tests'
         }
     }
-    dexOptions {
-        incremental true
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+    sourceSets {
+        main {
+            res.srcDirs = ['res']
+            java.srcDirs = ['src', 'src_config']
+            manifest.srcFile 'AndroidManifest-common.xml'
+            proto.srcDirs 'protos/'
+        }
+
+        androidTest {
+            java.srcDirs = ['tests/src']
+            manifest.srcFile "tests/AndroidManifest.xml"
+        }
+
+        aosp {
+            manifest.srcFile "AndroidManifest.xml"
+        }
     }
 }
 
@@ -48,9 +59,31 @@ repositories {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:24.0.0'
-    compile 'com.android.support:recyclerview-v7:24.0.0'
+    compile 'com.android.support:support-v4:23.1.1'
+    compile 'com.android.support:recyclerview-v7:23.1.1'
+    compile 'com.android.support:palette-v7:23.2.0'
     compile 'com.google.protobuf.nano:protobuf-javanano:3.0.0-alpha-2'
-    compile project(':mxlibrary')
+
+    testCompile 'junit:junit:4.12'
+    androidTestCompile 'com.android.support.test:runner:0.5'
+    androidTestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
+    androidTestCompile 'com.android.support:support-annotations:23.2.0'
 }
 
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3'
+
+        generateProtoTasks {
+            all().each { task ->
+                task.builtins {
+                    remove java
+                    javanano {
+                        option 'ignore_services=false'
+                    }
+                }
+            }
+        }
+    }
+}

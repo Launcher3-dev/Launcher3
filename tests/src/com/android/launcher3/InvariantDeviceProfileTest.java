@@ -15,14 +15,13 @@
  */
 package com.android.launcher3;
 
+import android.content.res.Resources;
+import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
-
-import com.android.launcher3.DeviceProfile;
-import com.android.launcher3.InvariantDeviceProfile;
-import com.android.launcher3.util.FocusLogic;
 
 import java.util.ArrayList;
 
@@ -42,7 +41,7 @@ public class InvariantDeviceProfileTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mInvariantProfile = new InvariantDeviceProfile(getContext());
-        mPredefinedDeviceProfiles = mInvariantProfile.getPredefinedDeviceProfiles();
+        mPredefinedDeviceProfiles = mInvariantProfile.getPredefinedDeviceProfiles(getContext());
     }
 
     @Override
@@ -52,9 +51,12 @@ public class InvariantDeviceProfileTest extends AndroidTestCase {
 
     public void testFindClosestDeviceProfile2() {
         for (InvariantDeviceProfile idf: mPredefinedDeviceProfiles) {
+            ArrayList<InvariantDeviceProfile> predefinedProfilesCopy =
+                    new ArrayList<>(mPredefinedDeviceProfiles);
             ArrayList<InvariantDeviceProfile> closestProfiles =
                     mInvariantProfile.findClosestDeviceProfiles(
-                            idf.minWidthDps, idf.minHeightDps, mPredefinedDeviceProfiles);
+                            idf.minWidthDps, idf.minHeightDps, predefinedProfilesCopy
+                    );
             assertTrue(closestProfiles.get(0).equals(idf));
         }
     }
@@ -106,15 +108,9 @@ public class InvariantDeviceProfileTest extends AndroidTestCase {
         if (!android.os.Build.DEVICE.equals("hammerhead")) {
             return;
         }
-        assertEquals(mInvariantProfile.numRows, 4);
-        assertEquals(mInvariantProfile.numColumns, 4);
-        assertEquals((int) mInvariantProfile.numHotseatIcons, 5);
-
-        DeviceProfile landscapeProfile = mInvariantProfile.landscapeProfile;
-        DeviceProfile portraitProfile = mInvariantProfile.portraitProfile;
-
-        assertEquals(portraitProfile.allAppsNumCols, 3);
-        assertEquals(landscapeProfile.allAppsNumCols, 5); // not used
+        assertEquals(4, mInvariantProfile.numRows);
+        assertEquals(4, mInvariantProfile.numColumns);
+        assertEquals(5, mInvariantProfile.numHotseatIcons);
     }
 
     // Add more tests for other devices, however, running them once on a single device is enough

@@ -19,18 +19,18 @@
     android:id="@+id/widgets_cell_list_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/widgets_cell_color"
+    android:background="?android:attr/colorPrimary"
     android:orientation="vertical"
     android:focusable="true"
     android:descendantFocusability="afterDescendants">
 
     <!-- Section info -->
 
-    <com.codemx.launcher3.BubbleTextView
+    <com.android.launcher3.BubbleTextView
         android:id="@+id/section"
         android:layout_width="match_parent"
         android:layout_height="@dimen/widget_section_height"
-        android:background="@color/quantum_panel_bg_color_dark"
+        android:background="?attr/colorSecondary"
         android:drawablePadding="@dimen/widget_section_horizontal_padding"
         android:ellipsize="end"
         android:focusable="true"
@@ -51,7 +51,7 @@
 
     <HorizontalScrollView
         android:id="@+id/widgets_scroll_container"
-        android:theme="@style/Theme.Dark.CustomOverscroll"
+        android:theme="@style/CustomOverscroll.Dark"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:scrollbars="none">
@@ -59,8 +59,8 @@
             android:id="@+id/widgets_cell_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/widget_row_padding"
-            android:layout_marginLeft="@dimen/widget_row_padding"
+            android:paddingStart="@dimen/widget_row_padding"
+            android:paddingEnd="0dp"
             android:orientation="horizontal"
             android:divider="@drawable/widgets_row_divider"
             android:showDividers="middle"/>

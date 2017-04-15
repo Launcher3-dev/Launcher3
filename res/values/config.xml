@@ -8,33 +8,29 @@
     <bool name="is_tablet">false</bool>
     <bool name="is_large_tablet">false</bool>
     <bool name="allow_rotation">false</bool>
-    <bool name="set_default">false</bool>
 
-    <!-- Max number of page indicators to show -->
-    <integer name="config_maxNumberOfPageIndicatorsToShow">21</integer>
-
-    <!-- App data backup and restore. To enble backup, register with an android backup service.
-         http://developer.android.com/guide/topics/data/backup.html#BackupKey -->
-    <bool name="enable_backup">false</bool>
+    <!-- A string pointer to the original app name string. This allows derived projects to
+     easily override the app name without providing all translations -->
+    <string name="derived_app_name" translatable="false">@string/app_name</string>
 
 <!-- DragController -->
-    <integer name="config_flingToDeleteMinVelocity">-1500</integer>
     <item type="id" name="drag_event_parity" />
 
 <!-- AllApps & Launcher transitions -->
     <!-- The alpha of the AppsCustomize bg in spring loaded mode -->
-    <integer name="config_workspaceScrimAlpha">55</integer>
+    <integer name="config_workspaceScrimAlpha">30</integer>
     <integer name="config_allAppsTransitionTime">100</integer>
     <integer name="config_overviewTransitionTime">250</integer>
 
     <!-- Out of 100, the percent to shrink the workspace during spring loaded mode. -->
-    <integer name="config_workspaceSpringLoadShrinkPercentage">80</integer>
+    <integer name="config_workspaceSpringLoadShrinkPercentage">90</integer>
     <!-- Out of 100, the percent to shrink the workspace during overview mode. -->
     <integer name="config_workspaceOverviewShrinkPercentage">70</integer>
 
     <!-- Fade/zoom in/out duration & scale in a Launcher overlay transition.
          Note: This should be less than the config_overlayTransitionTime as they happen together. -->
     <integer name="config_overlayRevealTime">220</integer>
+    <integer name="config_overlaySlideRevealTime">320</integer>
     <integer name="config_overlayTransitionTime">300</integer>
     <integer name="config_overlayItemsAlphaStagger">60</integer>
 
@@ -42,7 +38,8 @@
          is used for internal (baked-in) padding -->
     <integer name="config_allAppsButtonPaddingPercent">17</integer>
 
-    <integer name="config_workspaceDefaultScreen">0</integer>
+    <!-- The duration of the animation from search hint to text entry -->
+    <integer name="config_searchHintAnimationDuration">50</integer>
 
 <!-- Workspace -->
     <!-- The duration (in ms) of the fade animation on the object outlines, used when
@@ -65,22 +62,41 @@
     <!-- The distance at which the animation should take the max duration -->
     <integer name="config_dropAnimMaxDist">800</integer>
 
+    <!-- The duration of the caret animation -->
+    <integer name="config_caretAnimationDuration">200</integer>
+
 <!-- Hotseat -->
     <bool name="hotseat_transpose_layout_with_orientation">true</bool>
 
-    <!-- Memory debugging, including a memory dump icon -->
-    <bool name="debug_memory_enabled">false</bool>
-
-    <!-- Name of a subclass of AppFilter used to
+    <!-- Name of a subclass of com.android.launcher3.AppFilter used to
          filter the activities shown in the launcher. Can be empty. -->
     <string name="app_filter_class" translatable="false"></string>
 
-    <!-- Name of a subclass of BuildInfo used to
-         get build information. Can be empty. -->
-    <string name="build_info_class" translatable="false"></string>
+    <!-- List of package names that com.android.launcher3.action.LAUNCH
+     should be targeting. Can be empty. -->
+    <array name="launch_broadcast_targets" translatable="false"></array>
+
+    <!-- Name of an icon provider class. -->
+    <string name="icon_provider_class" translatable="false"></string>
+
+    <!-- Package name of the default wallpaper picker. -->
+    <string name="wallpaper_picker_package" translatable="false"></string>
 
     <!-- View ID to use for QSB widget -->
     <item type="id" name="qsb_widget" />
+
+    <!-- View ID to use for blocked area on the first screen -->
+    <item type="id" name="workspace_blocked_row" />
+
+    <!-- View ID used by cell layout to jail its content -->
+    <item type="id" name="cell_layout_jail_id" />
+
+<!-- Deep shortcuts -->
+    <integer name="config_deepShortcutOpenDuration">220</integer>
+    <integer name="config_deepShortcutArrowOpenDuration">80</integer>
+    <integer name="config_deepShortcutOpenStagger">40</integer>
+    <integer name="config_deepShortcutCloseDuration">150</integer>
+    <integer name="config_deepShortcutCloseStagger">20</integer>
 
 <!-- Accessibility actions -->
     <item type="id" name="action_remove" />
@@ -92,4 +108,5 @@
     <item type="id" name="action_move_screen_backwards" />
     <item type="id" name="action_move_screen_forwards" />
     <item type="id" name="action_resize" />
+    <item type="id" name="action_deep_shortcuts" />
 </resources>
