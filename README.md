@@ -1,4 +1,8 @@
+## Launcher3
+
 ### 1.基于最新Launcher_7.1.1_r38版本
+
+    原始版本在分支里面：[launcher3_6.0](https://github.com/yuchuangu85/Launcher3_mx/tree/launcher3_6.0)
 
 ### 2.修改配置：
 
@@ -12,8 +16,10 @@
 
 ### 4.预览图
 
-<img width="320" src="/art/launcher1.jpg"/> <img width="320" src="/art/launcher2.jpg"/>
-<img width="320" src="/art/launcher3.jpg"/> <img width="320" src="/art/launcher4.jpg"/>
+<img width="320" src="/art/launcher1.jpg"/>    <img width="320" src="/art/launcher2.jpg"/>
+
+<img width="320" src="/art/launcher3.jpg"/>    <img width="320" src="/art/launcher4.jpg"/>
+
 <img width="320" src="/art/launcher5.jpg"/>
 
 
