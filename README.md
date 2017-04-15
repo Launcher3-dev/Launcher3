@@ -18,6 +18,6 @@
 ![launcher4 -w200](/art/launcher4.jpg)
 ![launcher5 -w200](/art/launcher5.jpg)
 
-<img width="150" height="150" src="/art/launcher5.jpg"/>
+<img width="200" src="/art/launcher5.jpg"/>
 
 
