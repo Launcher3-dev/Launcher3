@@ -12,12 +12,10 @@
 
 ### 4.预览图
 
-![launcher1 -w200](/art/launcher1.jpg)
-![launcher2 -w200](/art/launcher2.jpg)
-![launcher3 -w200](/art/launcher3.jpg)
-![launcher4 -w200](/art/launcher4.jpg)
-![launcher5 -w200](/art/launcher5.jpg)
-
-<img width="200" src="/art/launcher5.jpg"/>
+<img width="320" src="/art/launcher1.jpg"/>
+<img width="320" src="/art/launcher2.jpg"/>
+<img width="320" src="/art/launcher3.jpg"/>
+<img width="320" src="/art/launcher4.jpg"/>
+<img width="320" src="/art/launcher5.jpg"/>
 
 
