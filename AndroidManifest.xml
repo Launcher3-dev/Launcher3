@@ -18,7 +18,7 @@
 */
 -->
 <manifest
-    package="com.codemx.launcher3"
+    package="com.android.launcher3"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-sdk
@@ -35,13 +35,13 @@
     name in the permissions. eq com.mypackage.permission.READ_SETTINGS
     -->
     <permission
-        android:name="com.codemx.launcher3.permission.READ_SETTINGS"
+        android:name="com.android.launcher3.permission.READ_SETTINGS"
         android:description="@string/permdesc_read_settings"
         android:label="@string/permlab_read_settings"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
         android:protectionLevel="normal"/>
     <permission
-        android:name="com.codemx.launcher3.permission.WRITE_SETTINGS"
+        android:name="com.android.launcher3.permission.WRITE_SETTINGS"
         android:description="@string/permdesc_write_settings"
         android:label="@string/permlab_write_settings"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
@@ -49,11 +49,11 @@
 
     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS"/>
     <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS"/>
-    <uses-permission android:name="com.codemx.launcher3.permission.READ_SETTINGS"/>
-    <uses-permission android:name="com.codemx.launcher3.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="com.android.launcher3.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.android.launcher3.permission.WRITE_SETTINGS"/>
 
     <application
-        android:backupAgent="com.codemx.launcher3.LauncherBackupAgent"
+        android:backupAgent="com.android.launcher3.LauncherBackupAgent"
         android:fullBackupContent="@xml/backupscheme"
         android:fullBackupOnly="true"
         android:hardwareAccelerated="true"
@@ -93,7 +93,7 @@
         The settings activity. When extending keep the intent filter present
         -->
         <activity
-            android:name="com.codemx.launcher3.SettingsActivity"
+            android:name="com.android.launcher3.SettingsActivity"
             android:autoRemoveFromRecents="true"
             android:label="@string/settings_button_text">
             <intent-filter>
@@ -108,11 +108,11 @@
         represent the package name.
         -->
         <provider
-            android:name="com.codemx.launcher3.LauncherProvider"
-            android:authorities="com.codemx.launcher3.settings"
+            android:name="com.android.launcher3.LauncherProvider"
+            android:authorities="com.android.launcher3.settings"
             android:exported="true"
-            android:readPermission="com.codemx.launcher3.permission.READ_SETTINGS"
-            android:writePermission="com.codemx.launcher3.permission.WRITE_SETTINGS"/>
+            android:readPermission="com.android.launcher3.permission.READ_SETTINGS"
+            android:writePermission="com.android.launcher3.permission.WRITE_SETTINGS"/>
 
         <!-- ENABLE_FOR_TESTING
 

@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<com.codemx.launcher3.BubbleTextView
+<com.android.launcher3.BubbleTextView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:launcher="http://schemas.android.com/apk/res-auto"
     style="@style/Icon.AllApps"

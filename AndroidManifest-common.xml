@@ -18,7 +18,7 @@
 */
 -->
 <manifest
-    package="com.codemx.launcher3"
+    package="com.android.launcher3"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-sdk
@@ -48,7 +48,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
-        android:backupAgent="com.codemx.launcher3.LauncherBackupAgent"
+        android:backupAgent="com.android.launcher3.LauncherBackupAgent"
         android:fullBackupContent="@xml/backupscheme"
         android:fullBackupOnly="true"
         android:hardwareAccelerated="true"

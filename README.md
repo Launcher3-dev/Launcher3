@@ -19,18 +19,18 @@
 * AndroidManifest.xml中的所有"com.android.launcher3"的改成对应的包名
 
 * 代码中ProviderConfig.java中的"com.android.launcher3.settings"改成对应包名，同时修改AndroidManifest中的
-provider中的android:authorities="com.android.launcher3.settings"以及 android:name="com.codemx.launcher3.LauncherProvider"
+provider中的android:authorities="com.android.launcher3.settings"以及 android:name="com.android.launcher3.LauncherProvider"
 改成对应包名，以及provider中的writePermission和readPermission权限的包名也要改成对应包名，这个权限对应：
 
     <permission
-        android:name="com.codemx.launcher3.permission.READ_SETTINGS"
+        android:name="com.android.launcher3.permission.READ_SETTINGS"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
         android:protectionLevel="normal"
         android:label="@string/permlab_read_settings"
         android:description="@string/permdesc_read_settings"/>
         
     <permission
-        android:name="com.codemx.launcher3.permission.WRITE_SETTINGS"
+        android:name="com.android.launcher3.permission.WRITE_SETTINGS"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
         android:protectionLevel="signatureOrSystem"
         android:label="@string/permlab_write_settings"
@@ -46,7 +46,23 @@ provider中的android:authorities="com.android.launcher3.settings"以及 android
 
 * 其实就是所有"com.android.launcher3"的都改，没有"3"的都不改
 
-#### 4.预览图
+#### 4.添加特效(15种)
+
+workspace类中的screenScrolled方法中添加：
+
+  startScrollWithAnim(screenCenter);
+
+以及：
+
+  // add:mx---特效----------start----
+  
+  ...
+  
+  // add:mx---特效----------end包含的代码----
+
+
+
+#### 5.预览图
 
 <img width="320" src="/art/launcher1.jpg"/>    <img width="320" src="/art/launcher2.jpg"/>
 
