@@ -39,4 +39,9 @@ public final class FeatureFlags {
     public static final boolean PULLDOWN_SEARCH = false;
     // When enabled the status bar may show dark icons based on the top of the wallpaper.
     public static final boolean LIGHT_STATUS_BAR = false;
+
+    // Feature flag to enable page loop
+    public static final boolean LAUNCHER_PAGE_LOOP_ENABLE = true;
+
+
 }

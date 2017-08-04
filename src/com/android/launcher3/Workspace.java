@@ -1878,7 +1878,7 @@ public class Workspace extends PagedView
             // Apply transition effect and adjacent screen fade if enabled
             SharedPreferences sp = getContext().getSharedPreferences(
                     "com.android.launcher3.prefs", Context.MODE_PRIVATE);
-            int screenEffectNum = 9;
+            int screenEffectNum = 0;
 //            int screenEffectNum = sp.getInt("screenEffect", 1);
             final int N = getChildCount();
             for (int i = 0; i < N; i++) {
@@ -4272,6 +4272,7 @@ public class Workspace extends PagedView
 
     @Override
     public boolean onEnterScrollArea(int x, int y, int direction) {
+
         // Ignore the scroll area if we are dragging over the hot seat
         boolean isPortrait = !mLauncher.getDeviceProfile().isLandscape;
         if (mLauncher.getHotseat() != null && isPortrait) {
@@ -4286,10 +4287,23 @@ public class Workspace extends PagedView
         if (!workspaceInModalState() && !mIsSwitchingState && getOpenFolder() == null) {
             mInScrollArea = true;
 
-            final int page = getNextPage() +
-                       (direction == DragController.SCROLL_LEFT ? -1 : 1);
+//            final int page = getNextPage() +
+//                       (direction == DragController.SCROLL_LEFT ? -1 : 1);
             // We always want to exit the current layout to ensure parity of enter / exit
             setCurrentDropLayout(null);
+
+
+            //---------add loop 2017-06-10 start--------------------------
+            int page = mCurrentPage + (direction == DragController.SCROLL_LEFT ? -1 : 1);
+            if (FeatureFlags.LAUNCHER_PAGE_LOOP_ENABLE) {
+                if (page == -1) {
+                    page = getChildCount() - 1;
+                } else if (page == getChildCount() - 1) {
+                    page = 0;
+                }
+            }
+            //---------add loop 2017-06-10 end--------------------------
+
 
             if (0 <= page && page < getChildCount()) {
                 // Ensure that we are not dragging over to the custom content screen
