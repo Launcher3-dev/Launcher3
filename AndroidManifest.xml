@@ -18,12 +18,9 @@
 */
 -->
 <manifest
-    package="com.android.launcher3"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <uses-sdk
-        android:minSdkVersion="21"
-        android:targetSdkVersion="23"/>
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.launcher3">
+    <uses-sdk android:targetSdkVersion="23" android:minSdkVersion="21"/>
     <!--
     Manifest entries specific to Launcher3. This is merged with AndroidManifest-common.xml.
     Refer comments around specific entries on how to extend individual components.
@@ -36,56 +33,56 @@
     -->
     <permission
         android:name="com.android.launcher3.permission.READ_SETTINGS"
-        android:description="@string/permdesc_read_settings"
-        android:label="@string/permlab_read_settings"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
-        android:protectionLevel="normal"/>
+        android:protectionLevel="normal"
+        android:label="@string/permlab_read_settings"
+        android:description="@string/permdesc_read_settings"/>
     <permission
         android:name="com.android.launcher3.permission.WRITE_SETTINGS"
-        android:description="@string/permdesc_write_settings"
-        android:label="@string/permlab_write_settings"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
-        android:protectionLevel="signatureOrSystem"/>
+        android:protectionLevel="signatureOrSystem"
+        android:label="@string/permlab_write_settings"
+        android:description="@string/permdesc_write_settings"/>
 
-    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS"/>
-    <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS"/>
-    <uses-permission android:name="com.android.launcher3.permission.READ_SETTINGS"/>
-    <uses-permission android:name="com.android.launcher3.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="com.android.launcher3.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.android.launcher3.permission.WRITE_SETTINGS" />
 
     <application
         android:backupAgent="com.android.launcher3.LauncherBackupAgent"
-        android:fullBackupContent="@xml/backupscheme"
         android:fullBackupOnly="true"
+        android:fullBackupContent="@xml/backupscheme"
         android:hardwareAccelerated="true"
-        android:icon="@mipmap/ic_launcher_home"
+        android:icon="@drawable/ic_launcher_home"
         android:label="@string/derived_app_name"
+        android:theme="@style/LauncherTheme"
         android:largeHeap="@bool/config_largeHeap"
         android:restoreAnyVersion="true"
-        android:supportsRtl="true">
+        android:supportsRtl="true" >
 
         <!--
         Main launcher activity. When extending only change the name, and keep all the
         attributes and intent filters the same
         -->
         <activity
-            android:name=".Launcher"
-            android:clearTaskOnLaunch="true"
-            android:configChanges="keyboard|keyboardHidden|navigation"
-            android:enabled="true"
+            android:name="com.android.launcher3.Launcher"
             android:launchMode="singleTask"
-            android:resumeWhilePausing="true"
-            android:screenOrientation="nosensor"
+            android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
+            android:windowSoftInputMode="adjustPan|stateUnchanged"
+            android:screenOrientation="nosensor"
+            android:configChanges="keyboard|keyboardHidden|navigation"
+            android:resizeableActivity="true"
+            android:resumeWhilePausing="true"
             android:taskAffinity=""
-            android:theme="@style/LauncherTheme"
-            android:windowSoftInputMode="adjustPan">
+            android:enabled="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-
-                <category android:name="android.intent.category.HOME"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.MONKEY"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
@@ -94,11 +91,12 @@
         -->
         <activity
             android:name="com.android.launcher3.SettingsActivity"
-            android:autoRemoveFromRecents="true"
-            android:label="@string/settings_button_text">
+            android:label="@string/settings_button_text"
+            android:theme="@android:style/Theme.DeviceDefault.Settings"
+            android:autoRemoveFromRecents="true">
             <intent-filter>
-                <action android:name="android.intent.action.APPLICATION_PREFERENCES"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -111,13 +109,13 @@
             android:name="com.android.launcher3.LauncherProvider"
             android:authorities="com.android.launcher3.settings"
             android:exported="true"
-            android:readPermission="com.android.launcher3.permission.READ_SETTINGS"
-            android:writePermission="com.android.launcher3.permission.WRITE_SETTINGS"/>
+            android:writePermission="com.android.launcher3.permission.WRITE_SETTINGS"
+            android:readPermission="com.android.launcher3.permission.READ_SETTINGS" />
 
         <!-- ENABLE_FOR_TESTING
 
         <activity
-            android:name="LauncherExtension"
+            android:name="com.android.launcher3.testing.LauncherExtension"
             android:launchMode="singleTask"
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
@@ -134,11 +132,11 @@
         </activity>
 
         <activity
-            android:name="MemoryDumpActivity"
+            android:name="com.android.launcher3.testing.MemoryDumpActivity"
             android:theme="@android:style/Theme.NoDisplay"
             android:label="* HPROF"
             android:excludeFromRecents="true"
-            android:icon="@mipmap/ic_launcher_home"
+            android:icon="@drawable/ic_launcher_home"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -148,9 +146,9 @@
         </activity>
 
         <activity
-            android:name="ToggleWeightWatcher"
+            android:name="com.android.launcher3.testing.ToggleWeightWatcher"
             android:label="Show Mem"
-            android:icon="@mipmap/ic_launcher_home">
+            android:icon="@drawable/ic_launcher_home">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -158,7 +156,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name="MemoryTracker" />
+        <service android:name="com.android.launcher3.testing.MemoryTracker" />
 
         -->
 

@@ -24,8 +24,7 @@ public class CheckLongPressHelper {
 
     public static final int DEFAULT_LONG_PRESS_TIMEOUT = 300;
 
-    @Thunk
-    View mView;
+    @Thunk View mView;
     @Thunk View.OnLongClickListener mListener;
     @Thunk boolean mHasPerformedLongPress;
     private int mLongPressTimeout = DEFAULT_LONG_PRESS_TIMEOUT;

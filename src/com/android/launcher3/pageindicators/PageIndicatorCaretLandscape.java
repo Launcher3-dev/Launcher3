@@ -16,11 +16,14 @@
 package com.android.launcher3.pageindicators;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 
 import com.android.launcher3.Launcher;
+import com.android.launcher3.R;
 
 /**
  * Simply draws the caret drawable bottom-right aligned in the view. This ensures that we can have
@@ -41,7 +44,7 @@ public class PageIndicatorCaretLandscape extends PageIndicator {
     public PageIndicatorCaretLandscape(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        int caretSize = context.getResources().getDimensionPixelSize(com.android.launcher3.R.dimen.all_apps_caret_size);
+        int caretSize = context.getResources().getDimensionPixelSize(R.dimen.all_apps_caret_size);
         CaretDrawable caretDrawable = new CaretDrawable(context);
         caretDrawable.setBounds(0, 0, caretSize, caretSize);
         setCaretDrawable(caretDrawable);

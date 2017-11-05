@@ -32,6 +32,7 @@ import android.text.TextUtils;
 import android.util.LongSparseArray;
 import android.util.SparseBooleanArray;
 
+import com.android.launcher3.AutoInstallsLayout.LayoutParserCallback;
 import com.android.launcher3.DefaultLayoutParser;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherAppWidgetInfo;
@@ -40,16 +41,15 @@ import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.LauncherSettings.Settings;
 import com.android.launcher3.LauncherSettings.WorkspaceScreens;
+import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.Workspace;
-import com.android.launcher3.compat.UserHandleCompat;
 import com.android.launcher3.compat.UserManagerCompat;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.config.ProviderConfig;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.model.GridSizeMigrationTask;
 import com.android.launcher3.util.LongArrayMap;
-import com.android.launcher3.AutoInstallsLayout;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -89,10 +89,12 @@ public class ImportDataTask {
         ArrayList<Long> allScreens = LauncherDbUtils.getScreenIdsFromCursor(
                 mContext.getContentResolver().query(mOtherScreensUri, null, null, null,
                         LauncherSettings.WorkspaceScreens.SCREEN_RANK));
+        FileLog.d(TAG, "Importing DB from " + mOtherFavoritesUri);
 
         // During import we reset the screen IDs to 0-indexed values.
         if (allScreens.isEmpty()) {
             // No thing to migrate
+            FileLog.e(TAG, "No data found to import");
             return false;
         }
 
@@ -129,7 +131,7 @@ public class ImportDataTask {
     private void importWorkspaceItems(
             long firsetScreenId, LongSparseArray<Long> screenIdMap) throws Exception {
         String profileId = Long.toString(UserManagerCompat.getInstance(mContext)
-                .getSerialNumberForUser(UserHandleCompat.myUserHandle()));
+                .getSerialNumberForUser(Process.myUserHandle()));
 
         boolean createEmptyRowOnFirstScreen = false;
         if (FeatureFlags.QSB_ON_FIRST_SCREEN) {
@@ -293,6 +295,7 @@ public class ImportDataTask {
                 }
             }
         }
+        FileLog.d(TAG, totalItemsOnWorkspace + " items imported from external source");
         if (totalItemsOnWorkspace < MIN_ITEM_COUNT_FOR_SUCCESSFUL_MIGRATION) {
             throw new Exception("Insufficient data");
         }
@@ -303,7 +306,7 @@ public class ImportDataTask {
         }
 
         LongArrayMap<Object> hotseatItems = GridSizeMigrationTask.removeBrokenHotseatItems(mContext);
-        int myHotseatCount = LauncherAppState.getInstance().getInvariantDeviceProfile().numHotseatIcons;
+        int myHotseatCount = LauncherAppState.getIDP(mContext).numHotseatIcons;
         if (!FeatureFlags.NO_ALL_APPS_ICON) {
             myHotseatCount--;
         }
@@ -378,10 +381,10 @@ public class ImportDataTask {
         return c.getSharedPreferences(LauncherFiles.DEVICE_PREFERENCES_KEY, Context.MODE_PRIVATE);
     }
 
-    private static final int getMyHotseatLayoutId() {
-        return LauncherAppState.getInstance().getInvariantDeviceProfile().numHotseatIcons <= 5
-                ? com.android.launcher3.R.xml.dw_phone_hotseat
-                : com.android.launcher3.R.xml.dw_tablet_hotseat;
+    private static final int getMyHotseatLayoutId(Context context) {
+        return LauncherAppState.getIDP(context).numHotseatIcons <= 5
+                ? R.xml.dw_phone_hotseat
+                : R.xml.dw_tablet_hotseat;
     }
 
     /**
@@ -389,7 +392,7 @@ public class ImportDataTask {
      */
     private static class HotseatLayoutParser extends DefaultLayoutParser {
         public HotseatLayoutParser(Context context, LayoutParserCallback callback) {
-            super(context, null, callback, context.getResources(), getMyHotseatLayoutId());
+            super(context, null, callback, context.getResources(), getMyHotseatLayoutId(context));
         }
 
         @Override
@@ -404,9 +407,9 @@ public class ImportDataTask {
     }
 
     /**
-     * {@link AutoInstallsLayout.LayoutParserCallback} which adds items in empty hotseat spots.
+     * {@link LayoutParserCallback} which adds items in empty hotseat spots.
      */
-    private static class HotseatParserCallback implements AutoInstallsLayout.LayoutParserCallback {
+    private static class HotseatParserCallback implements LayoutParserCallback {
         private final HashSet<String> mExisitingApps;
         private final LongArrayMap<Object> mExistingItems;
         private final ArrayList<ContentProviderOperation> mOutOps;

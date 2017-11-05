@@ -20,6 +20,7 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 
 import com.android.launcher3.Launcher;
+import com.android.launcher3.R;
 import com.android.launcher3.pageindicators.CaretDrawable;
 
 public class AllAppsCaretController {
@@ -41,7 +42,7 @@ public class AllAppsCaretController {
         mCaretDrawable = caret;
 
         final long caretAnimationDuration = launcher.getResources().getInteger(
-                com.android.launcher3.R.integer.config_caretAnimationDuration);
+                R.integer.config_caretAnimationDuration);
         final Interpolator caretInterpolator = AnimationUtils.loadInterpolator(launcher,
                 android.R.interpolator.fast_out_slow_in);
 

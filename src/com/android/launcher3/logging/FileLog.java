@@ -6,6 +6,7 @@ import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 
+import com.android.launcher3.LauncherModel;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.config.ProviderConfig;
 
@@ -39,7 +40,7 @@ public final class FileLog {
     private static File sLogsDirectory = null;
 
     public static void setDir(File logsDir) {
-        if (ProviderConfig.IS_DOGFOOD_BUILD) {
+        if (ProviderConfig.IS_DOGFOOD_BUILD || Utilities.IS_DEBUG_DEVICE) {
             synchronized (DATE_FORMAT) {
                 // If the target directory changes, stop any active thread.
                 if (sHandler != null && !logsDir.equals(sLogsDirectory)) {

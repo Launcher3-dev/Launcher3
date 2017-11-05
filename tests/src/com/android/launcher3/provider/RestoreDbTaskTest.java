@@ -6,8 +6,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 
-import com.android.launcher3.LauncherProvider;
-import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.LauncherProvider.DatabaseHelper;
+import com.android.launcher3.LauncherSettings.Favorites;
 
 /**
  * Tests for {@link RestoreDbTask}
@@ -25,9 +25,9 @@ public class RestoreDbTaskTest extends AndroidTestCase {
         // Add some dummy data
         for (int i = 0; i < 5; i++) {
             ContentValues values = new ContentValues();
-            values.put(LauncherSettings.Favorites._ID, i);
-            values.put(LauncherSettings.Favorites.TITLE, "item " + i);
-            db.insert(LauncherSettings.Favorites.TABLE_NAME, null, values);
+            values.put(Favorites._ID, i);
+            values.put(Favorites.TITLE, "item " + i);
+            db.insert(Favorites.TABLE_NAME, null, values);
         }
         // Verify item add
         assertEquals(5, getCount(db, "select * from favorites where profileId = 42"));
@@ -40,9 +40,9 @@ public class RestoreDbTaskTest extends AndroidTestCase {
 
         // Verify default value changed
         ContentValues values = new ContentValues();
-        values.put(LauncherSettings.Favorites._ID, 100);
-        values.put(LauncherSettings.Favorites.TITLE, "item 100");
-        db.insert(LauncherSettings.Favorites.TABLE_NAME, null, values);
+        values.put(Favorites._ID, 100);
+        values.put(Favorites.TITLE, "item 100");
+        db.insert(Favorites.TABLE_NAME, null, values);
         assertEquals(6, getCount(db, "select * from favorites where profileId = 33"));
     }
 
@@ -55,7 +55,7 @@ public class RestoreDbTaskTest extends AndroidTestCase {
         }
     }
 
-    private class MyDatabaseHelper extends LauncherProvider.DatabaseHelper {
+    private class MyDatabaseHelper extends DatabaseHelper {
 
         private final long mProfileId;
 

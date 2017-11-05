@@ -43,8 +43,7 @@ public class FirstFrameAnimatorHelper extends AnimatorListenerAdapter
     private boolean mAdjustedSecondFrameTime;
 
     private static ViewTreeObserver.OnDrawListener sGlobalDrawListener;
-    @Thunk
-    static long sGlobalFrameCounter;
+    @Thunk static long sGlobalFrameCounter;
     private static boolean sVisible;
 
     public FirstFrameAnimatorHelper(ValueAnimator animator, View target) {

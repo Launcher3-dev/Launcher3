@@ -33,8 +33,7 @@ import java.util.LinkedList;
  * This class is fifo.
  */
 public class DeferredHandler {
-    @Thunk
-    LinkedList<Runnable> mQueue = new LinkedList<>();
+    @Thunk LinkedList<Runnable> mQueue = new LinkedList<>();
     private MessageQueue mMessageQueue = Looper.myQueue();
     private Impl mHandler = new Impl();
 

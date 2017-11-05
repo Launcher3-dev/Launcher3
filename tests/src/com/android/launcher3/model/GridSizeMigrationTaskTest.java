@@ -1,6 +1,7 @@
 package com.android.launcher3.model;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Point;

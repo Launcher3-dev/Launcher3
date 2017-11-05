@@ -16,9 +16,7 @@
 
 package com.android.launcher3.accessibility;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.SparseArray;
 import android.view.View;
@@ -26,15 +24,15 @@ import android.view.View.AccessibilityDelegate;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 
+import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.Workspace;
 import com.android.launcher3.config.FeatureFlags;
 
-@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class OverviewScreenAccessibilityDelegate extends AccessibilityDelegate {
 
-    private static final int MOVE_BACKWARD = com.android.launcher3.R.id.action_move_screen_backwards;
-    private static final int MOVE_FORWARD = com.android.launcher3.R.id.action_move_screen_forwards;
+    private static final int MOVE_BACKWARD = R.id.action_move_screen_backwards;
+    private static final int MOVE_FORWARD = R.id.action_move_screen_forwards;
 
     private final SparseArray<AccessibilityAction> mActions = new SparseArray<>();
     private final Workspace mWorkspace;
@@ -45,11 +43,11 @@ public class OverviewScreenAccessibilityDelegate extends AccessibilityDelegate {
         Context context = mWorkspace.getContext();
         boolean isRtl = Utilities.isRtl(context.getResources());
         mActions.put(MOVE_BACKWARD, new AccessibilityAction(MOVE_BACKWARD,
-                context.getText(isRtl ? com.android.launcher3.R.string.action_move_screen_right :
-                    com.android.launcher3.R.string.action_move_screen_left)));
+                context.getText(isRtl ? R.string.action_move_screen_right :
+                    R.string.action_move_screen_left)));
         mActions.put(MOVE_FORWARD, new AccessibilityAction(MOVE_FORWARD,
-                context.getText(isRtl ? com.android.launcher3.R.string.action_move_screen_left :
-                    com.android.launcher3.R.string.action_move_screen_right)));
+                context.getText(isRtl ? R.string.action_move_screen_left :
+                    R.string.action_move_screen_right)));
     }
 
     @Override
@@ -75,7 +73,7 @@ public class OverviewScreenAccessibilityDelegate extends AccessibilityDelegate {
         mWorkspace.removeView(view);
         mWorkspace.addView(view, finalIndex);
         mWorkspace.onEndReordering();
-        mWorkspace.announceForAccessibility(mWorkspace.getContext().getText(com.android.launcher3.R.string.screen_moved));
+        mWorkspace.announceForAccessibility(mWorkspace.getContext().getText(R.string.screen_moved));
 
         mWorkspace.updateAccessibilityFlags();
         view.performAccessibilityAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);

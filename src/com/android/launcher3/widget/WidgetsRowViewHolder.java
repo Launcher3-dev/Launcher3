@@ -19,6 +19,7 @@ import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.view.ViewGroup;
 
 import com.android.launcher3.BubbleTextView;
+import com.android.launcher3.R;
 
 public class WidgetsRowViewHolder extends ViewHolder {
 
@@ -28,7 +29,7 @@ public class WidgetsRowViewHolder extends ViewHolder {
     public WidgetsRowViewHolder(ViewGroup v) {
         super(v);
 
-        cellContainer = (ViewGroup) v.findViewById(com.android.launcher3.R.id.widgets_cell_list);
-        title = (BubbleTextView) v.findViewById(com.android.launcher3.R.id.section);
+        cellContainer = (ViewGroup) v.findViewById(R.id.widgets_cell_list);
+        title = (BubbleTextView) v.findViewById(R.id.section);
     }
 }

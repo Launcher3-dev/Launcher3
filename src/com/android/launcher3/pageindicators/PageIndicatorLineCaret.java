@@ -19,6 +19,7 @@ import android.view.ViewConfiguration;
 import android.widget.ImageView;
 
 import com.android.launcher3.Launcher;
+import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.dynamicui.ExtractedColors;
 
@@ -125,14 +126,14 @@ public class PageIndicatorLineCaret extends PageIndicator {
         mLinePaint.setAlpha(0);
 
         mLauncher = Launcher.getLauncher(context);
-        mLineHeight = res.getDimensionPixelSize(com.android.launcher3.R.dimen.dynamic_grid_page_indicator_line_height);
+        mLineHeight = res.getDimensionPixelSize(R.dimen.dynamic_grid_page_indicator_line_height);
         setCaretDrawable(new CaretDrawable(context));
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mAllAppsHandle = (ImageView) findViewById(com.android.launcher3.R.id.all_apps_handle);
+        mAllAppsHandle = (ImageView) findViewById(R.id.all_apps_handle);
         mAllAppsHandle.setImageDrawable(getCaretDrawable());
         mAllAppsHandle.setOnTouchListener(mLauncher.getHapticFeedbackTouchListener());
         mAllAppsHandle.setOnClickListener(mLauncher);

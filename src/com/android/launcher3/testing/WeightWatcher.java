@@ -83,8 +83,7 @@ public class WeightWatcher extends LinearLayout {
             }
         }
     };
-    @Thunk
-    MemoryTracker mMemoryService;
+    @Thunk MemoryTracker mMemoryService;
 
     public WeightWatcher(Context context, AttributeSet attrs) {
         super(context, attrs);

@@ -17,6 +17,7 @@
 package com.android.launcher3;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -91,7 +92,6 @@ public interface LauncherCallbacks {
     /*
      * Extensions points for adding / replacing some other aspects of the Launcher experience.
      */
-    public UserEventDispatcher getUserEventDispatcher();
     public boolean shouldMoveToDefaultScreenOnHomeIntent();
     public boolean hasSettings();
     public AllAppsSearchBarController getAllAppsSearchBarController();

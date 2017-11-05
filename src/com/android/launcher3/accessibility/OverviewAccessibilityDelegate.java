@@ -24,6 +24,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 
 import com.android.launcher3.Launcher;
+import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 
 /**
@@ -31,10 +32,10 @@ import com.android.launcher3.Utilities;
  */
 public class OverviewAccessibilityDelegate extends AccessibilityDelegate {
 
-    private static final int OVERVIEW = com.android.launcher3.R.string.accessibility_action_overview;
-    private static final int WALLPAPERS = com.android.launcher3.R.string.wallpaper_button_text;
-    private static final int WIDGETS = com.android.launcher3.R.string.widget_button_text;
-    private static final int SETTINGS = com.android.launcher3.R.string.settings_button_text;
+    private static final int OVERVIEW = R.string.accessibility_action_overview;
+    private static final int WALLPAPERS = R.string.wallpaper_button_text;
+    private static final int WIDGETS = R.string.widget_button_text;
+    private static final int SETTINGS = R.string.settings_button_text;
 
     @Override
     public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
@@ -43,7 +44,7 @@ public class OverviewAccessibilityDelegate extends AccessibilityDelegate {
         Context context = host.getContext();
         info.addAction(new AccessibilityAction(OVERVIEW, context.getText(OVERVIEW)));
 
-        if (Utilities.isWallapaperAllowed(context)) {
+        if (Utilities.isWallpaperAllowed(context)) {
             info.addAction(new AccessibilityAction(WALLPAPERS, context.getText(WALLPAPERS)));
         }
         info.addAction(new AccessibilityAction(WIDGETS, context.getText(WIDGETS)));

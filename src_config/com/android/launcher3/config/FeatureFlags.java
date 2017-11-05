@@ -23,13 +23,22 @@ public final class FeatureFlags {
     private FeatureFlags() {}
 
     // Custom flags go below this
+    // true：大图标，false：小图标
     public static boolean LAUNCHER3_DISABLE_ICON_NORMALIZATION = false;
-    // As opposed to the new spring-loaded workspace.
-    public static boolean LAUNCHER3_LEGACY_WORKSPACE_DND = false;
+    // true：文件夹图标中应用图标叠加，false：文件夹图标中应用图标排列
     public static boolean LAUNCHER3_LEGACY_FOLDER_ICON = false;
-    public static boolean LAUNCHER3_USE_SYSTEM_DRAG_DRIVER = true;
+    public static boolean LAUNCHER3_USE_SYSTEM_DRAG_DRIVER = false;
+    // 两指掐捏进入预览模式
     public static boolean LAUNCHER3_DISABLE_PINCH_TO_OVERVIEW = false;
+    // 上拉显示所有应用列表
     public static boolean LAUNCHER3_ALL_APPS_PULL_UP = true;
+    public static boolean LAUNCHER3_NEW_FOLDER_ANIMATION = false;
+    // When enabled allows to use any point on the fast scrollbar to start dragging.
+    // 所有应用界面，true:可以直接点击来跳动制定位置，false:只允许拖动来滑动所有应用界面
+    public static boolean LAUNCHER3_DIRECT_SCROLL = true;
+    // When enabled while all-apps open, the soft input will be set to adjust resize .
+    public static boolean LAUNCHER3_UPDATE_SOFT_INPUT_MODE = false;
+
 
     // Feature flag to enable moving the QSB on the 0th screen of the workspace.
     public static final boolean QSB_ON_FIRST_SCREEN = true;
@@ -39,9 +48,13 @@ public final class FeatureFlags {
     public static final boolean PULLDOWN_SEARCH = false;
     // When enabled the status bar may show dark icons based on the top of the wallpaper.
     public static final boolean LIGHT_STATUS_BAR = false;
-
-    // Feature flag to enable page loop
-    public static final boolean LAUNCHER_PAGE_LOOP_ENABLE = true;
-
-
+    // When enabled icons are badged with the number of notifications associated with that app.
+    // 图标角标显示信息数
+    public static final boolean BADGE_ICONS = true;
+    // When enabled, icons not supporting {@link AdaptiveIconDrawable} will be wrapped in this class.
+    public static final boolean LEGACY_ICON_TREATMENT = true;
+    // When enabled, adaptive icons would have shadows baked when being stored to icon cache.
+    public static final boolean ADAPTIVE_ICON_SHADOW = true;
+    // When enabled, app discovery will be enabled if service is implemented
+    public static final boolean DISCOVERY_ENABLED = false;
 }

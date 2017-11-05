@@ -16,13 +16,11 @@
 package com.android.launcher3.widget;
 
 import android.appwidget.AppWidgetHostView;
-import android.content.Context;
 import android.os.Bundle;
 
 import com.android.launcher3.LauncherAppWidgetProviderInfo;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.PendingAddItemInfo;
-import com.android.launcher3.compat.AppWidgetManagerCompat;
 
 /**
  * Meta data used for late binding of {@link LauncherAppWidgetProviderInfo}.
@@ -36,14 +34,14 @@ public class PendingAddWidgetInfo extends PendingAddItemInfo {
     public AppWidgetHostView boundWidget;
     public Bundle bindOptions = null;
 
-    public PendingAddWidgetInfo(Context context, LauncherAppWidgetProviderInfo i) {
+    public PendingAddWidgetInfo(LauncherAppWidgetProviderInfo i) {
         if (i.isCustomWidget) {
             itemType = LauncherSettings.Favorites.ITEM_TYPE_CUSTOM_APPWIDGET;
         } else {
             itemType = LauncherSettings.Favorites.ITEM_TYPE_APPWIDGET;
         }
         this.info = i;
-        user = AppWidgetManagerCompat.getInstance(context).getUser(i);
+        user = i.getUser();
         componentName = i.provider;
         previewImage = i.previewImage;
         icon = i.icon;
@@ -54,7 +52,7 @@ public class PendingAddWidgetInfo extends PendingAddItemInfo {
         minSpanY = i.minSpanY;
     }
 
-    public boolean isCustomWidget() {
-        return itemType == LauncherSettings.Favorites.ITEM_TYPE_CUSTOM_APPWIDGET;
+    public WidgetAddFlowHandler getHandler() {
+        return new WidgetAddFlowHandler(info);
     }
 }

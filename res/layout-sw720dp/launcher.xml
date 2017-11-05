@@ -76,18 +76,7 @@
             android:id="@+id/apps_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="invisible"
-           launcher:layout_ignoreInsets="true" />
-
-        <com.android.launcher3.menu.MenuDetail
-            android:id="@+id/menu_detail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <com.android.launcher3.menu.MenuMain
-            android:id="@+id/menu_main"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:visibility="invisible" />
     </com.android.launcher3.dragndrop.DragLayer>
 
 </com.android.launcher3.LauncherRootView>

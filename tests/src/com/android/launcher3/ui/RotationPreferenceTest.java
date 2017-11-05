@@ -7,6 +7,7 @@ import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
 import android.test.suitebuilder.annotation.MediumTest;
 
+import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 
 /**
@@ -36,7 +37,7 @@ public class RotationPreferenceTest extends LauncherInstrumentationTestCase {
     }
 
     public void testRotation_disabled() throws Exception {
-        if (mTargetContext.getResources().getBoolean(com.android.launcher3.R.bool.allow_rotation)) {
+        if (mTargetContext.getResources().getBoolean(R.bool.allow_rotation)) {
             // This is a tablet. The test is only valid to mobile devices.
             return;
         }
@@ -50,7 +51,7 @@ public class RotationPreferenceTest extends LauncherInstrumentationTestCase {
     }
 
     public void testRotation_enabled() throws Exception {
-        if (mTargetContext.getResources().getBoolean(com.android.launcher3.R.bool.allow_rotation)) {
+        if (mTargetContext.getResources().getBoolean(R.bool.allow_rotation)) {
             // This is a tablet. The test is only valid to mobile devices.
             return;
         }

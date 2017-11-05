@@ -22,22 +22,20 @@ import android.animation.FloatArrayEvaluator;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.os.Build;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAnimUtils;
-import com.android.launcher3.Utilities;
+import com.android.launcher3.R;
+import com.android.launcher3.util.Themes;
 import com.android.launcher3.util.Thunk;
 
 import java.util.Arrays;
@@ -46,14 +44,16 @@ public class DragView extends View {
     public static final int COLOR_CHANGE_DURATION = 120;
     public static final int VIEW_ZOOM_DURATION = 150;
 
-    @Thunk
-    static float sDragAlpha = 1f;
+    @Thunk static float sDragAlpha = 1f;
 
     private Bitmap mBitmap;
     private Bitmap mCrossFadeBitmap;
     @Thunk Paint mPaint;
+    private final int mBlurSizeOutline;
     private final int mRegistrationX;
     private final int mRegistrationY;
+    private final float mInitialScale;
+    private final int[] mTempLoc = new int[2];
 
     private Point mDragVisualizeOffset = null;
     private Rect mDragRegion = null;
@@ -86,7 +86,6 @@ public class DragView extends View {
      * @param registrationX The x coordinate of the registration point.
      * @param registrationY The y coordinate of the registration point.
      */
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public DragView(Launcher launcher, Bitmap bitmap, int registrationX, int registrationY,
                     final float initialScale, final float finalScaleDps) {
         super(launcher);
@@ -100,7 +99,7 @@ public class DragView extends View {
         setScaleY(initialScale);
 
         // Animate the view into the correct position
-        mAnim = LauncherAnimUtils.ofFloat(this, 0f, 1f);
+        mAnim = LauncherAnimUtils.ofFloat(0f, 1f);
         mAnim.setDuration(VIEW_ZOOM_DURATION);
         mAnim.addUpdateListener(new AnimatorUpdateListener() {
             @Override
@@ -135,14 +134,16 @@ public class DragView extends View {
         mRegistrationX = registrationX;
         mRegistrationY = registrationY;
 
+        mInitialScale = initialScale;
+
         // Force a measure, because Workspace uses getMeasuredHeight() before the layout pass
         int ms = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         measure(ms, ms);
         mPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
 
-        if (Utilities.ATLEAST_LOLLIPOP) {
-            setElevation(getResources().getDimension(com.android.launcher3.R.dimen.drag_elevation));
-        }
+        mBlurSizeOutline = getResources().getDimensionPixelSize(R.dimen.blur_size_medium_outline);
+
+        setElevation(getResources().getDimension(R.dimen.drag_elevation));
     }
 
     /** Sets the scale of the view over the normal workspace icon size. */
@@ -236,7 +237,7 @@ public class DragView extends View {
     }
 
     public void crossFade(int duration) {
-        ValueAnimator va = LauncherAnimUtils.ofFloat(this, 0f, 1f);
+        ValueAnimator va = LauncherAnimUtils.ofFloat(0f, 1f);
         va.setDuration(duration);
         va.setInterpolator(new DecelerateInterpolator(1.5f));
         va.addUpdateListener(new AnimatorUpdateListener() {
@@ -258,17 +259,12 @@ public class DragView extends View {
             m1.setSaturation(0);
 
             ColorMatrix m2 = new ColorMatrix();
-            setColorScale(color, m2);
+            Themes.setColorScaleOnMatrix(color, m2);
             m1.postConcat(m2);
 
-            if (Utilities.ATLEAST_LOLLIPOP) {
-                animateFilterTo(m1.getArray());
-            } else {
-                mPaint.setColorFilter(new ColorMatrixColorFilter(m1));
-                invalidate();
-            }
+            animateFilterTo(m1.getArray());
         } else {
-            if (!Utilities.ATLEAST_LOLLIPOP || mCurrentFilter == null) {
+            if (mCurrentFilter == null) {
                 mPaint.setColorFilter(null);
                 invalidate();
             } else {
@@ -277,7 +273,6 @@ public class DragView extends View {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void animateFilterTo(float[] targetFilter) {
         float[] oldFilter = mCurrentFilter == null ? new ColorMatrix().getArray() : mCurrentFilter;
         mCurrentFilter = Arrays.copyOf(oldFilter, oldFilter.length);
@@ -353,6 +348,13 @@ public class DragView extends View {
         applyTranslation();
     }
 
+    public void animateTo(int toTouchX, int toTouchY, Runnable onCompleteRunnable, int duration) {
+        mTempLoc[0] = toTouchX - mRegistrationX;
+        mTempLoc[1] = toTouchY - mRegistrationY;
+        mDragLayer.animateViewIntoPosition(this, mTempLoc, 1f, mInitialScale, mInitialScale,
+                DragLayer.ANIMATION_END_DISAPPEAR, onCompleteRunnable, duration);
+    }
+
     public void animateShift(final int shiftX, final int shiftY) {
         if (mAnim.isStarted()) {
             return;
@@ -382,8 +384,11 @@ public class DragView extends View {
         }
     }
 
-    public static void setColorScale(int color, ColorMatrix target) {
-        target.setScale(Color.red(color) / 255f, Color.green(color) / 255f,
-                Color.blue(color) / 255f, Color.alpha(color) / 255f);
+    public int getBlurSizeOutline() {
+        return mBlurSizeOutline;
+    }
+
+    public float getInitialScale() {
+        return mInitialScale;
     }
 }

@@ -27,6 +27,7 @@ import android.view.accessibility.AccessibilityEvent;
 
 import com.android.launcher3.CellLayout;
 import com.android.launcher3.Launcher;
+import com.android.launcher3.R;
 
 import java.util.List;
 
@@ -104,7 +105,7 @@ public abstract class DragAndDropAccessibilityDelegate extends ExploreByTouchHel
         if (id == INVALID_ID) {
             throw new IllegalArgumentException("Invalid virtual view id");
         }
-        event.setContentDescription(mContext.getString(com.android.launcher3.R.string.action_move_here));
+        event.setContentDescription(mContext.getString(R.string.action_move_here));
     }
 
     @Override

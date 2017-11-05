@@ -16,21 +16,22 @@
 
 <!-- Full screen view projects under the status bar and contains the background -->
 <com.android.launcher3.LauncherRootView
-    android:id="@+id/launcher"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:launcher="http://schemas.android.com/apk/res-auto"
+
+    android:id="@+id/launcher"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
     <com.android.launcher3.dragndrop.DragLayer
         android:id="@+id/drag_layer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/workspace_bg"
         android:clipChildren="false"
+        android:importantForAccessibility="no"
         android:clipToPadding="false"
-        android:importantForAccessibility="no">
+        android:background="@drawable/workspace_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <!-- The workspace contains 5 screens of cells -->
         <!-- DO NOT CHANGE THE ID -->
@@ -43,56 +44,40 @@
         </com.android.launcher3.Workspace>
 
         <!-- DO NOT CHANGE THE ID -->
-        <include
+        <include layout="@layout/hotseat"
             android:id="@+id/hotseat"
-            layout="@layout/hotseat"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            launcher:layout_ignoreInsets="true"/>
+            launcher:layout_ignoreInsets="true" />
 
-        <include
+        <include layout="@layout/overview_panel"
             android:id="@+id/overview_panel"
-            layout="@layout/overview_panel"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
         <!-- Keep these behind the workspace so that they are not visible when
              we go into AllApps -->
-        <include
-            android:id="@+id/page_indicator"
-            layout="@layout/page_indicator"/>
+        <include layout="@layout/page_indicator"
+            android:id="@+id/page_indicator" />
 
         <include
             android:id="@+id/drop_target_bar"
-            layout="@layout/drop_target_bar_horz"/>
+            layout="@layout/drop_target_bar_horz" />
 
         <include
-            android:id="@+id/qsb_container"
-            layout="@layout/qsb_container"/>
+            layout="@layout/qsb_container"
+            android:id="@+id/qsb_container" />
 
-        <include
+        <include layout="@layout/widgets_view"
             android:id="@+id/widgets_view"
-            layout="@layout/widgets_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="invisible"/>
+            android:visibility="invisible" />
 
-        <include
+        <include layout="@layout/all_apps"
             android:id="@+id/apps_view"
-            layout="@layout/all_apps"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="invisible"
-            launcher:layout_ignoreInsets="true"/>
-
-        <com.android.launcher3.menu.MenuDetail
-            android:id="@+id/menu_detail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <com.android.launcher3.menu.MenuMain
-            android:id="@+id/menu_main"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:visibility="invisible" />
     </com.android.launcher3.dragndrop.DragLayer>
 
 </com.android.launcher3.LauncherRootView>

@@ -27,14 +27,19 @@
     <string name="safemode_shortcut_error" msgid="9160126848219158407">"ダウンロードしたアプリは、セーフモードでは無効です"</string>
     <string name="safemode_widget_error" msgid="4863470563535682004">"セーフモードではウィジェットは無効です"</string>
     <string name="shortcut_not_available" msgid="2536503539825726397">"ショートカットは使用できません"</string>
+    <string name="home_screen" msgid="806512411299847073">"ホーム画面"</string>
+    <string name="custom_actions" msgid="3747508247759093328">"カスタム操作"</string>
     <string name="long_press_widget_to_add" msgid="7699152356777458215">"ウィジェットを追加するには押し続けます。"</string>
     <string name="long_accessible_way_to_add" msgid="4289502106628154155">"ダブルタップ後に押し続けてウィジェットを選択するか、カスタム操作を使用してください。"</string>
     <string name="widget_dims_format" msgid="2370757736025621599">"%1$dx%2$d"</string>
     <string name="widget_accessible_dims_format" msgid="3640149169885301790">"幅 %1$d、高さ %2$d"</string>
+    <string name="add_item_request_drag_hint" msgid="5899764264480397019">"押し続けると、手動で追加できます"</string>
+    <string name="place_automatically" msgid="8064208734425456485">"自動的に追加"</string>
     <string name="all_apps_search_bar_hint" msgid="7084713969757597256">"アプリを検索"</string>
     <string name="all_apps_loading_message" msgid="7557140873644765180">"アプリを読み込んでいます…"</string>
     <string name="all_apps_no_search_results" msgid="6332185285860416787">"「<xliff:g id="QUERY">%1$s</xliff:g>」に一致するアプリは見つかりませんでした"</string>
     <string name="all_apps_search_market_message" msgid="1366263386197059176">"他のアプリを検索"</string>
+    <string name="notifications_header" msgid="1404149926117359025">"通知"</string>
     <string name="out_of_space" msgid="4691004494942118364">"このホーム画面に空きスペースがありません。"</string>
     <string name="hotseat_out_of_space" msgid="7448809638125333693">"お気に入りトレイに空きスペースがありません"</string>
     <string name="all_apps_button_label" msgid="8130441508702294465">"アプリのリスト"</string>
@@ -71,6 +76,16 @@
     <string name="allow_rotation_title" msgid="7728578836261442095">"ホーム画面の回転を許可"</string>
     <string name="allow_rotation_desc" msgid="8662546029078692509">"スマートフォンが回転したとき"</string>
     <string name="allow_rotation_blocked_desc" msgid="3212602545192996253">"現在の [ディスプレイ] 設定では回転を使用できません"</string>
+    <string name="icon_badging_title" msgid="4418239350706629417">"アイコンバッジ"</string>
+    <string name="icon_badging_desc_on" msgid="6022379097717134764">"すべてのアプリで ON"</string>
+    <string name="icon_badging_desc_off" msgid="1574640601251590211">"すべてのアプリで OFF"</string>
+    <string name="auto_add_shortcuts_label" msgid="8222286205987725611">"ホーム画面にアイコンを追加"</string>
+    <string name="auto_add_shortcuts_description" msgid="7117251166066978730">"新しいアプリをダウンロードしたときに"</string>
+    <!-- no translation found for icon_shape_override_label (2977264953998281004) -->
+    <skip />
+    <string name="icon_shape_system_default" msgid="1709762974822753030">"システムのデフォルトを使用"</string>
+    <!-- no translation found for icon_shape_override_progress (3461735694970239908) -->
+    <skip />
     <string name="package_state_unknown" msgid="7592128424511031410">"不明"</string>
     <string name="abandoned_clean_this" msgid="7610119707847920412">"削除"</string>
     <string name="abandoned_search" msgid="891119232568284442">"検索"</string>
@@ -78,6 +93,7 @@
     <string name="abandoned_promise_explanation" msgid="3990027586878167529">"このアイコンのアプリはインストールされていません。このアイコンは削除できます。または、手動でアプリを検索してインストールしください。"</string>
     <string name="app_downloading_title" msgid="8336702962104482644">"<xliff:g id="NAME">%1$s</xliff:g>をダウンロード中、<xliff:g id="PROGRESS">%2$s</xliff:g>完了"</string>
     <string name="app_waiting_download_title" msgid="7053938513995617849">"<xliff:g id="NAME">%1$s</xliff:g>のインストール待ち"</string>
+    <string name="widgets_bottom_sheet_title" msgid="2904559530954183366">"<xliff:g id="NAME">%1$s</xliff:g>のウィジェット"</string>
     <string name="action_add_to_workspace" msgid="8902165848117513641">"ホーム画面に追加"</string>
     <string name="action_move_here" msgid="2170188780612570250">"アイテムをここに移動"</string>
     <string name="item_added_to_workspace" msgid="4211073925752213539">"アイテムをホーム画面に追加しました"</string>
@@ -104,4 +120,7 @@
     <string name="widget_resized" msgid="9130327887929620">"ウィジェットのサイズを幅<xliff:g id="NUMBER_0">%1$s</xliff:g>、高さ<xliff:g id="NUMBER_1">%2$s</xliff:g>に変更しました"</string>
     <string name="action_deep_shortcut" msgid="2864038805849372848">"ショートカット"</string>
     <string name="shortcuts_menu_description" msgid="406159963824238648">"<xliff:g id="APP_NAME">%2$s</xliff:g>用の <xliff:g id="NUMBER_OF_SHORTCUTS">%1$d</xliff:g> 件のショートカット"</string>
+    <string name="shortcuts_menu_with_notifications_description" msgid="8985659504915468840">"<xliff:g id="APP_NAME">%3$s</xliff:g>: <xliff:g id="NUMBER_OF_SHORTCUTS">%1$d</xliff:g> 個のショートカットと <xliff:g id="NUMBER_OF_NOTIFICATIONS">%2$d</xliff:g> 件の通知"</string>
+    <string name="action_dismiss_notification" msgid="5909461085055959187">"表示しない"</string>
+    <string name="notification_dismissed" msgid="6002233469409822874">"通知を非表示にしました"</string>
 </resources>

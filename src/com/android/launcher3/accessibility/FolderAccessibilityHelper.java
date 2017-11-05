@@ -18,6 +18,7 @@ package com.android.launcher3.accessibility;
 
 import com.android.launcher3.CellLayout;
 import com.android.launcher3.folder.FolderPagedView;
+import com.android.launcher3.R;
 
 /**
  * Implementation of {@link DragAndDropAccessibilityDelegate} to support DnD in a folder.
@@ -45,11 +46,11 @@ public class FolderAccessibilityHelper extends DragAndDropAccessibilityDelegate 
 
     @Override
     protected String getLocationDescriptionForIconDrop(int id) {
-        return mContext.getString(com.android.launcher3.R.string.move_to_position, id + mStartPosition + 1);
+        return mContext.getString(R.string.move_to_position, id + mStartPosition + 1);
     }
 
     @Override
     protected String getConfirmationForIconDrop(int id) {
-        return mContext.getString(com.android.launcher3.R.string.item_moved);
+        return mContext.getString(R.string.item_moved);
     }
 }

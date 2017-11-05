@@ -2,6 +2,7 @@ package com.android.launcher3.testing;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -177,9 +178,6 @@ public class LauncherExtension extends Launcher {
             customContent.setBackgroundColor(Color.GRAY);
             addToCustomContentPage(customContent, mCustomContentCallbacks, "");
         }
-
-        @Override
-        public UserEventDispatcher getUserEventDispatcher() { return null; }
 
         @Override
         public View getQsbBar() {
