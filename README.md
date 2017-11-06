@@ -21,9 +21,9 @@
 #### 八.[墨香带你学Launcher之（八）- 加载Icon、设置壁纸](http://www.codemx.cn/2017/05/19/Launcher08/)
 
 ## 预览图
-<img width="320" src="/image/launcher01.jpg"/>    <img width="320" src="/image/launcher02.jpg"/>
-<img width="320" src="/image/launcher03.jpg"/>    <img width="320" src="/image/launcher04.jpg"/>
-<img width="320" src="/image/launcher05.jpg"/>    <img width="320" src="/image/launcher06.jpg"/>
-<img width="320" src="/image/launcher07.jpg"/>    <img width="320" src="/image/launcher08.jpg"/>
-<img width="320" src="/image/launcher09.jpg"/>    <img width="320" src="/image/launcher10.jpg"/>
+<img width="320" src="/image/launcher01.png"/>    <img width="320" src="/image/launcher02.png"/>
+<img width="320" src="/image/launcher03.png"/>    <img width="320" src="/image/launcher04.png"/>
+<img width="320" src="/image/launcher05.png"/>    <img width="320" src="/image/launcher06.png"/>
+<img width="320" src="/image/launcher07.png"/>    <img width="320" src="/image/launcher08.png"/>
+<img width="320" src="/image/launcher09.png"/>    <img width="320" src="/image/launcher10.png"/>
 
