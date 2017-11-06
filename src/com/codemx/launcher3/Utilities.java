@@ -660,8 +660,9 @@ public final class Utilities {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public static boolean isRtl(Resources res) {
-        return ATLEAST_JB_MR1 &&
-                (res.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL);
+//        return ATLEAST_JB_MR1 &&
+//                (res.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL);
+        return true;
     }
 
     public static void assertWorkerThread() {

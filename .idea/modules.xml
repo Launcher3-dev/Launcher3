@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Launcher3_mx.iml" filepath="$PROJECT_DIR$/Launcher3_mx.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Launcher3_6.0.iml" filepath="$PROJECT_DIR$/Launcher3_6.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/mxlibrary/mxlibrary.iml" filepath="$PROJECT_DIR$/mxlibrary/mxlibrary.iml" />
     </modules>
   </component>
