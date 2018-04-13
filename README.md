@@ -1,9 +1,10 @@
 #Launcher3-8.0.0_r24
 
 ## 概述
-本版本基于Launcher3-8.0.0_r24版本，特效的代码在分支Launcher3-7.0中，需要请通过该分支获取。
+本版本基于Launcher3-master版本，本版本我会进行定制开发，但是依然是双层桌面，只是添加一下功能，包括：主题，特效等。
 
 ## 教程
+注：本教程是基于Android6.0的Launcher3讲解的，最新版与现在版本差异较大，我尽量在关键位置添加相应的注释，方便大家修改。
 #### 一.[墨香带你学Launcher之（一）-概述](http://www.codemx.cn/2016/07/30/Launcher01/)
 
 #### 二.[墨香带你学Launcher之（二）-数据加载流程](http://www.codemx.cn/2016/08/05/Launcher02/)
