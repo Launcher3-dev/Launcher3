@@ -21,8 +21,11 @@ import android.text.TextUtils;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppWidgetInfo;
 import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.model.LauncherDumpProto;
-import com.android.launcher3.userevent.nano.LauncherLogProto;
+import com.android.launcher3.model.nano.LauncherDumpProto;
+import com.android.launcher3.model.nano.LauncherDumpProto.ContainerType;
+import com.android.launcher3.model.nano.LauncherDumpProto.DumpTarget;
+import com.android.launcher3.model.nano.LauncherDumpProto.ItemType;
+import com.android.launcher3.model.nano.LauncherDumpProto.UserType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +34,7 @@ import java.util.List;
  * This class can be used when proto definition doesn't support nesting.
  */
 public class DumpTargetWrapper {
-    LauncherDumpProto.DumpTarget node;
+    DumpTarget node;
     ArrayList<DumpTargetWrapper> children;
 
     public DumpTargetWrapper() {
@@ -48,7 +51,7 @@ public class DumpTargetWrapper {
         node = newItemTarget(info);
     }
 
-    public LauncherDumpProto.DumpTarget getDumpTarget() {
+    public DumpTarget getDumpTarget() {
         return node;
     }
 
@@ -56,8 +59,8 @@ public class DumpTargetWrapper {
         children.add(child);
     }
 
-    public List<LauncherDumpProto.DumpTarget> getFlattenedList() {
-        ArrayList<LauncherDumpProto.DumpTarget> list = new ArrayList<>();
+    public List<DumpTarget> getFlattenedList() {
+        ArrayList<DumpTarget> list = new ArrayList<>();
         list.add(node);
         if (!children.isEmpty()) {
             for(DumpTargetWrapper t: children) {
@@ -67,36 +70,36 @@ public class DumpTargetWrapper {
         }
         return list;
     }
-    public LauncherDumpProto.DumpTarget newItemTarget(ItemInfo info) {
-        LauncherDumpProto.DumpTarget dt = new LauncherDumpProto.DumpTarget();
-        dt.type = LauncherDumpProto.DumpTarget.Type.ITEM;
+    public DumpTarget newItemTarget(ItemInfo info) {
+        DumpTarget dt = new DumpTarget();
+        dt.type = DumpTarget.Type.ITEM;
 
         switch (info.itemType) {
             case LauncherSettings.Favorites.ITEM_TYPE_APPLICATION:
-                dt.itemType = LauncherLogProto.ItemType.APP_ICON;
+                dt.itemType = ItemType.APP_ICON;
                 break;
             case LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT:
-                dt.itemType = LauncherDumpProto.ItemType.UNKNOWN_ITEMTYPE;
+                dt.itemType = ItemType.UNKNOWN_ITEMTYPE;
                 break;
             case LauncherSettings.Favorites.ITEM_TYPE_APPWIDGET:
-                dt.itemType = LauncherLogProto.ItemType.WIDGET;
+                dt.itemType = ItemType.WIDGET;
                 break;
             case LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT:
-                dt.itemType = LauncherLogProto.ItemType.SHORTCUT;
+                dt.itemType = ItemType.SHORTCUT;
                 break;
         }
         return dt;
     }
 
-    public LauncherDumpProto.DumpTarget newContainerTarget(int type, int id) {
-        LauncherDumpProto.DumpTarget dt = new LauncherDumpProto.DumpTarget();
-        dt.type = LauncherDumpProto.DumpTarget.Type.CONTAINER;
+    public DumpTarget newContainerTarget(int type, int id) {
+        DumpTarget dt = new DumpTarget();
+        dt.type = DumpTarget.Type.CONTAINER;
         dt.containerType = type;
         dt.pageId = id;
         return dt;
     }
 
-    public static String getDumpTargetStr(LauncherDumpProto.DumpTarget t) {
+    public static String getDumpTargetStr(DumpTarget t) {
         if (t == null){
             return "";
         }
@@ -104,10 +107,10 @@ public class DumpTargetWrapper {
             case LauncherDumpProto.DumpTarget.Type.ITEM:
                 return getItemStr(t);
             case LauncherDumpProto.DumpTarget.Type.CONTAINER:
-                String str = LoggerUtils.getFieldName(t.containerType, LauncherLogProto.ContainerType.class);
-                if (t.containerType == LauncherLogProto.ContainerType.WORKSPACE) {
+                String str = LoggerUtils.getFieldName(t.containerType, ContainerType.class);
+                if (t.containerType == ContainerType.WORKSPACE) {
                     str += " id=" + t.pageId;
-                } else if (t.containerType == LauncherLogProto.ContainerType.FOLDER) {
+                } else if (t.containerType == ContainerType.FOLDER) {
                     str += " grid(" + t.gridX + "," + t.gridY+ ")";
                 }
                 return str;
@@ -116,8 +119,8 @@ public class DumpTargetWrapper {
         }
     }
 
-    private static String getItemStr(LauncherDumpProto.DumpTarget t) {
-        String typeStr = LoggerUtils.getFieldName(t.itemType, LauncherLogProto.ItemType.class);
+    private static String getItemStr(DumpTarget t) {
+        String typeStr = LoggerUtils.getFieldName(t.itemType, ItemType.class);
         if (!TextUtils.isEmpty(t.packageName)) {
             typeStr += ", package=" + t.packageName;
         }
@@ -128,7 +131,7 @@ public class DumpTargetWrapper {
                 + "), pageIdx=" + t.pageId + " user=" + t.userType;
     }
 
-    public LauncherDumpProto.DumpTarget writeToDumpTarget(ItemInfo info) {
+    public DumpTarget writeToDumpTarget(ItemInfo info) {
         node.component = info.getTargetComponent() == null? "":
                 info.getTargetComponent().flattenToString();
         node.packageName = info.getTargetComponent() == null? "":
@@ -142,7 +145,7 @@ public class DumpTargetWrapper {
         node.gridY = info.cellY;
         node.spanX = info.spanX;
         node.spanY = info.spanY;
-        node.userType = (info.user.equals(Process.myUserHandle()))? LauncherDumpProto.UserType.DEFAULT : LauncherDumpProto.UserType.WORK;
+        node.userType = (info.user.equals(Process.myUserHandle()))? UserType.DEFAULT : UserType.WORK;
         return node;
     }
 }
