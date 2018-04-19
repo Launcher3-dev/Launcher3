@@ -21,10 +21,11 @@ import android.view.animation.Interpolator;
 
 import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
+import com.android.launcher3.mximpl.ScrollControllerImpl;
 import com.android.launcher3.pageindicators.CaretDrawable;
 import com.android.launcher3.touch.SwipeDetector;
 
-public class AllAppsCaretController {
+public class AllAppsCaretController implements ScrollControllerImpl{
     // Determines when the caret should flip. Should be accessed via getThreshold()
     private static final float CARET_THRESHOLD = 0.015f;
     private static final float CARET_THRESHOLD_LAND = 0.5f;
@@ -62,6 +63,7 @@ public class AllAppsCaretController {
      * @param velocity The velocity of the container
      * @param dragging {@code true} if the container is being dragged
      */
+    @Override
     public void updateCaret(float containerProgress, float velocity, boolean dragging) {
         // If we're in portrait and the shift is not 0 or 1, adjust the caret based on velocity
         if (getThreshold() < containerProgress && containerProgress < 1 - getThreshold() &&
@@ -88,7 +90,8 @@ public class AllAppsCaretController {
         }
     }
 
-    private void animateCaretToProgress(float progress) {
+    @Override
+    public void animateCaretToProgress(float progress) {
         // If the new progress is the same as the last progress we animated to, terminate early
         if (Float.compare(mLastCaretProgress, progress) == 0) {
             return;
@@ -104,7 +107,8 @@ public class AllAppsCaretController {
         mCaretAnimator.start();
     }
 
-    private float getThreshold() {
+    @Override
+    public float getThreshold() {
         // In landscape, just return the landscape threshold.
         if (mLauncher.useVerticalBarLayout()) {
             return CARET_THRESHOLD_LAND;
@@ -117,6 +121,7 @@ public class AllAppsCaretController {
         return mThresholdCrossed ? CARET_THRESHOLD : 0f;
     }
 
+    @Override
     public void onDragStart() {
         mThresholdCrossed = false;
     }

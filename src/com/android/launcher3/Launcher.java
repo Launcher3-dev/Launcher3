@@ -2852,7 +2852,6 @@ public class Launcher extends BaseActivity
 
         // Change the state *after* we've called all the transition code
         setState(State.WORKSPACE);
-
         if (changed) {
             // Send an accessibility event to announce the context change
             getWindow().getDecorView()
