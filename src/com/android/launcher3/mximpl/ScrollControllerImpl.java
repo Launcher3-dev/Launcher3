@@ -1,16 +1,19 @@
 package com.android.launcher3.mximpl;
 
-import com.android.launcher3.allapps.SearchUiManager;
-import com.android.launcher3.touch.SwipeDetector;
-import com.android.launcher3.util.TouchController;
-
 /**
+ * 二级界面和菜单的控制接口
+ *
  * Created by yuchuan on 2018/4/14.
  */
 
-public interface ScrollControllerImpl extends TouchController, SwipeDetector.Listener,
-        SearchUiManager.OnScrollRangeChangeListener{
+public interface ScrollControllerImpl {
 
-    boolean isTransitioning();
+    void updateCaret(float containerProgress, float velocity, boolean dragging);
+
+    void animateCaretToProgress(float progress);
+
+    float getThreshold();
+
+    void onDragStart();
 
 }
