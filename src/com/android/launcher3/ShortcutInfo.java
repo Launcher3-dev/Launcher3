@@ -20,13 +20,19 @@ import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherActivityInfo;
 import android.os.Build;
+import android.os.Process;
+import android.os.UserHandle;
 import android.text.TextUtils;
 
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.compat.UserManagerCompat;
 import com.android.launcher3.shortcuts.ShortcutInfoCompat;
+import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.ContentWriter;
+import com.android.launcher3.util.PackageManagerHelper;
 
 /**
  * Represents a launchable icon on the workspaces and in folders.
@@ -65,16 +71,11 @@ public class ShortcutInfo extends ItemInfoWithIcon {
     public static final int FLAG_SUPPORTS_WEB_UI = 16; //0B10000;
 
     /**
-     * Indicates if it represents a common type mentioned in {@link CommonAppTypeParser}.
-     * Upto 15 different types supported.
-     */
-    @Deprecated
-    public static final int FLAG_RESTORED_APP_TYPE = 0B0011110000;
-
-    /**
      * The intent used to start the application.
      */
     public Intent intent;
+
+    public ComponentName componentName;
 
     /**
      * If isShortcut=true and customIcon=false, this contains a reference to the
@@ -83,46 +84,10 @@ public class ShortcutInfo extends ItemInfoWithIcon {
     public Intent.ShortcutIconResource iconResource;
 
     /**
-     * Indicates that the icon is disabled due to safe mode restrictions.
-     */
-    public static final int FLAG_DISABLED_SAFEMODE = 1 << 0;
-
-    /**
-     * Indicates that the icon is disabled as the app is not available.
-     */
-    public static final int FLAG_DISABLED_NOT_AVAILABLE = 1 << 1;
-
-    /**
-     * Indicates that the icon is disabled as the app is suspended
-     */
-    public static final int FLAG_DISABLED_SUSPENDED = 1 << 2;
-
-    /**
-     * Indicates that the icon is disabled as the user is in quiet mode.
-     */
-    public static final int FLAG_DISABLED_QUIET_USER = 1 << 3;
-
-    /**
-     * Indicates that the icon is disabled as the publisher has disabled the actual shortcut.
-     */
-    public static final int FLAG_DISABLED_BY_PUBLISHER = 1 << 4;
-
-    /**
-     * Indicates that the icon is disabled as the user partition is currently locked.
-     */
-    public static final int FLAG_DISABLED_LOCKED_USER = 1 << 5;
-
-    /**
-     * Could be disabled, if the the app is installed but unavailable (eg. in safe mode or when
-     * sd-card is not available).
-     */
-    public int isDisabled = DEFAULT;
-
-    /**
      * A message to display when the user tries to start a disabled shortcut.
      * This is currently only used for deep shortcuts.
      */
-    CharSequence disabledMessage;
+    public CharSequence disabledMessage;
 
     public int status;
 
@@ -142,16 +107,27 @@ public class ShortcutInfo extends ItemInfoWithIcon {
         iconResource = info.iconResource;
         status = info.status;
         mInstallProgress = info.mInstallProgress;
-        isDisabled = info.isDisabled;
     }
 
-    /** TODO: Remove this.  It's only called by ApplicationInfo.makeShortcut. */
-    public ShortcutInfo(AppInfo info) {
-        super(info);
-        title = Utilities.trim(info.title);
-        intent = new Intent(info.intent);
-        isDisabled = info.isDisabled;
+    /**
+     * Must not hold the Context.
+     */
+    public ShortcutInfo(Context context, LauncherActivityInfo info, UserHandle user) {
+        this(info, user, UserManagerCompat.getInstance(context).isQuietModeEnabled(user));
     }
+
+    public ShortcutInfo(LauncherActivityInfo info, UserHandle user, boolean quietModeEnabled) {
+        this.componentName = info.getComponentName();
+        this.container = ItemInfo.NO_ID;
+        this.user = user;
+        intent = makeLaunchIntent(info);
+
+        if (quietModeEnabled) {
+            runtimeStatusFlags |= FLAG_DISABLED_QUIET_USER;
+        }
+        updateRuntimeFlagsForActivityTarget(this, info);
+    }
+
 
     /**
      * Creates a {@link ShortcutInfo} from a {@link ShortcutInfoCompat}.
@@ -161,6 +137,38 @@ public class ShortcutInfo extends ItemInfoWithIcon {
         user = shortcutInfo.getUserHandle();
         itemType = LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
         updateFromDeepShortcutInfo(shortcutInfo, context);
+    }
+
+    public ComponentKey toComponentKey() {
+        return new ComponentKey(componentName, user);
+    }
+
+    public static Intent makeLaunchIntent(LauncherActivityInfo info) {
+        return makeLaunchIntent(info.getComponentName());
+    }
+
+    public static Intent makeLaunchIntent(ComponentName cn) {
+        return new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+                .setComponent(cn)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+    }
+
+    public static void updateRuntimeFlagsForActivityTarget(
+            ItemInfoWithIcon info, LauncherActivityInfo lai) {
+        ApplicationInfo appInfo = lai.getApplicationInfo();
+        if (PackageManagerHelper.isAppSuspended(appInfo)) {
+            info.runtimeStatusFlags |= FLAG_DISABLED_SUSPENDED;
+        }
+        info.runtimeStatusFlags |= (appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0
+                ? FLAG_SYSTEM_NO : FLAG_SYSTEM_YES;
+
+        if (Utilities.ATLEAST_OREO
+                && appInfo.targetSdkVersion >= Build.VERSION_CODES.O
+                && Process.myUserHandle().equals(lai.getUser())) {
+            // The icon for a non-primary user is badged, hence it's not exactly an adaptive icon.
+            info.runtimeStatusFlags |= FLAG_ADAPTIVE_ICON;
+        }
     }
 
     @Override
@@ -219,9 +227,9 @@ public class ShortcutInfo extends ItemInfoWithIcon {
         contentDescription = UserManagerCompat.getInstance(context)
                 .getBadgedLabelForUser(label, user);
         if (shortcutInfo.isEnabled()) {
-            isDisabled &= ~FLAG_DISABLED_BY_PUBLISHER;
+            runtimeStatusFlags &= ~FLAG_DISABLED_BY_PUBLISHER;
         } else {
-            isDisabled |= FLAG_DISABLED_BY_PUBLISHER;
+            runtimeStatusFlags |= FLAG_DISABLED_BY_PUBLISHER;
         }
         disabledMessage = shortcutInfo.getDisabledMessage();
     }
@@ -230,11 +238,6 @@ public class ShortcutInfo extends ItemInfoWithIcon {
     public String getDeepShortcutId() {
         return itemType == Favorites.ITEM_TYPE_DEEP_SHORTCUT ?
                 getIntent().getStringExtra(ShortcutInfoCompat.EXTRA_SHORTCUT_ID) : null;
-    }
-
-    @Override
-    public boolean isDisabled() {
-        return isDisabled != 0;
     }
 
     @Override

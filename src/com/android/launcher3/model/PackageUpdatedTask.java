@@ -18,34 +18,32 @@ package com.android.launcher3.model;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.os.Process;
 import android.os.UserHandle;
 import android.util.ArrayMap;
 import android.util.Log;
 
 import com.android.launcher3.AllAppsList;
-import com.android.launcher3.AppInfo;
 import com.android.launcher3.IconCache;
 import com.android.launcher3.InstallShortcutReceiver;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherAppWidgetInfo;
+import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherModel.CallbackTask;
 import com.android.launcher3.LauncherModel.Callbacks;
 import com.android.launcher3.LauncherSettings.Favorites;
-import com.android.launcher3.SessionCommitReceiver;
 import com.android.launcher3.ShortcutInfo;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.compat.LauncherAppsCompat;
 import com.android.launcher3.compat.UserManagerCompat;
-import com.android.launcher3.config.FeatureFlags;
+import com.android.launcher3.graphics.BitmapInfo;
 import com.android.launcher3.graphics.LauncherIcons;
 import com.android.launcher3.util.FlagOp;
 import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.util.LongArrayMap;
 import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.PackageUserKey;
+import com.android.mxlibrary.util.XLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,8 +60,8 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
     private static final String TAG = "PackageUpdatedTask";
 
     public static final int OP_NONE = 0;
-    public static final int OP_ADD = 1;
-    public static final int OP_UPDATE = 2;
+    public static final int OP_ADD = 1; // installed
+    public static final int OP_UPDATE = 2; // updated
     public static final int OP_REMOVE = 3; // uninstalled
     public static final int OP_UNAVAILABLE = 4; // external media unmounted
     public static final int OP_SUSPEND = 5; // package suspended
@@ -94,16 +92,9 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
             case OP_ADD: {
                 for (int i = 0; i < N; i++) {
                     if (DEBUG) Log.d(TAG, "mAllAppsList.addPackage " + packages[i]);
-                    iconCache.updateIconsForPkg(packages[i], mUser);
-                    if (FeatureFlags.LAUNCHER3_PROMISE_APPS_IN_ALL_APPS) {
-                        appsList.removePackage(packages[i], Process.myUserHandle());
-                    }
+
                     appsList.addPackage(context, packages[i], mUser);
 
-                    // Automatically add homescreen icon for work profile apps for below O device.
-                    if (!Utilities.ATLEAST_OREO && !Process.myUserHandle().equals(mUser)) {
-                        SessionCommitReceiver.queueAppIconAddition(context, packages[i], mUser);
-                    }
                 }
                 flagOp = FlagOp.removeFlag(ShortcutInfo.FLAG_DISABLED_NOT_AVAILABLE);
                 break;
@@ -111,7 +102,7 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
             case OP_UPDATE:
                 for (int i = 0; i < N; i++) {
                     if (DEBUG) Log.d(TAG, "mAllAppsList.updatePackage " + packages[i]);
-                    iconCache.updateIconsForPkg(packages[i], mUser);
+//                    iconCache.updateIconsForPkg(packages[i], mUser);
                     appsList.updatePackage(context, packages[i], mUser);
                     app.getWidgetCache().removePackage(packages[i], mUser);
                 }
@@ -150,27 +141,46 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
                 break;
         }
 
-        final ArrayList<AppInfo> addedOrModified = new ArrayList<>();
-        addedOrModified.addAll(appsList.added);
-        appsList.added.clear();
-        addedOrModified.addAll(appsList.modified);
-        appsList.modified.clear();
+        // --- modify by codemx.cn --- 2019/09/05 --- start
+        ArrayList<ItemInfo> added = null;
+        ArrayList<ShortcutInfo> modified = null;
+        final ArrayList<ShortcutInfo> removedApps = new ArrayList<>();
+        if (appsList.added.size() > 0) {
+            XLog.e(XLog.getTag(),XLog.TAG_GU + appsList.added.size());
+            added = new ArrayList<>(appsList.added);
+            appsList.added.clear();
+        }
+        if (appsList.modified.size() > 0) {
+            modified = new ArrayList<>(appsList.modified);
+            appsList.modified.clear();
+        }
 
-        final ArrayList<AppInfo> removedApps = new ArrayList<>(appsList.removed);
-        appsList.removed.clear();
+        if (appsList.removed.size() > 0) {
+            removedApps.addAll(appsList.removed);
+            appsList.removed.clear();
+        }
 
-        final ArrayMap<ComponentName, AppInfo> addedOrUpdatedApps = new ArrayMap<>();
-        if (!addedOrModified.isEmpty()) {
+        final ArrayMap<ComponentName, ShortcutInfo> addedOrUpdatedApps = new ArrayMap<>();
+
+        if (added != null) {
+            final ArrayList<ItemInfo> addedApps = added;
+            LauncherModel model = app.getModel();
+            model.addAndBindNoPositionWorkspaceItems(addedApps);
+        }
+
+        if (modified != null) {
+            final ArrayList<ShortcutInfo> modifiedFinal = modified;
+            for (ShortcutInfo ai : modified) {
+                addedOrUpdatedApps.put(ai.componentName, ai);
+            }
             scheduleCallbackTask(new CallbackTask() {
                 @Override
                 public void execute(Callbacks callbacks) {
-                    callbacks.bindAppsAddedOrUpdated(addedOrModified);
+                    callbacks.bindShortcutsChanged(modifiedFinal, mUser);
                 }
             });
-            for (AppInfo ai : addedOrModified) {
-                addedOrUpdatedApps.put(ai.componentName, ai);
-            }
         }
+        // --- modify by codemx.cn --- 2019/09/05 --- end
 
         final LongArrayMap<Boolean> removedShortcuts = new LongArrayMap<>();
 
@@ -191,16 +201,18 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
                         // Update shortcuts which use iconResource.
                         if ((si.iconResource != null)
                                 && packageSet.contains(si.iconResource.packageName)) {
-                            Bitmap icon = LauncherIcons.createIconBitmap(si.iconResource, context);
-                            if (icon != null) {
-                                si.iconBitmap = icon;
+                            LauncherIcons li = LauncherIcons.obtain(context);
+                            BitmapInfo iconInfo = li.createIconBitmap(si.iconResource);
+                            li.recycle();
+                            if (iconInfo != null) {
+                                iconInfo.applyTo(si);
                                 infoUpdated = true;
                             }
                         }
 
                         ComponentName cn = si.getTargetComponent();
                         if (cn != null && matcher.matches(si, cn)) {
-                            AppInfo appInfo = addedOrUpdatedApps.get(cn);
+                            ShortcutInfo appInfo = addedOrUpdatedApps.get(cn);
 
                             if (si.hasStatusFlag(ShortcutInfo.FLAG_SUPPORTS_WEB_UI)) {
                                 removedShortcuts.put(si.id, false);
@@ -244,9 +256,9 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
                                 infoUpdated = true;
                             }
 
-                            int oldDisabledFlags = si.isDisabled;
-                            si.isDisabled = flagOp.apply(si.isDisabled);
-                            if (si.isDisabled != oldDisabledFlags) {
+                            int oldRuntimeFlags = si.runtimeStatusFlags;
+                            si.runtimeStatusFlags = flagOp.apply(si.runtimeStatusFlags);
+                            if (si.runtimeStatusFlags != oldRuntimeFlags) {
                                 shortcutUpdated = true;
                             }
                         }
@@ -311,7 +323,7 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
             }
 
             // Update removedComponents as some components can get removed during package update
-            for (AppInfo info : removedApps) {
+            for (ShortcutInfo info : removedApps) {
                 removedComponents.add(info.componentName);
             }
         }
@@ -336,17 +348,7 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
             });
         }
 
-        // Notify launcher of widget update. From marshmallow onwards we use AppWidgetHost to
-        // get widget update signals.
-        if (!Utilities.ATLEAST_MARSHMALLOW &&
-                (mOp == OP_ADD || mOp == OP_REMOVE || mOp == OP_UPDATE)) {
-            scheduleCallbackTask(new CallbackTask() {
-                @Override
-                public void execute(Callbacks callbacks) {
-                    callbacks.notifyWidgetProvidersChanged();
-                }
-            });
-        } else if (Utilities.ATLEAST_OREO && mOp == OP_ADD) {
+        if (Utilities.ATLEAST_OREO && mOp == OP_ADD) {
             // Load widgets for the new package. Changes due to app updates are handled through
             // AppWidgetHost events, this is just to initialize the long-press options.
             for (int i = 0; i < N; i++) {

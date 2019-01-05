@@ -23,7 +23,7 @@ import android.os.Bundle;
 import android.provider.BaseColumns;
 
 /**
- * Settings related utilities.
+ * MxSettings related utilities.
  */
 public class LauncherSettings {
     /** Columns required on table staht will be subject to backup and restore. */
@@ -303,11 +303,6 @@ public class LauncherSettings {
         public static final String METHOD_CREATE_EMPTY_DB = "create_empty_db";
 
         public static final String METHOD_LOAD_DEFAULT_FAVORITES = "load_default_favorites";
-
-        public static final String METHOD_SET_EXTRACTED_COLORS_AND_WALLPAPER_ID =
-                "set_extracted_colors_and_wallpaper_id_setting";
-        public static final String EXTRA_EXTRACTED_COLORS = "extra_extractedColors";
-        public static final String EXTRA_WALLPAPER_ID = "extra_wallpaperId";
 
         public static final String METHOD_REMOVE_GHOST_WIDGETS = "remove_ghost_widgets";
 

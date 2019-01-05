@@ -22,6 +22,7 @@ import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Point;
+import android.support.annotation.VisibleForTesting;
 import android.util.DisplayMetrics;
 import android.util.Xml;
 import android.view.Display;
@@ -65,12 +66,6 @@ public class InvariantDeviceProfile {
     public int numColumns;
 
     /**
-     * The minimum number of predicted apps in all apps.
-     */
-    @Deprecated
-    int minAllAppsPredictionColumns;
-
-    /**
      * Number of icons per row and column in the folder.
      */
     public int numFolderRows;
@@ -94,18 +89,19 @@ public class InvariantDeviceProfile {
 
     public Point defaultWallpaperSize;
 
+    @VisibleForTesting
     public InvariantDeviceProfile() {
     }
 
-    public InvariantDeviceProfile(InvariantDeviceProfile p) {
+    private InvariantDeviceProfile(InvariantDeviceProfile p) {
         this(p.name, p.minWidthDps, p.minHeightDps, p.numRows, p.numColumns,
-                p.numFolderRows, p.numFolderColumns, p.minAllAppsPredictionColumns,
+                p.numFolderRows, p.numFolderColumns,
                 p.iconSize, p.landscapeIconSize, p.iconTextSize, p.numHotseatIcons,
                 p.defaultLayoutId, p.demoModeLayoutId);
     }
 
-    InvariantDeviceProfile(String n, float w, float h, int r, int c, int fr, int fc, int maapc,
-            float is, float lis, float its, int hs, int dlId, int dmlId) {
+    private InvariantDeviceProfile(String n, float w, float h, int r, int c, int fr, int fc,
+                                   float is, float lis, float its, int hs, int dlId, int dmlId) {
         name = n;
         minWidthDps = w;
         minHeightDps = h;
@@ -113,7 +109,6 @@ public class InvariantDeviceProfile {
         numColumns = c;
         numFolderRows = fr;
         numFolderColumns = fc;
-        minAllAppsPredictionColumns = maapc;
         iconSize = is;
         landscapeIconSize = lis;
         iconTextSize = its;
@@ -123,7 +118,7 @@ public class InvariantDeviceProfile {
     }
 
     @TargetApi(23)
-    InvariantDeviceProfile(Context context) {
+    public InvariantDeviceProfile(Context context) {
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         DisplayMetrics dm = new DisplayMetrics();
@@ -137,11 +132,13 @@ public class InvariantDeviceProfile {
         minWidthDps = Utilities.dpiFromPx(Math.min(smallestSize.x, smallestSize.y), dm);
         minHeightDps = Utilities.dpiFromPx(Math.min(largestSize.x, largestSize.y), dm);
 
+        // 通过排序查找与手机宽高最接近的配置信息
         ArrayList<InvariantDeviceProfile> closestProfiles = findClosestDeviceProfiles(
                 minWidthDps, minHeightDps, getPredefinedDeviceProfiles(context));
         InvariantDeviceProfile interpolatedDeviceProfileOut =
-                invDistWeightedInterpolate(minWidthDps,  minHeightDps, closestProfiles);
+                invDistWeightedInterpolate(minWidthDps, minHeightDps, closestProfiles);
 
+        // 获取最接近屏幕宽高的配置信息
         InvariantDeviceProfile closestProfile = closestProfiles.get(0);
         numRows = closestProfile.numRows;
         numColumns = closestProfile.numColumns;
@@ -150,7 +147,6 @@ public class InvariantDeviceProfile {
         demoModeLayoutId = closestProfile.demoModeLayoutId;
         numFolderRows = closestProfile.numFolderRows;
         numFolderColumns = closestProfile.numFolderColumns;
-        minAllAppsPredictionColumns = closestProfile.minAllAppsPredictionColumns;
 
         iconSize = interpolatedDeviceProfileOut.iconSize;
         landscapeIconSize = interpolatedDeviceProfileOut.landscapeIconSize;
@@ -170,9 +166,9 @@ public class InvariantDeviceProfile {
         int largeSide = Math.max(realSize.x, realSize.y);
 
         landscapeProfile = new DeviceProfile(context, this, smallestSize, largestSize,
-                largeSide, smallSide, true /* isLandscape */);
+                largeSide, smallSide, true /* isLandscape */, false /* isMultiWindowMode */);
         portraitProfile = new DeviceProfile(context, this, smallestSize, largestSize,
-                smallSide, largeSide, false /* isLandscape */);
+                smallSide, largeSide, false /* isLandscape */, false /* isMultiWindowMode */);
 
         // We need to ensure that there is enough extra space in the wallpaper
         // for the intended parallax effects
@@ -185,6 +181,13 @@ public class InvariantDeviceProfile {
         }
     }
 
+    /**
+     * 解析xml文件夹中的device_profiles.xml文件
+     *
+     * @param context 上下文
+     *
+     * @return
+     */
     ArrayList<InvariantDeviceProfile> getPredefinedDeviceProfiles(Context context) {
         ArrayList<InvariantDeviceProfile> profiles = new ArrayList<>();
         try (XmlResourceParser parser = context.getResources().getXml(R.xml.device_profiles)) {
@@ -207,7 +210,6 @@ public class InvariantDeviceProfile {
                             numColumns,
                             a.getInt(R.styleable.InvariantDeviceProfile_numFolderRows, numRows),
                             a.getInt(R.styleable.InvariantDeviceProfile_numFolderColumns, numColumns),
-                            a.getInt(R.styleable.InvariantDeviceProfile_minAllAppsPredictionColumns, numColumns),
                             iconSize,
                             a.getFloat(R.styleable.InvariantDeviceProfile_landscapeIconSize, iconSize),
                             a.getFloat(R.styleable.InvariantDeviceProfile_iconTextSize, 0),
@@ -217,7 +219,7 @@ public class InvariantDeviceProfile {
                     a.recycle();
                 }
             }
-        } catch (IOException|XmlPullParserException e) {
+        } catch (IOException | XmlPullParserException e) {
             throw new RuntimeException(e);
         }
         return profiles;
@@ -225,7 +227,7 @@ public class InvariantDeviceProfile {
 
     private int getLauncherIconDensity(int requiredSize) {
         // Densities typically defined by an app.
-        int[] densityBuckets = new int[] {
+        int[] densityBuckets = new int[]{
                 DisplayMetrics.DENSITY_LOW,
                 DisplayMetrics.DENSITY_MEDIUM,
                 DisplayMetrics.DENSITY_TV,
@@ -249,7 +251,7 @@ public class InvariantDeviceProfile {
 
     /**
      * Apply any Partner customization grid overrides.
-     *
+     * <p>
      * Currently we support: all apps row / column count.
      */
     private void applyPartnerDeviceProfileOverrides(Context context, DisplayMetrics dm) {
@@ -259,7 +261,8 @@ public class InvariantDeviceProfile {
         }
     }
 
-    @Thunk float dist(float x0, float y0, float x1, float y1) {
+    @Thunk
+    float dist(float x0, float y0, float x1, float y1) {
         return (float) Math.hypot(x1 - x0, y1 - y0);
     }
 
@@ -284,7 +287,7 @@ public class InvariantDeviceProfile {
 
     // Package private visibility for testing.
     InvariantDeviceProfile invDistWeightedInterpolate(float width, float height,
-                ArrayList<InvariantDeviceProfile> points) {
+                                                      ArrayList<InvariantDeviceProfile> points) {
         float weights = 0;
 
         InvariantDeviceProfile p = points.get(0);
@@ -299,7 +302,7 @@ public class InvariantDeviceProfile {
             weights += w;
             out.add(p.multiply(w));
         }
-        return out.multiply(1.0f/weights);
+        return out.multiply(1.0f / weights);
     }
 
     private void add(InvariantDeviceProfile p) {
@@ -316,7 +319,7 @@ public class InvariantDeviceProfile {
     }
 
     public int getAllAppsButtonRank() {
-        if (FeatureFlags.IS_DOGFOOD_BUILD && FeatureFlags.NO_ALL_APPS_ICON) {
+        if (FeatureFlags.IS_DOGFOOD_BUILD) {
             throw new IllegalAccessError("Accessing all apps rank when all-apps is disabled");
         }
         return numHotseatIcons / 2;
@@ -351,8 +354,8 @@ public class InvariantDeviceProfile {
         // We will use these two data points to extrapolate how much the wallpaper parallax effect
         // to span (ie travel) at any aspect ratio:
 
-        final float ASPECT_RATIO_LANDSCAPE = 16/10f;
-        final float ASPECT_RATIO_PORTRAIT = 10/16f;
+        final float ASPECT_RATIO_LANDSCAPE = 16 / 10f;
+        final float ASPECT_RATIO_PORTRAIT = 10 / 16f;
         final float WALLPAPER_WIDTH_TO_SCREEN_RATIO_LANDSCAPE = 1.5f;
         final float WALLPAPER_WIDTH_TO_SCREEN_RATIO_PORTRAIT = 1.2f;
 
