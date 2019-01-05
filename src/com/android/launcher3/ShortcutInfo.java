@@ -20,19 +20,13 @@ import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.LauncherActivityInfo;
 import android.os.Build;
-import android.os.Process;
-import android.os.UserHandle;
 import android.text.TextUtils;
 
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.compat.UserManagerCompat;
 import com.android.launcher3.shortcuts.ShortcutInfoCompat;
-import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.ContentWriter;
-import com.android.launcher3.util.PackageManagerHelper;
 
 /**
  * Represents a launchable icon on the workspaces and in folders.
@@ -75,8 +69,6 @@ public class ShortcutInfo extends ItemInfoWithIcon {
      */
     public Intent intent;
 
-    public ComponentName componentName;
-
     /**
      * If isShortcut=true and customIcon=false, this contains a reference to the
      * shortcut icon as an application's resource.
@@ -109,25 +101,12 @@ public class ShortcutInfo extends ItemInfoWithIcon {
         mInstallProgress = info.mInstallProgress;
     }
 
-    /**
-     * Must not hold the Context.
-     */
-    public ShortcutInfo(Context context, LauncherActivityInfo info, UserHandle user) {
-        this(info, user, UserManagerCompat.getInstance(context).isQuietModeEnabled(user));
+    /** TODO: Remove this.  It's only called by ApplicationInfo.makeShortcut. */
+    public ShortcutInfo(AppInfo info) {
+        super(info);
+        title = Utilities.trim(info.title);
+        intent = new Intent(info.intent);
     }
-
-    public ShortcutInfo(LauncherActivityInfo info, UserHandle user, boolean quietModeEnabled) {
-        this.componentName = info.getComponentName();
-        this.container = ItemInfo.NO_ID;
-        this.user = user;
-        intent = makeLaunchIntent(info);
-
-        if (quietModeEnabled) {
-            runtimeStatusFlags |= FLAG_DISABLED_QUIET_USER;
-        }
-        updateRuntimeFlagsForActivityTarget(this, info);
-    }
-
 
     /**
      * Creates a {@link ShortcutInfo} from a {@link ShortcutInfoCompat}.
@@ -137,38 +116,6 @@ public class ShortcutInfo extends ItemInfoWithIcon {
         user = shortcutInfo.getUserHandle();
         itemType = LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
         updateFromDeepShortcutInfo(shortcutInfo, context);
-    }
-
-    public ComponentKey toComponentKey() {
-        return new ComponentKey(componentName, user);
-    }
-
-    public static Intent makeLaunchIntent(LauncherActivityInfo info) {
-        return makeLaunchIntent(info.getComponentName());
-    }
-
-    public static Intent makeLaunchIntent(ComponentName cn) {
-        return new Intent(Intent.ACTION_MAIN)
-                .addCategory(Intent.CATEGORY_LAUNCHER)
-                .setComponent(cn)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-    }
-
-    public static void updateRuntimeFlagsForActivityTarget(
-            ItemInfoWithIcon info, LauncherActivityInfo lai) {
-        ApplicationInfo appInfo = lai.getApplicationInfo();
-        if (PackageManagerHelper.isAppSuspended(appInfo)) {
-            info.runtimeStatusFlags |= FLAG_DISABLED_SUSPENDED;
-        }
-        info.runtimeStatusFlags |= (appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0
-                ? FLAG_SYSTEM_NO : FLAG_SYSTEM_YES;
-
-        if (Utilities.ATLEAST_OREO
-                && appInfo.targetSdkVersion >= Build.VERSION_CODES.O
-                && Process.myUserHandle().equals(lai.getUser())) {
-            // The icon for a non-primary user is badged, hence it's not exactly an adaptive icon.
-            info.runtimeStatusFlags |= FLAG_ADAPTIVE_ICON;
-        }
     }
 
     @Override

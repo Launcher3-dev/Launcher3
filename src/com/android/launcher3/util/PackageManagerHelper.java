@@ -35,7 +35,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.launcher3.AppInfo;
 import com.android.launcher3.ItemInfo;
+import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppWidgetInfo;
 import com.android.launcher3.PendingAddItemInfo;
 import com.android.launcher3.PromiseAppInfo;
@@ -90,7 +92,7 @@ public class PackageManagerHelper {
     public Intent getAppLaunchIntent(String pkg, UserHandle user) {
         List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(pkg, user);
         return activities.isEmpty() ? null :
-                ShortcutInfo.makeLaunchIntent(activities.get(0));
+                AppInfo.makeLaunchIntent(activities.get(0));
     }
 
     /**
@@ -193,7 +195,9 @@ public class PackageManagerHelper {
             return;
         }
         ComponentName componentName = null;
-       if (info instanceof ShortcutInfo) {
+        if (info instanceof AppInfo) {
+            componentName = ((AppInfo) info).componentName;
+        } else if (info instanceof ShortcutInfo) {
             componentName = info.getTargetComponent();
         } else if (info instanceof PendingAddItemInfo) {
             componentName = ((PendingAddItemInfo) info).componentName;

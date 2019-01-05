@@ -57,6 +57,7 @@ public interface LauncherCallbacks {
      * Extension points for providing custom behavior on certain user interactions.
      */
     void onLauncherProviderChange();
+    void bindAllApplications(ArrayList<AppInfo> apps);
 
     /**
      * Starts a search with {@param initialQuery}. Return false if search was not started.

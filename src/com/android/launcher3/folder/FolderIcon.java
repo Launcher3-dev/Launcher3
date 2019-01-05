@@ -16,12 +16,16 @@
 
 package com.android.launcher3.folder;
 
+import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.MAX_NUM_ITEMS_IN_PREVIEW;
+import static com.android.launcher3.folder.PreviewItemManager.INITIAL_ITEM_ANIMATION_DURATION;
+
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -35,6 +39,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.android.launcher3.Alarm;
+import com.android.launcher3.AppInfo;
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.CellLayout;
 import com.android.launcher3.CheckLongPressHelper;
@@ -64,9 +69,6 @@ import com.android.launcher3.widget.PendingAddShortcutInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.MAX_NUM_ITEMS_IN_PREVIEW;
-import static com.android.launcher3.folder.PreviewItemManager.INITIAL_ITEM_ANIMATION_DURATION;
 
 /**
  * An icon that can appear on in the workspace representing an {@link Folder}.
@@ -231,7 +233,7 @@ public class FolderIcon extends FrameLayout implements FolderListener {
         mBackground.animateToAccept(cl, lp.cellX, lp.cellY);
         mOpenAlarm.setOnAlarmListener(mOnOpenListener);
         if (SPRING_LOADING_ENABLED &&
-                ((dragInfo instanceof ShortcutInfo)
+                ((dragInfo instanceof AppInfo)
                         || (dragInfo instanceof ShortcutInfo)
                         || (dragInfo instanceof PendingAddShortcutInfo))) {
             mOpenAlarm.setAlarm(ON_OPEN_DELAY);
@@ -368,9 +370,9 @@ public class FolderIcon extends FrameLayout implements FolderListener {
 
     public void onDrop(DragObject d, boolean itemReturnedOnFailedDrop) {
         ShortcutInfo item;
-        if (d.dragInfo instanceof ShortcutInfo) {
+        if (d.dragInfo instanceof AppInfo) {
             // Came from all apps -- make a copy
-            item = (ShortcutInfo) d.dragInfo;
+            item = ((AppInfo) d.dragInfo).makeShortcut();
         } else if (d.dragSource instanceof BaseItemDragListener){
             // Came from a different window -- make a copy
             item = new ShortcutInfo((ShortcutInfo) d.dragInfo);

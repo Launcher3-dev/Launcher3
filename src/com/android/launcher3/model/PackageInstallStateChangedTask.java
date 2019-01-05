@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.os.Process;
 
 import com.android.launcher3.AllAppsList;
+import com.android.launcher3.AppInfo;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherAppWidgetInfo;
@@ -66,9 +67,9 @@ public class PackageInstallStateChangedTask extends BaseModelUpdateTask {
 
         synchronized (apps) {
             PromiseAppInfo updated = null;
-            final ArrayList<ShortcutInfo> removed = new ArrayList<>();
+            final ArrayList<AppInfo> removed = new ArrayList<>();
             for (int i=0; i < apps.size(); i++) {
-                final ShortcutInfo appInfo = apps.get(i);
+                final AppInfo appInfo = apps.get(i);
                 final ComponentName tgtComp = appInfo.getTargetComponent();
                 if (tgtComp != null && tgtComp.getPackageName().equals(mInstallInfo.packageName)) {
                     if (appInfo instanceof PromiseAppInfo) {

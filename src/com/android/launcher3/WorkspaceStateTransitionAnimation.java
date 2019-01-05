@@ -16,16 +16,6 @@
 
 package com.android.launcher3;
 
-import android.view.View;
-import android.view.animation.Interpolator;
-
-import com.android.launcher3.LauncherState.PageAlphaProvider;
-import com.android.launcher3.LauncherStateManager.AnimationConfig;
-import com.android.launcher3.anim.AnimatorSetBuilder;
-import com.android.launcher3.anim.PropertySetter;
-import com.android.launcher3.graphics.WorkspaceAndHotseatScrim;
-import com.android.mxlibrary.util.XLog;
-
 import static com.android.launcher3.LauncherAnimUtils.DRAWABLE_ALPHA;
 import static com.android.launcher3.LauncherAnimUtils.SCALE_PROPERTY;
 import static com.android.launcher3.LauncherState.HOTSEAT_ICONS;
@@ -38,6 +28,15 @@ import static com.android.launcher3.anim.PropertySetter.NO_ANIM_PROPERTY_SETTER;
 import static com.android.launcher3.graphics.WorkspaceAndHotseatScrim.SCRIM_PROGRESS;
 import static com.android.launcher3.graphics.WorkspaceAndHotseatScrim.SYSUI_PROGRESS;
 
+import android.view.View;
+import android.view.animation.Interpolator;
+
+import com.android.launcher3.LauncherState.PageAlphaProvider;
+import com.android.launcher3.LauncherStateManager.AnimationConfig;
+import com.android.launcher3.anim.AnimatorSetBuilder;
+import com.android.launcher3.anim.PropertySetter;
+import com.android.launcher3.graphics.WorkspaceAndHotseatScrim;
+
 /**
  * Manages the animations between each of the workspace states.
  */
@@ -45,8 +44,6 @@ public class WorkspaceStateTransitionAnimation {
 
     private final Launcher mLauncher;
     private final Workspace mWorkspace;
-
-    public final int mOverviewTransitionTime = 300;
 
     private float mNewScale;
 
@@ -61,7 +58,7 @@ public class WorkspaceStateTransitionAnimation {
     }
 
     public void setStateWithAnimation(LauncherState toState, AnimatorSetBuilder builder,
-                                      AnimationConfig config) {
+            AnimationConfig config) {
         setWorkspaceProperty(toState, config.getPropertySetter(builder), builder, config);
     }
 
@@ -73,24 +70,19 @@ public class WorkspaceStateTransitionAnimation {
      * Starts a transition animation for the workspace.
      */
     private void setWorkspaceProperty(LauncherState state, PropertySetter propertySetter,
-                                      AnimatorSetBuilder builder, AnimationConfig config) {
+            AnimatorSetBuilder builder, AnimationConfig config) {
         float[] scaleAndTranslation = state.getWorkspaceScaleAndTranslation(mLauncher);
         mNewScale = scaleAndTranslation[0];
-        // modify by comdex.cn ---20181027-------start
-//        PageAlphaProvider pageAlphaProvider = state.getWorkspacePageAlphaProvider(mLauncher);
-        LauncherState.PageScaleProvider pageScaleProvider = state.getWorkspacePageScaleProvider(mLauncher);
+        PageAlphaProvider pageAlphaProvider = state.getWorkspacePageAlphaProvider(mLauncher);
         final int childCount = mWorkspace.getChildCount();
         for (int i = 0; i < childCount; i++) {
-//            applyChildStateAlpha(state, (CellLayout) mWorkspace.getChildAt(i), i, pageAlphaProvider,
-//                    propertySetter, builder, config);
-            applyChildStateScale(state, (CellLayout) mWorkspace.getChildAt(i), i, pageScaleProvider,
+            applyChildState(state, (CellLayout) mWorkspace.getChildAt(i), i, pageAlphaProvider,
                     propertySetter, builder, config);
         }
-        // modify by comdex.cn ---20181027-------end
 
         int elements = state.getVisibleElements(mLauncher);
         Interpolator fadeInterpolator = builder.getInterpolator(ANIM_WORKSPACE_FADE,
-                pageScaleProvider.interpolator);
+                pageAlphaProvider.interpolator);
         boolean playAtomicComponent = config.playAtomicComponent();
         if (playAtomicComponent) {
             Interpolator scaleInterpolator = builder.getInterpolator(ANIM_WORKSPACE_SCALE, ZOOM_OUT);
@@ -123,25 +115,14 @@ public class WorkspaceStateTransitionAnimation {
         propertySetter.setFloat(scrim, SYSUI_PROGRESS, state.hasSysUiScrim ? 1 : 0, LINEAR);
     }
 
-    public void applyChildStateAlpha(LauncherState state, CellLayout cl, int childIndex) {
-        applyChildStateAlpha(state, cl, childIndex, state.getWorkspacePageAlphaProvider(mLauncher),
+    public void applyChildState(LauncherState state, CellLayout cl, int childIndex) {
+        applyChildState(state, cl, childIndex, state.getWorkspacePageAlphaProvider(mLauncher),
                 NO_ANIM_PROPERTY_SETTER, new AnimatorSetBuilder(), new AnimationConfig());
     }
 
-    /**
-     * 单个CellLayout的Alpha动画
-     *
-     * @param state             目标状态
-     * @param cl                CellLayout
-     * @param childIndex        CellLayout的Index
-     * @param pageAlphaProvider Alpha值速度值
-     * @param propertySetter    Property设置值
-     * @param builder           动画集合构造器
-     * @param config            动画配置
-     */
-    private void applyChildStateAlpha(LauncherState state, CellLayout cl, int childIndex,
-                                      PageAlphaProvider pageAlphaProvider, PropertySetter propertySetter,
-                                      AnimatorSetBuilder builder, AnimationConfig config) {
+    private void applyChildState(LauncherState state, CellLayout cl, int childIndex,
+            PageAlphaProvider pageAlphaProvider, PropertySetter propertySetter,
+            AnimatorSetBuilder builder, AnimationConfig config) {
         float pageAlpha = pageAlphaProvider.getPageAlpha(childIndex);
         int drawableAlpha = Math.round(pageAlpha * (state.hasWorkspacePageBackground ? 255 : 0));
 
@@ -155,84 +136,5 @@ public class WorkspaceStateTransitionAnimation {
             propertySetter.setFloat(cl.getShortcutsAndWidgets(), View.ALPHA,
                     pageAlpha, fadeInterpolator);
         }
-    }
-
-    /**
-     * 单个CellLayout的Scale动画
-     *
-     * @param state             目标状态
-     * @param cl                CellLayout
-     * @param childIndex        CellLayout的Index
-     * @param pageScaleProvider Alpha值速度值
-     * @param propertySetter    Property设置值
-     * @param builder           动画集合构造器
-     * @param config            动画配置
-     */
-    private void applyChildStateScale(LauncherState state, CellLayout cl, int childIndex,
-                                      LauncherState.PageScaleProvider pageScaleProvider, PropertySetter propertySetter,
-                                      AnimatorSetBuilder builder, AnimationConfig config) {
-        float pageScale;
-        if (state == LauncherState.NORMAL) {
-            pageScale = 1.0f;
-        } else {
-            pageScale = pageScaleProvider.getPageScale(childIndex);
-        }
-        if (config.playNonAtomicComponent()) {
-            propertySetter.setFloat(cl, SCALE_PROPERTY, pageScale, ZOOM_OUT);
-        }
-        if (config.playAtomicComponent()) {
-            Interpolator scaleInterpolator = builder.getInterpolator(ANIM_WORKSPACE_SCALE,
-                    pageScaleProvider.interpolator);
-            propertySetter.setFloat(cl.getShortcutsAndWidgets(), View.SCALE_X,
-                    pageScale, scaleInterpolator);
-            propertySetter.setFloat(cl.getShortcutsAndWidgets(), View.SCALE_Y,
-                    pageScale, scaleInterpolator);
-        }
-    }
-}
-
-/**
- * Stores the transition states for convenience.
- */
-class TransitionStates {
-
-    // Raw states
-    final boolean oldStateIsNormal;
-    final boolean oldStateIsEditing;
-    final boolean oldStateIsSpringLoaded;
-    final boolean oldStateIsOverview;
-
-    final boolean stateIsNormal;
-    final boolean stateIsEditing;
-    final boolean stateIsSpringLoaded;
-    final boolean stateIsOverview;
-
-    // Convenience members
-    final boolean workspaceToOverview;
-    final boolean overviewToWorkspace;
-    final boolean workspaceToEditing;
-    final boolean editingToWorkspace;
-    final boolean workspaceToSpringLoaded;
-    final boolean springLoadedToEditing;
-
-
-    public TransitionStates(final LauncherState fromState, final LauncherState toState) {
-        XLog.e(XLog.getTag(), XLog.TAG_GU + "fromState:  " + fromState.containerType + "  ---   toState:  " + toState.containerType);
-        oldStateIsNormal = (fromState == LauncherState.NORMAL);
-        oldStateIsEditing = (fromState == LauncherState.EDITING);
-        oldStateIsSpringLoaded = (fromState == LauncherState.SPRING_LOADED);
-        oldStateIsOverview = (fromState == LauncherState.OVERVIEW);
-
-        stateIsNormal = (toState == LauncherState.NORMAL);
-        stateIsEditing = (toState == LauncherState.EDITING);
-        stateIsSpringLoaded = (toState == LauncherState.SPRING_LOADED);
-        stateIsOverview = (toState == LauncherState.OVERVIEW);
-
-        workspaceToOverview = (oldStateIsNormal && stateIsOverview);
-        overviewToWorkspace = (oldStateIsOverview && stateIsNormal);
-        workspaceToEditing = (oldStateIsNormal && stateIsEditing);
-        editingToWorkspace = (oldStateIsEditing && stateIsNormal);
-        workspaceToSpringLoaded = (oldStateIsNormal && stateIsSpringLoaded);
-        springLoadedToEditing = (oldStateIsSpringLoaded && stateIsEditing);
     }
 }

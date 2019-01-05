@@ -16,6 +16,8 @@
 
 package com.android.launcher3.provider;
 
+import static com.android.launcher3.Utilities.getDevicePrefs;
+
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.content.Context;
@@ -32,7 +34,6 @@ import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.LongSparseArray;
 import android.util.SparseBooleanArray;
-
 import com.android.launcher3.AutoInstallsLayout.LayoutParserCallback;
 import com.android.launcher3.DefaultLayoutParser;
 import com.android.launcher3.LauncherAppState;
@@ -50,12 +51,9 @@ import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.model.GridSizeMigrationTask;
 import com.android.launcher3.util.LongArrayMap;
-
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
-
-import static com.android.launcher3.Utilities.getDevicePrefs;
 
 /**
  * Utility class to import data from another Launcher which is based on Launcher3 schema.
@@ -310,6 +308,9 @@ public class ImportDataTask {
 
         LongArrayMap<Object> hotseatItems = GridSizeMigrationTask.removeBrokenHotseatItems(mContext);
         int myHotseatCount = LauncherAppState.getIDP(mContext).numHotseatIcons;
+        if (!FeatureFlags.NO_ALL_APPS_ICON) {
+            myHotseatCount--;
+        }
         if (hotseatItems.size() < myHotseatCount) {
             // Insufficient hotseat items. Add a few more.
             HotseatParserCallback parserCallback = new HotseatParserCallback(

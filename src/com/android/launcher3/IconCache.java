@@ -422,7 +422,7 @@ public class IconCache {
         IconLoadRequest request = new IconLoadRequest(mWorkerHandler, this::onIconRequestEnd) {
             @Override
             public void run() {
-                if (info instanceof ShortcutInfo) {
+                if (info instanceof AppInfo || info instanceof ShortcutInfo) {
                     getTitleAndIcon(info, false);
                 } else if (info instanceof PackageItemInfo) {
                     getTitleAndIconForApp((PackageItemInfo) info, false);
@@ -447,7 +447,7 @@ public class IconCache {
     /**
      * Updates {@param application} only if a valid entry is found.
      */
-    public synchronized void updateTitleAndIcon(ShortcutInfo application) {
+    public synchronized void updateTitleAndIcon(AppInfo application) {
         CacheEntry entry = cacheLocked(application.componentName,
                 Provider.<LauncherActivityInfo>of(null),
                 application.user, false, application.usingLowResIcon);

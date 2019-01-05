@@ -330,7 +330,7 @@ public class RecyclerViewFastScroller extends View {
     }
 
     /**
-     * Returns true if MenuTransitionController can handle vertical motion
+     * Returns true if AllAppsTransitionController can handle vertical motion
      * beginning at this point.
      */
     public boolean shouldBlockIntercept(int x, int y) {

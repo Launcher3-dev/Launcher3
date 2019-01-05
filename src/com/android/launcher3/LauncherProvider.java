@@ -61,7 +61,6 @@ import com.android.launcher3.provider.RestoreDbTask;
 import com.android.launcher3.util.NoLocaleSQLiteHelper;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.Thunk;
-import com.android.mxlibrary.util.XLog;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -388,7 +387,6 @@ public class LauncherProvider extends ContentProvider {
                 return null;
             }
             case LauncherSettings.Settings.METHOD_LOAD_DEFAULT_FAVORITES: {
-                // 加载配置信息
                 loadDefaultFavoritesIfNecessary();
                 return null;
             }
@@ -447,18 +445,17 @@ public class LauncherProvider extends ContentProvider {
     }
 
     /**
-     * Loads the default workspace based on the following priority（优先） scheme（策略）:
-     *   1) From the app restrictions(限制)
+     * Loads the default workspace based on the following priority scheme:
+     *   1) From the app restrictions
      *   2) From a package provided by play store
      *   3) From a partner configuration APK, already in the system image
-     *   4) The default configuration for the particular（特定） device
+     *   4) The default configuration for the particular device
      */
     synchronized private void loadDefaultFavoritesIfNecessary() {
         SharedPreferences sp = Utilities.getPrefs(getContext());
 
-        // 空数据库
         if (sp.getBoolean(EMPTY_DATABASE_CREATED, false)) {
-            XLog.e(TAG, "loading default workspace");
+            Log.d(TAG, "loading default workspace");
 
             AppWidgetHost widgetHost = mOpenHelper.newLauncherWidgetHost();
             AutoInstallsLayout loader = createWorkspaceLoaderFromAppRestriction(widgetHost);

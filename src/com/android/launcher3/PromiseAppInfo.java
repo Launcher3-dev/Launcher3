@@ -23,7 +23,7 @@ import android.support.annotation.NonNull;
 import com.android.launcher3.compat.PackageInstallerCompat;
 import com.android.launcher3.util.PackageManagerHelper;
 
-public class PromiseAppInfo extends ShortcutInfo {
+public class PromiseAppInfo extends AppInfo {
 
     public int level = 0;
 
@@ -36,7 +36,7 @@ public class PromiseAppInfo extends ShortcutInfo {
                         | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
     }
 
-
+    @Override
     public ShortcutInfo makeShortcut() {
         ShortcutInfo shortcut = new ShortcutInfo(this);
         shortcut.setInstallProgress(level);

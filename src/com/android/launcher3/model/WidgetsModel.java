@@ -1,6 +1,8 @@
 
 package com.android.launcher3.model;
 
+import static android.appwidget.AppWidgetProviderInfo.WIDGET_FEATURE_HIDE_FROM_PICKER;
+
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -31,8 +33,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import static android.appwidget.AppWidgetProviderInfo.WIDGET_FEATURE_HIDE_FROM_PICKER;
 
 /**
  * Widgets data model that is used by the adapters of the widget views and controllers.
@@ -200,8 +200,7 @@ public class WidgetsModel {
         // Update each package entry
         IconCache iconCache = app.getIconCache();
         for (PackageItemInfo p : tmpPackageItemInfos.values()) {
-            // 改成true桌面图标会模糊
-            iconCache.getTitleAndIconForApp(p, false /* userLowResIcon */);
+            iconCache.getTitleAndIconForApp(p, true /* userLowResIcon */);
         }
     }
 }

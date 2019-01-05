@@ -16,6 +16,13 @@
 
 package com.android.launcher3;
 
+import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
+
+import static com.android.launcher3.compat.AccessibilityManagerCompat.isAccessibilityEnabled;
+import static com.android.launcher3.compat.AccessibilityManagerCompat.sendCustomAccessibilityEvent;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.IntDef;
@@ -31,12 +38,6 @@ import com.android.launcher3.views.BaseDragLayer;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-
-import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
-import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
-import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
-import static com.android.launcher3.compat.AccessibilityManagerCompat.isAccessibilityEnabled;
-import static com.android.launcher3.compat.AccessibilityManagerCompat.sendCustomAccessibilityEvent;
 
 /**
  * Base class for a View which shows a floating UI on top of the launcher UI.
@@ -57,9 +58,7 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
             TYPE_OPTIONS_POPUP
     })
     @Retention(RetentionPolicy.SOURCE)
-    public @interface FloatingViewType {
-    }
-
+    public @interface FloatingViewType {}
     public static final int TYPE_FOLDER = 1 << 0;
     public static final int TYPE_ACTION_POPUP = 1 << 1;
     public static final int TYPE_WIDGETS_BOTTOM_SHEET = 1 << 2;
@@ -69,9 +68,9 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
     public static final int TYPE_DISCOVERY_BOUNCE = 1 << 6;
 
     // Popups related to quickstep UI
-    public static final int TYPE_QUICKSTEP_PREVIEW = 1 << 7;
-    public static final int TYPE_TASK_MENU = 1 << 8;
-    public static final int TYPE_OPTIONS_POPUP = 1 << 9;
+    public static final int TYPE_QUICKSTEP_PREVIEW = 1 << 6;
+    public static final int TYPE_TASK_MENU = 1 << 7;
+    public static final int TYPE_OPTIONS_POPUP = 1 << 8;
 
     public static final int TYPE_ALL = TYPE_FOLDER | TYPE_ACTION_POPUP
             | TYPE_WIDGETS_BOTTOM_SHEET | TYPE_WIDGET_RESIZE_FRAME | TYPE_WIDGETS_FULL_SHEET
@@ -106,11 +105,6 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
         return true;
     }
 
-    /**
-     * 关闭弹窗
-     *
-     * @param animate 是否需要动画
-     */
     public final void close(boolean animate) {
         animate &= !Utilities.isPowerSaverPreventingAnimation(getContext());
         if (mIsOpen) {
@@ -121,16 +115,10 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
         mIsOpen = false;
     }
 
-    /**
-     * 处理关闭事件
-     *
-     * @param animate 是否带有动画
-     */
     protected abstract void handleClose(boolean animate);
 
     public abstract void logActionCommand(int command);
 
-    // 弹窗是否打开
     public final boolean isOpen() {
         return mIsOpen;
     }
@@ -140,9 +128,7 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
 
     protected abstract boolean isOfType(@FloatingViewType int type);
 
-    /**
-     * @return Whether the back is consumed. If false, Launcher will handle the back as well.
-     */
+    /** @return Whether the back is consumed. If false, Launcher will handle the back as well. */
     public boolean onBackPressed() {
         logActionCommand(Action.Command.BACK);
         close(true);
@@ -173,15 +159,6 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
         return null;
     }
 
-    /**
-     * 获取对应类型的已经打开的弹窗
-     *
-     * @param activity 弹窗所在的Activity
-     * @param type     类型
-     * @param <T>      返回的弹窗
-     *
-     * @return
-     */
     protected static <T extends AbstractFloatingView> T getOpenView(
             BaseDraggingActivity activity, @FloatingViewType int type) {
         BaseDragLayer dragLayer = activity.getDragLayer();
@@ -199,29 +176,16 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
         return null;
     }
 
-    /**
-     * 关闭对应类型的弹窗
-     *
-     * @param activity 弹窗所在Activity
-     * @param type     类型
-     */
     public static void closeOpenContainer(BaseDraggingActivity activity,
-                                          @FloatingViewType int type) {
+            @FloatingViewType int type) {
         AbstractFloatingView view = getOpenView(activity, type);
         if (view != null) {
             view.close(true);
         }
     }
 
-    /**
-     * 关闭对应类型的悬浮弹窗
-     *
-     * @param activity 弹窗所在的Activity
-     * @param animate  是否带有动画
-     * @param type     所需类型
-     */
     public static void closeOpenViews(BaseDraggingActivity activity, boolean animate,
-                                      @FloatingViewType int type) {
+            @FloatingViewType int type) {
         BaseDragLayer dragLayer = activity.getDragLayer();
         // Iterate in reverse order. AbstractFloatingView is added later to the dragLayer,
         // and will be one of the last views.
@@ -236,47 +200,21 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
         }
     }
 
-    /**
-     * 关闭所有悬浮弹窗
-     *
-     * @param activity 弹窗所在的Activity
-     * @param animate  是否带有动画
-     */
     public static void closeAllOpenViews(BaseDraggingActivity activity, boolean animate) {
         closeOpenViews(activity, animate, TYPE_ALL);
         activity.finishAutoCancelActionMode();
     }
 
-    /**
-     * 关闭所有悬浮弹窗
-     *
-     * @param activity 弹窗所在的Activity
-     */
     public static void closeAllOpenViews(BaseDraggingActivity activity) {
         closeAllOpenViews(activity, true);
     }
 
-    /**
-     * 获取顶部打开的弹窗
-     *
-     * @param activity 弹窗所在的Activity
-     *
-     * @return
-     */
     public static AbstractFloatingView getTopOpenView(BaseDraggingActivity activity) {
         return getTopOpenViewWithType(activity, TYPE_ALL);
     }
 
-    /**
-     * 获取对应类型的顶部弹窗
-     *
-     * @param activity 弹窗所在的Activity
-     * @param type     类型
-     *
-     * @return
-     */
     public static AbstractFloatingView getTopOpenViewWithType(BaseDraggingActivity activity,
-                                                              @FloatingViewType int type) {
+            @FloatingViewType int type) {
         return getOpenView(activity, type);
     }
 }

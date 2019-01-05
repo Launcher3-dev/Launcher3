@@ -36,7 +36,6 @@
     <dimen name="dynamic_grid_hotseat_bottom_padding">2dp</dimen>
     <dimen name="dynamic_grid_hotseat_size">80dp</dimen>
     <dimen name="dynamic_grid_hotseat_side_padding">0dp</dimen>
-    <dimen name="dynamic_grid_hotseat_bottom_margin">12dp</dimen>
 
     <!-- Hotseat/all-apps scrim -->
     <dimen name="all_apps_scrim_radius">8dp</dimen>
@@ -44,15 +43,15 @@
     <dimen name="all_apps_scrim_blur">4dp</dimen>
     <dimen name="vertical_drag_handle_size">24dp</dimen>
 
-    <!-- Drop target bar -->
+<!-- Drop target bar -->
     <dimen name="dynamic_grid_drop_target_size">48dp</dimen>
     <dimen name="drop_target_vertical_gap">20dp</dimen>
 
-    <!-- App Widget resize frame -->
+<!-- App Widget resize frame -->
     <dimen name="widget_handle_margin">13dp</dimen>
     <dimen name="resize_frame_background_padding">24dp</dimen>
 
-    <!-- Fast scroll -->
+<!-- Fast scroll -->
     <dimen name="fastscroll_track_min_width">6dp</dimen>
     <dimen name="fastscroll_track_max_width">8dp</dimen>
     <dimen name="fastscroll_thumb_padding">1dp</dimen>
@@ -89,14 +88,14 @@
     <dimen name="all_apps_tabs_side_padding">12dp</dimen>
     <dimen name="all_apps_divider_height">1dp</dimen>
 
-    <!-- Search bar in All Apps -->
+<!-- Search bar in All Apps -->
     <dimen name="all_apps_header_max_elevation">3dp</dimen>
     <dimen name="all_apps_header_scroll_to_elevation">16dp</dimen>
     <dimen name="all_apps_header_shadow_height">6dp</dimen>
 
     <dimen name="all_apps_divider_margin_vertical">8dp</dimen>
 
-    <!-- Widget tray -->
+<!-- Widget tray -->
     <dimen name="widget_preview_label_vertical_padding">8dp</dimen>
     <dimen name="widget_preview_label_horizontal_padding">16dp</dimen>
 
@@ -120,7 +119,7 @@
     <dimen name="shortcut_preview_padding_right">0dp</dimen>
     <dimen name="shortcut_preview_padding_top">0dp</dimen>
 
-    <!-- Dragging -->
+<!-- Dragging -->
     <!-- Drag padding to add to the bottom of drop targets -->
     <dimen name="drop_target_drag_padding">14dp</dimen>
     <dimen name="drop_target_text_size">14sp</dimen>
@@ -137,7 +136,7 @@
 
     <dimen name="spring_loaded_panel_border">1dp</dimen>
 
-    <!-- Folders -->
+<!-- Folders -->
     <dimen name="page_indicator_dot_size">8dp</dimen>
 
     <dimen name="folder_cell_x_padding">9dp</dimen>
@@ -147,22 +146,22 @@
     <dimen name="folder_label_padding_bottom">12dp</dimen>
     <dimen name="folder_label_text_size">14sp</dimen>
 
-    <!-- Sizes for managed profile badges -->
+<!-- Sizes for managed profile badges -->
     <dimen name="profile_badge_size">24dp</dimen>
     <dimen name="profile_badge_margin">5dp</dimen>
     <dimen name="profile_badge_minimum_top">2dp</dimen>
 
-    <!-- Shadows and outlines -->
+<!-- Shadows and outlines -->
     <dimen name="blur_size_thin_outline">1dp</dimen>
     <dimen name="blur_size_medium_outline">2dp</dimen>
     <dimen name="blur_size_click_shadow">4dp</dimen>
     <dimen name="click_shadow_high_shift">2dp</dimen>
 
-    <!-- Pending widget -->
+<!-- Pending widget -->
     <dimen name="pending_widget_min_padding">8dp</dimen>
     <dimen name="pending_widget_elevation">2dp</dimen>
 
-    <!-- Deep shortcuts -->
+<!-- Deep shortcuts -->
     <dimen name="deep_shortcuts_elevation">9dp</dimen>
     <dimen name="bg_popup_item_width">220dp</dimen>
     <dimen name="bg_popup_item_height">56dp</dimen>
@@ -196,7 +195,7 @@
     <!-- (touch_size - icon_size) / 2 -->
     <dimen name="system_shortcut_header_icon_padding">12dp</dimen>
 
-    <!-- Notifications -->
+<!-- Notifications -->
     <dimen name="bg_round_rect_radius">8dp</dimen>
     <dimen name="notification_padding_start">16dp</dimen>
     <dimen name="notification_padding_end">12dp</dimen>
@@ -221,31 +220,7 @@
     <dimen name="popup_item_divider_height">0.5dp</dimen>
     <dimen name="swipe_helper_falsing_threshold">70dp</dimen>
 
-    <!-- Overview -->
+<!-- Overview -->
     <dimen name="options_menu_icon_size">24dp</dimen>
     <dimen name="options_menu_thumb_size">32dp</dimen>
-
-    <!-- Menu -->
-    <dimen name="dynamic_grid_menu_bottom_margin">180dp</dimen>
-
-<!--Uninstall-->
-    <dimen name="unread_minWidth">10dp</dimen>
-    <dimen name="hotseat_unread_margin_top">16dp</dimen>
-    <dimen name="hotseat_unread_margin_right">8dp</dimen>
-    <dimen name="folder_unread_margin_top">4dp</dimen>
-    <dimen name="folder_unread_margin_right">16dp</dimen>
-    <dimen name="workspace_unread_margin_top">0dp</dimen>
-    <dimen name="workspace_unread_margin_right">9dp</dimen>
-    <dimen name="hotseat_uninstall_margin_top">16dp</dimen>
-    <dimen name="hotseat_uninstall_margin_right">4dp</dimen>
-    <dimen name="folder_uninstall_margin_top">2dp</dimen>
-    <dimen name="folder_uninstall_margin_right">2dp</dimen>
-    <dimen name="workspace_uninstall_margin_top">1dp</dimen>
-    <dimen name="workspace_uninstall_margin_right">12dp</dimen>
-    <!--卸载图标位置调整-->
-    <dimen name="uninstall_icon_margin_left">-5dp</dimen>
-    <dimen name="uninstall_icon_margin_top">7dp</dimen>
-
-    <dimen name="uninstall_icon_folder_margin_left">-5dp</dimen>
-    <dimen name="uninstall_icon_folder_margin_top">1dp</dimen>
 </resources>

@@ -22,6 +22,7 @@ import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.text.TextUtils;
 import android.view.View;
 
+import com.android.launcher3.AppInfo;
 import com.android.launcher3.CellLayout;
 import com.android.launcher3.FolderInfo;
 import com.android.launcher3.ItemInfo;
@@ -103,7 +104,7 @@ public class WorkspaceAccessibilityHelper extends DragAndDropAccessibilityDelega
             } else if (dragInfo.dragType != DragType.FOLDER) {
                 // For icons, we can consider cells that have another icon or a folder.
                 ItemInfo info = (ItemInfo) child.getTag();
-                if (info instanceof FolderInfo ||
+                if (info instanceof AppInfo || info instanceof FolderInfo ||
                         info instanceof ShortcutInfo) {
                     return id;
                 }
@@ -123,7 +124,7 @@ public class WorkspaceAccessibilityHelper extends DragAndDropAccessibilityDelega
             return mContext.getString(R.string.item_moved);
         } else {
             ItemInfo info = (ItemInfo) child.getTag();
-            if (info instanceof ShortcutInfo || info instanceof ShortcutInfo) {
+            if (info instanceof AppInfo || info instanceof ShortcutInfo) {
                 return mContext.getString(R.string.folder_created);
 
             } else if (info instanceof FolderInfo) {

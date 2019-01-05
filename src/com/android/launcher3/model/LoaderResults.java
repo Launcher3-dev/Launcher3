@@ -20,6 +20,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.android.launcher3.AllAppsList;
+import com.android.launcher3.AppInfo;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppState;
@@ -35,7 +36,6 @@ import com.android.launcher3.util.LooperIdleLock;
 import com.android.launcher3.util.MultiHashMap;
 import com.android.launcher3.util.ViewOnDrawExecutor;
 import com.android.launcher3.widget.WidgetListRowEntry;
-import com.android.mxlibrary.util.XLog;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class LoaderResults {
     private final WeakReference<Callbacks> mCallbacks;
 
     public LoaderResults(LauncherAppState app, BgDataModel dataModel,
-                         AllAppsList allAppsList, int pageToBindFirst, WeakReference<Callbacks> callbacks) {
+            AllAppsList allAppsList, int pageToBindFirst, WeakReference<Callbacks> callbacks) {
         mUiExecutor = new MainThreadExecutor();
         mApp = app;
         mBgDataModel = dataModel;
@@ -207,14 +207,12 @@ public class LoaderResults {
     }
 
 
-    /**
-     * Filters the set of items who are directly or indirectly (via another container) on the
-     * specified screen.
-     */
+    /** Filters the set of items who are directly or indirectly (via another container) on the
+     * specified screen. */
     public static <T extends ItemInfo> void filterCurrentWorkspaceItems(long currentScreenId,
-                                                                        ArrayList<T> allWorkspaceItems,
-                                                                        ArrayList<T> currentScreenItems,
-                                                                        ArrayList<T> otherScreenItems) {
+            ArrayList<T> allWorkspaceItems,
+            ArrayList<T> currentScreenItems,
+            ArrayList<T> otherScreenItems) {
         // Purge any null ItemInfos
         Iterator<T> iter = allWorkspaceItems.iterator();
         while (iter.hasNext()) {
@@ -256,10 +254,8 @@ public class LoaderResults {
         }
     }
 
-    /**
-     * Sorts the set of items by hotseat, workspace (spatially from top to bottom, left to
-     * right)
-     */
+    /** Sorts the set of items by hotseat, workspace (spatially from top to bottom, left to
+     * right) */
     private void sortWorkspaceItemsSpatially(ArrayList<ItemInfo> workspaceItems) {
         final InvariantDeviceProfile profile = mApp.getInvariantDeviceProfile();
         final int screenCols = profile.numColumns;
@@ -297,20 +293,20 @@ public class LoaderResults {
     }
 
     private void bindWorkspaceItems(final ArrayList<ItemInfo> workspaceItems,
-                                    final ArrayList<LauncherAppWidgetInfo> appWidgets,
-                                    final Executor executor) {
+            final ArrayList<LauncherAppWidgetInfo> appWidgets,
+            final Executor executor) {
 
         // Bind the workspace items
         int N = workspaceItems.size();
         for (int i = 0; i < N; i += ITEMS_CHUNK) {
             final int start = i;
-            final int chunkSize = (i + ITEMS_CHUNK <= N) ? ITEMS_CHUNK : (N - i);
+            final int chunkSize = (i+ITEMS_CHUNK <= N) ? ITEMS_CHUNK : (N-i);
             final Runnable r = new Runnable() {
                 @Override
                 public void run() {
                     Callbacks callbacks = mCallbacks.get();
                     if (callbacks != null) {
-                        callbacks.bindItems(workspaceItems.subList(start, start + chunkSize), false);
+                        callbacks.bindItems(workspaceItems.subList(start, start+chunkSize), false);
                     }
                 }
             };
@@ -350,10 +346,20 @@ public class LoaderResults {
         mUiExecutor.execute(r);
     }
 
-    public void bindAllAppsNoPosition() {
-        final ArrayList<ItemInfo> list = (ArrayList<ItemInfo>) mBgAllAppsList.noPosition.clone();
-        XLog.e(XLog.getTag(), XLog.TAG_GU + list.size());
-        mApp.getModel().addAndBindNoPositionWorkspaceItems(list);
+    public void bindAllApps() {
+        // shallow copy
+        @SuppressWarnings("unchecked")
+        final ArrayList<AppInfo> list = (ArrayList<AppInfo>) mBgAllAppsList.data.clone();
+
+        Runnable r = new Runnable() {
+            public void run() {
+                Callbacks callbacks = mCallbacks.get();
+                if (callbacks != null) {
+                    callbacks.bindAllApplications(list);
+                }
+            }
+        };
+        mUiExecutor.execute(r);
     }
 
     public void bindWidgets() {

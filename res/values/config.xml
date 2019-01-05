@@ -149,7 +149,4 @@
     <integer name="config_recentsMaxThumbnailCacheSize">6</integer>
     <integer name="config_recentsMaxIconCacheSize">12</integer>
 
-    <!-- Out of 100, the percent to shrink the workspace during overview mode. -->
-    <integer name="config_workspaceOverviewShrinkPercentage">85</integer>
-
 </resources>

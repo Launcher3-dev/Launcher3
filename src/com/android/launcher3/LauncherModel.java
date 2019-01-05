@@ -16,6 +16,9 @@
 
 package com.android.launcher3;
 
+import static com.android.launcher3.LauncherAppState.ACTION_FORCE_ROLOAD;
+import static com.android.launcher3.config.FeatureFlags.IS_DOGFOOD_BUILD;
+
 import android.content.BroadcastReceiver;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
@@ -37,7 +40,6 @@ import com.android.launcher3.compat.LauncherAppsCompat;
 import com.android.launcher3.compat.PackageInstallerCompat.PackageInstallInfo;
 import com.android.launcher3.compat.UserManagerCompat;
 import com.android.launcher3.graphics.LauncherIcons;
-import com.android.launcher3.model.AddWorkspaceItemsNoPositionTask;
 import com.android.launcher3.model.AddWorkspaceItemsTask;
 import com.android.launcher3.model.BaseModelUpdateTask;
 import com.android.launcher3.model.BgDataModel;
@@ -71,9 +73,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
-
-import static com.android.launcher3.LauncherAppState.ACTION_FORCE_ROLOAD;
-import static com.android.launcher3.config.FeatureFlags.IS_DOGFOOD_BUILD;
 
 /**
  * Maintains in-memory state of the Launcher. It is expected that there should be only one
@@ -145,7 +144,8 @@ public class LauncherModel extends BroadcastReceiver
         public void bindScreens(ArrayList<Long> orderedScreenIds);
         public void finishFirstPageBind(ViewOnDrawExecutor executor);
         public void finishBindingItems();
-        public void bindAppsAddedOrUpdated(ArrayList<ShortcutInfo> apps);
+        public void bindAllApplications(ArrayList<AppInfo> apps);
+        public void bindAppsAddedOrUpdated(ArrayList<AppInfo> apps);
         public void bindAppsAdded(ArrayList<Long> newScreens,
                                   ArrayList<ItemInfo> addNotAnimated,
                                   ArrayList<ItemInfo> addAnimated);
@@ -154,7 +154,7 @@ public class LauncherModel extends BroadcastReceiver
         public void bindWidgetsRestored(ArrayList<LauncherAppWidgetInfo> widgets);
         public void bindRestoreItemsChange(HashSet<ItemInfo> updates);
         public void bindWorkspaceComponentsRemoved(ItemInfoMatcher matcher);
-        public void bindAppInfosRemoved(ArrayList<ShortcutInfo> appInfos);
+        public void bindAppInfosRemoved(ArrayList<AppInfo> appInfos);
         public void bindAllWidgets(ArrayList<WidgetListRowEntry> widgets);
         public void onPageBoundSynchronously(int page);
         public void executeOnNextDraw(ViewOnDrawExecutor executor);
@@ -196,14 +196,6 @@ public class LauncherModel extends BroadcastReceiver
      */
     public void addAndBindAddedWorkspaceItems(List<Pair<ItemInfo, Object>> itemList) {
         enqueueModelUpdateTask(new AddWorkspaceItemsTask(itemList));
-    }
-
-    /**
-     * Adds the no position items to workspace.
-     * @param itemList
-     */
-    public void addAndBindNoPositionWorkspaceItems(List<ItemInfo> itemList){
-        enqueueModelUpdateTask(new AddWorkspaceItemsNoPositionTask(itemList));
     }
 
     public ModelWriter getWriter(boolean hasVerticalHotseat, boolean verifyChanges) {
@@ -467,7 +459,7 @@ public class LauncherModel extends BroadcastReceiver
                     loaderResults.bindWorkspace();
                     // For now, continue posting the binding of AllApps as there are other
                     // issues that arise from that.
-                    loaderResults.bindAllAppsNoPosition();
+                    loaderResults.bindAllApps();
                     loaderResults.bindDeepShortcuts();
                     loaderResults.bindWidgets();
                     return true;
@@ -519,6 +511,25 @@ public class LauncherModel extends BroadcastReceiver
         // Get screens ordered by rank.
         return LauncherDbUtils.getScreenIdsFromCursor(contentResolver.query(
                 screensUri, null, null, null, LauncherSettings.WorkspaceScreens.SCREEN_RANK));
+    }
+
+    public void onInstallSessionCreated(final PackageInstallInfo sessionInfo) {
+        enqueueModelUpdateTask(new BaseModelUpdateTask() {
+            @Override
+            public void execute(LauncherAppState app, BgDataModel dataModel, AllAppsList apps) {
+                apps.addPromiseApp(app.getContext(), sessionInfo);
+                if (!apps.added.isEmpty()) {
+                    final ArrayList<AppInfo> arrayList = new ArrayList<>(apps.added);
+                    apps.added.clear();
+                    scheduleCallbackTask(new CallbackTask() {
+                        @Override
+                        public void execute(Callbacks callbacks) {
+                            callbacks.bindAppsAddedOrUpdated(arrayList);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     public class LoaderTransaction implements AutoCloseable {
@@ -649,7 +660,7 @@ public class LauncherModel extends BroadcastReceiver
     public void dumpState(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
         if (args.length > 0 && TextUtils.equals(args[0], "--all")) {
             writer.println(prefix + "All apps list: size=" + mBgAllAppsList.data.size());
-            for (ShortcutInfo info : mBgAllAppsList.data) {
+            for (AppInfo info : mBgAllAppsList.data) {
                 writer.println(prefix + "   title=\"" + info.title + "\" iconBitmap=" + info.iconBitmap
                         + " componentName=" + info.componentName.getPackageName());
             }

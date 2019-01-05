@@ -23,7 +23,7 @@ import android.os.Bundle;
 import android.provider.BaseColumns;
 
 /**
- * MxSettings related utilities.
+ * Settings related utilities.
  */
 public class LauncherSettings {
     /** Columns required on table staht will be subject to backup and restore. */

@@ -175,11 +175,6 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
         super.dispatchDraw(canvas);
     }
 
-    @Override
-    protected boolean isPagedViewCircledScroll() {
-        return false;
-    }
-
     /**
      * Binds items to the layout.
      */

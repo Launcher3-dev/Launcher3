@@ -16,6 +16,13 @@
 
 package com.android.launcher3.popup;
 
+import static com.android.launcher3.notification.NotificationMainView.NOTIFICATION_ITEM_INFO;
+import static com.android.launcher3.popup.PopupPopulator.MAX_SHORTCUTS;
+import static com.android.launcher3.popup.PopupPopulator.MAX_SHORTCUTS_IF_NOTIFICATIONS;
+import static com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
+import static com.android.launcher3.userevent.nano.LauncherLogProto.ItemType;
+import static com.android.launcher3.userevent.nano.LauncherLogProto.Target;
+
 import android.animation.AnimatorSet;
 import android.animation.LayoutTransition;
 import android.annotation.TargetApi;
@@ -66,17 +73,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.android.launcher3.notification.NotificationMainView.NOTIFICATION_ITEM_INFO;
-import static com.android.launcher3.popup.PopupPopulator.MAX_SHORTCUTS;
-import static com.android.launcher3.popup.PopupPopulator.MAX_SHORTCUTS_IF_NOTIFICATIONS;
-import static com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
-import static com.android.launcher3.userevent.nano.LauncherLogProto.ItemType;
-import static com.android.launcher3.userevent.nano.LauncherLogProto.Target;
-
 /**
  * A container for shortcuts to deep links and notifications associated with an app.
- *
- * 长按图标弹出的扩展框
  */
 @TargetApi(Build.VERSION_CODES.N)
 public class PopupContainerWithArrow extends ArrowPopup implements DragSource,

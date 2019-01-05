@@ -21,8 +21,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import com.android.launcher3.AppInfo;
 import com.android.launcher3.R;
-import com.android.launcher3.ShortcutInfo;
 import com.android.launcher3.Utilities;
 
 import java.util.Collections;
@@ -42,7 +42,7 @@ public class InstantAppResolver {
         return false;
     }
 
-    public boolean isInstantApp(ShortcutInfo info) {
+    public boolean isInstantApp(AppInfo info) {
         return false;
     }
 

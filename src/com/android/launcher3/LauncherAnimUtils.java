@@ -34,13 +34,13 @@ public class LauncherAnimUtils {
      * Durations for various state animations. These are not defined in resources to allow
      * easier access from static classes and enums
      */
-    public static final int MENU_TRANSITION_MS = 320;
+    public static final int ALL_APPS_TRANSITION_MS = 320;
     public static final int OVERVIEW_TRANSITION_MS = 250;
     public static final int SPRING_LOADED_TRANSITION_MS = 150;
     public static final int SPRING_LOADED_EXIT_DELAY = 500;
 
     // The progress of an animation to all apps must be at least this far along to snap to all apps.
-    public static final float MIN_PROGRESS_TO_MENU = 0.5f;
+    public static final float MIN_PROGRESS_TO_ALL_APPS = 0.5f;
 
     static WeakHashMap<Animator, Object> sAnimators = new WeakHashMap<Animator, Object>();
     static Animator.AnimatorListener sEndAnimListener = new Animator.AnimatorListener() {

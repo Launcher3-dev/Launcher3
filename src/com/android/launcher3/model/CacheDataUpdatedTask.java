@@ -19,6 +19,7 @@ import android.content.ComponentName;
 import android.os.UserHandle;
 
 import com.android.launcher3.AllAppsList;
+import com.android.launcher3.AppInfo;
 import com.android.launcher3.IconCache;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppState;
@@ -52,7 +53,7 @@ public class CacheDataUpdatedTask extends BaseModelUpdateTask {
     public void execute(LauncherAppState app, BgDataModel dataModel, AllAppsList apps) {
         IconCache iconCache = app.getIconCache();
 
-        final ArrayList<ShortcutInfo> updatedApps = new ArrayList<>();
+        final ArrayList<AppInfo> updatedApps = new ArrayList<>();
 
         ArrayList<ShortcutInfo> updatedShortcuts = new ArrayList<>();
         synchronized (dataModel) {

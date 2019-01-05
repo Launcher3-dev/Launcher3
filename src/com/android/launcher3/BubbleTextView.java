@@ -37,9 +37,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewDebug;
-import android.view.ViewParent;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.launcher3.IconCache.IconLoadRequest;
 import com.android.launcher3.IconCache.ItemInfoUpdateReceiver;
@@ -50,12 +48,7 @@ import com.android.launcher3.folder.FolderIcon;
 import com.android.launcher3.graphics.DrawableFactory;
 import com.android.launcher3.graphics.IconPalette;
 import com.android.launcher3.graphics.PreloadIconDrawable;
-import com.android.launcher3.imp.ImpUninstallIconShowListener;
 import com.android.launcher3.model.PackageItemInfo;
-import com.android.launcher3.setting.MxSettings;
-import com.android.launcher3.uninstall.UninstallIconAnimUtil;
-import com.android.launcher3.uninstall.UninstallOrDeleteUtil;
-import com.android.launcher3.util.DrawEditIcons;
 
 import java.text.NumberFormat;
 
@@ -64,14 +57,13 @@ import java.text.NumberFormat;
  * because we want to make the bubble taller than the text and TextView's clip is
  * too aggressive.
  */
-public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, OnResumeCallback
-        , ImpUninstallIconShowListener {
+public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, OnResumeCallback {
 
     private static final int DISPLAY_WORKSPACE = 0;
     private static final int DISPLAY_ALL_APPS = 1;
     private static final int DISPLAY_FOLDER = 2;
 
-    private static final int[] STATE_PRESSED = new int[]{android.R.attr.state_pressed};
+    private static final int[] STATE_PRESSED = new int[] {android.R.attr.state_pressed};
 
 
     private static final Property<BubbleTextView, Float> BADGE_SCALE_PROPERTY
@@ -146,7 +138,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
     public BubbleTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        mLauncher = Launcher.getLauncher(context);
         mActivity = BaseDraggingActivity.fromContext(context);
         DeviceProfile grid = mActivity.getDeviceProfile();
         mSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
@@ -214,7 +205,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         applyBadgeState(info, false /* animate */);
     }
 
-    public void applyFromApplicationInfo(ShortcutInfo info) {
+    public void applyFromApplicationInfo(AppInfo info) {
         applyIconAndLabel(info);
 
         // We don't need to check the info since it's not a ShortcutInfo
@@ -283,9 +274,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         return drawableState;
     }
 
-    /**
-     * Returns the icon for this view.
-     */
+    /** Returns the icon for this view. */
     public Drawable getIcon() {
         return mIcon;
     }
@@ -304,10 +293,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                // add by codemx.cn ---- 20181029 ---- start
-                mTouchX = (int) event.getRawX();
-                mTouchY = (int) event.getRawY();
-                // add by codemx.cn ---- 20181029 ---- end
                 // If we're in a stylus button press, don't check for long press.
                 if (!mStylusEventHelper.inStylusButtonPressed()) {
                     mLongPressHelper.postCheckForLongPress();
@@ -363,105 +348,11 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        // add by codemx.cn ---- 20181027 --- start
-        // 绘制卸载按钮
-        if (isSupportsUninstall && (MxSettings.sShowUnInstallIcon && mLauncher.getStateManager().getState() == LauncherState.SPRING_LOADED)) {
-            if (!isPerformAnim) {
-                uninstallIconPercent = 1.0f;
-            }
-            drawUninstallIndicator(canvas, uninstallIconPercent);
-        }
-        // add by codemx.cn ---- 20181027 --- end
         drawBadgeIfNecessary(canvas);
     }
 
-    // add by codemx.cn ---- 20181027 --- start
-    // 手指触摸点位置
-    private int mTouchX;
-    private int mTouchY;
-
-    @Override
-    public boolean performClick() {
-        if (mLauncher.getStateManager().getState() == LauncherState.EDITING) {
-            ShortcutInfo info = (ShortcutInfo) getTag();
-            if (info == null) {
-                return super.performClick();
-            }
-
-            if (MxSettings.sShowUnInstallIcon && !isSupportsUninstall) {
-                Toast.makeText(mLauncher, R.string.uninstall_system_app_text, Toast.LENGTH_SHORT).show();
-                return true;
-            }
-
-            // 获取应用在屏幕上的坐标点
-            int[] locs = new int[2];
-            getLocationOnScreen(locs);
-            int width = getWidth() / 2;
-            int height = getHeight() / 2;
-
-            // 点击左上角四分之一区域
-            Rect rect = new Rect(locs[0], locs[1], locs[0] + width, locs[1] + height);
-            if (rect.contains(mTouchX, mTouchY)) {
-                if (info.itemType == LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT) {// 删除图标
-                    ViewParent vg = getParent();
-                    if (vg instanceof ShortcutAndWidgetContainer) {
-                        ((ShortcutAndWidgetContainer) vg).removeView(this);
-                    }
-                } else {// 卸载
-                    UninstallOrDeleteUtil.startUninstallApk(mLauncher, info);
-                }
-            }
-            return true;
-        }
-        return super.performClick();
-    }
-
-
-    private Launcher mLauncher;
-    private boolean isSupportsUninstall = false;
-    private boolean isPerformAnim = false;
-    private float uninstallIconPercent = 0.0f;
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (getTag() instanceof ShortcutInfo) {
-            isSupportsUninstall = UninstallOrDeleteUtil.supportsUninstall(mLauncher, (ItemInfo) getTag());
-        }
-    }
-
-    private void drawUninstallIndicator(Canvas canvas, float uninstallIconPercent) {
-        Drawable d = getContext().getDrawable(R.drawable.ic_uninstall);
-        DrawEditIcons.drawUninstallIcon(canvas, this, d, uninstallIconPercent);
-    }
-
-    @Override
-    public void onUninstallIconChange(float percent) {
-        uninstallIconPercent = percent;
-        postInvalidate();
-    }
-
-    @Override
-    public void showUninstallIcon(UninstallIconAnimUtil uninstallIconAnimUtil, boolean isPerformAnim) {
-        this.isPerformAnim = isPerformAnim;
-        if (isPerformAnim && uninstallIconAnimUtil != null) {
-            uninstallIconAnimUtil.animateToIconIndicatorDraw(this);
-        } else {
-            if (MxSettings.sShowUnInstallIcon) {
-                uninstallIconPercent = 1.0f;
-            } else {
-                uninstallIconPercent = 0.0f;
-            }
-            invalidate();
-        }
-    }
-
-    // add by codemx.cn ---- 20181027 --- end
-
     /**
      * Draws the icon badge in the top right corner of the icon bounds.
-     *
      * @param canvas The canvas to draw to.
      */
     protected void drawBadgeIfNecessary(Canvas canvas) {
@@ -558,7 +449,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
     /**
      * Creates an animator to fade the text in or out.
-     *
      * @param fadeIn Whether the text should fade in or fade out.
      */
     public ObjectAnimator createTextAlphaAnimator(boolean fadeIn) {
@@ -650,7 +540,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     /**
      * Sets the icon for this view based on the layout direction.
      */
-    public void setIcon(Drawable icon) {
+    private void setIcon(Drawable icon) {
         if (mIsIconVisible) {
             applyCompoundDrawables(icon);
         }
@@ -696,8 +586,8 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
             // Optimization: Starting in N, pre-uploads the bitmap to RenderThread.
             info.iconBitmap.prepareToDraw();
 
-            if (info instanceof ShortcutInfo) {
-                applyFromApplicationInfo((ShortcutInfo) info);
+            if (info instanceof AppInfo) {
+                applyFromApplicationInfo((AppInfo) info);
             } else if (info instanceof ShortcutInfo) {
                 applyFromShortcutInfo((ShortcutInfo) info);
                 mActivity.invalidateParent(info);
@@ -729,6 +619,4 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     public int getIconSize() {
         return mIconSize;
     }
-
-
 }

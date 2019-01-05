@@ -91,12 +91,6 @@ enum ContainerType {
   APP = 13; // Foreground activity is another app (QuickStep)
   TIP = 14; // Onboarding texts (QuickStep)
   SIDELOADED_LAUNCHER = 15;
-  EDITING = 16;
-  MENU = 17;
-  OVERVIEW_SPRING_LOADED = 18;
-  OVERVIEW_CREATE_FOLDER = 19;
-  OVERVIEW_MULTIPLE_UNINSTALL = 20;
-  OVERVIEW_CLIP = 21;
 }
 
 // Used to define what type of control a Target would represent.
