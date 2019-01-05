@@ -30,7 +30,6 @@ import android.util.SparseArray;
 import com.android.launcher3.IconCache;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
-import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.util.Thunk;
 
 import java.util.ArrayList;
@@ -59,13 +58,13 @@ public class PackageInstallerCompatVL extends PackageInstallerCompat {
     }
 
     @Override
-    public HashMap<String, Integer> updateAndGetActiveSessionCache() {
-        HashMap<String, Integer> activePackages = new HashMap<>();
+    public HashMap<String, SessionInfo> updateAndGetActiveSessionCache() {
+        HashMap<String, SessionInfo> activePackages = new HashMap<>();
         UserHandle user = Process.myUserHandle();
         for (SessionInfo info : getAllVerifiedSessions()) {
             addSessionInfoToCache(info, user);
             if (info.getAppPackageName() != null) {
-                activePackages.put(info.getAppPackageName(), (int) (info.getProgress() * 100));
+                activePackages.put(info.getAppPackageName(), info);
                 mActiveSessions.put(info.getSessionId(), info.getAppPackageName());
             }
         }
@@ -96,14 +95,9 @@ public class PackageInstallerCompatVL extends PackageInstallerCompat {
 
         @Override
         public void onCreated(int sessionId) {
-            SessionInfo sessionInfo = pushSessionDisplayToLauncher(sessionId);
-            if (FeatureFlags.LAUNCHER3_PROMISE_APPS_IN_ALL_APPS && sessionInfo != null) {
-                LauncherAppState app = LauncherAppState.getInstanceNoCreate();
-                if (app != null) {
-                    app.getModel().onInstallSessionCreated(
-                            PackageInstallInfo.fromInstallingState(sessionInfo));
-                }
-            }
+            // --- modify by codemx.cn --- 2018/09/05 --- start
+            pushSessionDisplayToLauncher(sessionId);
+            // --- modify by codemx.cn --- 2018/09/05 --- end
         }
 
         @Override

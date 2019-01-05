@@ -48,6 +48,9 @@ public class FlingToDeleteHelper {
                 .getDimensionPixelSize(R.dimen.drag_flingToDeleteMinVelocity);
     }
 
+    /**
+     * 记录滑动速度
+     */
     public void recordMotionEvent(MotionEvent ev) {
         if (mVelocityTracker == null) {
             mVelocityTracker = VelocityTracker.obtain();

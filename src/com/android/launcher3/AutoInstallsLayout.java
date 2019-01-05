@@ -28,7 +28,10 @@ import android.content.res.XmlResourceParser;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Build.VERSION;
 import android.os.Bundle;
+import android.os.Process;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -36,7 +39,6 @@ import android.util.Pair;
 import android.util.Patterns;
 import com.android.launcher3.LauncherProvider.SqlArguments;
 import com.android.launcher3.LauncherSettings.Favorites;
-import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.graphics.LauncherIcons;
 import com.android.launcher3.util.Thunk;
 import java.io.IOException;
@@ -228,7 +230,7 @@ public class AutoInstallsLayout {
             out[0] = Favorites.CONTAINER_HOTSEAT;
             // Hack: hotseat items are stored using screen ids
             long rank = Long.parseLong(getAttributeValue(parser, ATTR_RANK));
-            out[1] = (FeatureFlags.NO_ALL_APPS_ICON || rank < mIdp.getAllAppsButtonRank())
+            out[1] = (rank < mIdp.getAllAppsButtonRank())
                     ? rank : (rank + 1);
         } else {
             out[0] = Favorites.CONTAINER_DESKTOP;
@@ -237,7 +239,7 @@ public class AutoInstallsLayout {
     }
 
     /**
-     * Parses the current node and returns the number of elements added.
+     * Parses the current node(节点) and returns the number of elements added.
      */
     protected int parseAndAddNode(
         XmlResourceParser parser,
@@ -433,8 +435,12 @@ public class AutoInstallsLayout {
                 return -1;
             }
 
-            mValues.put(LauncherSettings.Favorites.ICON,
-                    Utilities.flattenBitmap(LauncherIcons.createIconBitmap(icon, mContext)));
+            // Auto installs should always support the current platform version.
+            LauncherIcons li = LauncherIcons.obtain(mContext);
+            mValues.put(LauncherSettings.Favorites.ICON, Utilities.flattenBitmap(
+                    li.createBadgedIconBitmap(icon, Process.myUserHandle(), VERSION.SDK_INT).icon));
+            li.recycle();
+
             mValues.put(Favorites.ICON_PACKAGE, mIconRes.getResourcePackageName(iconId));
             mValues.put(Favorites.ICON_RESOURCE, mIconRes.getResourceName(iconId));
 

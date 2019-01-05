@@ -20,7 +20,6 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.launcher3">
-    <uses-sdk android:targetSdkVersion="23" android:minSdkVersion="21"/>
     <!--
     Manifest entries specific to Launcher3. This is merged with AndroidManifest-common.xml.
     Refer comments around specific entries on how to extend individual components.
@@ -32,13 +31,13 @@
     name in the permissions. eq com.mypackage.permission.READ_SETTINGS
     -->
     <permission
-        android:name="com.android.mxlauncher3.permission.READ_SETTINGS"
+        android:name="com.android.launcher3.permission.READ_SETTINGS"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
-        android:protectionLevel="normal"
+        android:protectionLevel="signatureOrSystem"
         android:label="@string/permlab_read_settings"
         android:description="@string/permdesc_read_settings"/>
     <permission
-        android:name="com.android.mxlauncher3.permission.WRITE_SETTINGS"
+        android:name="com.android.launcher3.permission.WRITE_SETTINGS"
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
         android:protectionLevel="signatureOrSystem"
         android:label="@string/permlab_write_settings"
@@ -71,19 +70,20 @@
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
             android:windowSoftInputMode="adjustPan"
-            android:screenOrientation="nosensor"
-            android:configChanges="keyboard|keyboardHidden|navigation|mcc|mnc"
+            android:screenOrientation="unspecified"
+            android:configChanges="keyboard|keyboardHidden|mcc|mnc|navigation|orientation|screenSize|screenLayout|smallestScreenSize"
             android:resizeableActivity="true"
             android:resumeWhilePausing="true"
             android:taskAffinity=""
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.MONKEY"/>
                 <category android:name="android.intent.category.LAUNCHER_APP" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -110,56 +110,8 @@
             android:name="com.android.launcher3.LauncherProvider"
             android:authorities="com.android.mxlauncher3.settings"
             android:exported="true"
-            android:writePermission="com.android.mxlauncher3.permission.WRITE_SETTINGS"
-            android:readPermission="com.android.mxlauncher3.permission.READ_SETTINGS" />
-
-        <!-- ENABLE_FOR_TESTING
-
-        <activity
-            android:name="com.android.launcher3.testing.LauncherExtension"
-            android:launchMode="singleTask"
-            android:clearTaskOnLaunch="true"
-            android:stateNotNeeded="true"
-            android:theme="@style/Theme"
-            android:windowSoftInputMode="adjustPan"
-            android:screenOrientation="nosensor"
-            >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.MONKEY"/>
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name="com.android.launcher3.testing.MemoryDumpActivity"
-            android:theme="@android:style/Theme.NoDisplay"
-            android:label="* HPROF"
-            android:excludeFromRecents="true"
-            android:icon="@drawable/ic_launcher_home"
-            >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name="com.android.launcher3.testing.ToggleWeightWatcher"
-            android:label="Show Mem"
-            android:icon="@drawable/ic_launcher_home">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <service android:name="com.android.launcher3.testing.MemoryTracker" />
-
-        -->
+            android:writePermission="com.android.launcher3.permission.WRITE_SETTINGS"
+            android:readPermission="com.android.launcher3.permission.READ_SETTINGS" />
 
     </application>
 </manifest>

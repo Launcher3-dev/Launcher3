@@ -17,7 +17,7 @@ AUTO_FILE = "launcher.db"
 APPLICATION_COMPONENTS = [
   "com.android.calculator2/com.android.calculator2.Calculator",
   "com.android.providers.downloads.ui/com.android.providers.downloads.ui.DownloadList",
-  "com.android.settings/com.android.settings.Settings",
+  "com.android.settings/com.android.settings.MxSettings",
   "com.android.mms/com.android.mms.ui.ConversationList",
   "com.android.contacts/com.android.contacts.activities.PeopleActivity",
   "com.android.dialer/com.android.dialer.DialtactsActivity"

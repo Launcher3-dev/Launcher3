@@ -17,7 +17,7 @@ package com.android.launcher3.allapps.search;
 
 import android.os.Handler;
 
-import com.android.launcher3.AppInfo;
+import com.android.launcher3.ShortcutInfo;
 import com.android.launcher3.util.ComponentKey;
 
 import java.text.Collator;
@@ -29,10 +29,10 @@ import java.util.List;
  */
 public class DefaultAppSearchAlgorithm implements SearchAlgorithm {
 
-    private final List<AppInfo> mApps;
+    private final List<ShortcutInfo> mApps;
     protected final Handler mResultHandler;
 
-    public DefaultAppSearchAlgorithm(List<AppInfo> apps) {
+    public DefaultAppSearchAlgorithm(List<ShortcutInfo> apps) {
         mApps = apps;
         mResultHandler = new Handler();
     }
@@ -63,7 +63,7 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm {
         final String queryTextLower = query.toLowerCase();
         final ArrayList<ComponentKey> result = new ArrayList<>();
         StringMatcher matcher = StringMatcher.getInstance();
-        for (AppInfo info : mApps) {
+        for (ShortcutInfo info : mApps) {
             if (matches(info, queryTextLower, matcher)) {
                 result.add(info.toComponentKey());
             }
@@ -71,7 +71,7 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm {
         return result;
     }
 
-    public static boolean matches(AppInfo info, String query, StringMatcher matcher) {
+    public static boolean matches(ShortcutInfo info, String query, StringMatcher matcher) {
         int queryLength = query.length();
 
         String title = info.title.toString();

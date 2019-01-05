@@ -16,46 +16,28 @@
 
 package com.android.launcher3;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.support.v4.graphics.ColorUtils;
 import android.util.AttributeSet;
-import android.view.LayoutInflater;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewDebug;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 
-import com.android.launcher3.config.FeatureFlags;
-import com.android.launcher3.dynamicui.ExtractedColors;
-import com.android.launcher3.logging.UserEventDispatcher;
+import com.android.launcher3.logging.UserEventDispatcher.LogContainerProvider;
+import com.android.launcher3.uninstall.UninstallIconAnimUtil;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
-import com.android.launcher3.util.Themes;
 
-public class Hotseat extends FrameLayout
-        implements UserEventDispatcher.LogContainerProvider {
+public class Hotseat extends FrameLayout implements LogContainerProvider, Insettable {
 
+    private final Launcher mLauncher;
     private CellLayout mContent;
 
-    private Launcher mLauncher;
-
     @ViewDebug.ExportedProperty(category = "launcher")
-    private final boolean mHasVerticalHotseat;
-
-    @ViewDebug.ExportedProperty(category = "launcher")
-    private int mBackgroundColor;
-    @ViewDebug.ExportedProperty(category = "launcher")
-    private ColorDrawable mBackground;
-    private ValueAnimator mBackgroundColorAnimator;
+    private boolean mHasVerticalHotseat;
 
     public Hotseat(Context context) {
         this(context, null);
@@ -68,32 +50,10 @@ public class Hotseat extends FrameLayout
     public Hotseat(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mLauncher = Launcher.getLauncher(context);
-        mHasVerticalHotseat = mLauncher.getDeviceProfile().isVerticalBarLayout();
-        mBackgroundColor = ColorUtils.setAlphaComponent(
-                Themes.getAttrColor(context, android.R.attr.colorPrimary), 0);
-        mBackground = new ColorDrawable(mBackgroundColor);
-        if (!FeatureFlags.LAUNCHER3_GRADIENT_ALL_APPS) {
-            setBackground(mBackground);
-        }
     }
 
     public CellLayout getLayout() {
         return mContent;
-    }
-
-    /**
-     * Returns whether there are other icons than the all apps button in the hotseat.
-     */
-    public boolean hasIcons() {
-        return mContent.getShortcutsAndWidgets().getChildCount() > 1;
-    }
-
-    /**
-     * Registers the specified listener on the cell layout of the hotseat.
-     */
-    @Override
-    public void setOnLongClickListener(OnLongClickListener l) {
-        mContent.setOnLongClickListener(l);
     }
 
     /* Get the orientation invariant order of the item in the hotseat for persistence. */
@@ -113,53 +73,17 @@ public class Hotseat extends FrameLayout
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        DeviceProfile grid = mLauncher.getDeviceProfile();
-        mContent = (CellLayout) findViewById(R.id.layout);
-        if (grid.isVerticalBarLayout()) {
-            mContent.setGridSize(1, grid.inv.numHotseatIcons);
-        } else {
-            mContent.setGridSize(grid.inv.numHotseatIcons, 1);
-        }
-
-        resetLayout();
+        mContent = findViewById(R.id.layout);
     }
 
-    void resetLayout() {
+    void resetLayout(boolean hasVerticalHotseat) {
         mContent.removeAllViewsInLayout();
-
-        if (!FeatureFlags.NO_ALL_APPS_ICON) {
-            // Add the Apps button
-            Context context = getContext();
-            DeviceProfile grid = mLauncher.getDeviceProfile();
-            int allAppsButtonRank = grid.inv.getAllAppsButtonRank();
-
-            LayoutInflater inflater = LayoutInflater.from(context);
-            TextView allAppsButton = (TextView)
-                    inflater.inflate(R.layout.all_apps_button, mContent, false);
-            Drawable d = context.getResources().getDrawable(R.drawable.all_apps_button_icon);
-            d.setBounds(0, 0, grid.iconSizePx, grid.iconSizePx);
-
-            int scaleDownPx = getResources().getDimensionPixelSize(R.dimen.all_apps_button_scale_down);
-            Rect bounds = d.getBounds();
-            d.setBounds(bounds.left, bounds.top + scaleDownPx / 2, bounds.right - scaleDownPx,
-                    bounds.bottom - scaleDownPx / 2);
-            allAppsButton.setCompoundDrawables(null, d, null, null);
-
-            allAppsButton.setContentDescription(context.getString(R.string.all_apps_button_label));
-            allAppsButton.setOnKeyListener(new HotseatIconKeyEventListener());
-            if (mLauncher != null) {
-                mLauncher.setAllAppsButton(allAppsButton);
-                allAppsButton.setOnClickListener(mLauncher);
-                allAppsButton.setOnFocusChangeListener(mLauncher.mFocusHandler);
-            }
-
-            // Note: We do this to ensure that the hotseat is always laid out in the orientation of
-            // the hotseat in order regardless of which orientation they were added
-            int x = getCellXFromOrder(allAppsButtonRank);
-            int y = getCellYFromOrder(allAppsButtonRank);
-            CellLayout.LayoutParams lp = new CellLayout.LayoutParams(x, y, 1, 1);
-            lp.canReorder = false;
-            mContent.addViewToCellLayout(allAppsButton, -1, allAppsButton.getId(), lp, true);
+        mHasVerticalHotseat = hasVerticalHotseat;
+        InvariantDeviceProfile idp = mLauncher.getDeviceProfile().inv;
+        if (hasVerticalHotseat) {
+            mContent.setGridSize(1, idp.numHotseatIcons);
+        } else {
+            mContent.setGridSize(idp.numHotseatIcons, 1);
         }
     }
 
@@ -178,48 +102,42 @@ public class Hotseat extends FrameLayout
         targetParent.containerType = ContainerType.HOTSEAT;
     }
 
-    public void updateColor(ExtractedColors extractedColors, boolean animate) {
-        if (FeatureFlags.LAUNCHER3_GRADIENT_ALL_APPS) {
-            // not hotseat visible
-            return;
-        }
-        if (!mHasVerticalHotseat) {
-            int color = extractedColors.getColor(ExtractedColors.HOTSEAT_INDEX);
-            if (mBackgroundColorAnimator != null) {
-                mBackgroundColorAnimator.cancel();
-            }
-            if (!animate) {
-                setBackgroundColor(color);
+    @Override
+    public void setInsets(Rect insets) {
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) getLayoutParams();
+        DeviceProfile grid = mLauncher.getDeviceProfile();
+
+        if (grid.isVerticalBarLayout()) {
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            if (grid.isSeascape()) {
+                lp.gravity = Gravity.LEFT;
+                lp.width = grid.hotseatBarSizePx + insets.left + grid.hotseatBarSidePaddingPx;
             } else {
-                mBackgroundColorAnimator = ValueAnimator.ofInt(mBackgroundColor, color);
-                mBackgroundColorAnimator.setEvaluator(new ArgbEvaluator());
-                mBackgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator animation) {
-                        mBackground.setColor((Integer) animation.getAnimatedValue());
-                    }
-                });
-                mBackgroundColorAnimator.addListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        mBackgroundColorAnimator = null;
-                    }
-                });
-                mBackgroundColorAnimator.start();
+                lp.gravity = Gravity.RIGHT;
+                lp.width = grid.hotseatBarSizePx + insets.right + grid.hotseatBarSidePaddingPx;
             }
-            mBackgroundColor = color;
-        }
-    }
-
-    public void setBackgroundTransparent(boolean enable) {
-        if (enable) {
-            mBackground.setAlpha(0);
         } else {
-            mBackground.setAlpha(255);
+            lp.gravity = Gravity.BOTTOM;
+            lp.bottomMargin = grid.hotseatBarBottomMarginPx;
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = grid.hotseatBarSizePx + insets.bottom;
         }
+        Rect padding = grid.getHotseatLayoutPadding();
+        getLayout().setPadding(padding.left, padding.top, padding.right, padding.bottom);
+
+        setLayoutParams(lp);
+        InsettableFrameLayout.dispatchInsets(this, insets);
     }
 
-    public int getBackgroundDrawableColor() {
-        return mBackgroundColor;
+    // add by codemx.cn ---- 20181029 --- start
+    public void showUninstallIcon(UninstallIconAnimUtil uninstallIconAnimUtil, boolean perform) {
+        final int N = mContent.getShortcutsAndWidgets().getChildCount();
+        for (int i = 0; i < N; i++) {
+            View view = mContent.getShortcutsAndWidgets().getChildAt(i);
+            if (view.getVisibility() == View.VISIBLE && view instanceof BubbleTextView) {
+                ((BubbleTextView) view).showUninstallIcon(uninstallIconAnimUtil, perform);
+            }
+        }
     }
+    // add by codemx.cn ---- 20181029 --- end
 }

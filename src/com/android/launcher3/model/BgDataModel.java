@@ -15,6 +15,7 @@
  */
 package com.android.launcher3.model;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.os.UserHandle;
 import android.text.TextUtils;
@@ -71,6 +72,14 @@ public class BgDataModel {
     public final ArrayList<ItemInfo> workspaceItems = new ArrayList<>();
 
     /**
+     * List of all the shortcuts directly on the home screen(include shortcuts in
+     * folders of home screen)
+     * <p>
+     * 桌面启动时加载的数据库中有的所有应用（主要是单层桌面使用）
+     */
+    public final HashMap<ComponentName, ItemInfo> workspaceShortcuts = new HashMap<>();
+
+    /**
      * All LauncherAppWidgetInfo created by LauncherModel.
      */
     public final ArrayList<LauncherAppWidgetInfo> appWidgets = new ArrayList<>();
@@ -106,6 +115,11 @@ public class BgDataModel {
     public final WidgetsModel widgetsModel = new WidgetsModel();
 
     /**
+     * Id when the model was last bound
+     */
+    public int lastBindId = 0;
+
+    /**
      * Clears all the data
      */
     public synchronized void clear() {
@@ -116,11 +130,12 @@ public class BgDataModel {
         workspaceScreens.clear();
         pinnedShortcutCounts.clear();
         deepShortcutMap.clear();
+        workspaceShortcuts.clear();
     }
 
-     public synchronized void dump(String prefix, FileDescriptor fd, PrintWriter writer,
-             String[] args) {
-        if (args.length > 0 && TextUtils.equals(args[0], "--proto")) {
+    public synchronized void dump(String prefix, FileDescriptor fd, PrintWriter writer,
+                                  String[] args) {
+        if (Arrays.asList(args).contains("--proto")) {
             dumpProto(prefix, fd, writer, args);
             return;
         }
@@ -139,11 +154,11 @@ public class BgDataModel {
             writer.println(prefix + '\t' + appWidgets.get(i).toString());
         }
         writer.println(prefix + " ---- folder items ");
-        for (int i = 0; i< folders.size(); i++) {
+        for (int i = 0; i < folders.size(); i++) {
             writer.println(prefix + '\t' + folders.valueAt(i).toString());
         }
         writer.println(prefix + " ---- items id map ");
-        for (int i = 0; i< itemsIdMap.size(); i++) {
+        for (int i = 0; i < itemsIdMap.size(); i++) {
             writer.println(prefix + '\t' + itemsIdMap.valueAt(i).toString());
         }
 
@@ -160,7 +175,7 @@ public class BgDataModel {
     }
 
     private synchronized void dumpProto(String prefix, FileDescriptor fd, PrintWriter writer,
-            String[] args) {
+                                        String[] args) {
 
         // Add top parent nodes. (L1)
         DumpTargetWrapper hotseat = new DumpTargetWrapper(ContainerType.HOTSEAT, 0);
@@ -175,7 +190,7 @@ public class BgDataModel {
             FolderInfo fInfo = folders.valueAt(i);
             dtw = new DumpTargetWrapper(ContainerType.FOLDER, folders.size());
             dtw.writeToDumpTarget(fInfo);
-            for(ShortcutInfo sInfo: fInfo.contents) {
+            for (ShortcutInfo sInfo : fInfo.contents) {
                 DumpTargetWrapper child = new DumpTargetWrapper(sInfo);
                 child.writeToDumpTarget(sInfo);
                 dtw.add(child);
@@ -219,7 +234,7 @@ public class BgDataModel {
             targetList.addAll(workspaces.valueAt(i).getFlattenedList());
         }
 
-        if (args.length > 1 && TextUtils.equals(args[1], "--debug")) {
+        if (Arrays.asList(args).contains("--debug")) {
             for (int i = 0; i < targetList.size(); i++) {
                 writer.println(prefix + DumpTargetWrapper.getDumpTargetStr(targetList.get(i)));
             }
@@ -269,7 +284,7 @@ public class BgDataModel {
                     MutableInt count = pinnedShortcutCounts.get(pinnedShortcut);
                     if ((count == null || --count.value == 0)
                             && !InstallShortcutReceiver.getPendingShortcuts(context)
-                                .contains(pinnedShortcut)) {
+                            .contains(pinnedShortcut)) {
                         DeepShortcutManager.getInstance(context).unpinShortcut(pinnedShortcut);
                     }
                     // Fall through.
@@ -378,5 +393,9 @@ public class BgDataModel {
                 deepShortcutMap.addToList(targetComponent, shortcut.getId());
             }
         }
+    }
+
+    public synchronized void addShortcutOnMain(ItemInfo info) {
+
     }
 }
