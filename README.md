@@ -1,9 +1,18 @@
 # Launcher3-mx
+<<<<<<< HEAD
 ## 更新：20190126
 基于 Android P Launcher源码
+=======
+本仓库主要是谷歌官方Launcher3源码。
+>>>>>>> bc151ed858fc8135ce91cedcd509de007bb1492a
 
-## 概述
-本版本基于Launcher3-master版本，本版本我会进行定制开发，但是依然是双层桌面，只是添加一下功能，包括：主题，特效等。
+## 主要分支
+
+* Launcher3-6.0
+* Launcher3-7.0
+* Launcher3-8.0.0_r24
+* Launcher3-9.0
+* master
 
 ## 教程
 注：本教程是基于Android6.0的Launcher3讲解的，最新版与现在版本差异较大，我尽量在关键位置添加相应的注释，方便大家修改。
@@ -29,4 +38,3 @@
 <img width="320" src="/image/launcher05.png"/>    <img width="320" src="/image/launcher06.png"/>
 <img width="320" src="/image/launcher07.png"/>    <img width="320" src="/image/launcher08.png"/>
 <img width="320" src="/image/launcher09.png"/>    <img width="320" src="/image/launcher10.png"/>
-
