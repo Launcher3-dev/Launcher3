@@ -34,7 +34,6 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
@@ -44,7 +43,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Process;
-import android.os.Trace;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.text.TextUtils;
@@ -55,15 +53,12 @@ import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.LauncherSettings.WorkspaceScreens;
 import com.android.launcher3.compat.UserManagerCompat;
 import com.android.launcher3.config.FeatureFlags;
-import com.android.launcher3.dynamicui.ExtractionUtils;
-import com.android.launcher3.graphics.IconShapeOverride;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.model.DbDowngradeHelper;
 import com.android.launcher3.provider.LauncherDbUtils;
 import com.android.launcher3.provider.LauncherDbUtils.SQLiteTransaction;
 import com.android.launcher3.provider.RestoreDbTask;
-import com.android.launcher3.util.ManagedProfileHeuristic;
-import com.android.launcher3.util.NoLocaleSqliteContext;
+import com.android.launcher3.util.NoLocaleSQLiteHelper;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.Thunk;
 
@@ -87,12 +82,11 @@ public class LauncherProvider extends ContentProvider {
      */
     public static final int SCHEMA_VERSION = 27;
 
-    public static final String AUTHORITY = (BuildConfig.APPLICATION_ID + ".settings").intern();
+    public static final String AUTHORITY = FeatureFlags.AUTHORITY;
 
     static final String EMPTY_DATABASE_CREATED = "EMPTY_DATABASE_CREATED";
 
     private static final String RESTRICTION_PACKAGE_NAME = "workspace.configuration.package.name";
-    public static LauncherProvider sLauncherProvider;
 
     private final ChangeListenerWrapper mListenerWrapper = new ChangeListenerWrapper();
     private Handler mListenerHandler;
@@ -119,12 +113,8 @@ public class LauncherProvider extends ContentProvider {
         mListenerHandler = new Handler(mListenerWrapper);
 
         // The content provider exists for the entire duration of the launcher main process and
-        // is the first component to get created. Initializing FileLog here ensures that it's
-        // always available in the main process.
-        FileLog.setDir(getContext().getApplicationContext().getFilesDir());
-        IconShapeOverride.apply(getContext());
-        SessionCommitReceiver.applyDefaultUserPrefs(getContext());
-        sLauncherProvider = this;
+        // is the first component to get created.
+        MainProcessInitializer.initialize(getContext().getApplicationContext());
         return true;
     }
 
@@ -151,9 +141,6 @@ public class LauncherProvider extends ContentProvider {
      */
     protected synchronized void createDbIfNotExists() {
         if (mOpenHelper == null) {
-            if (LauncherAppState.PROFILE_STARTUP) {
-                Trace.beginSection("Opening workspace DB");
-            }
             mOpenHelper = new DatabaseHelper(getContext(), mListenerHandler);
 
             if (RestoreDbTask.isPending(getContext())) {
@@ -164,16 +151,12 @@ public class LauncherProvider extends ContentProvider {
                 // executed again.
                 RestoreDbTask.setPending(getContext(), false);
             }
-
-            if (LauncherAppState.PROFILE_STARTUP) {
-                Trace.endSection();
-            }
         }
     }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
-                        String[] selectionArgs, String sortOrder) {
+            String[] selectionArgs, String sortOrder) {
         createDbIfNotExists();
 
         SqlArguments args = new SqlArguments(uri, selection, selectionArgs);
@@ -187,9 +170,8 @@ public class LauncherProvider extends ContentProvider {
         return result;
     }
 
-    @Thunk
-    static long dbInsertAndCheck(DatabaseHelper helper,
-                                 SQLiteDatabase db, String table, String nullColumnHack, ContentValues values) {
+    @Thunk static long dbInsertAndCheck(DatabaseHelper helper,
+            SQLiteDatabase db, String table, String nullColumnHack, ContentValues values) {
         if (values == null) {
             throw new RuntimeException("Error: attempting to insert null values");
         }
@@ -267,7 +249,7 @@ public class LauncherProvider extends ContentProvider {
                     AppWidgetHost widgetHost = mOpenHelper.newLauncherWidgetHost();
                     int appWidgetId = widgetHost.allocateAppWidgetId();
                     values.put(LauncherSettings.Favorites.APPWIDGET_ID, appWidgetId);
-                    if (!appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, cn)) {
+                    if (!appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId,cn)) {
                         widgetHost.deleteAppWidgetId(appWidgetId);
                         return false;
                     }
@@ -327,7 +309,7 @@ public class LauncherProvider extends ContentProvider {
             throws OperationApplicationException {
         createDbIfNotExists();
         try (SQLiteTransaction t = new SQLiteTransaction(mOpenHelper.getWritableDatabase())) {
-            ContentProviderResult[] result = super.applyBatch(operations);
+            ContentProviderResult[] result =  super.applyBatch(operations);
             t.commit();
             reloadLauncherIfExternal();
             return result;
@@ -375,24 +357,11 @@ public class LauncherProvider extends ContentProvider {
         createDbIfNotExists();
 
         switch (method) {
-            case LauncherSettings.Settings.METHOD_SET_EXTRACTED_COLORS_AND_WALLPAPER_ID: {
-                String extractedColors = extras.getString(
-                        LauncherSettings.Settings.EXTRA_EXTRACTED_COLORS);
-                int wallpaperId = extras.getInt(LauncherSettings.Settings.EXTRA_WALLPAPER_ID);
-                Utilities.getPrefs(getContext()).edit()
-                        .putString(ExtractionUtils.EXTRACTED_COLORS_PREFERENCE_KEY, extractedColors)
-                        .putInt(ExtractionUtils.WALLPAPER_ID_PREFERENCE_KEY, wallpaperId)
-                        .apply();
-                mListenerHandler.sendEmptyMessage(ChangeListenerWrapper.MSG_EXTRACTED_COLORS_CHANGED);
-                Bundle result = new Bundle();
-                result.putString(LauncherSettings.Settings.EXTRA_VALUE, extractedColors);
-                return result;
-            }
             case LauncherSettings.Settings.METHOD_CLEAR_EMPTY_DB_FLAG: {
                 clearFlagEmptyDbCreated();
                 return null;
             }
-            case LauncherSettings.Settings.METHOD_WAS_EMPTY_DB_CREATED: {
+            case LauncherSettings.Settings.METHOD_WAS_EMPTY_DB_CREATED : {
                 Bundle result = new Bundle();
                 result.putBoolean(LauncherSettings.Settings.EXTRA_VALUE,
                         Utilities.getPrefs(getContext()).getBoolean(EMPTY_DATABASE_CREATED, false));
@@ -431,7 +400,6 @@ public class LauncherProvider extends ContentProvider {
 
     /**
      * Deletes any empty folder from the DB.
-     *
      * @return Ids of deleted folders.
      */
     private ArrayList<Long> deleteEmptyFolders() {
@@ -441,11 +409,11 @@ public class LauncherProvider extends ContentProvider {
             // Select folders whose id do not match any container value.
             String selection = LauncherSettings.Favorites.ITEM_TYPE + " = "
                     + LauncherSettings.Favorites.ITEM_TYPE_FOLDER + " AND "
-                    + LauncherSettings.Favorites._ID + " NOT IN (SELECT " +
-                    LauncherSettings.Favorites.CONTAINER + " FROM "
-                    + Favorites.TABLE_NAME + ")";
+                    + LauncherSettings.Favorites._ID +  " NOT IN (SELECT " +
+                            LauncherSettings.Favorites.CONTAINER + " FROM "
+                                + Favorites.TABLE_NAME + ")";
             try (Cursor c = db.query(Favorites.TABLE_NAME,
-                    new String[]{LauncherSettings.Favorites._ID},
+                    new String[] {LauncherSettings.Favorites._ID},
                     selection, null, null, null, null)) {
                 LauncherDbUtils.iterateCursor(c, 0, folderIds);
             }
@@ -468,8 +436,7 @@ public class LauncherProvider extends ContentProvider {
         mListenerHandler.sendEmptyMessage(ChangeListenerWrapper.MSG_LAUNCHER_PROVIDER_CHANGED);
     }
 
-    @Thunk
-    static void addModifiedTime(ContentValues values) {
+    @Thunk static void addModifiedTime(ContentValues values) {
         values.put(LauncherSettings.ChangeLogColumns.MODIFIED, System.currentTimeMillis());
     }
 
@@ -479,10 +446,10 @@ public class LauncherProvider extends ContentProvider {
 
     /**
      * Loads the default workspace based on the following priority scheme:
-     * 1) From the app restrictions
-     * 2) From a package provided by play store
-     * 3) From a partner configuration APK, already in the system image
-     * 4) The default configuration for the particular device
+     *   1) From the app restrictions
+     *   2) From a package provided by play store
+     *   3) From a partner configuration APK, already in the system image
+     *   4) The default configuration for the particular device
      */
     synchronized private void loadDefaultFavoritesIfNecessary() {
         SharedPreferences sp = Utilities.getPrefs(getContext());
@@ -493,7 +460,7 @@ public class LauncherProvider extends ContentProvider {
             AppWidgetHost widgetHost = mOpenHelper.newLauncherWidgetHost();
             AutoInstallsLayout loader = createWorkspaceLoaderFromAppRestriction(widgetHost);
             if (loader == null) {
-                loader = AutoInstallsLayout.get(getContext(), widgetHost, mOpenHelper);
+                loader = AutoInstallsLayout.get(getContext(),widgetHost, mOpenHelper);
             }
             if (loader == null) {
                 final Partner partner = Partner.get(getContext().getPackageManager());
@@ -572,7 +539,7 @@ public class LauncherProvider extends ContentProvider {
     /**
      * The class is subclassed in tests to create an in-memory db.
      */
-    public static class DatabaseHelper extends SQLiteOpenHelper implements LayoutParserCallback {
+    public static class DatabaseHelper extends NoLocaleSQLiteHelper implements LayoutParserCallback {
         private final Handler mWidgetHostResetHandler;
         private final Context mContext;
         private long mMaxItemId = -1;
@@ -598,7 +565,7 @@ public class LauncherProvider extends ContentProvider {
          */
         public DatabaseHelper(
                 Context context, Handler widgetHostResetHandler, String tableName) {
-            super(new NoLocaleSqliteContext(context), tableName, null, SCHEMA_VERSION);
+            super(context, tableName, SCHEMA_VERSION);
             mContext = context;
             mWidgetHostResetHandler = widgetHostResetHandler;
         }
@@ -616,8 +583,8 @@ public class LauncherProvider extends ContentProvider {
 
         private boolean tableExists(String tableName) {
             Cursor c = getReadableDatabase().query(
-                    true, "sqlite_master", new String[]{"tbl_name"},
-                    "tbl_name = ?", new String[]{tableName},
+                    true, "sqlite_master", new String[] {"tbl_name"},
+                    "tbl_name = ?", new String[] {tableName},
                     null, null, null, null, null);
             try {
                 return c.getCount() > 0;
@@ -654,10 +621,6 @@ public class LauncherProvider extends ContentProvider {
 
             // Set the flag for empty DB
             Utilities.getPrefs(mContext).edit().putBoolean(EMPTY_DATABASE_CREATED, true).commit();
-
-            // When a new DB is created, remove all previously stored managed profile information.
-            ManagedProfileHeuristic.processAllUsers(Collections.<UserHandle>emptyList(),
-                    mContext);
         }
 
         public long getDefaultUserSerial() {
@@ -821,7 +784,7 @@ public class LauncherProvider extends ContentProvider {
                 case 23:
                     // No-op
                 case 24:
-                    ManagedProfileHeuristic.markExistingUsersForNoFolderCreation(mContext);
+                    // No-op
                 case 25:
                     convertShortcutsToLauncherActivities(db);
                 case 26:
@@ -883,7 +846,7 @@ public class LauncherProvider extends ContentProvider {
             }
             final HashSet<Integer> validWidgets = new HashSet<>();
             try (Cursor c = db.query(Favorites.TABLE_NAME,
-                    new String[]{Favorites.APPWIDGET_ID},
+                    new String[] {Favorites.APPWIDGET_ID },
                     "itemType=" + Favorites.ITEM_TYPE_APPWIDGET, null, null, null, null)) {
                 while (c.moveToNext()) {
                     validWidgets.add(c.getInt(0));
@@ -908,12 +871,11 @@ public class LauncherProvider extends ContentProvider {
          * Replaces all shortcuts of type {@link Favorites#ITEM_TYPE_SHORTCUT} which have a valid
          * launcher activity target with {@link Favorites#ITEM_TYPE_APPLICATION}.
          */
-        @Thunk
-        void convertShortcutsToLauncherActivities(SQLiteDatabase db) {
+        @Thunk void convertShortcutsToLauncherActivities(SQLiteDatabase db) {
             try (SQLiteTransaction t = new SQLiteTransaction(db);
                  // Only consider the primary user as other users can't have a shortcut.
                  Cursor c = db.query(Favorites.TABLE_NAME,
-                         new String[]{Favorites._ID, Favorites.INTENT},
+                         new String[] { Favorites._ID, Favorites.INTENT},
                          "itemType=" + Favorites.ITEM_TYPE_SHORTCUT +
                                  " AND profileId=" + getDefaultUserSerial(),
                          null, null, null, null);
@@ -955,7 +917,7 @@ public class LauncherProvider extends ContentProvider {
                 final ArrayList<Long> sortedIDs;
 
                 try (Cursor c = db.query(WorkspaceScreens.TABLE_NAME,
-                        new String[]{LauncherSettings.WorkspaceScreens._ID},
+                        new String[] {LauncherSettings.WorkspaceScreens._ID},
                         null, null, null, null,
                         LauncherSettings.WorkspaceScreens.SCREEN_RANK)) {
                     // Use LinkedHashSet so that ordering is preserved
@@ -984,8 +946,7 @@ public class LauncherProvider extends ContentProvider {
             return true;
         }
 
-        @Thunk
-        boolean updateFolderItemsRank(SQLiteDatabase db, boolean addRankColumn) {
+        @Thunk boolean updateFolderItemsRank(SQLiteDatabase db, boolean addRankColumn) {
             try (SQLiteTransaction t = new SQLiteTransaction(db)) {
                 if (addRankColumn) {
                     // Insert new column for holding rank
@@ -994,14 +955,14 @@ public class LauncherProvider extends ContentProvider {
 
                 // Get a map for folder ID to folder width
                 Cursor c = db.rawQuery("SELECT container, MAX(cellX) FROM favorites"
-                                + " WHERE container IN (SELECT _id FROM favorites WHERE itemType = ?)"
-                                + " GROUP BY container;",
-                        new String[]{Integer.toString(LauncherSettings.Favorites.ITEM_TYPE_FOLDER)});
+                        + " WHERE container IN (SELECT _id FROM favorites WHERE itemType = ?)"
+                        + " GROUP BY container;",
+                        new String[] {Integer.toString(LauncherSettings.Favorites.ITEM_TYPE_FOLDER)});
 
                 while (c.moveToNext()) {
                     db.execSQL("UPDATE favorites SET rank=cellX+(cellY*?) WHERE "
-                                    + "container=? AND cellX IS NOT NULL AND cellY IS NOT NULL;",
-                            new Object[]{c.getLong(1) + 1, c.getLong(0)});
+                            + "container=? AND cellX IS NOT NULL AND cellY IS NOT NULL;",
+                            new Object[] {c.getLong(1) + 1, c.getLong(0)});
                 }
 
                 c.close();
@@ -1057,7 +1018,7 @@ public class LauncherProvider extends ContentProvider {
             long id = values.getAsLong(LauncherSettings.BaseLauncherColumns._ID);
             if (WorkspaceScreens.TABLE_NAME.equals(table)) {
                 mMaxScreenId = Math.max(id, mMaxScreenId);
-            } else {
+            }  else {
                 mMaxItemId = Math.max(id, mMaxItemId);
             }
         }
@@ -1083,8 +1044,7 @@ public class LauncherProvider extends ContentProvider {
             return getMaxId(db, WorkspaceScreens.TABLE_NAME);
         }
 
-        @Thunk
-        int loadFavorites(SQLiteDatabase db, AutoInstallsLayout loader) {
+        @Thunk int loadFavorites(SQLiteDatabase db, AutoInstallsLayout loader) {
             ArrayList<Long> screenIds = new ArrayList<Long>();
             // TODO: Use multiple loaders with fall-back and transaction.
             int count = loader.loadLayout(db, screenIds);
@@ -1115,8 +1075,7 @@ public class LauncherProvider extends ContentProvider {
     /**
      * @return the max _id in the provided table.
      */
-    @Thunk
-    static long getMaxId(SQLiteDatabase db, String table) {
+    @Thunk static long getMaxId(SQLiteDatabase db, String table) {
         Cursor c = db.rawQuery("SELECT MAX(_id) FROM " + table, null);
         // get the result
         long id = -1;
@@ -1169,8 +1128,7 @@ public class LauncherProvider extends ContentProvider {
     private static class ChangeListenerWrapper implements Handler.Callback {
 
         private static final int MSG_LAUNCHER_PROVIDER_CHANGED = 1;
-        private static final int MSG_EXTRACTED_COLORS_CHANGED = 2;
-        private static final int MSG_APP_WIDGET_HOST_RESET = 3;
+        private static final int MSG_APP_WIDGET_HOST_RESET = 2;
 
         private LauncherProviderChangeListener mListener;
 
@@ -1180,9 +1138,6 @@ public class LauncherProvider extends ContentProvider {
                 switch (msg.what) {
                     case MSG_LAUNCHER_PROVIDER_CHANGED:
                         mListener.onLauncherProviderChanged();
-                        break;
-                    case MSG_EXTRACTED_COLORS_CHANGED:
-                        mListener.onExtractedColorsChanged();
                         break;
                     case MSG_APP_WIDGET_HOST_RESET:
                         mListener.onAppWidgetHostReset();

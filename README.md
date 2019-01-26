@@ -1,4 +1,6 @@
 # Launcher3-mx
+## 更新：20190126
+基于 Android P Launcher源码
 
 ## 概述
 本版本基于Launcher3-master版本，本版本我会进行定制开发，但是依然是双层桌面，只是添加一下功能，包括：主题，特效等。
