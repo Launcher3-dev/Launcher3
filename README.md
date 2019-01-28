@@ -1,10 +1,7 @@
 # Launcher3-mx
-<<<<<<< HEAD
+
 ## 更新：20190126
 基于 Android P Launcher源码
-=======
-本仓库主要是谷歌官方Launcher3源码。
->>>>>>> bc151ed858fc8135ce91cedcd509de007bb1492a
 
 ## 主要分支
 
