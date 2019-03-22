@@ -21,6 +21,7 @@ import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
 
@@ -64,7 +65,7 @@ public class LauncherAppState {
                             return LauncherAppState.getInstance(context);
                         }
                     }).get();
-                } catch (InterruptedException|ExecutionException e) {
+                } catch (InterruptedException | ExecutionException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -175,9 +176,25 @@ public class LauncherAppState {
     }
 
     private static LauncherProvider getLocalProvider(Context context) {
-        try (ContentProviderClient cl = context.getContentResolver()
-                .acquireContentProviderClient(LauncherProvider.AUTHORITY)) {
-            return (LauncherProvider) cl.getLocalContentProvider();
+        // modify by codemx.cn --20190322--------start
+        LauncherProvider provider = null;
+        try {
+            ContentProviderClient client = context.getContentResolver()
+                    .acquireContentProviderClient(LauncherProvider.AUTHORITY);
+            if (client != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {//>24
+                    client.close();
+                } else {
+                    client.release();
+                }
+                provider = (LauncherProvider) client.getLocalContentProvider();
+            } else {
+                Log.e("TAG", " can't get ContentProviderClient--- ");
+            }
+        } catch (Exception e) {
+            Log.e("TAG", e.getMessage());
         }
+        return provider;
+        // modify by codemx.cn --20190322--------end
     }
 }
