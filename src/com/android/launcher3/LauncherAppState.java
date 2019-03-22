@@ -65,7 +65,7 @@ public class LauncherAppState {
                             return LauncherAppState.getInstance(context);
                         }
                     }).get();
-                } catch (InterruptedException|ExecutionException e) {
+                } catch (InterruptedException | ExecutionException e) {
                     throw new RuntimeException(e);
                 }
             }

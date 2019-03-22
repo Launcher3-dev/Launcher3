@@ -1,10 +1,6 @@
 buildscript {
     repositories {
         mavenCentral()
-//        google()
-        maven {
-            url "https://maven.google.com"
-        }
         google()
     }
     dependencies {
@@ -47,7 +43,7 @@ android {
     productFlavors {
         aosp {
             dimension "default"
-            applicationId 'com.android.launcher31'
+            applicationId 'com.android.launcher3'
             testApplicationId 'com.android.launcher3.tests'
         }
 
@@ -118,11 +114,7 @@ repositories {
     maven { url "../../../prebuilts/fullsdk-darwin/extras/android/m2repository" }
     maven { url "../../../prebuilts/fullsdk-linux/extras/android/m2repository" }
     mavenCentral()
-//    google()
-    jcenter()
-    maven {
-        url "https://maven.google.com"
-    }
+    google()
 }
 
 dependencies {

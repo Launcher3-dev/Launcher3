@@ -1,6 +1,15 @@
-# Launcher-master
-## 概述
-该分支是谷歌原始Launcher3-Pie(9.0源码)，未修改代码。
+# Launcher3-mx
+
+## 更新：20190126
+基于 Android P Launcher源码
+
+## 主要分支
+
+* Launcher3-6.0
+* Launcher3-7.0
+* Launcher3-8.0.0_r24
+* Launcher3-9.0
+* master
 
 ## 教程
 注：本教程是基于Android6.0的Launcher3讲解的，最新版与现在版本差异较大，我尽量在关键位置添加相应的注释，方便大家修改。
