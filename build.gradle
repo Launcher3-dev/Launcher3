@@ -4,19 +4,18 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.0-alpha06'
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
+        classpath 'com.android.tools.build:gradle:3.4.1'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.9'
     }
 }
 
-final String SUPPORT_LIBS_VERSION = '28.0.0-rc01'
+final String SUPPORT_LIBS_VERSION = '28.0.0'
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 
 android {
     compileSdkVersion 28
-    buildToolsVersion '28.0.2'
 
     defaultConfig {
         minSdkVersion 21

@@ -1,7 +1,8 @@
 # Launcher3-mx
 
-## 更新：20190126
-基于 Android P Launcher源码
+## 更新：20190627
+* 基于 Android P Launcher源码
+* 修改gradle版本为5.1.1
 
 ## 主要分支
 
@@ -28,6 +29,10 @@
 #### 七.[墨香带你学Launcher之（七）-小部件的加载、添加以及大小调节](http://www.codemx.cn/2016/12/18/Launcher07/)
 
 #### 八.[墨香带你学Launcher之（八）- 加载Icon、设置壁纸](http://www.codemx.cn/2017/05/19/Launcher08/)
+
+## Protobuf相关信息查看
+* [Protobuf](https://github.com/protocolbuffers/protobuf)
+* [protobuf-gradle-plugin](https://github.com/google/protobuf-gradle-plugin)
 
 ## 预览图
 <img width="320" src="/image/launcher01.png"/>    <img width="320" src="/image/launcher02.png"/>
