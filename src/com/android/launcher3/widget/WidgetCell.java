@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.View.OnLayoutChangeListener;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -36,6 +37,7 @@ import com.android.launcher3.SimpleOnStylusPressListener;
 import com.android.launcher3.StylusEventHelper;
 import com.android.launcher3.WidgetPreviewLoader;
 import com.android.launcher3.graphics.DrawableFactory;
+import com.android.launcher3.icons.BaseIconFactory;
 import com.android.launcher3.model.WidgetItem;
 
 /**
@@ -79,6 +81,7 @@ public class WidgetCell extends LinearLayout implements OnLayoutChangeListener {
     private Bitmap mDeferredBitmap;
 
     protected final BaseActivity mActivity;
+    protected DeviceProfile mDeviceProfile;
 
     public WidgetCell(Context context) {
         this(context, null);
@@ -92,6 +95,7 @@ public class WidgetCell extends LinearLayout implements OnLayoutChangeListener {
         super(context, attrs, defStyle);
 
         mActivity = BaseActivity.fromContext(context);
+        mDeviceProfile = mActivity.getDeviceProfile();
         mStylusEventHelper = new StylusEventHelper(new SimpleOnStylusPressListener(this), this);
 
         setContainerWidth();
@@ -101,8 +105,7 @@ public class WidgetCell extends LinearLayout implements OnLayoutChangeListener {
     }
 
     private void setContainerWidth() {
-        DeviceProfile profile = mActivity.getDeviceProfile();
-        mCellSize = (int) (profile.cellWidthPx * WIDTH_SCALE);
+        mCellSize = (int) (mDeviceProfile.allAppsCellWidthPx * WIDTH_SCALE);
         mPresetPreviewSize = (int) (mCellSize * PREVIEW_SCALE);
     }
 
@@ -180,7 +183,9 @@ public class WidgetCell extends LinearLayout implements OnLayoutChangeListener {
         }
         if (bitmap != null) {
             mWidgetImage.setBitmap(bitmap,
-                    DrawableFactory.get(getContext()).getBadgeForUser(mItem.user, getContext()));
+                    DrawableFactory.INSTANCE.get(getContext()).getBadgeForUser(mItem.user,
+                            getContext(), BaseIconFactory.getBadgeSizeForIconSize(
+                                    mDeviceProfile.allAppsIconSizePx)));
             if (mAnimatePreview) {
                 mWidgetImage.setAlpha(0f);
                 ViewPropertyAnimator anim = mWidgetImage.animate();
@@ -235,5 +240,11 @@ public class WidgetCell extends LinearLayout implements OnLayoutChangeListener {
     @Override
     public CharSequence getAccessibilityClassName() {
         return WidgetCell.class.getName();
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK);
     }
 }

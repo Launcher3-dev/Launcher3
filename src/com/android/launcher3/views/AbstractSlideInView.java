@@ -30,16 +30,16 @@ import android.view.animation.Interpolator;
 
 import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.Launcher;
-import com.android.launcher3.LauncherAnimUtils;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.anim.Interpolators;
-import com.android.launcher3.touch.SwipeDetector;
+import com.android.launcher3.touch.BaseSwipeDetector;
+import com.android.launcher3.touch.SingleAxisSwipeDetector;
 
 /**
  * Extension of AbstractFloatingView with common methods for sliding in from bottom
  */
 public abstract class AbstractSlideInView extends AbstractFloatingView
-        implements SwipeDetector.Listener {
+        implements SingleAxisSwipeDetector.Listener {
 
     protected static Property<AbstractSlideInView, Float> TRANSLATION_SHIFT =
             new Property<AbstractSlideInView, Float>(Float.class, "translationShift") {
@@ -58,7 +58,7 @@ public abstract class AbstractSlideInView extends AbstractFloatingView
     protected static final float TRANSLATION_SHIFT_OPENED = 0f;
 
     protected final Launcher mLauncher;
-    protected final SwipeDetector mSwipeDetector;
+    protected final SingleAxisSwipeDetector mSwipeDetector;
     protected final ObjectAnimator mOpenCloseAnimator;
 
     protected View mContent;
@@ -74,9 +74,10 @@ public abstract class AbstractSlideInView extends AbstractFloatingView
         mLauncher = Launcher.getLauncher(context);
 
         mScrollInterpolator = Interpolators.SCROLL_CUBIC;
-        mSwipeDetector = new SwipeDetector(context, this, SwipeDetector.VERTICAL);
+        mSwipeDetector = new SingleAxisSwipeDetector(context, this,
+                SingleAxisSwipeDetector.VERTICAL);
 
-        mOpenCloseAnimator = LauncherAnimUtils.ofPropertyValuesHolder(this);
+        mOpenCloseAnimator = ObjectAnimator.ofPropertyValuesHolder(this);
         mOpenCloseAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -98,33 +99,38 @@ public abstract class AbstractSlideInView extends AbstractFloatingView
         }
 
         int directionsToDetectScroll = mSwipeDetector.isIdleState() ?
-                SwipeDetector.DIRECTION_NEGATIVE : 0;
+                SingleAxisSwipeDetector.DIRECTION_NEGATIVE : 0;
         mSwipeDetector.setDetectableScrollConditions(
                 directionsToDetectScroll, false);
         mSwipeDetector.onTouchEvent(ev);
         return mSwipeDetector.isDraggingOrSettling()
-                || !mLauncher.getDragLayer().isEventOverView(mContent, ev);
+                || !getPopupContainer().isEventOverView(mContent, ev);
     }
 
     @Override
     public boolean onControllerTouchEvent(MotionEvent ev) {
         mSwipeDetector.onTouchEvent(ev);
-        if (ev.getAction() == MotionEvent.ACTION_UP && mSwipeDetector.isIdleState()) {
+        if (ev.getAction() == MotionEvent.ACTION_UP && mSwipeDetector.isIdleState()
+                && !isOpeningAnimationRunning()) {
             // If we got ACTION_UP without ever starting swipe, close the panel.
-            if (!mLauncher.getDragLayer().isEventOverView(mContent, ev)) {
+            if (!getPopupContainer().isEventOverView(mContent, ev)) {
                 close(true);
             }
         }
         return true;
     }
 
-    /* SwipeDetector.Listener */
+    private boolean isOpeningAnimationRunning() {
+        return mIsOpen && mOpenCloseAnimator.isRunning();
+    }
+
+    /* SingleAxisSwipeDetector.Listener */
 
     @Override
     public void onDragStart(boolean start) { }
 
     @Override
-    public boolean onDrag(float displacement, float velocity) {
+    public boolean onDrag(float displacement) {
         float range = mContent.getHeight();
         displacement = Utilities.boundToRange(displacement, 0, range);
         setTranslationShift(displacement / range);
@@ -132,30 +138,30 @@ public abstract class AbstractSlideInView extends AbstractFloatingView
     }
 
     @Override
-    public void onDragEnd(float velocity, boolean fling) {
-        if ((fling && velocity > 0) || mTranslationShift > 0.5f) {
+    public void onDragEnd(float velocity) {
+        if ((mSwipeDetector.isFling(velocity) && velocity > 0) || mTranslationShift > 0.5f) {
             mScrollInterpolator = scrollInterpolatorForVelocity(velocity);
-            mOpenCloseAnimator.setDuration(SwipeDetector.calculateDuration(
+            mOpenCloseAnimator.setDuration(BaseSwipeDetector.calculateDuration(
                     velocity, TRANSLATION_SHIFT_CLOSED - mTranslationShift));
             close(true);
         } else {
             mOpenCloseAnimator.setValues(PropertyValuesHolder.ofFloat(
                     TRANSLATION_SHIFT, TRANSLATION_SHIFT_OPENED));
             mOpenCloseAnimator.setDuration(
-                    SwipeDetector.calculateDuration(velocity, mTranslationShift))
+                    BaseSwipeDetector.calculateDuration(velocity, mTranslationShift))
                     .setInterpolator(Interpolators.DEACCEL);
             mOpenCloseAnimator.start();
         }
     }
 
     protected void handleClose(boolean animate, long defaultDuration) {
-        if (mIsOpen && !animate) {
+        if (!mIsOpen) {
+            return;
+        }
+        if (!animate) {
             mOpenCloseAnimator.cancel();
             setTranslationShift(TRANSLATION_SHIFT_CLOSED);
             onCloseComplete();
-            return;
-        }
-        if (!mIsOpen || mOpenCloseAnimator.isRunning()) {
             return;
         }
         mOpenCloseAnimator.setValues(
@@ -178,6 +184,10 @@ public abstract class AbstractSlideInView extends AbstractFloatingView
 
     protected void onCloseComplete() {
         mIsOpen = false;
-        mLauncher.getDragLayer().removeView(this);
+        getPopupContainer().removeView(this);
+    }
+
+    protected BaseDragLayer getPopupContainer() {
+        return mLauncher.getDragLayer();
     }
 }

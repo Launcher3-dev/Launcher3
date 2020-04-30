@@ -18,7 +18,8 @@ package com.android.launcher3.compat;
 
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.Nullable;
 
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.util.PackageUserKey;

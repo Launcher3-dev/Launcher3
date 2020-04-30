@@ -16,15 +16,15 @@
 package com.android.launcher3.model;
 
 import android.content.Context;
-import android.support.annotation.WorkerThread;
 import android.util.Log;
 
-import com.android.launcher3.AllAppsList;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherModel.ModelUpdateTask;
 
 import java.util.concurrent.Executor;
+
+import androidx.annotation.WorkerThread;
 
 /**
  * Utility class to preload LauncherModel

@@ -18,15 +18,11 @@ package com.android.launcher3.model;
 import android.content.ComponentName;
 import android.os.UserHandle;
 
-import com.android.launcher3.AllAppsList;
-import com.android.launcher3.AppInfo;
-import com.android.launcher3.IconCache;
+import com.android.launcher3.WorkspaceItemInfo;
+import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppState;
-import com.android.launcher3.LauncherModel.CallbackTask;
-import com.android.launcher3.LauncherModel.Callbacks;
 import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.ShortcutInfo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -53,37 +49,29 @@ public class CacheDataUpdatedTask extends BaseModelUpdateTask {
     public void execute(LauncherAppState app, BgDataModel dataModel, AllAppsList apps) {
         IconCache iconCache = app.getIconCache();
 
-        final ArrayList<AppInfo> updatedApps = new ArrayList<>();
 
-        ArrayList<ShortcutInfo> updatedShortcuts = new ArrayList<>();
+        ArrayList<WorkspaceItemInfo> updatedShortcuts = new ArrayList<>();
+
         synchronized (dataModel) {
             for (ItemInfo info : dataModel.itemsIdMap) {
-                if (info instanceof ShortcutInfo && mUser.equals(info.user)) {
-                    ShortcutInfo si = (ShortcutInfo) info;
+                if (info instanceof WorkspaceItemInfo && mUser.equals(info.user)) {
+                    WorkspaceItemInfo si = (WorkspaceItemInfo) info;
                     ComponentName cn = si.getTargetComponent();
                     if (si.itemType == LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
                             && isValidShortcut(si) && cn != null
                             && mPackages.contains(cn.getPackageName())) {
-                        iconCache.getTitleAndIcon(si, si.usingLowResIcon);
+                        iconCache.getTitleAndIcon(si, si.usingLowResIcon());
                         updatedShortcuts.add(si);
                     }
                 }
             }
-            apps.updateIconsAndLabels(mPackages, mUser, updatedApps);
+            apps.updateIconsAndLabels(mPackages, mUser);
         }
-        bindUpdatedShortcuts(updatedShortcuts, mUser);
-
-        if (!updatedApps.isEmpty()) {
-            scheduleCallbackTask(new CallbackTask() {
-                @Override
-                public void execute(Callbacks callbacks) {
-                    callbacks.bindAppsAddedOrUpdated(updatedApps);
-                }
-            });
-        }
+        bindUpdatedWorkspaceItems(updatedShortcuts);
+        bindApplicationsIfNeeded();
     }
 
-    public boolean isValidShortcut(ShortcutInfo si) {
+    public boolean isValidShortcut(WorkspaceItemInfo si) {
         switch (mOp) {
             case OP_CACHE_UPDATE:
                 return true;

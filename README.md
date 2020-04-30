@@ -1,8 +1,8 @@
 # Launcher3-mx
 
-## 更新：20190627
-* 基于 Android P Launcher源码
-* 修改gradle版本为5.1.1
+## 更新：20200430
+* 基于 Android P Launcher-master源码
+* 源码最新提交日期：20200305
 
 ## 主要分支
 
@@ -10,6 +10,7 @@
 * Launcher3-7.0
 * Launcher3-8.0.0_r24
 * Launcher3-9.0
+* Launcher3-master-20200305
 * master
 
 ## 教程

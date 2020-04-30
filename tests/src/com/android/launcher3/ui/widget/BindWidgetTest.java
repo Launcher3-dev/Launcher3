@@ -15,34 +15,36 @@
  */
 package com.android.launcher3.ui.widget;
 
+import static com.android.launcher3.WorkspaceLayoutManager.FIRST_SCREEN_ID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.test.filters.LargeTest;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.UiSelector;
+
+import androidx.test.filters.LargeTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.launcher3.LauncherAppWidgetHost;
-import com.android.launcher3.widget.LauncherAppWidgetHostView;
 import com.android.launcher3.LauncherAppWidgetInfo;
 import com.android.launcher3.LauncherAppWidgetProviderInfo;
-import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.widget.PendingAppWidgetHostView;
-import com.android.launcher3.Workspace;
 import com.android.launcher3.compat.AppWidgetManagerCompat;
 import com.android.launcher3.compat.PackageInstallerCompat;
+import com.android.launcher3.tapl.Workspace;
 import com.android.launcher3.ui.AbstractLauncherUiTest;
+import com.android.launcher3.ui.TestViewHelpers;
 import com.android.launcher3.util.ContentWriter;
-import com.android.launcher3.util.LooperExecutor;
-import com.android.launcher3.util.rule.LauncherActivityRule;
+import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.rule.ShellCommandRule;
 import com.android.launcher3.widget.PendingAddWidgetInfo;
 import com.android.launcher3.widget.WidgetHostViewLoader;
@@ -53,14 +55,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import java.util.function.Consumer;
 
 /**
  * Tests for bind widget flow.
@@ -71,8 +68,8 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class BindWidgetTest extends AbstractLauncherUiTest {
 
-    @Rule public LauncherActivityRule mActivityMonitor = new LauncherActivityRule();
-    @Rule public ShellCommandRule mGrantWidgetRule = ShellCommandRule.grandWidgetBind();
+    @Rule
+    public ShellCommandRule mGrantWidgetRule = ShellCommandRule.grantWidgetBind();
 
     private ContentResolver mResolver;
     private AppWidgetManagerCompat mWidgetManager;
@@ -96,7 +93,7 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         if (mCursor != null) {
             mCursor.close();
         }
@@ -108,62 +105,65 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
 
     @Test
     public void testBindNormalWidget_withConfig() {
-        LauncherAppWidgetProviderInfo info = findWidgetProvider(true);
+        LauncherAppWidgetProviderInfo info = TestViewHelpers.findWidgetProvider(this, true);
         LauncherAppWidgetInfo item = createWidgetInfo(info, true);
 
-        setupAndVerifyContents(item, LauncherAppWidgetHostView.class, info.label);
+        setupContents(item);
+        verifyWidgetPresent(info);
     }
 
     @Test
     public void testBindNormalWidget_withoutConfig() {
-        LauncherAppWidgetProviderInfo info = findWidgetProvider(false);
+        LauncherAppWidgetProviderInfo info = TestViewHelpers.findWidgetProvider(this, false);
         LauncherAppWidgetInfo item = createWidgetInfo(info, true);
 
-        setupAndVerifyContents(item, LauncherAppWidgetHostView.class, info.label);
+        setupContents(item);
+        verifyWidgetPresent(info);
     }
 
     @Test
-    public void testUnboundWidget_removed() throws Exception {
-        LauncherAppWidgetProviderInfo info = findWidgetProvider(false);
+    public void testUnboundWidget_removed() {
+        LauncherAppWidgetProviderInfo info = TestViewHelpers.findWidgetProvider(this, false);
         LauncherAppWidgetInfo item = createWidgetInfo(info, false);
         item.appWidgetId = -33;
 
-        // Since there is no widget to verify, just wait until the workspace is ready.
-        setupAndVerifyContents(item, Workspace.class, null);
+        setupContents(item);
 
-        waitUntilLoaderIdle();
+        final Workspace workspace = mLauncher.getWorkspace();
         // Item deleted from db
         mCursor = mResolver.query(LauncherSettings.Favorites.getContentUri(item.id),
                 null, null, null, null, null);
         assertEquals(0, mCursor.getCount());
 
         // The view does not exist
-        assertFalse(mDevice.findObject(new UiSelector().description(info.label)).exists());
+        assertTrue("Widget exists", workspace.tryGetWidget(info.label, 0) == null);
     }
 
     @Test
     public void testPendingWidget_autoRestored() {
         // A non-restored widget with no config screen gets restored automatically.
-        LauncherAppWidgetProviderInfo info = findWidgetProvider(false);
+        LauncherAppWidgetProviderInfo info = TestViewHelpers.findWidgetProvider(this, false);
 
         // Do not bind the widget
         LauncherAppWidgetInfo item = createWidgetInfo(info, false);
         item.restoreStatus = LauncherAppWidgetInfo.FLAG_ID_NOT_VALID;
 
-        setupAndVerifyContents(item, LauncherAppWidgetHostView.class, info.label);
+        setupContents(item);
+        verifyWidgetPresent(info);
     }
 
     @Test
-    public void testPendingWidget_withConfigScreen() throws Exception {
+    public void testPendingWidget_withConfigScreen() {
         // A non-restored widget with config screen get bound and shows a 'Click to setup' UI.
-        LauncherAppWidgetProviderInfo info = findWidgetProvider(true);
+        LauncherAppWidgetProviderInfo info = TestViewHelpers.findWidgetProvider(this, true);
 
         // Do not bind the widget
         LauncherAppWidgetInfo item = createWidgetInfo(info, false);
         item.restoreStatus = LauncherAppWidgetInfo.FLAG_ID_NOT_VALID;
 
-        setupAndVerifyContents(item, PendingAppWidgetHostView.class, null);
-        waitUntilLoaderIdle();
+        setupContents(item);
+        verifyPendingWidgetPresent();
+
         // Item deleted from db
         mCursor = mResolver.query(LauncherSettings.Favorites.getContentUri(item.id),
                 null, null, null, null, null);
@@ -178,16 +178,15 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
     }
 
     @Test
-    public void testPendingWidget_notRestored_removed() throws Exception {
+    public void testPendingWidget_notRestored_removed() {
         LauncherAppWidgetInfo item = getInvalidWidgetInfo();
         item.restoreStatus = LauncherAppWidgetInfo.FLAG_ID_NOT_VALID
                 | LauncherAppWidgetInfo.FLAG_PROVIDER_NOT_READY;
 
-        setupAndVerifyContents(item, Workspace.class, null);
-        // The view does not exist
-        assertFalse(mDevice.findObject(
-                new UiSelector().className(PendingAppWidgetHostView.class)).exists());
-        waitUntilLoaderIdle();
+        setupContents(item);
+
+        assertTrue("Pending widget exists",
+                mLauncher.getWorkspace().tryGetPendingWidget(0) == null);
         // Item deleted from db
         mCursor = mResolver.query(LauncherSettings.Favorites.getContentUri(item.id),
                 null, null, null, null, null);
@@ -195,7 +194,7 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
     }
 
     @Test
-    public void testPendingWidget_notRestored_brokenInstall() throws Exception {
+    public void testPendingWidget_notRestored_brokenInstall() {
         // A widget which is was being installed once, even if its not being
         // installed at the moment is not removed.
         LauncherAppWidgetInfo item = getInvalidWidgetInfo();
@@ -203,9 +202,10 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
                 | LauncherAppWidgetInfo.FLAG_RESTORE_STARTED
                 | LauncherAppWidgetInfo.FLAG_PROVIDER_NOT_READY;
 
-        setupAndVerifyContents(item, PendingAppWidgetHostView.class, null);
+        setupContents(item);
+        verifyPendingWidgetPresent();
+
         // Verify item still exists in db
-        waitUntilLoaderIdle();
         mCursor = mResolver.query(LauncherSettings.Favorites.getContentUri(item.id),
                 null, null, null, null, null);
         assertEquals(1, mCursor.getCount());
@@ -230,9 +230,10 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
         PackageInstaller installer = mTargetContext.getPackageManager().getPackageInstaller();
         mSessionId = installer.createSession(params);
 
-        setupAndVerifyContents(item, PendingAppWidgetHostView.class, null);
+        setupContents(item);
+        verifyPendingWidgetPresent();
+
         // Verify item still exists in db
-        waitUntilLoaderIdle();
         mCursor = mResolver.query(LauncherSettings.Favorites.getContentUri(item.id),
                 null, null, null, null, null);
         assertEquals(1, mCursor.getCount());
@@ -247,28 +248,21 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
     /**
      * Adds {@param item} on the homescreen on the 0th screen at 0,0, and verifies that the
      * widget class is displayed on the homescreen.
-     * @param widgetClass the View class which is displayed on the homescreen
-     * @param desc the content description of the view or null.
      */
-    private void setupAndVerifyContents(
-            LauncherAppWidgetInfo item, Class<?> widgetClass, String desc) {
-        long screenId = Workspace.FIRST_SCREEN_ID;
+    private void setupContents(LauncherAppWidgetInfo item) {
+        int screenId = FIRST_SCREEN_ID;
         // Update the screen id counter for the provider.
         LauncherSettings.Settings.call(mResolver, LauncherSettings.Settings.METHOD_NEW_SCREEN_ID);
 
-        if (screenId > Workspace.FIRST_SCREEN_ID) {
-            screenId = Workspace.FIRST_SCREEN_ID;
+        if (screenId > FIRST_SCREEN_ID) {
+            screenId = FIRST_SCREEN_ID;
         }
-        ContentValues v = new ContentValues();
-        v.put(LauncherSettings.WorkspaceScreens._ID, screenId);
-        v.put(LauncherSettings.WorkspaceScreens.SCREEN_RANK, 0);
-        mResolver.insert(LauncherSettings.WorkspaceScreens.CONTENT_URI, v);
 
         // Insert the item
         ContentWriter writer = new ContentWriter(mTargetContext);
         item.id = LauncherSettings.Settings.call(
                 mResolver, LauncherSettings.Settings.METHOD_NEW_ITEM_ID)
-                .getLong(LauncherSettings.Settings.EXTRA_VALUE);
+                .getInt(LauncherSettings.Settings.EXTRA_VALUE);
         item.screenId = screenId;
         item.onAddToDatabase(writer);
         writer.put(LauncherSettings.Favorites._ID, item.id);
@@ -276,14 +270,17 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
         resetLoaderState();
 
         // Launch the home activity
-        mActivityMonitor.startLauncher();
-        // Verify UI
-        UiSelector selector = new UiSelector().packageName(mTargetContext.getPackageName())
-                .className(widgetClass);
-        if (desc != null) {
-            selector = selector.description(desc);
-        }
-        assertTrue(mDevice.findObject(selector).waitForExists(DEFAULT_UI_TIMEOUT));
+        mDevice.pressHome();
+    }
+
+    private void verifyWidgetPresent(LauncherAppWidgetProviderInfo info) {
+        assertTrue("Widget is not present",
+                mLauncher.getWorkspace().tryGetWidget(info.label, DEFAULT_UI_TIMEOUT) != null);
+    }
+
+    private void verifyPendingWidgetPresent() {
+        assertTrue("Pending widget is not present",
+                mLauncher.getWorkspace().tryGetPendingWidget(DEFAULT_UI_TIMEOUT) != null);
     }
 
     /**
@@ -331,12 +328,11 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
         int count = 0;
         String pkg = invalidPackage;
 
-        Set<String> activePackage = getOnUiThread(new Callable<Set<String>>() {
-            @Override
-            public Set<String> call() throws Exception {
-                return PackageInstallerCompat.getInstance(mTargetContext)
-                        .updateAndGetActiveSessionCache().keySet();
-            }
+        Set<String> activePackage = getOnUiThread(() -> {
+            Set<String> packages = new HashSet<>();
+            PackageInstallerCompat.getInstance(mTargetContext).updateAndGetActiveSessionCache()
+                    .keySet().forEach(packageUserKey -> packages.add(packageUserKey.mPackageName));
+            return packages;
         });
         while(true) {
             try {
@@ -360,16 +356,5 @@ public class BindWidgetTest extends AbstractLauncherUiTest {
         item.cellY = 1;
         item.container = LauncherSettings.Favorites.CONTAINER_DESKTOP;
         return item;
-    }
-
-    /**
-     * Blocks the current thread until all the jobs in the main worker thread are complete.
-     */
-    private void waitUntilLoaderIdle() throws Exception {
-        new LooperExecutor(LauncherModel.getWorkerLooper())
-                .submit(new Runnable() {
-                    @Override
-                    public void run() { }
-                }).get(DEFAULT_WORKER_TIMEOUT_SECS, TimeUnit.SECONDS);
     }
 }

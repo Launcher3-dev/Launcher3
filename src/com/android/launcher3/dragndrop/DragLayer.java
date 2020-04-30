@@ -17,6 +17,10 @@
 
 package com.android.launcher3.dragndrop;
 
+import static android.view.View.MeasureSpec.EXACTLY;
+import static android.view.View.MeasureSpec.getMode;
+import static android.view.View.MeasureSpec.getSize;
+
 import static com.android.launcher3.compat.AccessibilityManagerCompat.sendCustomAccessibilityEvent;
 
 import android.animation.Animator;
@@ -29,12 +33,14 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Interpolator;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.android.launcher3.AbstractFloatingView;
@@ -47,12 +53,14 @@ import com.android.launcher3.Workspace;
 import com.android.launcher3.anim.Interpolators;
 import com.android.launcher3.folder.Folder;
 import com.android.launcher3.folder.FolderIcon;
-import com.android.launcher3.graphics.ViewScrim;
+import com.android.launcher3.graphics.OverviewScrim;
+import com.android.launcher3.graphics.RotationMode;
 import com.android.launcher3.graphics.WorkspaceAndHotseatScrim;
 import com.android.launcher3.keyboard.ViewGroupFocusHelper;
 import com.android.launcher3.uioverrides.UiFactory;
 import com.android.launcher3.util.Thunk;
 import com.android.launcher3.views.BaseDragLayer;
+import com.android.launcher3.views.Transposable;
 
 import java.util.ArrayList;
 
@@ -64,8 +72,7 @@ public class DragLayer extends BaseDragLayer<Launcher> {
     public static final int ALPHA_INDEX_OVERLAY = 0;
     public static final int ALPHA_INDEX_LAUNCHER_LOAD = 1;
     public static final int ALPHA_INDEX_TRANSITIONS = 2;
-    public static final int ALPHA_INDEX_SWIPE_UP = 3;
-    private static final int ALPHA_CHANNEL_COUNT = 4;
+    private static final int ALPHA_CHANNEL_COUNT = 3;
 
     public static final int ANIMATION_END_DISAPPEAR = 0;
     public static final int ANIMATION_END_REMAIN_VISIBLE = 2;
@@ -86,7 +93,8 @@ public class DragLayer extends BaseDragLayer<Launcher> {
 
     // Related to adjacent page hints
     private final ViewGroupFocusHelper mFocusIndicatorHelper;
-    private final WorkspaceAndHotseatScrim mScrim;
+    private final WorkspaceAndHotseatScrim mWorkspaceScrim;
+    private final OverviewScrim mOverviewScrim;
 
     /**
      * Used to create a new DragLayer from XML.
@@ -102,12 +110,13 @@ public class DragLayer extends BaseDragLayer<Launcher> {
         setChildrenDrawingOrderEnabled(true);
 
         mFocusIndicatorHelper = new ViewGroupFocusHelper(this);
-        mScrim = new WorkspaceAndHotseatScrim(this);
+        mWorkspaceScrim = new WorkspaceAndHotseatScrim(this);
+        mOverviewScrim = new OverviewScrim(this);
     }
 
     public void setup(DragController dragController, Workspace workspace) {
         mDragController = dragController;
-        mScrim.setWorkspace(workspace);
+        mWorkspaceScrim.setWorkspace(workspace);
         recreateControllers();
     }
 
@@ -122,25 +131,6 @@ public class DragLayer extends BaseDragLayer<Launcher> {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         return mDragController.dispatchKeyEvent(event) || super.dispatchKeyEvent(event);
-    }
-
-    @Override
-    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-        ViewScrim scrim = ViewScrim.get(child);
-        if (scrim != null) {
-            scrim.draw(canvas, getWidth(), getHeight());
-        }
-        return super.drawChild(canvas, child, drawingTime);
-    }
-
-    @Override
-    protected boolean findActiveController(MotionEvent ev) {
-        if (mActivity.getStateManager().getState().disableInteraction) {
-            // You Shall Not Pass!!!
-            mActiveController = null;
-            return true;
-        }
-        return super.findActiveController(ev);
     }
 
     private boolean isEventOverAccessibleDropTargetBar(MotionEvent ev) {
@@ -271,10 +261,10 @@ public class DragLayer extends BaseDragLayer<Launcher> {
         Rect r = new Rect();
         getViewRectRelativeToSelf(dragView, r);
 
-        int coord[] = new int[2];
+        float coord[] = new float[2];
         float childScale = child.getScaleX();
-        coord[0] = lp.x + (int) (child.getMeasuredWidth() * (1 - childScale) / 2);
-        coord[1] = lp.y + (int) (child.getMeasuredHeight() * (1 - childScale) / 2);
+        coord[0] = lp.x + (child.getMeasuredWidth() * (1 - childScale) / 2);
+        coord[1] = lp.y + (child.getMeasuredHeight() * (1 - childScale) / 2);
 
         // Since the child hasn't necessarily been laid out, we force the lp to be updated with
         // the correct coordinates (above) and use these to determine the final location
@@ -282,8 +272,8 @@ public class DragLayer extends BaseDragLayer<Launcher> {
         // We need to account for the scale of the child itself, as the above only accounts for
         // for the scale in parents.
         scale *= childScale;
-        int toX = coord[0];
-        int toY = coord[1];
+        int toX = Math.round(coord[0]);
+        int toY = Math.round(coord[1]);
         float toScale = scale;
         if (child instanceof TextView) {
             TextView tv = (TextView) child;
@@ -294,7 +284,8 @@ public class DragLayer extends BaseDragLayer<Launcher> {
             // The child may be scaled (always about the center of the view) so to account for it,
             // we have to offset the position by the scaled size.  Once we do that, we can center
             // the drag view about the scaled child view.
-            toY += Math.round(toScale * tv.getPaddingTop());
+            // padding will remain constant (does not scale with size)
+            toY += tv.getPaddingTop();
             toY -= dragView.getMeasuredHeight() * (1 - toScale) / 2;
             if (dragView.getDragVisualizeOffset() != null) {
                 toY -=  Math.round(toScale * dragView.getDragVisualizeOffset().y);
@@ -542,24 +533,179 @@ public class DragLayer extends BaseDragLayer<Launcher> {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         // Draw the background below children.
-        mScrim.draw(canvas);
+        mWorkspaceScrim.draw(canvas);
+        mOverviewScrim.updateCurrentScrimmedView(this);
         mFocusIndicatorHelper.draw(canvas);
         super.dispatchDraw(canvas);
     }
 
     @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        if (child == mOverviewScrim.getScrimmedView()) {
+            mOverviewScrim.draw(canvas);
+        }
+        return super.drawChild(canvas, child, drawingTime);
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        mScrim.setSize(w, h);
+        mWorkspaceScrim.setSize(w, h);
     }
 
     @Override
     public void setInsets(Rect insets) {
         super.setInsets(insets);
-        mScrim.onInsetsChanged(insets);
+        mWorkspaceScrim.onInsetsChanged(insets);
+        mOverviewScrim.onInsetsChanged(insets);
     }
 
     public WorkspaceAndHotseatScrim getScrim() {
-        return mScrim;
+        return mWorkspaceScrim;
+    }
+
+    public OverviewScrim getOverviewScrim() {
+        return mOverviewScrim;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        RotationMode rotation = mActivity.getRotationMode();
+        int count = getChildCount();
+
+        if (!rotation.isTransposed
+                || getMode(widthMeasureSpec) != EXACTLY
+                || getMode(heightMeasureSpec) != EXACTLY) {
+
+            for (int i = 0; i < count; i++) {
+                final View child = getChildAt(i);
+                child.setRotation(rotation.surfaceRotation);
+            }
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        } else {
+
+            for (int i = 0; i < count; i++) {
+                final View child = getChildAt(i);
+                if (child.getVisibility() == GONE) {
+                    continue;
+                }
+                if (!(child instanceof Transposable)) {
+                    measureChildWithMargins(child, widthMeasureSpec, 0, heightMeasureSpec, 0);
+                } else {
+                    measureChildWithMargins(child, heightMeasureSpec, 0, widthMeasureSpec, 0);
+
+                    child.setPivotX(child.getMeasuredWidth() / 2);
+                    child.setPivotY(child.getMeasuredHeight() / 2);
+                    child.setRotation(rotation.surfaceRotation);
+                }
+            }
+            setMeasuredDimension(getSize(widthMeasureSpec), getSize(heightMeasureSpec));
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        RotationMode rotation = mActivity.getRotationMode();
+        if (!rotation.isTransposed) {
+            super.onLayout(changed, left, top, right, bottom);
+            return;
+        }
+
+        final int count = getChildCount();
+
+        final int parentWidth = right - left;
+        final int parentHeight = bottom - top;
+
+        for (int i = 0; i < count; i++) {
+            final View child = getChildAt(i);
+            if (child.getVisibility() == GONE) {
+                continue;
+            }
+
+            final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) child.getLayoutParams();
+
+            if (lp instanceof LayoutParams) {
+                final LayoutParams dlp = (LayoutParams) lp;
+                if (dlp.customPosition) {
+                    child.layout(dlp.x, dlp.y, dlp.x + dlp.width, dlp.y + dlp.height);
+                    continue;
+                }
+            }
+
+            final int width = child.getMeasuredWidth();
+            final int height = child.getMeasuredHeight();
+
+            int childLeft;
+            int childTop;
+
+            int gravity = lp.gravity;
+            if (gravity == -1) {
+                gravity = Gravity.TOP | Gravity.START;
+            }
+
+            final int layoutDirection = getLayoutDirection();
+
+            int absoluteGravity = Gravity.getAbsoluteGravity(gravity, layoutDirection);
+
+            if (child instanceof Transposable) {
+                absoluteGravity = rotation.toNaturalGravity(absoluteGravity);
+
+                switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
+                    case Gravity.CENTER_HORIZONTAL:
+                        childTop = (parentHeight - height) / 2 +
+                                lp.topMargin - lp.bottomMargin;
+                        break;
+                    case Gravity.RIGHT:
+                        childTop = width / 2 + lp.rightMargin - height / 2;
+                        break;
+                    case Gravity.LEFT:
+                    default:
+                        childTop = parentHeight - lp.leftMargin - width / 2 - height / 2;
+                }
+
+                switch (absoluteGravity & Gravity.VERTICAL_GRAVITY_MASK) {
+                    case Gravity.CENTER_VERTICAL:
+                        childLeft = (parentWidth - width) / 2 +
+                                lp.leftMargin - lp.rightMargin;
+                        break;
+                    case Gravity.BOTTOM:
+                        childLeft = parentWidth - width / 2 - height / 2 - lp.bottomMargin;
+                        break;
+                    case Gravity.TOP:
+                    default:
+                        childLeft = height / 2 - width / 2 + lp.topMargin;
+                }
+            } else {
+                switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
+                    case Gravity.CENTER_HORIZONTAL:
+                        childLeft = (parentWidth - width) / 2 +
+                                lp.leftMargin - lp.rightMargin;
+                        break;
+                    case Gravity.RIGHT:
+                        childLeft = parentWidth - width - lp.rightMargin;
+                        break;
+                    case Gravity.LEFT:
+                    default:
+                        childLeft = lp.leftMargin;
+                }
+
+                switch (absoluteGravity & Gravity.VERTICAL_GRAVITY_MASK) {
+                    case Gravity.TOP:
+                        childTop = lp.topMargin;
+                        break;
+                    case Gravity.CENTER_VERTICAL:
+                        childTop = (parentHeight - height) / 2 +
+                                lp.topMargin - lp.bottomMargin;
+                        break;
+                    case Gravity.BOTTOM:
+                        childTop = parentHeight - height - lp.bottomMargin;
+                        break;
+                    default:
+                        childTop = lp.topMargin;
+                }
+            }
+
+            child.layout(childLeft, childTop, childLeft + width, childTop + height);
+        }
     }
 }

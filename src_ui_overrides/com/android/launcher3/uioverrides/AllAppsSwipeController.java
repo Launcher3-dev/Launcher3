@@ -1,5 +1,8 @@
 package com.android.launcher3.uioverrides;
 
+import static com.android.launcher3.LauncherState.ALL_APPS;
+import static com.android.launcher3.LauncherState.NORMAL;
+
 import android.view.MotionEvent;
 
 import com.android.launcher3.AbstractFloatingView;
@@ -7,22 +10,18 @@ import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.LauncherStateManager.AnimationComponents;
 import com.android.launcher3.touch.AbstractStateChangeTouchController;
-import com.android.launcher3.touch.SwipeDetector;
+import com.android.launcher3.touch.SingleAxisSwipeDetector;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
-
-import static com.android.launcher3.LauncherState.ALL_APPS;
-import static com.android.launcher3.LauncherState.NORMAL;
 
 /**
  * TouchController to switch between NORMAL and ALL_APPS state.
- *
  */
 public class AllAppsSwipeController extends AbstractStateChangeTouchController {
 
     private MotionEvent mTouchDownEvent;
 
     public AllAppsSwipeController(Launcher l) {
-        super(l, SwipeDetector.VERTICAL);
+        super(l, SingleAxisSwipeDetector.VERTICAL);
     }
 
     @Override
@@ -58,7 +57,7 @@ public class AllAppsSwipeController extends AbstractStateChangeTouchController {
     }
 
     @Override
-    protected int getLogContainerTypeForNormalState() {
+    protected int getLogContainerTypeForNormalState(MotionEvent ev) {
         return mLauncher.getDragLayer().isEventOverView(mLauncher.getHotseat(), mTouchDownEvent) ?
                 ContainerType.HOTSEAT : ContainerType.WORKSPACE;
     }

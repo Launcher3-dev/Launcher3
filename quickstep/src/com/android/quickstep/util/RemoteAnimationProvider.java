@@ -17,6 +17,7 @@ package com.android.quickstep.util;
 
 import android.animation.AnimatorSet;
 import android.app.ActivityOptions;
+import android.content.Context;
 import android.os.Handler;
 
 import com.android.launcher3.LauncherAnimationRunner;
@@ -28,16 +29,18 @@ import com.android.systemui.shared.system.TransactionCompat;
 @FunctionalInterface
 public interface RemoteAnimationProvider {
 
+    static final int Z_BOOST_BASE = 800570000;
+
     AnimatorSet createWindowAnimation(RemoteAnimationTargetCompat[] targets);
 
-    default ActivityOptions toActivityOptions(Handler handler, long duration) {
+    default ActivityOptions toActivityOptions(Handler handler, long duration, Context context) {
         LauncherAnimationRunner runner = new LauncherAnimationRunner(handler,
                 false /* startAtFrontOfQueue */) {
 
             @Override
             public void onCreateAnimation(RemoteAnimationTargetCompat[] targetCompats,
                     AnimationResult result) {
-                result.setAnimation(createWindowAnimation(targetCompats));
+                result.setAnimation(createWindowAnimation(targetCompats), context);
             }
         };
         return ActivityOptionsCompat.makeRemoteAnimation(
@@ -54,11 +57,14 @@ public interface RemoteAnimationProvider {
     static void prepareTargetsForFirstFrame(RemoteAnimationTargetCompat[] targets,
             TransactionCompat t, int boostModeTargets) {
         for (RemoteAnimationTargetCompat target : targets) {
-            int layer = target.mode == boostModeTargets
-                    ? Integer.MAX_VALUE
-                    : target.prefixOrderIndex;
-            t.setLayer(target.leash, layer);
+            t.setLayer(target.leash, getLayer(target, boostModeTargets));
             t.show(target.leash);
         }
+    }
+
+    static int getLayer(RemoteAnimationTargetCompat target, int boostModeTarget) {
+        return target.mode == boostModeTarget
+                ? Z_BOOST_BASE + target.prefixOrderIndex
+                : target.prefixOrderIndex;
     }
 }

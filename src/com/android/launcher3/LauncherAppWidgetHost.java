@@ -26,16 +26,16 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
-import android.util.Log;
 import android.util.SparseArray;
-import android.view.LayoutInflater;
 import android.widget.Toast;
 
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.widget.DeferredAppWidgetHostView;
 import com.android.launcher3.widget.LauncherAppWidgetHostView;
+import com.android.launcher3.widget.custom.CustomWidgetManager;
 
 import java.util.ArrayList;
+import java.util.function.IntConsumer;
 
 
 /**
@@ -57,9 +57,17 @@ public class LauncherAppWidgetHost extends AppWidgetHost {
     private final Context mContext;
     private int mFlags = FLAG_RESUMED;
 
+    private IntConsumer mAppWidgetRemovedCallback = null;
+
     public LauncherAppWidgetHost(Context context) {
+        this(context, null);
+    }
+
+    public LauncherAppWidgetHost(Context context,
+            IntConsumer appWidgetRemovedCallback) {
         super(context, APPWIDGET_HOST_ID);
         mContext = context;
+        mAppWidgetRemovedCallback = appWidgetRemovedCallback;
     }
 
     @Override
@@ -106,6 +114,10 @@ public class LauncherAppWidgetHost extends AppWidgetHost {
         super.stopListening();
     }
 
+    public boolean isListening() {
+        return (mFlags & FLAG_LISTENING) != 0;
+    }
+
     /**
      * Updates the resumed state of the host.
      * When a host is not resumed, it defers calls to startListening until host is resumed again.
@@ -135,9 +147,6 @@ public class LauncherAppWidgetHost extends AppWidgetHost {
      * @see #setResumed(boolean)
      */
     public void setListenIfResumed(boolean listenIfResumed) {
-        if (!Utilities.ATLEAST_NOUGAT_MR1) {
-            return;
-        }
         if (listenIfResumed == ((mFlags & FLAG_LISTEN_IF_RESUMED) != 0)) {
             return;
         }
@@ -184,10 +193,8 @@ public class LauncherAppWidgetHost extends AppWidgetHost {
             LauncherAppWidgetProviderInfo appWidget) {
         if (appWidget.isCustomWidget()) {
             LauncherAppWidgetHostView lahv = new LauncherAppWidgetHostView(context);
-            LayoutInflater inflater = (LayoutInflater)
-                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            inflater.inflate(appWidget.initialLayout, lahv);
             lahv.setAppWidget(0, appWidget);
+            CustomWidgetManager.INSTANCE.get(context).onViewCreated(lahv);
             return lahv;
         } else if ((mFlags & FLAG_LISTENING) == 0) {
             DeferredAppWidgetHostView view = new DeferredAppWidgetHostView(context);
@@ -211,7 +218,7 @@ public class LauncherAppWidgetHost extends AppWidgetHost {
                 }
                 view.setAppWidget(appWidgetId, appWidget);
                 view.switchToErrorView();
-                return  view;
+                return view;
             }
         }
     }
@@ -227,6 +234,18 @@ public class LauncherAppWidgetHost extends AppWidgetHost {
         // The super method updates the dimensions of the providerInfo. Update the
         // launcher spans accordingly.
         info.initSpans(mContext);
+    }
+
+    /**
+     * Called on an appWidget is removed for a widgetId
+     * @param appWidgetId
+     * TODO: make this override when SDK is updated
+     */
+    public void onAppWidgetRemoved(int appWidgetId) {
+        if (mAppWidgetRemovedCallback == null) {
+            return;
+        }
+        mAppWidgetRemovedCallback.accept(appWidgetId);
     }
 
     @Override

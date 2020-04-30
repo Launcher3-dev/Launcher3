@@ -15,7 +15,8 @@
  */
 package com.android.launcher3.logging;
 
-import android.content.Context;
+import static com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType.NAVBAR;
+
 import android.util.ArrayMap;
 import android.util.SparseArray;
 import android.view.View;
@@ -43,6 +44,7 @@ import java.lang.reflect.Modifier;
 public class LoggerUtils {
     private static final ArrayMap<Class, SparseArray<String>> sNameCache = new ArrayMap<>();
     private static final String UNKNOWN = "UNKNOWN";
+    private static final int DEFAULT_PREDICTED_RANK = -100;
 
     public static String getFieldName(int value, Class c) {
         SparseArray<String> cache;
@@ -75,14 +77,21 @@ public class LoggerUtils {
                 if (action.touch == Action.Touch.SWIPE || action.touch == Action.Touch.FLING) {
                     str += " direction=" + getFieldName(action.dir, Action.Direction.class);
                 }
-                return str;
-            case Action.Type.COMMAND: return getFieldName(action.command, Action.Command.class);
+                break;
+            case Action.Type.COMMAND:
+                str += getFieldName(action.command, Action.Command.class);
+                break;
             default: return getFieldName(action.type, Action.Type.class);
         }
+        if (action.touch == Action.Touch.SWIPE || action.touch == Action.Touch.FLING ||
+                (action.command == Action.Command.BACK && action.dir != Action.Direction.NONE)) {
+            str += " direction=" + getFieldName(action.dir, Action.Direction.class);
+        }
+        return str;
     }
 
     public static String getTargetStr(Target t) {
-        if (t == null){
+        if (t == null) {
             return "";
         }
         String str = "";
@@ -96,14 +105,19 @@ public class LoggerUtils {
             case Target.Type.CONTAINER:
                 str = getFieldName(t.containerType, ContainerType.class);
                 if (t.containerType == ContainerType.WORKSPACE ||
-                        t.containerType == ContainerType.HOTSEAT) {
+                        t.containerType == ContainerType.HOTSEAT ||
+                        t.containerType == NAVBAR) {
                     str += " id=" + t.pageIndex;
                 } else if (t.containerType == ContainerType.FOLDER) {
-                    str += " grid(" + t.gridX + "," + t.gridY+ ")";
+                    str += " grid(" + t.gridX + "," + t.gridY + ")";
                 }
                 break;
             default:
                 str += "UNKNOWN TARGET TYPE";
+        }
+
+        if (t.spanX != 1 || t.spanY != 1) {
+            str += " span(" + t.spanX + "," + t.spanY + ")";
         }
 
         if (t.tipType != TipType.DEFAULT_NONE) {
@@ -124,12 +138,15 @@ public class LoggerUtils {
         if (t.intentHash != 0) {
             typeStr += ", intentHash=" + t.intentHash;
         }
-        if ((t.packageNameHash != 0 || t.componentHash != 0 || t.intentHash != 0) &&
-                t.itemType != ItemType.TASK) {
+        if (t.itemType == ItemType.FOLDER_ICON) {
+            typeStr += ", grid(" + t.gridX + "," + t.gridY + ")";
+        } else if ((t.packageNameHash != 0 || t.componentHash != 0 || t.intentHash != 0)
+                && t.itemType != ItemType.TASK) {
             typeStr += ", predictiveRank=" + t.predictedRank + ", grid(" + t.gridX + "," + t.gridY
-                    + "), span(" + t.spanX + "," + t.spanY
-                    + "), pageIdx=" + t.pageIndex;
-
+                    + "), span(" + t.spanX + "," + t.spanY + "), pageIdx=" + t.pageIndex;
+        }
+        if (t.searchQueryLength != 0) {
+            typeStr += ", searchQueryLength=" + t.searchQueryLength;
         }
         if (t.itemType == ItemType.TASK) {
             typeStr += ", pageIdx=" + t.pageIndex;
@@ -144,24 +161,24 @@ public class LoggerUtils {
     }
 
     public static Target newItemTarget(View v, InstantAppResolver instantAppResolver) {
-        return (v.getTag() instanceof ItemInfo)
+        return (v != null) && (v.getTag() instanceof ItemInfo)
                 ? newItemTarget((ItemInfo) v.getTag(), instantAppResolver)
                 : newTarget(Target.Type.ITEM);
     }
 
     public static Target newItemTarget(ItemInfo info, InstantAppResolver instantAppResolver) {
         Target t = newTarget(Target.Type.ITEM);
-
         switch (info.itemType) {
             case LauncherSettings.Favorites.ITEM_TYPE_APPLICATION:
                 t.itemType = (instantAppResolver != null && info instanceof AppInfo
-                        && instantAppResolver.isInstantApp(((AppInfo) info)) )
+                        && instantAppResolver.isInstantApp(((AppInfo) info)))
                         ? ItemType.WEB_APP
                         : ItemType.APP_ICON;
-                t.predictedRank = -100; // Never assigned
+                t.predictedRank = DEFAULT_PREDICTED_RANK;
                 break;
             case LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT:
                 t.itemType = ItemType.SHORTCUT;
+                t.predictedRank = DEFAULT_PREDICTED_RANK;
                 break;
             case LauncherSettings.Favorites.ITEM_TYPE_FOLDER:
                 t.itemType = ItemType.FOLDER_ICON;
@@ -171,6 +188,7 @@ public class LoggerUtils {
                 break;
             case LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT:
                 t.itemType = ItemType.DEEPSHORTCUT;
+                t.predictedRank = DEFAULT_PREDICTED_RANK;
                 break;
         }
         return t;

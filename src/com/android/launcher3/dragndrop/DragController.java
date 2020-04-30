@@ -16,28 +16,34 @@
 
 package com.android.launcher3.dragndrop;
 
+import static com.android.launcher3.AbstractFloatingView.TYPE_DISCOVERY_BOUNCE;
 import static com.android.launcher3.LauncherAnimUtils.SPRING_LOADED_EXIT_DELAY;
 import static com.android.launcher3.LauncherState.NORMAL;
+import static com.android.launcher3.Utilities.ATLEAST_Q;
 
+import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.DragSource;
 import com.android.launcher3.DropTarget;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
-import com.android.launcher3.ShortcutInfo;
+import com.android.launcher3.WorkspaceItemInfo;
 import com.android.launcher3.accessibility.DragViewStateAnnouncer;
+import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.util.Thunk;
 import com.android.launcher3.util.TouchController;
@@ -50,6 +56,12 @@ import java.util.ArrayList;
  */
 public class DragController implements DragDriver.EventListener, TouchController {
     private static final boolean PROFILE_DRAWING_DURING_DRAG = false;
+
+    /**
+     * When a drag is started from a deep press, you need to drag this much farther than normal to
+     * end a pre-drag. See {@link DragOptions.PreDragCondition#shouldStartDrag(double)}.
+     */
+    private static final int DEEP_PRESS_DISTANCE_FACTOR = 3;
 
     @Thunk Launcher mLauncher;
     private FlingToDeleteHelper mFlingToDeleteHelper;
@@ -86,9 +98,10 @@ public class DragController implements DragDriver.EventListener, TouchController
 
     private DropTarget mLastDropTarget;
 
-    @Thunk int mLastTouch[] = new int[2];
-    @Thunk long mLastTouchUpTime = -1;
-    @Thunk int mDistanceSinceScroll = 0;
+    private final int[] mLastTouch = new int[2];
+    private long mLastTouchUpTime = -1;
+    private int mLastTouchClassification;
+    private int mDistanceSinceScroll = 0;
 
     private int mTmpPoint[] = new int[2];
     private Rect mDragLayerRect = new Rect();
@@ -145,6 +158,7 @@ public class DragController implements DragDriver.EventListener, TouchController
 
         // Hide soft keyboard, if visible
         UiThreadHelper.hideKeyboardAsync(mLauncher, mWindowToken);
+        AbstractFloatingView.closeOpenViews(mLauncher, false, TYPE_DISCOVERY_BOUNCE);
 
         mOptions = options;
         if (mOptions.systemDndStartPoint != null) {
@@ -198,7 +212,7 @@ public class DragController implements DragDriver.EventListener, TouchController
         }
 
         mLauncher.getDragLayer().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-        dragView.show(mMotionDownX, mMotionDownY);
+        dragView.show(mLastTouch[0], mLastTouch[1]);
         mDistanceSinceScroll = 0;
 
         if (!mIsInPreDrag) {
@@ -207,9 +221,7 @@ public class DragController implements DragDriver.EventListener, TouchController
             mOptions.preDragCondition.onPreDragStart(mDragObject);
         }
 
-        mLastTouch[0] = mMotionDownX;
-        mLastTouch[1] = mMotionDownY;
-        handleMoveEvent(mMotionDownX, mMotionDownY);
+        handleMoveEvent(mLastTouch[0], mLastTouch[1]);
         mLauncher.getUserEventDispatcher().resetActionDurationMillis();
         return dragView;
     }
@@ -221,6 +233,12 @@ public class DragController implements DragDriver.EventListener, TouchController
         mIsInPreDrag = false;
         for (DragListener listener : new ArrayList<>(mListeners)) {
             listener.onDragStart(mDragObject, mOptions);
+        }
+    }
+
+    public void addFirstFrameAnimationHelper(ValueAnimator anim) {
+        if (mDragObject != null && mDragObject.dragView != null) {
+            mDragObject.dragView.mFirstFrameAnimatorHelper.addTo(anim);
         }
     }
 
@@ -275,7 +293,7 @@ public class DragController implements DragDriver.EventListener, TouchController
         // Cancel the current drag if we are removing an app that we are dragging
         if (mDragObject != null) {
             ItemInfo dragInfo = mDragObject.dragInfo;
-            if (dragInfo instanceof ShortcutInfo) {
+            if (dragInfo instanceof WorkspaceItemInfo) {
                 ComponentName cn = dragInfo.getTargetComponent();
                 if (cn != null && matcher.matches(dragInfo, cn)) {
                     cancelDrag();
@@ -386,7 +404,7 @@ public class DragController implements DragDriver.EventListener, TouchController
     @Override
     public void onDriverDragEnd(float x, float y) {
         DropTarget dropTarget;
-        Runnable flingAnimation = mFlingToDeleteHelper.getFlingAnimation(mDragObject);
+        Runnable flingAnimation = mFlingToDeleteHelper.getFlingAnimation(mDragObject, mOptions);
         if (flingAnimation != null) {
             dropTarget = mFlingToDeleteHelper.getDropTarget();
         } else {
@@ -418,6 +436,11 @@ public class DragController implements DragDriver.EventListener, TouchController
         final int[] dragLayerPos = getClampedDragLayerPos(ev.getX(), ev.getY());
         final int dragLayerX = dragLayerPos[0];
         final int dragLayerY = dragLayerPos[1];
+        mLastTouch[0] = dragLayerX;
+        mLastTouch[1] = dragLayerY;
+        if (ATLEAST_Q) {
+            mLastTouchClassification = ev.getClassification();
+        }
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
@@ -476,8 +499,12 @@ public class DragController implements DragDriver.EventListener, TouchController
         mLastTouch[0] = x;
         mLastTouch[1] = y;
 
+        int distanceDragged = mDistanceSinceScroll;
+        if (ATLEAST_Q && mLastTouchClassification == MotionEvent.CLASSIFICATION_DEEP_PRESS) {
+            distanceDragged /= DEEP_PRESS_DISTANCE_FACTOR;
+        }
         if (mIsInPreDrag && mOptions.preDragCondition != null
-                && mOptions.preDragCondition.shouldStartDrag(mDistanceSinceScroll)) {
+                && mOptions.preDragCondition.shouldStartDrag(distanceDragged)) {
             callOnDragStart();
         }
     }
@@ -567,6 +594,9 @@ public class DragController implements DragDriver.EventListener, TouchController
     }
 
     private void drop(DropTarget dropTarget, Runnable flingAnimation) {
+        if (TestProtocol.sDebugTracing) {
+            Log.d(TestProtocol.NO_DRAG_TO_WORKSPACE, "DragController.drop");
+        }
         final int[] coordinates = mCoordinatesTemp;
         mDragObject.x = coordinates[0];
         mDragObject.y = coordinates[1];
@@ -668,5 +698,4 @@ public class DragController implements DragDriver.EventListener, TouchController
     public void removeDropTarget(DropTarget target) {
         mDropTargets.remove(target);
     }
-
 }

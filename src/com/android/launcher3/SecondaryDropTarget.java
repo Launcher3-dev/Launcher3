@@ -10,7 +10,6 @@ import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.
 import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.UNINSTALL;
 
 import android.appwidget.AppWidgetHostView;
-import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,6 +30,7 @@ import android.widget.Toast;
 import com.android.launcher3.Launcher.OnResumeCallback;
 import com.android.launcher3.compat.LauncherAppsCompat;
 import com.android.launcher3.dragndrop.DragOptions;
+import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.logging.LoggerUtils;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ControlType;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
@@ -152,7 +152,7 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
         Intent intent = null;
         UserHandle user = null;
         if (item != null &&
-                item.itemType == LauncherSettings.BaseLauncherColumns.ITEM_TYPE_APPLICATION) {
+                item.itemType == LauncherSettings.Favorites.ITEM_TYPE_APPLICATION) {
             intent = item.getIntent();
             user = item.user;
         }
@@ -181,7 +181,7 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
             DeferredOnComplete deferred = (DeferredOnComplete) d.dragSource;
             if (target != null) {
                 deferred.mPackageName = target.getPackageName();
-                mLauncher.setOnResumeCallback(deferred);
+                mLauncher.addOnResumeCallback(deferred);
             } else {
                 deferred.sendFailure();
             }
@@ -242,6 +242,7 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
                     .setData(Uri.fromParts("package", cn.getPackageName(), cn.getClassName()))
                     .putExtra(Intent.EXTRA_USER, info.user);
             mLauncher.startActivity(i);
+            FileLog.d(TAG, "start uninstall activity " + cn.getPackageName());
             return cn;
         } catch (URISyntaxException e) {
             Log.e(TAG, "Failed to parse intent to start uninstall activity for item=" + info);

@@ -15,25 +15,29 @@
  */
 package com.android.launcher3.model;
 
-import android.content.Context;
 import android.content.Intent;
+import android.content.pm.LauncherActivityInfo;
+import android.content.pm.PackageInstaller.SessionInfo;
 import android.os.UserHandle;
 import android.util.LongSparseArray;
 import android.util.Pair;
-import com.android.launcher3.AllAppsList;
+
 import com.android.launcher3.AppInfo;
 import com.android.launcher3.FolderInfo;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherAppWidgetInfo;
-import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherModel.CallbackTask;
-import com.android.launcher3.LauncherModel.Callbacks;
+import com.android.launcher3.model.BgDataModel.Callbacks;
 import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.ShortcutInfo;
-import com.android.launcher3.Utilities;
+import com.android.launcher3.WorkspaceItemInfo;
+import com.android.launcher3.compat.LauncherAppsCompat;
+import com.android.launcher3.compat.PackageInstallerCompat;
 import com.android.launcher3.util.GridOccupancy;
+import com.android.launcher3.util.IntArray;
+import com.android.launcher3.util.PackageManagerHelper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,16 +60,12 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
         if (mItemList.isEmpty()) {
             return;
         }
-        Context context = app.getContext();
 
         final ArrayList<ItemInfo> addedItemsFinal = new ArrayList<>();
-        final ArrayList<Long> addedWorkspaceScreensFinal = new ArrayList<>();
+        final IntArray addedWorkspaceScreensFinal = new IntArray();
 
-        // Get the list of workspace screens.  We need to append to this list and
-        // can not use sBgWorkspaceScreens because loadWorkspace() may not have been
-        // called.
-        ArrayList<Long> workspaceScreens = LauncherModel.loadWorkspaceScreensDb(context);
         synchronized(dataModel) {
+            IntArray workspaceScreens = dataModel.collectWorkspaceScreens();
 
             List<ItemInfo> filteredItems = new ArrayList<>();
             for (Pair<ItemInfo, Object> entry : mItemList) {
@@ -76,11 +76,16 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
                     if (shortcutExists(dataModel, item.getIntent(), item.user)) {
                         continue;
                     }
+
+                    // b/139663018 Short-circuit this logic if the icon is a system app
+                    if (PackageManagerHelper.isSystemApp(app.getContext(), item.getIntent())) {
+                        continue;
+                    }
                 }
 
                 if (item.itemType == LauncherSettings.Favorites.ITEM_TYPE_APPLICATION) {
                     if (item instanceof AppInfo) {
-                        item = ((AppInfo) item).makeShortcut();
+                        item = ((AppInfo) item).makeWorkspaceItem();
                     }
                 }
                 if (item != null) {
@@ -88,35 +93,79 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
                 }
             }
 
+            PackageInstallerCompat packageInstaller =
+                    PackageInstallerCompat.getInstance(app.getContext());
+            LauncherAppsCompat launcherApps = LauncherAppsCompat.getInstance(app.getContext());
+
             for (ItemInfo item : filteredItems) {
                 // Find appropriate space for the item.
-                Pair<Long, int[]> coords = findSpaceForItem(app, dataModel, workspaceScreens,
+                int[] coords = findSpaceForItem(app, dataModel, workspaceScreens,
                         addedWorkspaceScreensFinal, item.spanX, item.spanY);
-                long screenId = coords.first;
-                int[] cordinates = coords.second;
+                int screenId = coords[0];
 
                 ItemInfo itemInfo;
-                if (item instanceof ShortcutInfo || item instanceof FolderInfo ||
+                if (item instanceof WorkspaceItemInfo || item instanceof FolderInfo ||
                         item instanceof LauncherAppWidgetInfo) {
                     itemInfo = item;
                 } else if (item instanceof AppInfo) {
-                    itemInfo = ((AppInfo) item).makeShortcut();
+                    itemInfo = ((AppInfo) item).makeWorkspaceItem();
                 } else {
                     throw new RuntimeException("Unexpected info type");
+                }
+
+                if (item instanceof WorkspaceItemInfo && ((WorkspaceItemInfo) item).isPromise()) {
+                    WorkspaceItemInfo workspaceInfo = (WorkspaceItemInfo) item;
+                    String packageName = item.getTargetComponent() != null
+                            ? item.getTargetComponent().getPackageName() : null;
+                    if (packageName == null) {
+                        continue;
+                    }
+                    SessionInfo sessionInfo = packageInstaller.getActiveSessionInfo(item.user,
+                            packageName);
+                    List<LauncherActivityInfo> activities = launcherApps
+                            .getActivityList(packageName, item.user);
+                    boolean hasActivity = activities != null && !activities.isEmpty();
+
+                    if (sessionInfo == null) {
+                        if (!hasActivity) {
+                            // Session was cancelled, do not add.
+                            continue;
+                        }
+                    } else {
+                        workspaceInfo.setInstallProgress((int) sessionInfo.getProgress());
+                    }
+
+                    if (hasActivity) {
+                        // App was installed while launcher was in the background,
+                        // or app was already installed for another user.
+                        itemInfo = new AppInfo(app.getContext(), activities.get(0), item.user)
+                                .makeWorkspaceItem();
+
+                        if (shortcutExists(dataModel, itemInfo.getIntent(), itemInfo.user)) {
+                            // We need this additional check here since we treat all auto added
+                            // workspace items as promise icons. At this point we now have the
+                            // correct intent to compare against existing workspace icons.
+                            // Icon already exists on the workspace and should not be auto-added.
+                            continue;
+                        }
+
+                        WorkspaceItemInfo wii = (WorkspaceItemInfo) itemInfo;
+                        wii.title = "";
+                        wii.applyFrom(app.getIconCache().getDefaultIcon(item.user));
+                        app.getIconCache().getTitleAndIcon(wii,
+                                ((WorkspaceItemInfo) itemInfo).usingLowResIcon());
+                    }
                 }
 
                 // Add the shortcut to the db
                 getModelWriter().addItemToDatabase(itemInfo,
                         LauncherSettings.Favorites.CONTAINER_DESKTOP, screenId,
-                        cordinates[0], cordinates[1]);
+                        coords[1], coords[2]);
 
-                // Save the ShortcutInfo for binding in the workspace
+                // Save the WorkspaceItemInfo for binding in the workspace
                 addedItemsFinal.add(itemInfo);
             }
         }
-
-        // Update the workspace screens
-        updateScreens(context, workspaceScreens);
 
         if (!addedItemsFinal.isEmpty()) {
             scheduleCallbackTask(new CallbackTask() {
@@ -126,7 +175,7 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
                     final ArrayList<ItemInfo> addNotAnimated = new ArrayList<>();
                     if (!addedItemsFinal.isEmpty()) {
                         ItemInfo info = addedItemsFinal.get(addedItemsFinal.size() - 1);
-                        long lastScreenId = info.screenId;
+                        int lastScreenId = info.screenId;
                         for (ItemInfo i : addedItemsFinal) {
                             if (i.screenId == lastScreenId) {
                                 addAnimated.add(i);
@@ -140,10 +189,6 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
                 }
             });
         }
-    }
-
-    protected void updateScreens(Context context, ArrayList<Long> workspaceScreens) {
-        LauncherModel.updateWorkspaceScreenOrder(context, workspaceScreens);
     }
 
     /**
@@ -173,11 +218,11 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
             intentWithoutPkg = intent.toUri(0);
         }
 
-        boolean isLauncherAppTarget = Utilities.isLauncherAppTarget(intent);
+        boolean isLauncherAppTarget = PackageManagerHelper.isLauncherAppTarget(intent);
         synchronized (dataModel) {
             for (ItemInfo item : dataModel.itemsIdMap) {
-                if (item instanceof ShortcutInfo) {
-                    ShortcutInfo info = (ShortcutInfo) item;
+                if (item instanceof WorkspaceItemInfo) {
+                    WorkspaceItemInfo info = (WorkspaceItemInfo) item;
                     if (item.getIntent() != null && info.user.equals(user)) {
                         Intent copyIntent = new Intent(item.getIntent());
                         copyIntent.setSourceBounds(intent.getSourceBounds());
@@ -189,7 +234,7 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
                         // checking for existing promise icon with same package name
                         if (isLauncherAppTarget
                                 && info.isPromise()
-                                && info.hasStatusFlag(ShortcutInfo.FLAG_AUTOINSTALL_ICON)
+                                && info.hasStatusFlag(WorkspaceItemInfo.FLAG_AUTOINSTALL_ICON)
                                 && info.getTargetComponent() != null
                                 && compPkgName != null
                                 && compPkgName.equals(info.getTargetComponent().getPackageName())) {
@@ -204,13 +249,10 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
 
     /**
      * Find a position on the screen for the given size or adds a new screen.
-     * @return screenId and the coordinates for the item.
+     * @return screenId and the coordinates for the item in an int array of size 3.
      */
-    protected Pair<Long, int[]> findSpaceForItem(
-            LauncherAppState app, BgDataModel dataModel,
-            ArrayList<Long> workspaceScreens,
-            ArrayList<Long> addedWorkspaceScreensFinal,
-            int spanX, int spanY) {
+    protected int[] findSpaceForItem( LauncherAppState app, BgDataModel dataModel,
+            IntArray workspaceScreens, IntArray addedWorkspaceScreensFinal, int spanX, int spanY) {
         LongSparseArray<ArrayList<ItemInfo>> screenItems = new LongSparseArray<>();
 
         // Use sBgItemsIdMap as all the items are already loaded.
@@ -228,7 +270,7 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
         }
 
         // Find appropriate space for the item.
-        long screenId = 0;
+        int screenId = 0;
         int[] cordinates = new int[2];
         boolean found = false;
 
@@ -258,7 +300,7 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
             // Still no position found. Add a new screen to the end.
             screenId = LauncherSettings.Settings.call(app.getContext().getContentResolver(),
                     LauncherSettings.Settings.METHOD_NEW_SCREEN_ID)
-                    .getLong(LauncherSettings.Settings.EXTRA_VALUE);
+                    .getInt(LauncherSettings.Settings.EXTRA_VALUE);
 
             // Save the screen id for binding in the workspace
             workspaceScreens.add(screenId);
@@ -270,7 +312,7 @@ public class AddWorkspaceItemsTask extends BaseModelUpdateTask {
                 throw new RuntimeException("Can't find space to add the item");
             }
         }
-        return Pair.create(screenId, cordinates);
+        return new int[] {screenId, cordinates[0], cordinates[1]};
     }
 
     private boolean findNextAvailableIconSpaceInScreen(

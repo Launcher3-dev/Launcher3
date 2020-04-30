@@ -91,12 +91,13 @@ public class FlingToDeleteHelper {
         return mDropTarget;
     }
 
-    public Runnable getFlingAnimation(DropTarget.DragObject dragObject) {
+    public Runnable getFlingAnimation(DropTarget.DragObject dragObject, DragOptions options) {
         PointF vel = isFlingingToDelete();
-        if (vel == null) {
+        options.isFlingToDelete = vel != null;
+        if (!options.isFlingToDelete) {
             return null;
         }
-        return new FlingAnimation(dragObject, vel, mDropTarget, mLauncher);
+        return new FlingAnimation(dragObject, vel, mDropTarget, mLauncher, options);
     }
 
     /**
@@ -105,6 +106,7 @@ public class FlingToDeleteHelper {
      * @return the vector at which the item was flung, or null if no fling was detected.
      */
     private PointF isFlingingToDelete() {
+        if (mVelocityTracker == null) return null;
         if (mDropTarget == null) {
             mDropTarget = (ButtonDropTarget) mLauncher.findViewById(R.id.delete_target_text);
         }
