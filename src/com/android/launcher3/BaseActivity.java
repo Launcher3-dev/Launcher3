@@ -25,32 +25,51 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.support.annotation.IntDef;
-import android.view.View.AccessibilityDelegate;
+import android.view.ContextThemeWrapper;
+
+import androidx.annotation.IntDef;
 
 import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
+import com.android.launcher3.logging.StatsLogManager;
+import com.android.launcher3.logging.StatsLogUtils;
+import com.android.launcher3.logging.StatsLogUtils.LogStateProvider;
 import com.android.launcher3.logging.UserEventDispatcher;
 import com.android.launcher3.logging.UserEventDispatcher.UserEventDelegate;
 import com.android.launcher3.uioverrides.UiFactory;
 import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.util.SystemUiController;
+import com.android.launcher3.util.ViewCache;
+import com.android.launcher3.views.ActivityContext;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.util.ArrayList;
 
-public abstract class BaseActivity extends Activity implements UserEventDelegate{
+public abstract class BaseActivity extends Activity
+        implements UserEventDelegate, LogStateProvider, ActivityContext {
 
     public static final int INVISIBLE_BY_STATE_HANDLER = 1 << 0;
     public static final int INVISIBLE_BY_APP_TRANSITIONS = 1 << 1;
+    public static final int INVISIBLE_BY_PENDING_FLAGS = 1 << 2;
+
+    // This is not treated as invisibility flag, but adds as a hint for an incomplete transition.
+    // When the wallpaper animation runs, it replaces this flag with a proper invisibility
+    // flag, INVISIBLE_BY_PENDING_FLAGS only for the duration of that animation.
+    public static final int PENDING_INVISIBLE_BY_WALLPAPER_ANIMATION = 1 << 3;
+
+    private static final int INVISIBLE_FLAGS =
+            INVISIBLE_BY_STATE_HANDLER | INVISIBLE_BY_APP_TRANSITIONS | INVISIBLE_BY_PENDING_FLAGS;
+    public static final int STATE_HANDLER_INVISIBILITY_FLAGS =
+            INVISIBLE_BY_STATE_HANDLER | PENDING_INVISIBLE_BY_WALLPAPER_ANIMATION;
     public static final int INVISIBLE_ALL =
-            INVISIBLE_BY_STATE_HANDLER | INVISIBLE_BY_APP_TRANSITIONS;
+            INVISIBLE_FLAGS | PENDING_INVISIBLE_BY_WALLPAPER_ANIMATION;
 
     @Retention(SOURCE)
     @IntDef(
             flag = true,
-            value = {INVISIBLE_BY_STATE_HANDLER, INVISIBLE_BY_APP_TRANSITIONS})
+            value = {INVISIBLE_BY_STATE_HANDLER, INVISIBLE_BY_APP_TRANSITIONS,
+                    INVISIBLE_BY_PENDING_FLAGS, PENDING_INVISIBLE_BY_WALLPAPER_ANIMATION})
     public @interface InvisibilityFlags{}
 
     private final ArrayList<OnDeviceProfileChangeListener> mDPChangeListeners = new ArrayList<>();
@@ -59,6 +78,7 @@ public abstract class BaseActivity extends Activity implements UserEventDelegate
 
     protected DeviceProfile mDeviceProfile;
     protected UserEventDispatcher mUserEventDispatcher;
+    protected StatsLogManager mStatsLogManager;
     protected SystemUiController mSystemUiController;
 
     private static final int ACTIVITY_STATE_STARTED = 1 << 0;
@@ -83,32 +103,33 @@ public abstract class BaseActivity extends Activity implements UserEventDelegate
     // animation
     @InvisibilityFlags private int mForceInvisible;
 
+    private final ViewCache mViewCache = new ViewCache();
+
+    public ViewCache getViewCache() {
+        return mViewCache;
+    }
+
+    @Override
     public DeviceProfile getDeviceProfile() {
         return mDeviceProfile;
     }
 
-    public AccessibilityDelegate getAccessibilityDelegate() {
-        return null;
-    }
+    public int getCurrentState() { return StatsLogUtils.LAUNCHER_STATE_BACKGROUND; }
 
     public void modifyUserEvent(LauncherLogProto.LauncherEvent event) {}
 
+    public final StatsLogManager getStatsLogManager() {
+        if (mStatsLogManager == null) {
+            mStatsLogManager = StatsLogManager.newInstance(this, this);
+        }
+        return mStatsLogManager;
+    }
+
     public final UserEventDispatcher getUserEventDispatcher() {
         if (mUserEventDispatcher == null) {
-            mUserEventDispatcher = UserEventDispatcher.newInstance(this, mDeviceProfile, this);
+            mUserEventDispatcher = UserEventDispatcher.newInstance(this, this);
         }
         return mUserEventDispatcher;
-    }
-
-    public boolean isInMultiWindowModeCompat() {
-        return Utilities.ATLEAST_NOUGAT && isInMultiWindowMode();
-    }
-
-    public static BaseActivity fromContext(Context context) {
-        if (context instanceof BaseActivity) {
-            return (BaseActivity) context;
-        }
-        return ((BaseActivity) ((ContextWrapper) context).getBaseContext());
     }
 
     public SystemUiController getSystemUiController() {
@@ -154,6 +175,10 @@ public abstract class BaseActivity extends Activity implements UserEventDelegate
         mActivityFlags &= ~ACTIVITY_STATE_STARTED & ~ACTIVITY_STATE_USER_ACTIVE;
         mForceInvisible = 0;
         super.onStop();
+
+        // Reset the overridden sysui flags used for the task-swipe launch animation, this is a
+        // catch all for if we do not get resumed (and therefore not paused below)
+        getSystemUiController().updateUiState(UI_STATE_OVERVIEW, 0);
     }
 
     @Override
@@ -208,7 +233,7 @@ public abstract class BaseActivity extends Activity implements UserEventDelegate
     /**
      * Used to set the override visibility state, used only to handle the transition home with the
      * recents animation.
-     * @see LauncherAppTransitionManagerImpl.getWallpaperOpenRunner()
+     * @see QuickstepAppTransitionManagerImpl#getWallpaperOpenRunner()
      */
     public void addForceInvisibleFlag(@InvisibilityFlags int flag) {
         mForceInvisible |= flag;
@@ -218,12 +243,15 @@ public abstract class BaseActivity extends Activity implements UserEventDelegate
         mForceInvisible &= ~flag;
     }
 
-
     /**
      * @return Wether this activity should be considered invisible regardless of actual visibility.
      */
     public boolean isForceInvisible() {
-        return mForceInvisible != 0;
+        return hasSomeInvisibleFlag(INVISIBLE_FLAGS);
+    }
+
+    public boolean hasSomeInvisibleFlag(int mask) {
+        return (mForceInvisible & mask) != 0;
     }
 
     public interface MultiWindowModeChangedListener {
@@ -237,11 +265,22 @@ public abstract class BaseActivity extends Activity implements UserEventDelegate
         }
     }
 
-    protected void dumpMisc(PrintWriter writer) {
-        writer.println(" deviceProfile isTransposed=" + getDeviceProfile().isVerticalBarLayout());
-        writer.println(" orientation=" + getResources().getConfiguration().orientation);
-        writer.println(" mSystemUiController: " + mSystemUiController);
-        writer.println(" mActivityFlags: " + mActivityFlags);
-        writer.println(" mForceInvisible: " + mForceInvisible);
+    protected void dumpMisc(String prefix, PrintWriter writer) {
+        writer.println(prefix + "deviceProfile isTransposed="
+                + getDeviceProfile().isVerticalBarLayout());
+        writer.println(prefix + "orientation=" + getResources().getConfiguration().orientation);
+        writer.println(prefix + "mSystemUiController: " + mSystemUiController);
+        writer.println(prefix + "mActivityFlags: " + mActivityFlags);
+        writer.println(prefix + "mForceInvisible: " + mForceInvisible);
+    }
+
+    public static <T extends BaseActivity> T fromContext(Context context) {
+        if (context instanceof BaseActivity) {
+            return (T) context;
+        } else if (context instanceof ContextThemeWrapper) {
+            return fromContext(((ContextWrapper) context).getBaseContext());
+        } else {
+            throw new IllegalArgumentException("Cannot find BaseActivity in parent tree");
+        }
     }
 }

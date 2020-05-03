@@ -17,6 +17,8 @@
 
 package com.android.launcher3.graphics;
 
+import static com.android.launcher3.graphics.IconShape.DEFAULT_PATH_SIZE;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -55,8 +57,6 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
                 }
             };
 
-    public static final int PATH_SIZE = 100;
-
     private static final float PROGRESS_WIDTH = 7;
     private static final float PROGRESS_GAP = 2;
     private static final int MAX_PAINT_ALPHA = 255;
@@ -77,7 +77,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
     private final Matrix mTmpMatrix = new Matrix();
     private final PathMeasure mPathMeasure = new PathMeasure();
 
-    private final Context mContext;
+    private final ItemInfoWithIcon mItem;
 
     // Path in [0, 100] bounds.
     private final Path mProgressPath;
@@ -106,7 +106,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
      */
     public PreloadIconDrawable(ItemInfoWithIcon info, Path progressPath, Context context) {
         super(info);
-        mContext = context;
+        mItem = info;
         mProgressPath = progressPath;
         mScaledTrackPath = new Path();
         mScaledProgressPath = new Path();
@@ -123,14 +123,14 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
     protected void onBoundsChange(Rect bounds) {
         super.onBoundsChange(bounds);
         mTmpMatrix.setScale(
-                (bounds.width() - 2 * PROGRESS_WIDTH - 2 * PROGRESS_GAP) / PATH_SIZE,
-                (bounds.height() - 2 * PROGRESS_WIDTH - 2 * PROGRESS_GAP) / PATH_SIZE);
+                (bounds.width() - 2 * PROGRESS_WIDTH - 2 * PROGRESS_GAP) / DEFAULT_PATH_SIZE,
+                (bounds.height() - 2 * PROGRESS_WIDTH - 2 * PROGRESS_GAP) / DEFAULT_PATH_SIZE);
         mTmpMatrix.postTranslate(
                 bounds.left + PROGRESS_WIDTH + PROGRESS_GAP,
                 bounds.top + PROGRESS_WIDTH + PROGRESS_GAP);
 
         mProgressPath.transform(mTmpMatrix, mScaledTrackPath);
-        float scale = bounds.width() / PATH_SIZE;
+        float scale = bounds.width() / DEFAULT_PATH_SIZE;
         mProgressPaint.setStrokeWidth(PROGRESS_WIDTH * scale);
 
         mShadowBitmap = getShadowBitmap(bounds.width(), bounds.height(),
@@ -274,7 +274,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
             mTrackAlpha = MAX_PAINT_ALPHA;
             setIsDisabled(true);
         } else if (progress >= 1) {
-            setIsDisabled(false);
+            setIsDisabled(mItem.isDisabled());
             mScaledTrackPath.set(mScaledProgressPath);
             float fraction = (progress - 1) / COMPLETE_ANIM_FRACTION;
 

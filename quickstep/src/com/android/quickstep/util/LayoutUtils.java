@@ -20,11 +20,13 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
-import android.support.annotation.AnyThread;
-import android.support.annotation.IntDef;
+
+import androidx.annotation.AnyThread;
+import androidx.annotation.IntDef;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
+import com.android.quickstep.SysUINavigationMode;
 
 import java.lang.annotation.Retention;
 
@@ -37,12 +39,27 @@ public class LayoutUtils {
     @IntDef({MULTI_WINDOW_STRATEGY_HALF_SCREEN, MULTI_WINDOW_STRATEGY_DEVICE_PROFILE})
     private @interface MultiWindowStrategy {}
 
+    /**
+     * The height for the swipe up motion
+     */
+    public static float getDefaultSwipeHeight(Context context, DeviceProfile dp) {
+        float swipeHeight = dp.allAppsCellHeightPx - dp.allAppsIconTextSizePx;
+        if (SysUINavigationMode.getMode(context) == SysUINavigationMode.Mode.NO_BUTTON) {
+            swipeHeight -= dp.getInsets().bottom;
+        }
+        return swipeHeight;
+    }
+
     public static void calculateLauncherTaskSize(Context context, DeviceProfile dp, Rect outRect) {
         float extraSpace;
         if (dp.isVerticalBarLayout()) {
             extraSpace = 0;
         } else {
-            extraSpace = dp.hotseatBarSizePx + dp.verticalDragHandleSizePx;
+            Resources res = context.getResources();
+
+            extraSpace = getDefaultSwipeHeight(context, dp) + dp.verticalDragHandleSizePx
+                    + res.getDimensionPixelSize(R.dimen.dynamic_grid_hotseat_extra_vertical_size)
+                    + res.getDimensionPixelSize(R.dimen.dynamic_grid_hotseat_bottom_padding);
         }
         calculateTaskSize(context, dp, extraSpace, MULTI_WINDOW_STRATEGY_HALF_SCREEN, outRect);
     }
@@ -108,6 +125,14 @@ public class LayoutUtils {
         float y = insets.top + Math.max(topIconMargin,
                 (launcherVisibleHeight - extraVerticalSpace - outHeight) / 2);
         outRect.set(Math.round(x), Math.round(y),
-                Math.round(x + outWidth), Math.round(y + outHeight));
+                Math.round(x) + Math.round(outWidth), Math.round(y) + Math.round(outHeight));
+    }
+
+    public static int getShelfTrackingDistance(Context context, DeviceProfile dp) {
+        // Track the bottom of the window.
+        int shelfHeight = dp.hotseatBarSizePx + dp.getInsets().bottom;
+        int spaceBetweenShelfAndRecents = (int) context.getResources().getDimension(
+                R.dimen.task_card_vert_space);
+        return shelfHeight + spaceBetweenShelfAndRecents;
     }
 }

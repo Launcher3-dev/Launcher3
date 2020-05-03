@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.states;
 
+import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
+
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
@@ -22,8 +24,7 @@ import android.os.IBinder;
 
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
-import com.android.launcher3.LauncherModel.Callbacks;
-import com.android.launcher3.MainThreadExecutor;
+import com.android.launcher3.model.BgDataModel.Callbacks;
 
 import java.lang.ref.WeakReference;
 
@@ -94,14 +95,12 @@ public abstract class InternalStateHandler extends Binder {
     private static class Scheduler implements Runnable {
 
         private WeakReference<InternalStateHandler> mPendingHandler = new WeakReference<>(null);
-        private MainThreadExecutor mMainThreadExecutor;
 
-        public synchronized void schedule(InternalStateHandler handler) {
-            mPendingHandler = new WeakReference<>(handler);
-            if (mMainThreadExecutor == null) {
-                mMainThreadExecutor = new MainThreadExecutor();
+        public void schedule(InternalStateHandler handler) {
+            synchronized (this) {
+                mPendingHandler = new WeakReference<>(handler);
             }
-            mMainThreadExecutor.execute(this);
+            MAIN_EXECUTOR.execute(this);
         }
 
         @Override
@@ -118,23 +117,25 @@ public abstract class InternalStateHandler extends Binder {
             initIfPending(launcher, launcher.isStarted());
         }
 
-        public synchronized boolean initIfPending(Launcher launcher, boolean alreadyOnHome) {
+        public boolean initIfPending(Launcher launcher, boolean alreadyOnHome) {
             InternalStateHandler pendingHandler = mPendingHandler.get();
             if (pendingHandler != null) {
                 if (!pendingHandler.init(launcher, alreadyOnHome)) {
-                    mPendingHandler.clear();
+                    clearReference(pendingHandler);
                 }
                 return true;
             }
             return false;
         }
 
-        public synchronized boolean clearReference(InternalStateHandler handler) {
-            if (mPendingHandler.get() == handler) {
-                mPendingHandler.clear();
-                return true;
+        public boolean clearReference(InternalStateHandler handler) {
+            synchronized (this) {
+                if (mPendingHandler.get() == handler) {
+                    mPendingHandler.clear();
+                    return true;
+                }
+                return false;
             }
-            return false;
         }
 
         public boolean hasPending() {

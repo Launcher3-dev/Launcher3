@@ -17,6 +17,8 @@ package com.android.launcher3.folder;
 
 import android.graphics.drawable.Drawable;
 
+import com.android.launcher3.WorkspaceItemInfo;
+
 /**
  * Manages the parameters used to draw a Folder preview item.
  */
@@ -25,9 +27,10 @@ class PreviewItemDrawingParams {
     float transY;
     float scale;
     float overlayAlpha;
-    FolderPreviewItemAnim anim;
+    public FolderPreviewItemAnim anim;
     public boolean hidden;
-    Drawable drawable;
+    public Drawable drawable;
+    public WorkspaceItemInfo item;
 
     PreviewItemDrawingParams(float transX, float transY, float scale, float overlayAlpha) {
         this.transX = transX;
@@ -40,8 +43,8 @@ class PreviewItemDrawingParams {
         // We ensure the update will not interfere with an animation on the layout params
         // If the final values differ, we cancel the animation.
         if (anim != null) {
-            if (anim.finalTransX == transX || anim.finalTransY == transY
-                    || anim.finalScale == scale) {
+            if (anim.finalState[1] == transX || anim.finalState[2] == transY
+                    || anim.finalState[0] == scale) {
                 return;
             }
             anim.cancel();

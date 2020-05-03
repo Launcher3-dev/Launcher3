@@ -26,31 +26,34 @@ import static com.android.launcher3.logging.LoggerUtils.newLauncherEvent;
 import static com.android.launcher3.logging.LoggerUtils.newTarget;
 import static com.android.launcher3.logging.LoggerUtils.newTouchAction;
 
+import static java.util.Optional.ofNullable;
+
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.SystemClock;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewParent;
 
-import com.android.launcher3.DeviceProfile;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.DropTarget;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.config.FeatureFlags;
+import com.android.launcher3.logging.StatsLogUtils.LogContainerProvider;
 import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
-import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 import com.android.launcher3.userevent.nano.LauncherLogProto.LauncherEvent;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.InstantAppResolver;
 import com.android.launcher3.util.LogConfig;
+import com.android.launcher3.util.ResourceBasedOverride;
 
 import java.util.Locale;
 import java.util.UUID;
@@ -58,19 +61,17 @@ import java.util.UUID;
 /**
  * Manages the creation of {@link LauncherEvent}.
  * To debug this class, execute following command before side loading a new apk.
- *
+ * <p>
  * $ adb shell setprop log.tag.UserEvent VERBOSE
  */
-public class UserEventDispatcher {
-
-    private final static int MAXIMUM_VIEW_HIERARCHY_LEVEL = 5;
+public class UserEventDispatcher implements ResourceBasedOverride {
 
     private static final String TAG = "UserEvent";
     private static final boolean IS_VERBOSE =
             FeatureFlags.IS_DOGFOOD_BUILD && Utilities.isPropertyEnabled(LogConfig.USEREVENT);
     private static final String UUID_STORAGE = "uuid";
 
-    public static UserEventDispatcher newInstance(Context context, DeviceProfile dp,
+    public static UserEventDispatcher newInstance(Context context,
             UserEventDelegate delegate) {
         SharedPreferences sharedPrefs = Utilities.getDevicePrefs(context);
         String uuidStr = sharedPrefs.getString(UUID_STORAGE, null);
@@ -78,18 +79,16 @@ public class UserEventDispatcher {
             uuidStr = UUID.randomUUID().toString();
             sharedPrefs.edit().putString(UUID_STORAGE, uuidStr).apply();
         }
-        UserEventDispatcher ued = Utilities.getOverrideObject(UserEventDispatcher.class,
+        UserEventDispatcher ued = Overrides.getObject(UserEventDispatcher.class,
                 context.getApplicationContext(), R.string.user_event_dispatcher_class);
         ued.mDelegate = delegate;
-        ued.mIsInLandscapeMode = dp.isVerticalBarLayout();
-        ued.mIsInMultiWindowMode = dp.isMultiWindowMode;
         ued.mUuidStr = uuidStr;
         ued.mInstantAppResolver = InstantAppResolver.newInstance(context);
         return ued;
     }
 
-    public static UserEventDispatcher newInstance(Context context, DeviceProfile dp) {
-        return newInstance(context, dp, null);
+    public static UserEventDispatcher newInstance(Context context) {
+        return newInstance(context, null);
     }
 
     public interface UserEventDelegate {
@@ -97,54 +96,36 @@ public class UserEventDispatcher {
     }
 
     /**
-     * Implemented by containers to provide a container source for a given child.
+     * Fills in the container data on the given event if the given view is not null.
+     *
+     * @return whether container data was added.
      */
-    public interface LogContainerProvider {
-
-        /**
-         * Copies data from the source to the destination proto.
-         *
-         * @param v            source of the data
-         * @param info         source of the data
-         * @param target       dest of the data
-         * @param targetParent dest of the data
-         */
-        void fillInLogContainerData(View v, ItemInfo info, Target target, Target targetParent);
+    public boolean fillInLogContainerData(LauncherLogProto.LauncherEvent event, @Nullable View v) {
+        // Fill in grid(x,y), pageIndex of the child and container type of the parent
+        LogContainerProvider provider = StatsLogUtils.getLaunchProviderRecursive(v);
+        if (v == null || !(v.getTag() instanceof ItemInfo) || provider == null) {
+            return false;
+        }
+        final ItemInfo itemInfo = (ItemInfo) v.getTag();
+        final Target target = event.srcTarget[0];
+        final Target targetParent = event.srcTarget[1];
+        onFillInLogContainerData(itemInfo, target, targetParent);
+        provider.fillInLogContainerData(v, itemInfo, target, targetParent);
+        return true;
     }
 
-    /**
-     * Recursively finds the parent of the given child which implements IconLogInfoProvider
-     */
-    public static LogContainerProvider getLaunchProviderRecursive(@Nullable View v) {
-        ViewParent parent;
-        if (v != null) {
-            parent = v.getParent();
-        } else {
-            return null;
-        }
-
-        // Optimization to only check up to 5 parents.
-        int count = MAXIMUM_VIEW_HIERARCHY_LEVEL;
-        while (parent != null && count-- > 0) {
-            if (parent instanceof LogContainerProvider) {
-                return (LogContainerProvider) parent;
-            } else {
-                parent = parent.getParent();
-            }
-        }
-        return null;
-    }
+    protected void onFillInLogContainerData(
+            @NonNull ItemInfo itemInfo, @NonNull Target target, @NonNull Target targetParent) { }
 
     private boolean mSessionStarted;
     private long mElapsedContainerMillis;
     private long mElapsedSessionMillis;
     private long mActionDurationMillis;
-    private boolean mIsInMultiWindowMode;
-    private boolean mIsInLandscapeMode;
     private String mUuidStr;
     protected InstantAppResolver mInstantAppResolver;
     private boolean mAppOrTaskLaunch;
     private UserEventDelegate mDelegate;
+    private boolean mPreviousHomeGesture;
 
     //                      APP_ICON    SHORTCUT    WIDGET
     // --------------------------------------------------------------
@@ -153,21 +134,7 @@ public class UserEventDispatcher {
     // intentHash                       required
     // --------------------------------------------------------------
 
-    /**
-     * Fills in the container data on the given event if the given view is not null.
-     * @return whether container data was added.
-     */
-    protected boolean fillInLogContainerData(LauncherEvent event, @Nullable View v) {
-        // Fill in grid(x,y), pageIndex of the child and container type of the parent
-        LogContainerProvider provider = getLaunchProviderRecursive(v);
-        if (v == null || !(v.getTag() instanceof ItemInfo) || provider == null) {
-            return false;
-        }
-        ItemInfo itemInfo = (ItemInfo) v.getTag();
-        provider.fillInLogContainerData(v, itemInfo, event.srcTarget[0], event.srcTarget[1]);
-        return true;
-    }
-
+    @Deprecated
     public void logAppLaunch(View v, Intent intent) {
         LauncherEvent event = newLauncherEvent(newTouchAction(Action.Touch.TAP),
                 newItemTarget(v, mInstantAppResolver), newTarget(Target.Type.CONTAINER));
@@ -182,8 +149,13 @@ public class UserEventDispatcher {
         mAppOrTaskLaunch = true;
     }
 
-    public void logActionTip(int actionType, int viewType) { }
+    /**
+     * Dummy method.
+     */
+    public void logActionTip(int actionType, int viewType) {
+    }
 
+    @Deprecated
     public void logTaskLaunchOrDismiss(int action, int direction, int taskIndex,
             ComponentKey componentKey) {
         LauncherEvent event = newLauncherEvent(newTouchAction(action), // TAP or SWIPE or FLING
@@ -226,7 +198,15 @@ public class UserEventDispatcher {
 
     public void logActionCommand(int command, int srcContainerType, int dstContainerType) {
         logActionCommand(command, newContainerTarget(srcContainerType),
-                dstContainerType >=0 ? newContainerTarget(dstContainerType) : null);
+                dstContainerType >= 0 ? newContainerTarget(dstContainerType) : null);
+    }
+
+    public void logActionCommand(int command, int srcContainerType, int dstContainerType,
+            int pageIndex) {
+        Target srcTarget = newContainerTarget(srcContainerType);
+        srcTarget.pageIndex = pageIndex;
+        logActionCommand(command, srcTarget,
+                dstContainerType >= 0 ? newContainerTarget(dstContainerType) : null);
     }
 
     public void logActionCommand(int command, Target srcTarget, Target dstTarget) {
@@ -275,7 +255,7 @@ public class UserEventDispatcher {
     }
 
     public void logActionOnControl(int action, int controlType, int parentContainer,
-                                   int grandParentContainer){
+            int grandParentContainer) {
         LauncherEvent event = newLauncherEvent(newTouchAction(action),
                 newControlTarget(controlType),
                 newContainerTarget(parentContainer),
@@ -284,11 +264,11 @@ public class UserEventDispatcher {
     }
 
     public void logActionOnControl(int action, int controlType, @Nullable View controlInContainer,
-                                   int parentContainerType) {
+            int parentContainerType) {
         final LauncherEvent event = (controlInContainer == null && parentContainerType < 0)
                 ? newLauncherEvent(newTouchAction(action), newTarget(Target.Type.CONTROL))
                 : newLauncherEvent(newTouchAction(action), newTarget(Target.Type.CONTROL),
-                        newTarget(Target.Type.CONTAINER));
+                newTarget(Target.Type.CONTAINER));
         event.srcTarget[0].controlType = controlType;
         if (controlInContainer != null) {
             fillInLogContainerData(event, controlInContainer);
@@ -335,9 +315,9 @@ public class UserEventDispatcher {
      * (1) WORKSPACE: if the launcher is the foreground activity
      * (2) APP: if another app was the foreground activity
      */
-    public void logStateChangeAction(int action, int dir, int srcChildTargetType,
-                                     int srcParentContainerType, int dstContainerType,
-                                     int pageIndex) {
+    public void logStateChangeAction(int action, int dir, int downX, int downY,
+            int srcChildTargetType, int srcParentContainerType, int dstContainerType,
+            int pageIndex) {
         LauncherEvent event;
         if (srcChildTargetType == LauncherLogProto.ItemType.TASK) {
             event = newLauncherEvent(newTouchAction(action),
@@ -353,21 +333,39 @@ public class UserEventDispatcher {
         event.action.dir = dir;
         event.action.isStateChange = true;
         event.srcTarget[0].pageIndex = pageIndex;
+        event.srcTarget[0].spanX = downX;
+        event.srcTarget[0].spanY = downY;
         dispatchUserEvent(event, null);
         resetElapsedContainerMillis("state changed");
     }
 
     public void logActionOnItem(int action, int dir, int itemType) {
+        logActionOnItem(action, dir, itemType, null, null);
+    }
+
+    /**
+     * Creates new {@link LauncherEvent} of ITEM target type with input arguments and dispatches it.
+     *
+     * @param touchAction ENUM value of {@link LauncherLogProto.Action.Touch} Action
+     * @param dir         ENUM value of {@link LauncherLogProto.Action.Direction} Action
+     * @param itemType    ENUM value of {@link LauncherLogProto.ItemType}
+     * @param gridX       Nullable X coordinate of item's position on the workspace grid
+     * @param gridY       Nullable Y coordinate of item's position on the workspace grid
+     */
+    public void logActionOnItem(int touchAction, int dir, int itemType,
+            @Nullable Integer gridX, @Nullable Integer gridY) {
         Target itemTarget = newTarget(Target.Type.ITEM);
         itemTarget.itemType = itemType;
-        LauncherEvent event = newLauncherEvent(newTouchAction(action), itemTarget);
+        ofNullable(gridX).ifPresent(value -> itemTarget.gridX = value);
+        ofNullable(gridY).ifPresent(value -> itemTarget.gridY = value);
+        LauncherEvent event = newLauncherEvent(newTouchAction(touchAction), itemTarget);
         event.action.dir = dir;
         dispatchUserEvent(event, null);
     }
 
     public void logDeepShortcutsOpen(View icon) {
-        LogContainerProvider provider = getLaunchProviderRecursive(icon);
-        if (icon == null || !(icon.getTag() instanceof ItemInfo)) {
+        LogContainerProvider provider = StatsLogUtils.getLaunchProviderRecursive(icon);
+        if (icon == null || !(icon.getTag() instanceof ItemInfo || provider == null)) {
             return;
         }
         ItemInfo info = (ItemInfo) icon.getTag();
@@ -379,20 +377,11 @@ public class UserEventDispatcher {
         resetElapsedContainerMillis("deep shortcut open");
     }
 
-    /* Currently we are only interested in whether this event happens or not and don't
-    * care about which screen moves to where. */
-    public void logOverviewReorder() {
-        LauncherEvent event = newLauncherEvent(newTouchAction(Action.Touch.DRAGDROP),
-                newContainerTarget(ContainerType.WORKSPACE),
-                newContainerTarget(ContainerType.OVERVIEW));
-        dispatchUserEvent(event, null);
-    }
-
     public void logDragNDrop(DropTarget.DragObject dragObj, View dropTargetAsView) {
         LauncherEvent event = newLauncherEvent(newTouchAction(Action.Touch.DRAGDROP),
                 newItemTarget(dragObj.originalDragInfo, mInstantAppResolver),
                 newTarget(Target.Type.CONTAINER));
-        event.destTarget = new Target[] {
+        event.destTarget = new Target[]{
                 newItemTarget(dragObj.originalDragInfo, mInstantAppResolver),
                 newDropTarget(dropTargetAsView)
         };
@@ -409,8 +398,26 @@ public class UserEventDispatcher {
         dispatchUserEvent(event, null);
     }
 
+    public void logActionBack(boolean completed, int downX, int downY, boolean isButton,
+            boolean gestureSwipeLeft, int containerType) {
+        int actionTouch = isButton ? Action.Touch.TAP : Action.Touch.SWIPE;
+        Action action = newCommandAction(actionTouch);
+        action.command = Action.Command.BACK;
+        action.dir = isButton ? Action.Direction.NONE :
+                gestureSwipeLeft ? Action.Direction.LEFT : Action.Direction.RIGHT;
+        Target target = newControlTarget(isButton ? LauncherLogProto.ControlType.BACK_BUTTON :
+                LauncherLogProto.ControlType.BACK_GESTURE);
+        target.spanX = downX;
+        target.spanY = downY;
+        target.cardinality = completed ? 1 : 0;
+        LauncherEvent event = newLauncherEvent(action, target, newContainerTarget(containerType));
+
+        dispatchUserEvent(event, null);
+    }
+
     /**
      * Currently logs following containers: workspace, allapps, widget tray.
+     *
      * @param reason
      */
     public final void resetElapsedContainerMillis(String reason) {
@@ -428,20 +435,35 @@ public class UserEventDispatcher {
         mElapsedContainerMillis = SystemClock.uptimeMillis();
     }
 
+    public final void setPreviousHomeGesture(boolean homeGesture) {
+        mPreviousHomeGesture = homeGesture;
+    }
+
+    public final boolean isPreviousHomeGesture() {
+        return mPreviousHomeGesture;
+    }
+
     public final void resetActionDurationMillis() {
         mActionDurationMillis = SystemClock.uptimeMillis();
     }
 
     public void dispatchUserEvent(LauncherEvent ev, Intent intent) {
+        if (mPreviousHomeGesture) {
+            mPreviousHomeGesture = false;
+        }
         mAppOrTaskLaunch = false;
-        ev.isInLandscapeMode = mIsInLandscapeMode;
-        ev.isInMultiWindowMode = mIsInMultiWindowMode;
         ev.elapsedContainerMillis = SystemClock.uptimeMillis() - mElapsedContainerMillis;
         ev.elapsedSessionMillis = SystemClock.uptimeMillis() - mElapsedSessionMillis;
-
         if (!IS_VERBOSE) {
             return;
         }
+        Log.d(TAG, generateLog(ev));
+    }
+
+    /**
+     * Returns a human-readable log for given user event.
+     */
+    public static String generateLog(LauncherEvent ev) {
         String log = "\n-----------------------------------------------------"
                 + "\naction:" + LoggerUtils.getActionStr(ev.action);
         if (ev.srcTarget != null && ev.srcTarget.length > 0) {
@@ -455,10 +477,8 @@ public class UserEventDispatcher {
                 ev.elapsedContainerMillis,
                 ev.elapsedSessionMillis,
                 ev.actionDurationMillis);
-        log += "\n isInLandscapeMode " + ev.isInLandscapeMode;
-        log += "\n isInMultiWindowMode " + ev.isInMultiWindowMode;
         log += "\n\n";
-        Log.d(TAG, log);
+        return log;
     }
 
     private static String getTargetsStr(Target[] targets) {

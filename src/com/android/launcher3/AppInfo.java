@@ -26,14 +26,21 @@ import android.os.Process;
 import android.os.UserHandle;
 
 import com.android.launcher3.compat.UserManagerCompat;
-import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.PackageManagerHelper;
+
+import java.util.Comparator;
 
 /**
  * Represents an app in AllAppsView.
  */
 public class AppInfo extends ItemInfoWithIcon {
+
+    public static AppInfo[] EMPTY_ARRAY = new AppInfo[0];
+    public static Comparator<AppInfo> COMPONENT_KEY_COMPARATOR = (a, b) -> {
+        int uc = a.user.hashCode() - b.user.hashCode();
+        return uc != 0 ? uc : a.componentName.compareTo(b.componentName);
+    };
 
     /**
      * The intent used to start the application.
@@ -41,6 +48,9 @@ public class AppInfo extends ItemInfoWithIcon {
     public Intent intent;
 
     public ComponentName componentName;
+
+    // Section name used for indexing.
+    public String sectionName = "";
 
     public AppInfo() {
         itemType = LauncherSettings.Favorites.ITEM_TYPE_APPLICATION;
@@ -75,6 +85,8 @@ public class AppInfo extends ItemInfoWithIcon {
         componentName = info.componentName;
         title = Utilities.trim(info.title);
         intent = new Intent(info.intent);
+        user = info.user;
+        runtimeStatusFlags = info.runtimeStatusFlags;
     }
 
     @Override
@@ -82,8 +94,8 @@ public class AppInfo extends ItemInfoWithIcon {
         return super.dumpProperties() + " componentName=" + componentName;
     }
 
-    public ShortcutInfo makeShortcut() {
-        return new ShortcutInfo(this);
+    public WorkspaceItemInfo makeWorkspaceItem() {
+        return new WorkspaceItemInfo(this);
     }
 
     public ComponentKey toComponentKey() {
@@ -116,5 +128,10 @@ public class AppInfo extends ItemInfoWithIcon {
             // The icon for a non-primary user is badged, hence it's not exactly an adaptive icon.
             info.runtimeStatusFlags |= FLAG_ADAPTIVE_ICON;
         }
+    }
+
+    @Override
+    public AppInfo clone() {
+        return new AppInfo(this);
     }
 }

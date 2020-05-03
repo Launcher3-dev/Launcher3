@@ -20,6 +20,7 @@ import static com.android.launcher3.logging.LoggerUtils.newCommandAction;
 import static com.android.launcher3.logging.LoggerUtils.newContainerTarget;
 import static com.android.launcher3.logging.LoggerUtils.newItemTarget;
 import static com.android.launcher3.logging.LoggerUtils.newLauncherEvent;
+import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 
 import android.annotation.TargetApi;
 import android.app.ActivityOptions;
@@ -32,6 +33,7 @@ import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -50,14 +52,16 @@ import com.android.launcher3.R;
 import com.android.launcher3.compat.AppWidgetManagerCompat;
 import com.android.launcher3.compat.LauncherAppsCompatVO;
 import com.android.launcher3.model.WidgetItem;
-import com.android.launcher3.shortcuts.ShortcutInfoCompat;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 import com.android.launcher3.util.InstantAppResolver;
+import com.android.launcher3.views.BaseDragLayer;
 import com.android.launcher3.widget.PendingAddShortcutInfo;
 import com.android.launcher3.widget.PendingAddWidgetInfo;
 import com.android.launcher3.widget.WidgetHostViewLoader;
 import com.android.launcher3.widget.WidgetImageView;
+
+import java.util.function.Supplier;
 
 @TargetApi(Build.VERSION_CODES.O)
 public class AddItemActivity extends BaseActivity implements OnLongClickListener, OnTouchListener {
@@ -78,7 +82,6 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
     // Widget request specific options.
     private LauncherAppWidgetHost mAppWidgetHost;
     private AppWidgetManagerCompat mAppWidgetManager;
-    private PendingAddWidgetInfo mPendingWidgetInfo;
     private int mPendingBindWidgetId;
     private Bundle mWidgetOptions;
 
@@ -149,16 +152,6 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
         PinItemDragListener listener = new PinItemDragListener(mRequest, bounds,
                 img.getBitmap().getWidth(), img.getWidth());
 
-        Intent homeIntent = listener.addToIntent(
-                new Intent(Intent.ACTION_MAIN)
-                        .addCategory(Intent.CATEGORY_HOME)
-                        .setPackage(getPackageName())
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-
-        listener.initWhenReady();
-        startActivity(homeIntent,
-                ActivityOptions.makeCustomAnimation(this, 0, android.R.anim.fade_out).toBundle());
-        mFinishOnPause = true;
 
         // Start a system drag and drop. We use a transparent bitmap as preview for system drag
         // as the preview is handled internally by launcher.
@@ -175,6 +168,18 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
                 outShadowTouchPoint.set(SHADOW_SIZE / 2, SHADOW_SIZE / 2);
             }
         }, null, View.DRAG_FLAG_GLOBAL);
+
+
+        Intent homeIntent = listener.addToIntent(
+                new Intent(Intent.ACTION_MAIN)
+                        .addCategory(Intent.CATEGORY_HOME)
+                        .setPackage(getPackageName())
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+
+        listener.initWhenReady();
+        startActivity(homeIntent,
+                ActivityOptions.makeCustomAnimation(this, 0, android.R.anim.fade_out).toBundle());
+        mFinishOnPause = true;
         return false;
     }
 
@@ -189,10 +194,9 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
     private void setupShortcut() {
         PinShortcutRequestActivityInfo shortcutInfo =
                 new PinShortcutRequestActivityInfo(mRequest, this);
-        WidgetItem item = new WidgetItem(shortcutInfo);
         mWidgetCell.getWidgetView().setTag(new PendingAddShortcutInfo(shortcutInfo));
-        mWidgetCell.applyFromCellItem(item, mApp.getWidgetCache());
-        mWidgetCell.ensurePreview();
+        applyWidgetItemAsync(
+                () -> new WidgetItem(shortcutInfo, mApp.getIconCache(), getPackageManager()));
     }
 
     private boolean setupWidget() {
@@ -207,16 +211,30 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
         mAppWidgetManager = AppWidgetManagerCompat.getInstance(this);
         mAppWidgetHost = new LauncherAppWidgetHost(this);
 
-        mPendingWidgetInfo = new PendingAddWidgetInfo(widgetInfo);
-        mPendingWidgetInfo.spanX = Math.min(mIdp.numColumns, widgetInfo.spanX);
-        mPendingWidgetInfo.spanY = Math.min(mIdp.numRows, widgetInfo.spanY);
-        mWidgetOptions = WidgetHostViewLoader.getDefaultOptionsForWidget(this, mPendingWidgetInfo);
+        PendingAddWidgetInfo pendingInfo = new PendingAddWidgetInfo(widgetInfo);
+        pendingInfo.spanX = Math.min(mIdp.numColumns, widgetInfo.spanX);
+        pendingInfo.spanY = Math.min(mIdp.numRows, widgetInfo.spanY);
+        mWidgetOptions = WidgetHostViewLoader.getDefaultOptionsForWidget(this, pendingInfo);
+        mWidgetCell.getWidgetView().setTag(pendingInfo);
 
-        WidgetItem item = new WidgetItem(widgetInfo, getPackageManager(), mIdp);
-        mWidgetCell.getWidgetView().setTag(mPendingWidgetInfo);
-        mWidgetCell.applyFromCellItem(item, mApp.getWidgetCache());
-        mWidgetCell.ensurePreview();
+        applyWidgetItemAsync(() -> new WidgetItem(widgetInfo, mIdp, mApp.getIconCache()));
         return true;
+    }
+
+    private void applyWidgetItemAsync(final Supplier<WidgetItem> itemProvider) {
+        new AsyncTask<Void, Void, WidgetItem>() {
+            @Override
+            protected WidgetItem doInBackground(Void... voids) {
+                return itemProvider.get();
+            }
+
+            @Override
+            protected void onPostExecute(WidgetItem item) {
+                mWidgetCell.applyFromCellItem(item, mApp.getWidgetCache());
+                mWidgetCell.ensurePreview();
+            }
+        }.executeOnExecutor(MODEL_EXECUTOR);
+        // TODO: Create a worker looper executor and reuse that everywhere.
     }
 
     /**
@@ -232,8 +250,7 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
      */
     public void onPlaceAutomaticallyClick(View v) {
         if (mRequest.getRequestType() == PinItemRequest.REQUEST_TYPE_SHORTCUT) {
-            InstallShortcutReceiver.queueShortcut(
-                    new ShortcutInfoCompat(mRequest.getShortcutInfo()), this);
+            InstallShortcutReceiver.queueShortcut(mRequest.getShortcutInfo(), this);
             logCommand(Action.Command.CONFIRM);
             mRequest.accept();
             finish();
@@ -296,6 +313,11 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
         super.onRestoreInstanceState(savedInstanceState);
         mPendingBindWidgetId = savedInstanceState
                 .getInt(STATE_EXTRA_WIDGET_ID, mPendingBindWidgetId);
+    }
+
+    @Override
+    public BaseDragLayer getDragLayer() {
+        throw new UnsupportedOperationException();
     }
 
     private void logCommand(int command) {
