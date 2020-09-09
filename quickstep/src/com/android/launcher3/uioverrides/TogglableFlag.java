@@ -16,10 +16,13 @@
 
 package com.android.launcher3.uioverrides;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.os.Build;
 import android.provider.DeviceConfig;
 import com.android.launcher3.config.BaseFlags.BaseTogglableFlag;
 
+@TargetApi(Build.VERSION_CODES.P)
 public class TogglableFlag extends BaseTogglableFlag {
     public static final String NAMESPACE_LAUNCHER = "launcher";
     public static final String TAG = "TogglableFlag";
