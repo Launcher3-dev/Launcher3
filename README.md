@@ -1,8 +1,7 @@
 # Launcher3-mx
 
-## 更新：20200430
+## 更新：20200909
 * 基于 Android P Launcher-master源码
-* 源码最新提交日期：20200305
 
 ## 主要分支
 
@@ -10,7 +9,7 @@
 * Launcher3-7.0
 * Launcher3-8.0.0_r24
 * Launcher3-9.0
-* Launcher3-master-20200305
+* Launcher3-10.0 (android-10.0.0_r46)
 * master
 
 ## 教程
