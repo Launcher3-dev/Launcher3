@@ -2,10 +2,11 @@ package com.android.launcher3.allapps;
 
 import static com.android.launcher3.LauncherState.ALL_APPS_CONTENT;
 import static com.android.launcher3.LauncherState.ALL_APPS_HEADER_EXTRA;
+import static com.android.launcher3.LauncherState.BACKGROUND_APP;
+import static com.android.launcher3.LauncherState.HOTSEAT_ICONS;
 import static com.android.launcher3.LauncherState.OVERVIEW;
 import static com.android.launcher3.LauncherState.VERTICAL_SWIPE_INDICATOR;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_ALL_APPS_FADE;
-import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_ALL_APPS_HEADER_FADE;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_SCALE;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_VERTICAL_PROGRESS;
 import static com.android.launcher3.anim.Interpolators.FAST_OUT_SLOW_IN;
@@ -16,6 +17,7 @@ import static com.android.launcher3.util.SystemUiController.UI_STATE_ALL_APPS;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.util.FloatProperty;
+import android.util.Log;
 import android.view.animation.Interpolator;
 
 import com.android.launcher3.DeviceProfile;
@@ -29,6 +31,7 @@ import com.android.launcher3.anim.AnimationSuccessListener;
 import com.android.launcher3.anim.AnimatorSetBuilder;
 import com.android.launcher3.anim.PropertySetter;
 import com.android.launcher3.anim.SpringObjectAnimator;
+import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ScrimView;
 
@@ -132,6 +135,15 @@ public class AllAppsTransitionController implements StateHandler, OnDeviceProfil
         } else {
             mLauncher.getSystemUiController().updateUiState(UI_STATE_ALL_APPS, 0);
         }
+
+        if ((OVERVIEW.getVisibleElements(mLauncher) & HOTSEAT_ICONS) != 0) {
+            // Translate hotseat with the shelf until reaching overview.
+            float overviewProgress = OVERVIEW.getVerticalProgress(mLauncher);
+            if (progress >= overviewProgress || mLauncher.isInState(BACKGROUND_APP)) {
+                float hotseatShift = (progress - overviewProgress) * mShiftRange;
+                mLauncher.getHotseat().setTranslationY(hotseatShift);
+            }
+        }
     }
 
     public float getProgress() {
@@ -156,6 +168,10 @@ public class AllAppsTransitionController implements StateHandler, OnDeviceProfil
     @Override
     public void setStateWithAnimation(LauncherState toState,
             AnimatorSetBuilder builder, AnimationConfig config) {
+        if (TestProtocol.sDebugTracing) {
+            Log.d(TestProtocol.NO_ALLAPPS_EVENT_TAG,
+                    "setStateWithAnimation " + toState.getClass().getSimpleName());
+        }
         float targetProgress = toState.getVerticalProgress(mLauncher);
         if (Float.compare(mProgress, targetProgress) == 0) {
             setAlphas(toState, config, builder);
@@ -196,14 +212,13 @@ public class AllAppsTransitionController implements StateHandler, OnDeviceProfil
         PropertySetter setter = config == null ? NO_ANIM_PROPERTY_SETTER
                 : config.getPropertySetter(builder);
         boolean hasHeaderExtra = (visibleElements & ALL_APPS_HEADER_EXTRA) != 0;
-        boolean hasAllAppsContent = (visibleElements & ALL_APPS_CONTENT) != 0;
+        boolean hasContent = (visibleElements & ALL_APPS_CONTENT) != 0;
 
         Interpolator allAppsFade = builder.getInterpolator(ANIM_ALL_APPS_FADE, LINEAR);
-        Interpolator headerFade = builder.getInterpolator(ANIM_ALL_APPS_HEADER_FADE, allAppsFade);
-        setter.setViewAlpha(mAppsView.getContentView(), hasAllAppsContent ? 1 : 0, allAppsFade);
-        setter.setViewAlpha(mAppsView.getScrollBar(), hasAllAppsContent ? 1 : 0, allAppsFade);
-        mAppsView.getFloatingHeaderView().setContentVisibility(hasHeaderExtra, hasAllAppsContent,
-                setter, headerFade, allAppsFade);
+        setter.setViewAlpha(mAppsView.getContentView(), hasContent ? 1 : 0, allAppsFade);
+        setter.setViewAlpha(mAppsView.getScrollBar(), hasContent ? 1 : 0, allAppsFade);
+        mAppsView.getFloatingHeaderView().setContentVisibility(hasHeaderExtra, hasContent, setter,
+                allAppsFade);
         mAppsView.getSearchUiManager().setContentVisibility(visibleElements, setter, allAppsFade);
 
         setter.setInt(mScrimView, ScrimView.DRAG_HANDLE_ALPHA,

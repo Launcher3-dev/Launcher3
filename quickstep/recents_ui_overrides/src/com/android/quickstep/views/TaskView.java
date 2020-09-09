@@ -28,6 +28,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
+import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.res.Resources;
@@ -191,6 +192,9 @@ public class TaskView extends FrameLayout implements PageCallbacks, Reusable {
         super(context, attrs, defStyleAttr);
         mActivity = BaseDraggingActivity.fromContext(context);
         setOnClickListener((view) -> {
+            if (com.android.launcher3.testing.TestProtocol.sDebugTracing) {
+                android.util.Log.d(TestProtocol.NO_START_TASK_TAG, "TaskView onClick");
+            }
             if (getTask() == null) {
                 return;
             }
@@ -287,6 +291,9 @@ public class TaskView extends FrameLayout implements PageCallbacks, Reusable {
 
     public void launchTask(boolean animate, boolean freezeTaskList, Consumer<Boolean> resultCallback,
             Handler resultCallbackHandler) {
+        if (com.android.launcher3.testing.TestProtocol.sDebugTracing) {
+            android.util.Log.d(TestProtocol.NO_START_TASK_TAG, "launchTask");
+        }
         if (ENABLE_QUICKSTEP_LIVE_TILE.get()) {
             if (isRunningTask()) {
                 getRecentsView().finishRecentsAnimation(false /* toRecents */,
@@ -301,6 +308,9 @@ public class TaskView extends FrameLayout implements PageCallbacks, Reusable {
 
     private void launchTaskInternal(boolean animate, boolean freezeTaskList,
             Consumer<Boolean> resultCallback, Handler resultCallbackHandler) {
+        if (com.android.launcher3.testing.TestProtocol.sDebugTracing) {
+            android.util.Log.d(TestProtocol.NO_START_TASK_TAG, "launchTaskInternal");
+        }
         if (mTask != null) {
             final ActivityOptions opts;
             if (animate) {
@@ -817,11 +827,8 @@ public class TaskView extends FrameLayout implements PageCallbacks, Reusable {
                     / (getWidth() + currentInsetsLeft + currentInsetsRight));
         }
 
-        if (!getRecentsView().isTaskIconScaledDown(this)) {
-            // Some of the items in here are dependent on the current fullscreen params, but don't
-            // update them if the icon is supposed to be scaled down.
-            setIconScaleAndDim(progress, true /* invert */);
-        }
+        // Some of the items in here are dependent on the current fullscreen params
+        setIconScaleAndDim(progress, true /* invert */);
 
         thumbnail.setFullscreenParams(mCurrentFullscreenParams);
         mOutlineProvider.setFullscreenParams(mCurrentFullscreenParams);

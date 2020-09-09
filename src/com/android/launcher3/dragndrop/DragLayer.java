@@ -48,13 +48,12 @@ import com.android.launcher3.CellLayout;
 import com.android.launcher3.DropTargetBar;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
+import com.android.launcher3.graphics.RotationMode;
 import com.android.launcher3.ShortcutAndWidgetContainer;
 import com.android.launcher3.Workspace;
 import com.android.launcher3.anim.Interpolators;
 import com.android.launcher3.folder.Folder;
 import com.android.launcher3.folder.FolderIcon;
-import com.android.launcher3.graphics.OverviewScrim;
-import com.android.launcher3.graphics.RotationMode;
 import com.android.launcher3.graphics.WorkspaceAndHotseatScrim;
 import com.android.launcher3.keyboard.ViewGroupFocusHelper;
 import com.android.launcher3.uioverrides.UiFactory;
@@ -93,8 +92,7 @@ public class DragLayer extends BaseDragLayer<Launcher> {
 
     // Related to adjacent page hints
     private final ViewGroupFocusHelper mFocusIndicatorHelper;
-    private final WorkspaceAndHotseatScrim mWorkspaceScrim;
-    private final OverviewScrim mOverviewScrim;
+    private final WorkspaceAndHotseatScrim mScrim;
 
     /**
      * Used to create a new DragLayer from XML.
@@ -110,13 +108,12 @@ public class DragLayer extends BaseDragLayer<Launcher> {
         setChildrenDrawingOrderEnabled(true);
 
         mFocusIndicatorHelper = new ViewGroupFocusHelper(this);
-        mWorkspaceScrim = new WorkspaceAndHotseatScrim(this);
-        mOverviewScrim = new OverviewScrim(this);
+        mScrim = new WorkspaceAndHotseatScrim(this);
     }
 
     public void setup(DragController dragController, Workspace workspace) {
         mDragController = dragController;
-        mWorkspaceScrim.setWorkspace(workspace);
+        mScrim.setWorkspace(workspace);
         recreateControllers();
     }
 
@@ -284,8 +281,7 @@ public class DragLayer extends BaseDragLayer<Launcher> {
             // The child may be scaled (always about the center of the view) so to account for it,
             // we have to offset the position by the scaled size.  Once we do that, we can center
             // the drag view about the scaled child view.
-            // padding will remain constant (does not scale with size)
-            toY += tv.getPaddingTop();
+            toY += Math.round(toScale * tv.getPaddingTop());
             toY -= dragView.getMeasuredHeight() * (1 - toScale) / 2;
             if (dragView.getDragVisualizeOffset() != null) {
                 toY -=  Math.round(toScale * dragView.getDragVisualizeOffset().y);
@@ -533,39 +529,25 @@ public class DragLayer extends BaseDragLayer<Launcher> {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         // Draw the background below children.
-        mWorkspaceScrim.draw(canvas);
-        mOverviewScrim.updateCurrentScrimmedView(this);
+        mScrim.draw(canvas);
         mFocusIndicatorHelper.draw(canvas);
         super.dispatchDraw(canvas);
     }
 
     @Override
-    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-        if (child == mOverviewScrim.getScrimmedView()) {
-            mOverviewScrim.draw(canvas);
-        }
-        return super.drawChild(canvas, child, drawingTime);
-    }
-
-    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        mWorkspaceScrim.setSize(w, h);
+        mScrim.setSize(w, h);
     }
 
     @Override
     public void setInsets(Rect insets) {
         super.setInsets(insets);
-        mWorkspaceScrim.onInsetsChanged(insets);
-        mOverviewScrim.onInsetsChanged(insets);
+        mScrim.onInsetsChanged(insets);
     }
 
     public WorkspaceAndHotseatScrim getScrim() {
-        return mWorkspaceScrim;
-    }
-
-    public OverviewScrim getOverviewScrim() {
-        return mOverviewScrim;
+        return mScrim;
     }
 
     @Override

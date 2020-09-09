@@ -15,23 +15,22 @@
  */
 package com.android.quickstep.util;
 
-import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
+import static com.android.quickstep.TouchInteractionService.MAIN_THREAD_EXECUTOR;
 
 import android.graphics.Rect;
 import android.util.ArraySet;
 
-import androidx.annotation.UiThread;
-
 import com.android.launcher3.Utilities;
 import com.android.launcher3.util.Preconditions;
 import com.android.quickstep.util.SwipeAnimationTargetSet.SwipeAnimationListener;
-import com.android.systemui.shared.recents.model.ThumbnailData;
 import com.android.systemui.shared.system.RecentsAnimationControllerCompat;
 import com.android.systemui.shared.system.RecentsAnimationListener;
 import com.android.systemui.shared.system.RemoteAnimationTargetCompat;
 
 import java.util.Set;
 import java.util.function.Consumer;
+
+import androidx.annotation.UiThread;
 
 /**
  * Wrapper around {@link RecentsAnimationListener} which delegates callbacks to multiple listeners
@@ -40,7 +39,7 @@ import java.util.function.Consumer;
 public class RecentsAnimationListenerSet implements RecentsAnimationListener {
 
     // The actual app surface is replaced by a screenshot upon recents animation cancelation when
-    // the thumbnailData exists. Launcher takes the responsibility to clean up this screenshot
+    // deferredWithScreenshot is true. Launcher takes the responsibility to clean up this screenshot
     // after app transition is finished. This delay is introduced to cover the app transition
     // period of time.
     private final int TRANSITION_DELAY = 100;
@@ -82,7 +81,7 @@ public class RecentsAnimationListenerSet implements RecentsAnimationListener {
         if (mCancelled) {
             targetSet.cancelAnimation();
         } else {
-            Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(), () -> {
+            Utilities.postAsyncCallback(MAIN_THREAD_EXECUTOR.getHandler(), () -> {
                 for (SwipeAnimationListener listener : getListeners()) {
                     listener.onRecentsAnimationStart(targetSet);
                 }
@@ -91,15 +90,15 @@ public class RecentsAnimationListenerSet implements RecentsAnimationListener {
     }
 
     @Override
-    public final void onAnimationCanceled(ThumbnailData thumbnailData) {
-        Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(), () -> {
+    public final void onAnimationCanceled(boolean deferredWithScreenshot) {
+        Utilities.postAsyncCallback(MAIN_THREAD_EXECUTOR.getHandler(), () -> {
             for (SwipeAnimationListener listener : getListeners()) {
                 listener.onRecentsAnimationCanceled();
             }
         });
         // TODO: handle the transition better instead of simply using a transition delay.
-        if (thumbnailData != null) {
-            MAIN_EXECUTOR.getHandler().postDelayed(() -> mController.cleanupScreenshot(),
+        if (deferredWithScreenshot) {
+            MAIN_THREAD_EXECUTOR.getHandler().postDelayed(() -> mController.cleanupScreenshot(),
                     TRANSITION_DELAY);
         }
     }
@@ -110,6 +109,6 @@ public class RecentsAnimationListenerSet implements RecentsAnimationListener {
 
     public void cancelListener() {
         mCancelled = true;
-        onAnimationCanceled(null);
+        onAnimationCanceled(false);
     }
 }

@@ -16,8 +16,6 @@
 
 package com.android.launcher3.dragndrop;
 
-import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
-
 import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -30,9 +28,8 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import com.android.launcher3.Launcher;
+import com.android.launcher3.MainThreadExecutor;
 import com.android.launcher3.R;
 import com.android.launcher3.folder.FolderIcon;
 import com.android.launcher3.folder.PreviewBackground;
@@ -69,24 +66,20 @@ public class FolderAdaptiveIcon extends AdaptiveIconDrawable {
         return mBadge;
     }
 
-    public static @Nullable FolderAdaptiveIcon createFolderAdaptiveIcon(
+    public static FolderAdaptiveIcon createFolderAdaptiveIcon(
             Launcher launcher, int folderId, Point dragViewSize) {
         Preconditions.assertNonUiThread();
         int margin = launcher.getResources()
                 .getDimensionPixelSize(R.dimen.blur_size_medium_outline);
 
         // Allocate various bitmaps on the background thread, because why not!
-        int width = dragViewSize.x - margin;
-        int height = dragViewSize.y - margin;
-        if (width <= 0 || height <= 0) {
-            return null;
-        }
-        final Bitmap badge = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        final Bitmap badge = Bitmap.createBitmap(
+                dragViewSize.x - margin, dragViewSize.y - margin, Bitmap.Config.ARGB_8888);
 
         // Create the actual drawable on the UI thread to avoid race conditions with
         // FolderIcon draw pass
         try {
-            return MAIN_EXECUTOR.submit(() -> {
+            return new MainThreadExecutor().submit(() -> {
                 FolderIcon icon = launcher.findFolderIcon(folderId);
                 return icon == null ? null : createDrawableOnUiThread(icon, badge, dragViewSize);
             }).get();

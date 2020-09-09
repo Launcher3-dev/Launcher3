@@ -36,7 +36,6 @@ import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.anim.AnimatorPlaybackController;
 import com.android.quickstep.util.RemoteAnimationProvider;
 import com.android.quickstep.util.RemoteAnimationTargetSet;
-import com.android.quickstep.util.ShelfPeekAnim;
 import com.android.systemui.shared.system.RemoteAnimationTargetCompat;
 
 import java.util.function.BiPredicate;
@@ -110,6 +109,16 @@ public interface ActivityControlHelper<T extends BaseDraggingActivity> {
 
     interface AnimationFactory {
 
+        enum ShelfAnimState {
+            HIDE(true), PEEK(true), OVERVIEW(false), CANCEL(false);
+
+            ShelfAnimState(boolean shouldPreformHaptic) {
+                this.shouldPreformHaptic = shouldPreformHaptic;
+            }
+
+            public final boolean shouldPreformHaptic;
+        }
+
         default void onRemoteAnimationReceived(RemoteAnimationTargetSet targets) { }
 
         void createActivityController(long transitionLength);
@@ -118,8 +127,8 @@ public interface ActivityControlHelper<T extends BaseDraggingActivity> {
 
         default void onTransitionCancelled() { }
 
-        default void setShelfState(ShelfPeekAnim.ShelfAnimState animState,
-                Interpolator interpolator, long duration) { }
+        default void setShelfState(ShelfAnimState animState, Interpolator interpolator,
+                long duration) { }
 
         /**
          * @param attached Whether to show RecentsView alongside the app window. If false, recents
@@ -143,15 +152,5 @@ public interface ActivityControlHelper<T extends BaseDraggingActivity> {
         default void playAtomicAnimation(float velocity) {
             // No-op
         }
-
-        static RectF getDefaultWindowTargetRect(DeviceProfile dp) {
-            final int halfIconSize = dp.iconSizePx / 2;
-            final float targetCenterX = dp.availableWidthPx / 2f;
-            final float targetCenterY = dp.availableHeightPx - dp.hotseatBarSizePx;
-            // Fallback to animate to center of screen.
-            return new RectF(targetCenterX - halfIconSize, targetCenterY - halfIconSize,
-                    targetCenterX + halfIconSize, targetCenterY + halfIconSize);
-        }
-
     }
 }

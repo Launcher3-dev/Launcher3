@@ -34,12 +34,10 @@ import com.android.launcher3.provider.LauncherDbUtils.SQLiteTransaction;
 import com.android.launcher3.util.GridOccupancy;
 import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.IntSparseArrayMap;
-import com.android.launcher3.util.PackageUserKey;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.function.Consumer;
 
 import androidx.annotation.VisibleForTesting;
 
@@ -972,9 +970,8 @@ public class GridSizeMigrationTask {
                 .getInstalledPackages(PackageManager.GET_UNINSTALLED_PACKAGES)) {
             validPackages.add(info.packageName);
         }
-        PackageInstallerCompat.getInstance(context)
-                .updateAndGetActiveSessionCache().keySet()
-                .forEach(packageUserKey -> validPackages.add(packageUserKey.mPackageName));
+        validPackages.addAll(PackageInstallerCompat.getInstance(context)
+                .updateAndGetActiveSessionCache().keySet());
         return validPackages;
     }
 

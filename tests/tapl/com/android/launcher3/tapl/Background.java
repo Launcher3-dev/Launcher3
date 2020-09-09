@@ -23,7 +23,6 @@ import android.os.SystemClock;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
-import androidx.test.uiautomator.UiObject2;
 
 import com.android.launcher3.testing.TestProtocol;
 
@@ -55,12 +54,12 @@ public class Background extends LauncherInstrumentation.VisibleContainer {
                 "want to switch from background to overview")) {
             verifyActiveContainer();
             goToOverviewUnchecked(BACKGROUND_APP_STATE_ORDINAL);
-            return mLauncher.isFallbackOverview() ?
-                    new BaseOverview(mLauncher) : new Overview(mLauncher);
+            return new BaseOverview(mLauncher);
         }
     }
 
     protected void goToOverviewUnchecked(int expectedState) {
+        mLauncher.getTestInfo(TestProtocol.REQUEST_ENABLE_DEBUG_TRACING);
         switch (mLauncher.getNavigationModel()) {
             case ZERO_BUTTON: {
                 final int centerX = mLauncher.getDevice().getDisplayWidth() / 2;
@@ -113,60 +112,7 @@ public class Background extends LauncherInstrumentation.VisibleContainer {
                 mLauncher.waitForSystemUiObject("recent_apps").click();
                 break;
         }
-    }
-
-    /**
-     * Swipes right or double presses the square button to switch to the previous app.
-     */
-    public Background quickSwitchToPreviousApp() {
-        try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer(
-                "want to quick switch to the previous app")) {
-            verifyActiveContainer();
-            quickSwitchToPreviousApp(getExpectedStateForQuickSwitch());
-            return new Background(mLauncher);
-        }
-    }
-
-    protected int getExpectedStateForQuickSwitch() {
-        return BACKGROUND_APP_STATE_ORDINAL;
-    }
-
-    protected void quickSwitchToPreviousApp(int expectedState) {
-        boolean transposeInLandscape = false;
-        switch (mLauncher.getNavigationModel()) {
-            case TWO_BUTTON:
-                transposeInLandscape = true;
-                // Fall through, zero button and two button modes behave the same.
-            case ZERO_BUTTON: {
-                final int startX;
-                final int startY;
-                final int endX;
-                final int endY;
-                if (mLauncher.getDevice().isNaturalOrientation() || !transposeInLandscape) {
-                    // Swipe from the bottom left to the bottom right of the screen.
-                    startX = 0;
-                    startY = getSwipeStartY();
-                    endX = mLauncher.getDevice().getDisplayWidth();
-                    endY = startY;
-                } else {
-                    // Swipe from the bottom right to the top right of the screen.
-                    startX = getSwipeStartX();
-                    startY = mLauncher.getRealDisplaySize().y - 1;
-                    endX = startX;
-                    endY = 0;
-                }
-                mLauncher.swipeToState(startX, startY, endX, endY, 20, expectedState);
-                break;
-            }
-
-            case THREE_BUTTON:
-                // Double press the recents button.
-                UiObject2 recentsButton = mLauncher.waitForSystemUiObject("recent_apps");
-                recentsButton.click();
-                mLauncher.getOverview();
-                recentsButton.click();
-                break;
-        }
+        mLauncher.getTestInfo(TestProtocol.REQUEST_DISABLE_DEBUG_TRACING);
     }
 
     protected String getSwipeHeightRequestName() {

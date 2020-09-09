@@ -81,7 +81,6 @@ final class AppToOverviewAnimationProvider<T extends BaseDraggingActivity> imple
                 });
         factory.onRemoteAnimationReceived(null);
         factory.createActivityController(RECENTS_LAUNCH_DURATION);
-        factory.setRecentsAttachedToAppWindow(true, false);
         mActivity = activity;
         mRecentsView = mActivity.getOverviewPanel();
         return false;
@@ -102,7 +101,6 @@ final class AppToOverviewAnimationProvider<T extends BaseDraggingActivity> imple
         anim.addListener(new AnimationSuccessListener() {
             @Override
             public void onAnimationSuccess(Animator animator) {
-                mHelper.onSwipeUpToRecentsComplete(mActivity);
                 if (mRecentsView != null) {
                     mRecentsView.animateUpRunningTaskIconScale();
                 }

@@ -16,6 +16,8 @@
 
 package com.android.launcher3.provider;
 
+import static com.android.launcher3.Utilities.getIntArrayFromString;
+import static com.android.launcher3.Utilities.getStringFromIntArray;
 import static com.android.launcher3.provider.LauncherDbUtils.dropTable;
 
 import android.app.backup.BackupManager;
@@ -38,7 +40,6 @@ import com.android.launcher3.WorkspaceItemInfo;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.provider.LauncherDbUtils.SQLiteTransaction;
-import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.LogConfig;
 
 import java.io.InvalidObjectException;
@@ -172,6 +173,12 @@ public class RestoreDbTask {
         values.put(Favorites.PROFILE_ID, newProfileId);
         db.update(Favorites.TABLE_NAME, values, "profileId = ?",
                 new String[]{Long.toString(oldProfileId)});
+
+        // Change default value of the column.
+        db.execSQL("ALTER TABLE favorites RENAME TO favorites_old;");
+        Favorites.addTableToDb(db, newProfileId, false);
+        db.execSQL("INSERT INTO favorites SELECT * FROM favorites_old;");
+        dropTable(db, "favorites_old");
     }
 
 
@@ -239,8 +246,8 @@ public class RestoreDbTask {
         SharedPreferences prefs = Utilities.getPrefs(context);
         if (prefs.contains(APPWIDGET_OLD_IDS) && prefs.contains(APPWIDGET_IDS)) {
             AppWidgetsRestoredReceiver.restoreAppWidgetIds(context,
-                    IntArray.fromConcatString(prefs.getString(APPWIDGET_OLD_IDS, "")).toArray(),
-                    IntArray.fromConcatString(prefs.getString(APPWIDGET_IDS, "")).toArray());
+                    getIntArrayFromString(prefs.getString(APPWIDGET_OLD_IDS, "")),
+                    getIntArrayFromString(prefs.getString(APPWIDGET_IDS, "")));
         } else {
             FileLog.d(TAG, "No app widget ids to restore.");
         }
@@ -252,8 +259,8 @@ public class RestoreDbTask {
     public static void setRestoredAppWidgetIds(Context context, @NonNull int[] oldIds,
             @NonNull int[] newIds) {
         Utilities.getPrefs(context).edit()
-                .putString(APPWIDGET_OLD_IDS, IntArray.wrap(oldIds).toConcatString())
-                .putString(APPWIDGET_IDS, IntArray.wrap(newIds).toConcatString())
+                .putString(APPWIDGET_OLD_IDS, getStringFromIntArray(oldIds))
+                .putString(APPWIDGET_IDS, getStringFromIntArray(newIds))
                 .commit();
     }
 

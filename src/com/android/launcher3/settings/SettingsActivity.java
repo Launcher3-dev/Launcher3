@@ -16,8 +16,6 @@
 
 package com.android.launcher3.settings;
 
-import static androidx.core.view.accessibility.AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS;
-
 import static com.android.launcher3.SessionCommitReceiver.ADD_ICON_PREFERENCE_KEY;
 import static com.android.launcher3.states.RotationHelper.ALLOW_ROTATION_PREFERENCE_KEY;
 import static com.android.launcher3.states.RotationHelper.getAllowRotationDefaultValue;
@@ -34,15 +32,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragment;
-import androidx.preference.PreferenceFragment.OnPreferenceStartFragmentCallback;
-import androidx.preference.PreferenceFragment.OnPreferenceStartScreenCallback;
-import androidx.preference.PreferenceGroup.PreferencePositionCallback;
-import androidx.preference.PreferenceScreen;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.android.launcher3.LauncherFiles;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
@@ -50,6 +39,14 @@ import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.graphics.GridOptionsProvider;
 import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
 import com.android.launcher3.util.SecureSettingsObserver;
+
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragment;
+import androidx.preference.PreferenceFragment.OnPreferenceStartFragmentCallback;
+import androidx.preference.PreferenceFragment.OnPreferenceStartScreenCallback;
+import androidx.preference.PreferenceGroup.PreferencePositionCallback;
+import androidx.preference.PreferenceScreen;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Settings activity for Launcher. Currently implements the following setting: Allow rotation
@@ -251,8 +248,6 @@ public class SettingsActivity extends Activity
                 if (highlighter != null) {
                     getView().postDelayed(highlighter, DELAY_HIGHLIGHT_DURATION_MILLIS);
                     mPreferenceHighlighted = true;
-                } else {
-                    requestAccessibilityFocus(getListView());
                 }
             }
         }
@@ -271,15 +266,6 @@ public class SettingsActivity extends Activity
             PreferencePositionCallback callback = (PreferencePositionCallback) list.getAdapter();
             int position = callback.getPreferenceAdapterPosition(mHighLightKey);
             return position >= 0 ? new PreferenceHighlighter(list, position) : null;
-        }
-
-        private void requestAccessibilityFocus(@NonNull final RecyclerView rv) {
-            rv.post(() -> {
-                if (!rv.hasFocus() && rv.getChildCount() > 0) {
-                    rv.getChildAt(0)
-                            .performAccessibilityAction(ACTION_ACCESSIBILITY_FOCUS, null);
-                }
-            });
         }
 
         @Override

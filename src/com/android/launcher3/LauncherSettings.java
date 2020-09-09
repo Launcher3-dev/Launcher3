@@ -59,10 +59,6 @@ public class LauncherSettings {
         public static final String ITEM_TYPE = "itemType";
 
         /**
-         * The gesture is a package
-         */
-        public static final int ITEM_TYPE_NON_ACTIONABLE = -1;
-        /**
          * The gesture is an application
          */
         public static final int ITEM_TYPE_APPLICATION = 0;
@@ -126,13 +122,11 @@ public class LauncherSettings {
          */
         public static final int CONTAINER_DESKTOP = -100;
         public static final int CONTAINER_HOTSEAT = -101;
-        public static final int CONTAINER_PREDICTION = -102;
 
         static final String containerToString(int container) {
             switch (container) {
                 case CONTAINER_DESKTOP: return "desktop";
                 case CONTAINER_HOTSEAT: return "hotseat";
-                case CONTAINER_PREDICTION: return "prediction";
                 default: return String.valueOf(container);
             }
         }

@@ -23,7 +23,6 @@
     package="com.android.launcher3" >
 
     <uses-permission android:name="android.permission.CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS" />
-    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:backupAgent="com.android.launcher3.LauncherBackupAgent"
@@ -88,7 +87,6 @@
         <activity android:name="com.android.quickstep.LockScreenRecentsActivity"
                   android:theme="@android:style/Theme.NoDisplay"
                   android:showOnLockScreen="true"
-                  android:taskAffinity="${packageName}.locktask"
                   android:directBootAware="true" />
 
     </application>

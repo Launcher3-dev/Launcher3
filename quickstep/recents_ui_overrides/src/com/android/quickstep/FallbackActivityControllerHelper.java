@@ -80,9 +80,7 @@ public final class FallbackActivityControllerHelper implements
 
     @Override
     public void onAssistantVisibilityChanged(float visibility) {
-        // This class becomes active when the screen is locked.
-        // Rather than having it handle assistant visibility changes, the assistant visibility is
-        // set to zero prior to this class becoming active.
+        // TODO:
     }
 
     @NonNull

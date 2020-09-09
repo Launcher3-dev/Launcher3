@@ -64,10 +64,10 @@ public class PluginHeaderRow implements FloatingHeaderRow {
     }
 
     @Override
-    public void setContentVisibility(boolean hasHeaderExtra, boolean hasAllAppsContent,
-            PropertySetter setter, Interpolator headerFade, Interpolator allAppsFade) {
+    public void setContentVisibility(boolean hasHeaderExtra, boolean hasContent,
+            PropertySetter setter, Interpolator fadeInterpolator) {
         // Don't use setViewAlpha as we want to control the visibility ourselves.
-        setter.setFloat(mView, ALPHA, hasAllAppsContent ? 1 : 0, headerFade);
+        setter.setFloat(mView, ALPHA, hasContent ? 1 : 0, fadeInterpolator);
     }
 
     @Override

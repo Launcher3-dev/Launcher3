@@ -243,10 +243,6 @@ public class LauncherState {
         return 0;
     }
 
-    public float getOverviewScrimAlpha(Launcher launcher) {
-        return 0;
-    }
-
     public String getDescription(Launcher launcher) {
         return launcher.getWorkspace().getCurrentPageDescription();
     }

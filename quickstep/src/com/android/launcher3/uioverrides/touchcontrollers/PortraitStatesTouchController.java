@@ -43,7 +43,7 @@ import com.android.launcher3.anim.AnimatorPlaybackController;
 import com.android.launcher3.anim.AnimatorSetBuilder;
 import com.android.launcher3.anim.Interpolators;
 import com.android.launcher3.touch.AbstractStateChangeTouchController;
-import com.android.launcher3.touch.SingleAxisSwipeDetector;
+import com.android.launcher3.touch.SwipeDetector;
 import com.android.launcher3.uioverrides.states.OverviewState;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action.Touch;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
@@ -51,6 +51,7 @@ import com.android.quickstep.OverviewInteractionState;
 import com.android.quickstep.RecentsModel;
 import com.android.quickstep.TouchInteractionService;
 import com.android.quickstep.util.LayoutUtils;
+import com.android.systemui.shared.system.QuickStepContract;
 
 /**
  * Touch controller for handling various state transitions in portrait UI.
@@ -62,7 +63,7 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
     /**
      * The progress at which all apps content will be fully visible when swiping up from overview.
      */
-    protected static final float ALL_APPS_CONTENT_FADE_THRESHOLD = 0.08f;
+    private static final float ALL_APPS_CONTENT_FADE_THRESHOLD = 0.08f;
 
     /**
      * The progress at which recents will begin fading out when swiping up from overview.
@@ -79,7 +80,7 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
     private boolean mFinishFastOnSecondTouch;
 
     public PortraitStatesTouchController(Launcher l, boolean allowDragToOverview) {
-        super(l, SingleAxisSwipeDetector.VERTICAL);
+        super(l, SwipeDetector.VERTICAL);
         mOverviewPortraitStateTouchHelper = new PortraitOverviewStateTouchHelper(l);
         mAllowDragToOverview = allowDragToOverview;
     }
@@ -147,8 +148,8 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
     }
 
     @Override
-    protected int getLogContainerTypeForNormalState(MotionEvent ev) {
-        return isTouchOverHotseat(mLauncher, ev) ? ContainerType.HOTSEAT : ContainerType.WORKSPACE;
+    protected int getLogContainerTypeForNormalState() {
+        return ContainerType.HOTSEAT;
     }
 
     private AnimatorSetBuilder getNormalToOverviewAnimation() {
@@ -177,20 +178,6 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
         return builder;
     }
 
-    private AnimatorSetBuilder getNormalToAllAppsAnimation() {
-        AnimatorSetBuilder builder = new AnimatorSetBuilder();
-        builder.setInterpolator(ANIM_ALL_APPS_FADE, Interpolators.clampToProgress(ACCEL,
-                0, ALL_APPS_CONTENT_FADE_THRESHOLD));
-        return builder;
-    }
-
-    private AnimatorSetBuilder getAllAppsToNormalAnimation() {
-        AnimatorSetBuilder builder = new AnimatorSetBuilder();
-        builder.setInterpolator(ANIM_ALL_APPS_FADE, Interpolators.clampToProgress(DEACCEL,
-                1 - ALL_APPS_CONTENT_FADE_THRESHOLD, 1));
-        return builder;
-    }
-
     @Override
     protected AnimatorSetBuilder getAnimatorSetBuilderForStates(LauncherState fromState,
             LauncherState toState) {
@@ -201,10 +188,6 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
             builder = getOverviewToAllAppsAnimation();
         } else if (fromState == ALL_APPS && toState == OVERVIEW) {
             builder = getAllAppsToOverviewAnimation();
-        } else if (fromState == NORMAL && toState == ALL_APPS) {
-            builder = getNormalToAllAppsAnimation();
-        } else if (fromState == ALL_APPS && toState == NORMAL) {
-            builder = getAllAppsToNormalAnimation();
         }
         return builder;
     }
@@ -313,13 +296,9 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
      * @return true if the event is over the hotseat
      */
     static boolean isTouchOverHotseat(Launcher launcher, MotionEvent ev) {
-        return (ev.getY() >= getHotseatTop(launcher));
-    }
-
-    public static int getHotseatTop(Launcher launcher) {
         DeviceProfile dp = launcher.getDeviceProfile();
         int hotseatHeight = dp.hotseatBarSizePx + dp.getInsets().bottom;
-        return launcher.getDragLayer().getHeight() - hotseatHeight;
+        return (ev.getY() >= (launcher.getDragLayer().getHeight() - hotseatHeight));
     }
 
     private static class InterpolatorWrapper implements Interpolator {

@@ -25,25 +25,39 @@ import android.os.Bundle;
 import android.os.UserHandle;
 
 import com.android.launcher3.ItemInfo;
-import com.android.launcher3.notification.NotificationKeyData;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Performs operations related to deep shortcuts, such as querying for them, pinning them, etc.
  */
 public class DeepShortcutManager {
-
-    private static final DeepShortcutManager sInstance = new DeepShortcutManager();
+    private static DeepShortcutManager sInstance;
+    private static final Object sInstanceLock = new Object();
 
     public static DeepShortcutManager getInstance(Context context) {
-        return sInstance;
+        synchronized (sInstanceLock) {
+            if (sInstance == null) {
+                sInstance = new DeepShortcutManager(context.getApplicationContext());
+            }
+            return sInstance;
+        }
     }
 
-    private final QueryResult mFailure = new QueryResult();
+    private DeepShortcutManager(Context context) {
+    }
 
-    private DeepShortcutManager() { }
+    public static boolean supportsShortcuts(ItemInfo info) {
+        return false;
+    }
+
+    public boolean wasLastCallSuccess() {
+        return false;
+    }
+
+    public void onShortcutsChanged(List<ShortcutInfo> shortcuts) {
+    }
 
     /**
      * Queries for the shortcuts with the package name and provided ids.
@@ -51,18 +65,18 @@ public class DeepShortcutManager {
      * This method is intended to get the full details for shortcuts when they are added or updated,
      * because we only get "key" fields in onShortcutsChanged().
      */
-    public QueryResult queryForFullDetails(String packageName,
+    public List<ShortcutInfo> queryForFullDetails(String packageName,
             List<String> shortcutIds, UserHandle user) {
-        return mFailure;
+        return Collections.emptyList();
     }
 
     /**
      * Gets all the manifest and dynamic shortcuts associated with the given package and user,
      * to be displayed in the shortcuts container on long press.
      */
-    public QueryResult queryForShortcutsContainer(ComponentName activity,
+    public List<ShortcutInfo> queryForShortcutsContainer(ComponentName activity,
             UserHandle user) {
-        return mFailure;
+        return Collections.emptyList();
     }
 
     /**
@@ -92,28 +106,20 @@ public class DeepShortcutManager {
      *
      * If packageName is null, returns all pinned shortcuts regardless of package.
      */
-    public QueryResult queryForPinnedShortcuts(String packageName, UserHandle user) {
-        return mFailure;
+    public List<ShortcutInfo> queryForPinnedShortcuts(String packageName, UserHandle user) {
+        return Collections.emptyList();
     }
 
-    public QueryResult queryForPinnedShortcuts(String packageName,
+    public List<ShortcutInfo> queryForPinnedShortcuts(String packageName,
             List<String> shortcutIds, UserHandle user) {
-        return mFailure;
+        return Collections.emptyList();
     }
 
-    public QueryResult queryForAllShortcuts(UserHandle user) {
-        return mFailure;
+    public List<ShortcutInfo> queryForAllShortcuts(UserHandle user) {
+        return Collections.emptyList();
     }
 
     public boolean hasHostPermission() {
         return false;
-    }
-
-
-    public static class QueryResult extends ArrayList<ShortcutInfo> {
-
-        public boolean wasSuccess() {
-            return true;
-        }
     }
 }

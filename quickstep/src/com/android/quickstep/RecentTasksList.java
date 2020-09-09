@@ -16,22 +16,20 @@
 
 package com.android.quickstep;
 
-import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
-
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.content.Context;
 import android.os.Build;
 import android.os.Process;
 import android.util.SparseBooleanArray;
-
-import androidx.annotation.VisibleForTesting;
-
-import com.android.launcher3.util.LooperExecutor;
+import com.android.launcher3.MainThreadExecutor;
 import com.android.systemui.shared.recents.model.Task;
 import com.android.systemui.shared.system.ActivityManagerWrapper;
+import com.android.systemui.shared.system.BackgroundExecutor;
 import com.android.systemui.shared.system.KeyguardManagerCompat;
+import com.android.systemui.shared.system.RecentTaskInfoCompat;
+import com.android.systemui.shared.system.TaskDescriptionCompat;
 import com.android.systemui.shared.system.TaskStackChangeListener;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,8 +42,8 @@ import java.util.function.Consumer;
 public class RecentTasksList extends TaskStackChangeListener {
 
     private final KeyguardManagerCompat mKeyguardManager;
-    private final LooperExecutor mMainThreadExecutor;
-    private final ActivityManagerWrapper mActivityManagerWrapper;
+    private final MainThreadExecutor mMainThreadExecutor;
+    private final BackgroundExecutor mBgThreadExecutor;
 
     // The list change id, increments as the task list changes in the system
     private int mChangeId;
@@ -56,13 +54,12 @@ public class RecentTasksList extends TaskStackChangeListener {
 
     ArrayList<Task> mTasks = new ArrayList<>();
 
-    public RecentTasksList(LooperExecutor mainThreadExecutor,
-            KeyguardManagerCompat keyguardManager, ActivityManagerWrapper activityManagerWrapper) {
-        mMainThreadExecutor = mainThreadExecutor;
-        mKeyguardManager = keyguardManager;
+    public RecentTasksList(Context context) {
+        mMainThreadExecutor = new MainThreadExecutor();
+        mBgThreadExecutor = BackgroundExecutor.get();
+        mKeyguardManager = new KeyguardManagerCompat(context);
         mChangeId = 1;
-        mActivityManagerWrapper = activityManagerWrapper;
-        mActivityManagerWrapper.registerTaskStackListener(this);
+        ActivityManagerWrapper.getInstance().registerTaskStackListener(this);
     }
 
     /**
@@ -70,7 +67,7 @@ public class RecentTasksList extends TaskStackChangeListener {
      */
     public void getTaskKeys(int numTasks, Consumer<ArrayList<Task>> callback) {
         // Kick off task loading in the background
-        UI_HELPER_EXECUTOR.execute(() -> {
+        mBgThreadExecutor.submit(() -> {
             ArrayList<Task> tasks = loadTasksInBackground(numTasks, true /* loadKeysOnly */);
             mMainThreadExecutor.execute(() -> callback.accept(tasks));
         });
@@ -90,14 +87,13 @@ public class RecentTasksList extends TaskStackChangeListener {
                 : () -> callback.accept(copyOf(mTasks));
 
         if (mLastLoadedId == mChangeId && (!mLastLoadHadKeysOnly || loadKeysOnly)) {
-            // The list is up to date, send the callback on the next frame,
-            // so that requestID can be returned first.
-            mMainThreadExecutor.post(resultCallback);
+            // The list is up to date, callback with the same list
+            mMainThreadExecutor.execute(resultCallback);
             return requestLoadId;
         }
 
         // Kick off task loading in the background
-        UI_HELPER_EXECUTOR.execute(() -> {
+        mBgThreadExecutor.submit(() -> {
             ArrayList<Task> tasks = loadTasksInBackground(Integer.MAX_VALUE, loadKeysOnly);
 
             mMainThreadExecutor.execute(() -> {
@@ -125,7 +121,12 @@ public class RecentTasksList extends TaskStackChangeListener {
 
     @Override
     public void onTaskRemoved(int taskId) {
-        mTasks = loadTasksInBackground(Integer.MAX_VALUE, false);
+        for (int i = mTasks.size() - 1; i >= 0; i--) {
+            if (mTasks.get(i).key.id == taskId) {
+                mTasks.remove(i);
+                return;
+            }
+        }
     }
 
     @Override
@@ -142,13 +143,12 @@ public class RecentTasksList extends TaskStackChangeListener {
     /**
      * Loads and creates a list of all the recent tasks.
      */
-    @VisibleForTesting
-    ArrayList<Task> loadTasksInBackground(int numTasks,
+    private ArrayList<Task> loadTasksInBackground(int numTasks,
             boolean loadKeysOnly) {
         int currentUserId = Process.myUserHandle().getIdentifier();
         ArrayList<Task> allTasks = new ArrayList<>();
         List<ActivityManager.RecentTaskInfo> rawTasks =
-                mActivityManagerWrapper.getRecentTasks(numTasks, currentUserId);
+                ActivityManagerWrapper.getInstance().getRecentTasks(numTasks, currentUserId);
         // The raw tasks are given in most-recent to least-recent order, we need to reverse it
         Collections.reverse(rawTasks);
 
@@ -166,11 +166,15 @@ public class RecentTasksList extends TaskStackChangeListener {
         int taskCount = rawTasks.size();
         for (int i = 0; i < taskCount; i++) {
             ActivityManager.RecentTaskInfo rawTask = rawTasks.get(i);
+            RecentTaskInfoCompat t = new RecentTaskInfoCompat(rawTask);
             Task.TaskKey taskKey = new Task.TaskKey(rawTask);
             Task task;
             if (!loadKeysOnly) {
-                boolean isLocked = tmpLockedUsers.get(taskKey.userId);
-                task = Task.from(taskKey, rawTask, isLocked);
+                ActivityManager.TaskDescription rawTd = t.getTaskDescription();
+                TaskDescriptionCompat td = new TaskDescriptionCompat(rawTd);
+                boolean isLocked = tmpLockedUsers.get(t.getUserId());
+                task = new Task(taskKey, td.getPrimaryColor(), td.getBackgroundColor(),
+                        t.supportsSplitScreenMultiWindow(), isLocked, rawTd, t.getTopActivity());
             } else {
                 task = new Task(taskKey);
             }

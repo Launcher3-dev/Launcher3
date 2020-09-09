@@ -10,7 +10,7 @@
 * Launcher3-7.0
 * Launcher3-8.0.0_r24
 * Launcher3-9.0
-* Launcher3-master-20200305
+* Launcher3-10.0 (android-10.0.0_r46)
 * master
 
 ## 教程

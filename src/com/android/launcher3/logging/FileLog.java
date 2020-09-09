@@ -1,14 +1,13 @@
 package com.android.launcher3.logging;
 
-import static com.android.launcher3.util.Executors.createAndStartNewLooper;
-
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 
-import com.android.launcher3.util.IOUtils;
+import com.android.launcher3.Utilities;
+import com.android.launcher3.config.FeatureFlags;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,7 +29,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class FileLog {
 
-    protected static final boolean ENABLED = true;
+    protected static final boolean ENABLED =
+            FeatureFlags.IS_DOGFOOD_BUILD || Utilities.IS_DEBUG_DEVICE;
     private static final String FILE_NAME_PREFIX = "log-";
     private static final DateFormat DATE_FORMAT =
             DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
@@ -91,8 +91,9 @@ public final class FileLog {
     private static Handler getHandler() {
         synchronized (DATE_FORMAT) {
             if (sHandler == null) {
-                sHandler = new Handler(createAndStartNewLooper("file-logger"),
-                        new LogWriterCallback());
+                HandlerThread thread = new HandlerThread("file-logger");
+                thread.start();
+                sHandler = new Handler(thread.getLooper(), new LogWriterCallback());
             }
         }
         return sHandler;
@@ -130,7 +131,7 @@ public final class FileLog {
         private PrintWriter mCurrentWriter = null;
 
         private void closeWriter() {
-            IOUtils.closeSilently(mCurrentWriter);
+            Utilities.closeSilently(mCurrentWriter);
             mCurrentWriter = null;
         }
 
@@ -218,7 +219,7 @@ public final class FileLog {
             } catch (Exception e) {
                 // ignore
             } finally {
-                IOUtils.closeSilently(in);
+                Utilities.closeSilently(in);
             }
         }
     }

@@ -14,37 +14,25 @@
  * limitations under the License.
  */
 
-package com.android.launcher3.model;
-
-import static com.android.launcher3.AppInfo.COMPONENT_KEY_COMPARATOR;
-import static com.android.launcher3.AppInfo.EMPTY_ARRAY;
+package com.android.launcher3;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
-import android.os.LocaleList;
 import android.os.Process;
 import android.os.UserHandle;
 import android.util.Log;
 
-import com.android.launcher3.AppFilter;
-import com.android.launcher3.AppInfo;
-import com.android.launcher3.PromiseAppInfo;
-import com.android.launcher3.compat.AlphabeticIndexCompat;
 import com.android.launcher3.compat.LauncherAppsCompat;
 import com.android.launcher3.compat.PackageInstallerCompat;
-import com.android.launcher3.compat.PackageInstallerCompat.PackageInstallInfo;
 import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.util.FlagOp;
 import com.android.launcher3.util.ItemInfoMatcher;
-import com.android.launcher3.util.SafeCloseable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.function.Consumer;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -54,23 +42,22 @@ import androidx.annotation.Nullable;
  * Stores the list of all applications for the all apps view.
  */
 public class AllAppsList {
-
     private static final String TAG = "AllAppsList";
-    private static final Consumer<AppInfo> NO_OP_CONSUMER = a -> { };
-
 
     public static final int DEFAULT_APPLICATIONS_NUMBER = 42;
 
     /** The list off all apps. */
     public final ArrayList<AppInfo> data = new ArrayList<>(DEFAULT_APPLICATIONS_NUMBER);
+    /** The list of apps that have been added since the last notify() call. */
+    public ArrayList<AppInfo> added = new ArrayList<>(DEFAULT_APPLICATIONS_NUMBER);
+    /** The list of apps that have been removed since the last notify() call. */
+    public ArrayList<AppInfo> removed = new ArrayList<>();
+    /** The list of apps that have been modified since the last notify() call. */
+    public ArrayList<AppInfo> modified = new ArrayList<>();
 
     private IconCache mIconCache;
+
     private AppFilter mAppFilter;
-
-    private boolean mDataChanged = false;
-    private Consumer<AppInfo> mRemoveListener = NO_OP_CONSUMER;
-
-    private AlphabeticIndexCompat mIndex;
 
     /**
      * Boring constructor.
@@ -78,16 +65,6 @@ public class AllAppsList {
     public AllAppsList(IconCache iconCache, AppFilter appFilter) {
         mIconCache = iconCache;
         mAppFilter = appFilter;
-        mIndex = new AlphabeticIndexCompat(LocaleList.getDefault());
-    }
-
-    /**
-     * Returns true if there have been any changes since last call.
-     */
-    public boolean getAndResetChangeFlag() {
-        boolean result = mDataChanged;
-        mDataChanged = false;
-        return result;
     }
 
     /**
@@ -104,60 +81,44 @@ public class AllAppsList {
             return;
         }
         mIconCache.getTitleAndIcon(info, activityInfo, true /* useLowResIcon */);
-        info.sectionName = mIndex.computeSectionName(info.title);
 
         data.add(info);
-        mDataChanged = true;
+        added.add(info);
     }
 
     public void addPromiseApp(Context context,
                               PackageInstallerCompat.PackageInstallInfo installInfo) {
         ApplicationInfo applicationInfo = LauncherAppsCompat.getInstance(context)
-                .getApplicationInfo(installInfo.packageName, 0, installInfo.user);
+                .getApplicationInfo(installInfo.packageName, 0, Process.myUserHandle());
         // only if not yet installed
         if (applicationInfo == null) {
             PromiseAppInfo info = new PromiseAppInfo(installInfo);
             mIconCache.getTitleAndIcon(info, info.usingLowResIcon());
-            info.sectionName = mIndex.computeSectionName(info.title);
-
             data.add(info);
-            mDataChanged = true;
+            added.add(info);
         }
     }
 
-    public PromiseAppInfo updatePromiseInstallInfo(PackageInstallInfo installInfo) {
-        UserHandle user = Process.myUserHandle();
-        for (int i=0; i < data.size(); i++) {
-            final AppInfo appInfo = data.get(i);
-            final ComponentName tgtComp = appInfo.getTargetComponent();
-            if (tgtComp != null && tgtComp.getPackageName().equals(installInfo.packageName)
-                    && appInfo.user.equals(user)
-                    && appInfo instanceof PromiseAppInfo) {
-                final PromiseAppInfo promiseAppInfo = (PromiseAppInfo) appInfo;
-                if (installInfo.state == PackageInstallerCompat.STATUS_INSTALLING) {
-                    promiseAppInfo.level = installInfo.progress;
-                    return promiseAppInfo;
-                } else if (installInfo.state == PackageInstallerCompat.STATUS_FAILED) {
-                    removeApp(i);
-                }
-            }
-        }
-        return null;
-    }
-
-    private void removeApp(int index) {
-        AppInfo removed = data.remove(index);
-        if (removed != null) {
-            mDataChanged = true;
-            mRemoveListener.accept(removed);
-        }
+    public void removePromiseApp(AppInfo appInfo) {
+        // the <em>removed</em> list is handled by the caller
+        // so not adding it here
+        data.remove(appInfo);
     }
 
     public void clear() {
         data.clear();
-        mDataChanged = false;
-        // Reset the index as locales might have changed
-        mIndex = new AlphabeticIndexCompat(LocaleList.getDefault());
+        // TODO: do we clear these too?
+        added.clear();
+        removed.clear();
+        modified.clear();
+    }
+
+    public int size() {
+        return data.size();
+    }
+
+    public AppInfo get(int index) {
+        return data.get(index);
     }
 
     /**
@@ -181,7 +142,8 @@ public class AllAppsList {
         for (int i = data.size() - 1; i >= 0; i--) {
             AppInfo info = data.get(i);
             if (info.user.equals(user) && packageName.equals(info.componentName.getPackageName())) {
-                removeApp(i);
+                removed.add(info);
+                data.remove(i);
             }
         }
     }
@@ -195,17 +157,17 @@ public class AllAppsList {
             AppInfo info = data.get(i);
             if (matcher.matches(info, info.componentName)) {
                 info.runtimeStatusFlags = op.apply(info.runtimeStatusFlags);
-                mDataChanged = true;
+                modified.add(info);
             }
         }
     }
 
-    public void updateIconsAndLabels(HashSet<String> packages, UserHandle user) {
+    public void updateIconsAndLabels(HashSet<String> packages, UserHandle user,
+            ArrayList<AppInfo> outUpdates) {
         for (AppInfo info : data) {
             if (info.user.equals(user) && packages.contains(info.componentName.getPackageName())) {
                 mIconCache.updateTitleAndIcon(info);
-                info.sectionName = mIndex.computeSectionName(info.title);
-                mDataChanged = true;
+                outUpdates.add(info);
             }
         }
     }
@@ -226,7 +188,8 @@ public class AllAppsList {
                         && packageName.equals(applicationInfo.componentName.getPackageName())) {
                     if (!findActivity(matches, applicationInfo.componentName)) {
                         Log.w(TAG, "Changing shortcut target due to app component name change.");
-                        removeApp(i);
+                        removed.add(applicationInfo);
+                        data.remove(i);
                     }
                 }
             }
@@ -239,9 +202,7 @@ public class AllAppsList {
                     add(new AppInfo(context, info, user), info);
                 } else {
                     mIconCache.getTitleAndIcon(applicationInfo, info, true /* useLowResIcon */);
-                    applicationInfo.sectionName = mIndex.computeSectionName(applicationInfo.title);
-
-                    mDataChanged = true;
+                    modified.add(applicationInfo);
                 }
             }
         } else {
@@ -250,12 +211,14 @@ public class AllAppsList {
                 final AppInfo applicationInfo = data.get(i);
                 if (user.equals(applicationInfo.user)
                         && packageName.equals(applicationInfo.componentName.getPackageName())) {
+                    removed.add(applicationInfo);
                     mIconCache.remove(applicationInfo.componentName, user);
-                    removeApp(i);
+                    data.remove(i);
                 }
             }
         }
     }
+
 
     /**
      * Returns whether <em>apps</em> contains <em>component</em>.
@@ -283,17 +246,5 @@ public class AllAppsList {
             }
         }
         return null;
-    }
-
-    public AppInfo[] copyData() {
-        AppInfo[] result = data.toArray(EMPTY_ARRAY);
-        Arrays.sort(result, COMPONENT_KEY_COMPARATOR);
-        return result;
-    }
-
-    public SafeCloseable trackRemoves(Consumer<AppInfo> removeListener) {
-        mRemoveListener = removeListener;
-
-        return () -> mRemoveListener = NO_OP_CONSUMER;
     }
 }

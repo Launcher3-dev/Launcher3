@@ -16,21 +16,16 @@
 
 package com.android.launcher3.tapl;
 
-import android.graphics.Point;
-import android.graphics.Rect;
-
-import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiObject2;
 
-import java.util.Collection;
+import com.android.launcher3.ResourceUtils;
 
 /**
  * All widgets container.
  */
 public final class Widgets extends LauncherInstrumentation.VisibleContainer {
-    private static final int FLING_STEPS = 10;
+    private static final int FLING_SPEED = 1500;
 
     Widgets(LauncherInstrumentation launcher) {
         super(launcher);
@@ -45,11 +40,11 @@ public final class Widgets extends LauncherInstrumentation.VisibleContainer {
                 "want to fling forward in widgets")) {
             LauncherInstrumentation.log("Widgets.flingForward enter");
             final UiObject2 widgetsContainer = verifyActiveContainer();
-            mLauncher.scroll(
-                    widgetsContainer,
-                    Direction.DOWN,
-                    new Rect(0, 0, 0, mLauncher.getBottomGestureMargin(widgetsContainer)),
-                    FLING_STEPS);
+            widgetsContainer.setGestureMargins(0, 0, 0,
+                    ResourceUtils.getNavbarSize(ResourceUtils.NAVBAR_BOTTOM_GESTURE_SIZE,
+                            mLauncher.getResources()) + 1);
+            widgetsContainer.fling(Direction.DOWN,
+                    (int) (FLING_SPEED * mLauncher.getDisplayDensity()));
             try (LauncherInstrumentation.Closable c1 = mLauncher.addContextLayer("flung forward")) {
                 verifyActiveContainer();
             }
@@ -65,11 +60,10 @@ public final class Widgets extends LauncherInstrumentation.VisibleContainer {
                 "want to fling backwards in widgets")) {
             LauncherInstrumentation.log("Widgets.flingBackward enter");
             final UiObject2 widgetsContainer = verifyActiveContainer();
-            mLauncher.scroll(
-                    widgetsContainer,
-                    Direction.UP,
-                    new Rect(0, 0, widgetsContainer.getVisibleBounds().width(), 0),
-                    FLING_STEPS);
+            widgetsContainer.setGestureMargin(100);
+            widgetsContainer.fling(Direction.UP,
+                    (int) (FLING_SPEED * mLauncher.getDisplayDensity()));
+            mLauncher.waitForIdle();
             try (LauncherInstrumentation.Closable c1 = mLauncher.addContextLayer("flung back")) {
                 verifyActiveContainer();
             }
@@ -80,36 +74,5 @@ public final class Widgets extends LauncherInstrumentation.VisibleContainer {
     @Override
     protected LauncherInstrumentation.ContainerType getContainerType() {
         return LauncherInstrumentation.ContainerType.WIDGETS;
-    }
-
-    public Widget getWidget(String labelText) {
-        final UiObject2 widgetsContainer = verifyActiveContainer();
-        final Point displaySize = mLauncher.getRealDisplaySize();
-        final BySelector labelSelector = By.clazz("android.widget.TextView").text(labelText);
-
-        int i = 0;
-        for (; ; ) {
-            final Collection<UiObject2> cells = mLauncher.getObjectsInContainer(
-                    widgetsContainer, "widgets_cell_list_container");
-            mLauncher.assertTrue("Widgets doesn't have 2 rows", cells.size() >= 2);
-            for (UiObject2 cell : cells) {
-                final UiObject2 label = cell.findObject(labelSelector);
-                if (label == null) continue;
-
-                final UiObject2 widget = label.getParent().getParent();
-                mLauncher.assertEquals(
-                        "View is not WidgetCell",
-                        "com.android.launcher3.widget.WidgetCell",
-                        widget.getClassName());
-
-                if (widget.getVisibleBounds().bottom <=
-                        displaySize.y - mLauncher.getBottomGestureSize()) {
-                    return new Widget(mLauncher, widget);
-                }
-            }
-
-            mLauncher.assertTrue("Too many attempts", ++i <= 40);
-            mLauncher.scrollToLastVisibleRow(widgetsContainer, cells, 0);
-        }
     }
 }

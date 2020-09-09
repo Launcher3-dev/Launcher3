@@ -68,16 +68,8 @@ public class BackgroundAppState extends OverviewState {
         if (taskCount == 0) {
             return super.getOverviewScaleAndTranslation(launcher);
         }
-        TaskView dummyTask;
-        if (recentsView.getCurrentPage() >= 0) {
-            if (recentsView.getCurrentPage() <= taskCount - 1) {
-                dummyTask = recentsView.getCurrentPageTaskView();
-            } else {
-                dummyTask = recentsView.getTaskViewAt(taskCount - 1);
-            }
-        } else {
-            dummyTask = recentsView.getTaskViewAt(0);
-        }
+        TaskView dummyTask = recentsView.getTaskViewAt(Math.max(taskCount - 1,
+                recentsView.getCurrentPage()));
         return recentsView.getTempClipAnimationHelper().updateForFullscreenOverview(dummyTask)
                 .getScaleAndTranslation();
     }
@@ -98,7 +90,7 @@ public class BackgroundAppState extends OverviewState {
         if ((getVisibleElements(launcher) & HOTSEAT_ICONS) != 0) {
             // Translate hotseat offscreen if we show it in overview.
             ScaleAndTranslation scaleAndTranslation = super.getHotseatScaleAndTranslation(launcher);
-            scaleAndTranslation.translationY += LayoutUtils.getShelfTrackingDistance(launcher,
+            scaleAndTranslation.translationY = LayoutUtils.getShelfTrackingDistance(launcher,
                     launcher.getDeviceProfile());
             return scaleAndTranslation;
         }

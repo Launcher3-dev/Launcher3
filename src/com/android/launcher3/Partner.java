@@ -16,8 +16,6 @@
 
 package com.android.launcher3;
 
-import static com.android.launcher3.util.PackageManagerHelper.findSystemApk;
-
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.util.DisplayMetrics;
@@ -61,7 +59,7 @@ public class Partner {
      */
     public static synchronized Partner get(PackageManager pm) {
         if (!sSearched) {
-            Pair<String, Resources> apkInfo = findSystemApk(ACTION_PARTNER_CUSTOMIZATION, pm);
+            Pair<String, Resources> apkInfo = Utilities.findSystemApk(ACTION_PARTNER_CUSTOMIZATION, pm);
             if (apkInfo != null) {
                 sPartner = new Partner(apkInfo.first, apkInfo.second);
             }

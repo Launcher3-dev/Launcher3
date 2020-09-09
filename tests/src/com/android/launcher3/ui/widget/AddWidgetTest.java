@@ -15,21 +15,26 @@
  */
 package com.android.launcher3.ui.widget;
 
-import static com.android.launcher3.ui.TaplTestsLauncher3.getAppPackageName;
-
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiObject2;
+import android.view.View;
 
+import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppWidgetInfo;
 import com.android.launcher3.LauncherAppWidgetProviderInfo;
-import com.android.launcher3.tapl.Widget;
+import com.android.launcher3.Workspace.ItemOperator;
 import com.android.launcher3.ui.AbstractLauncherUiTest;
 import com.android.launcher3.ui.TestViewHelpers;
+import com.android.launcher3.util.Condition;
+import com.android.launcher3.util.Wait;
 import com.android.launcher3.util.rule.ShellCommandRule;
+import com.android.launcher3.widget.WidgetCell;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,50 +46,45 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class AddWidgetTest extends AbstractLauncherUiTest {
 
-    @Rule
-    public ShellCommandRule mGrantWidgetRule = ShellCommandRule.grantWidgetBind();
+    @Rule public ShellCommandRule mGrantWidgetRule = ShellCommandRule.grantWidgetBind();
 
     @Test
-    @PortraitLandscape
-    public void testDragIcon() throws Throwable {
+    public void testDragIcon_portrait() throws Throwable {
+        lockRotation(true);
+        performTest();
+    }
+
+    @Test
+    @Ignore // b/121280703
+    public void testDragIcon_landscape() throws Throwable {
+        lockRotation(false);
+        performTest();
+    }
+
+    // Convert to TAPL b/131116002
+    private void performTest() throws Throwable {
         clearHomescreen();
-        mDevice.pressHome();
+        mActivityMonitor.startLauncher();
 
         final LauncherAppWidgetProviderInfo widgetInfo =
                 TestViewHelpers.findWidgetProvider(this, false /* hasConfigureScreen */);
 
-        mLauncher.
-                getWorkspace().
-                openAllWidgets().
-                getWidget(widgetInfo.getLabel(mTargetContext.getPackageManager())).
-                dragToWorkspace();
+        // Open widget tray and wait for load complete.
+        final UiObject2 widgetContainer = TestViewHelpers.openWidgetsTray();
+        Wait.atMost(null, Condition.minChildCount(widgetContainer, 2), DEFAULT_UI_TIMEOUT);
 
-        assertTrue(mActivityMonitor.itemExists(
-                (info, view) -> info instanceof LauncherAppWidgetInfo &&
+        // Drag widget to homescreen
+        UiObject2 widget = scrollAndFind(widgetContainer, By.clazz(WidgetCell.class)
+                .hasDescendant(By.text(widgetInfo.getLabel(mTargetContext.getPackageManager()))));
+        TestViewHelpers.dragToWorkspace(widget, false);
+
+        assertTrue(mActivityMonitor.itemExists(new ItemOperator() {
+            @Override
+            public boolean evaluate(ItemInfo info, View view) {
+                return info instanceof LauncherAppWidgetInfo &&
                         ((LauncherAppWidgetInfo) info).providerName.getClassName().equals(
-                                widgetInfo.provider.getClassName())).call());
-
-        final Widget widget = mLauncher.getWorkspace().tryGetWidget(widgetInfo.label,
-                DEFAULT_UI_TIMEOUT);
-        assertNotNull("Widget not found on the workspace", widget);
-        widget.launch(getAppPackageName());
-    }
-
-    /**
-     * Test dragging a custom shortcut to the workspace and launch it.
-     *
-     * A custom shortcut is a 1x1 widget that launches a specific intent when user tap on it.
-     * Custom shortcuts are replaced by deep shortcuts after api 25.
-     */
-    @Test
-    @PortraitLandscape
-    public void testDragCustomShortcut() throws Throwable {
-        clearHomescreen();
-        mDevice.pressHome();
-        mLauncher.getWorkspace().openAllWidgets()
-                .getWidget("com.android.launcher3.testcomponent.CustomShortcutConfigActivity")
-                .dragToWorkspace();
-        mLauncher.getWorkspace().getWorkspaceAppIcon("Shortcut")
-                .launch(getAppPackageName());
+                                widgetInfo.provider.getClassName());
+            }
+        }).call());
     }
 }

@@ -25,7 +25,6 @@ import static com.android.systemui.shared.system.RemoteAnimationTargetCompat.MOD
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.app.ActivityOptions;
-import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
@@ -152,7 +151,7 @@ final class AppToOverviewAnimationProvider<T extends BaseDraggingActivity> imple
     }
 
     @Override
-    public ActivityOptions toActivityOptions(Handler handler, long duration, Context context) {
+    public ActivityOptions toActivityOptions(Handler handler, long duration) {
         LauncherAnimationRunner runner = new LauncherAnimationRunner(handler,
                 false /* startAtFrontOfQueue */) {
 
@@ -166,7 +165,7 @@ final class AppToOverviewAnimationProvider<T extends BaseDraggingActivity> imple
                     );
                     return;
                 }
-                result.setAnimation(createWindowAnimation(targetCompats), context);
+                result.setAnimation(createWindowAnimation(targetCompats));
             }
         };
         return ActivityOptionsCompat.makeRemoteAnimation(

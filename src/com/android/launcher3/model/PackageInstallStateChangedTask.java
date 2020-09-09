@@ -18,19 +18,22 @@ package com.android.launcher3.model;
 import android.content.ComponentName;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Process;
 
+import com.android.launcher3.AllAppsList;
 import com.android.launcher3.AppInfo;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherAppWidgetInfo;
 import com.android.launcher3.LauncherModel.CallbackTask;
-import com.android.launcher3.model.BgDataModel.Callbacks;
+import com.android.launcher3.LauncherModel.Callbacks;
 import com.android.launcher3.PromiseAppInfo;
 import com.android.launcher3.WorkspaceItemInfo;
 import com.android.launcher3.compat.PackageInstallerCompat;
 import com.android.launcher3.compat.PackageInstallerCompat.PackageInstallInfo;
 import com.android.launcher3.util.InstantAppResolver;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -53,7 +56,7 @@ public class PackageInstallStateChangedTask extends BaseModelUpdateTask {
                 ApplicationInfo ai = app.getContext()
                         .getPackageManager().getApplicationInfo(mInstallInfo.packageName, 0);
                 if (InstantAppResolver.newInstance(app.getContext()).isInstantApp(ai)) {
-                    app.getModel().onPackageAdded(ai.packageName, mInstallInfo.user);
+                    app.getModel().onPackageAdded(ai.packageName, Process.myUserHandle());
                 }
             } catch (PackageManager.NameNotFoundException e) {
                 // Ignore
@@ -63,11 +66,41 @@ public class PackageInstallStateChangedTask extends BaseModelUpdateTask {
         }
 
         synchronized (apps) {
-            PromiseAppInfo updated = apps.updatePromiseInstallInfo(mInstallInfo);
-            if (updated != null) {
-                scheduleCallbackTask(c -> c.bindPromiseAppProgressUpdated(updated));
+            PromiseAppInfo updated = null;
+            final ArrayList<AppInfo> removed = new ArrayList<>();
+            for (int i=0; i < apps.size(); i++) {
+                final AppInfo appInfo = apps.get(i);
+                final ComponentName tgtComp = appInfo.getTargetComponent();
+                if (tgtComp != null && tgtComp.getPackageName().equals(mInstallInfo.packageName)) {
+                    if (appInfo instanceof PromiseAppInfo) {
+                        final PromiseAppInfo promiseAppInfo = (PromiseAppInfo) appInfo;
+                        if (mInstallInfo.state == PackageInstallerCompat.STATUS_INSTALLING) {
+                            promiseAppInfo.level = mInstallInfo.progress;
+                            updated = promiseAppInfo;
+                        } else if (mInstallInfo.state == PackageInstallerCompat.STATUS_FAILED) {
+                            apps.removePromiseApp(appInfo);
+                            removed.add(appInfo);
+                        }
+                    }
+                }
             }
-            bindApplicationsIfNeeded();
+            if (updated != null) {
+                final PromiseAppInfo updatedPromiseApp = updated;
+                scheduleCallbackTask(new CallbackTask() {
+                    @Override
+                    public void execute(Callbacks callbacks) {
+                        callbacks.bindPromiseAppProgressUpdated(updatedPromiseApp);
+                    }
+                });
+            }
+            if (!removed.isEmpty()) {
+                scheduleCallbackTask(new CallbackTask() {
+                    @Override
+                    public void execute(Callbacks callbacks) {
+                        callbacks.bindAppInfosRemoved(removed);
+                    }
+                });
+            }
         }
 
         synchronized (dataModel) {

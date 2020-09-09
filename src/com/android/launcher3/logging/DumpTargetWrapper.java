@@ -15,22 +15,17 @@
  */
 package com.android.launcher3.logging;
 
-import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
-
-import android.content.ComponentName;
 import android.os.Process;
 import android.text.TextUtils;
 
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.LauncherAppWidgetInfo;
 import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.WorkspaceItemInfo;
 import com.android.launcher3.model.nano.LauncherDumpProto;
 import com.android.launcher3.model.nano.LauncherDumpProto.ContainerType;
 import com.android.launcher3.model.nano.LauncherDumpProto.DumpTarget;
 import com.android.launcher3.model.nano.LauncherDumpProto.ItemType;
 import com.android.launcher3.model.nano.LauncherDumpProto.UserType;
-import com.android.launcher3.util.ShortcutUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,22 +73,19 @@ public class DumpTargetWrapper {
     public DumpTarget newItemTarget(ItemInfo info) {
         DumpTarget dt = new DumpTarget();
         dt.type = DumpTarget.Type.ITEM;
-        if (info == null) {
-            return dt;
-        }
+
         switch (info.itemType) {
             case LauncherSettings.Favorites.ITEM_TYPE_APPLICATION:
                 dt.itemType = ItemType.APP_ICON;
                 break;
+            case LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT:
+                dt.itemType = ItemType.UNKNOWN_ITEMTYPE;
+                break;
             case LauncherSettings.Favorites.ITEM_TYPE_APPWIDGET:
                 dt.itemType = ItemType.WIDGET;
                 break;
-            case ITEM_TYPE_DEEP_SHORTCUT:
-            case LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT:
+            case LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT:
                 dt.itemType = ItemType.SHORTCUT;
-                break;
-            default:
-                dt.itemType = ItemType.UNKNOWN_ITEMTYPE;
                 break;
         }
         return dt;
@@ -128,9 +120,6 @@ public class DumpTargetWrapper {
     }
 
     private static String getItemStr(DumpTarget t) {
-        if (t == null) {
-            return "";
-        }
         String typeStr = LoggerUtils.getFieldName(t.itemType, ItemType.class);
         if (!TextUtils.isEmpty(t.packageName)) {
             typeStr += ", package=" + t.packageName;
@@ -143,15 +132,8 @@ public class DumpTargetWrapper {
     }
 
     public DumpTarget writeToDumpTarget(ItemInfo info) {
-        if (info == null) {
-            return node;
-        }
-        if (ShortcutUtil.isDeepShortcut(info)) {
-            node.component = ((WorkspaceItemInfo) info).getDeepShortcutId();
-        } else {
-            ComponentName cmp = info.getTargetComponent();
-            node.component = cmp == null ? "" : cmp.flattenToString();
-        }
+        node.component = info.getTargetComponent() == null? "":
+                info.getTargetComponent().flattenToString();
         node.packageName = info.getTargetComponent() == null? "":
                 info.getTargetComponent().getPackageName();
         if (info instanceof LauncherAppWidgetInfo) {

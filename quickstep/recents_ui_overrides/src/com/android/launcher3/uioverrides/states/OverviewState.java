@@ -22,7 +22,6 @@ import static com.android.launcher3.LauncherAnimUtils.SCALE_PROPERTY;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_FADE;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_SCALE;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_TRANSLATE_X;
-import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_TRANSLATE_Y;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_WORKSPACE_FADE;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_WORKSPACE_SCALE;
 import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_WORKSPACE_TRANSLATE;
@@ -44,10 +43,10 @@ import com.android.launcher3.R;
 import com.android.launcher3.Workspace;
 import com.android.launcher3.allapps.DiscoveryBounce;
 import com.android.launcher3.anim.AnimatorSetBuilder;
+import com.android.launcher3.uioverrides.UiFactory;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 import com.android.quickstep.SysUINavigationMode;
-import com.android.quickstep.util.LayoutUtils;
 import com.android.quickstep.views.RecentsView;
 import com.android.quickstep.views.TaskView;
 
@@ -92,19 +91,8 @@ public class OverviewState extends LauncherState {
     @Override
     public ScaleAndTranslation getHotseatScaleAndTranslation(Launcher launcher) {
         if ((getVisibleElements(launcher) & HOTSEAT_ICONS) != 0) {
-            DeviceProfile dp = launcher.getDeviceProfile();
-            if (dp.allAppsIconSizePx >= dp.iconSizePx) {
-                return new ScaleAndTranslation(1, 0, 0);
-            } else {
-                float scale = ((float) dp.allAppsIconSizePx) / dp.iconSizePx;
-                // Distance between the screen center (which is the pivotY for hotseat) and the
-                // bottom of the hotseat (which we want to preserve)
-                float distanceFromBottom = dp.heightPx / 2 - dp.hotseatBarBottomPaddingPx;
-                // On scaling, the bottom edge is moved closer to the pivotY. We move the
-                // hotseat back down so that the bottom edge's position is preserved.
-                float translationY = distanceFromBottom * (1 - scale);
-                return new ScaleAndTranslation(scale, 0, translationY);
-            }
+            // If the hotseat icons are visible in overview, keep them in their normal position.
+            return super.getWorkspaceScaleAndTranslation(launcher);
         }
         return getWorkspaceScaleAndTranslation(launcher);
     }
@@ -140,15 +128,14 @@ public class OverviewState extends LauncherState {
         if (launcher.getDeviceProfile().isVerticalBarLayout()) {
             return VERTICAL_SWIPE_INDICATOR | RECENTS_CLEAR_ALL_BUTTON;
         } else {
-            boolean hasAllAppsHeaderExtra = launcher.getAppsView() != null
-                    && launcher.getAppsView().getFloatingHeaderView().hasVisibleContent();
             return HOTSEAT_SEARCH_BOX | VERTICAL_SWIPE_INDICATOR | RECENTS_CLEAR_ALL_BUTTON |
-                    (hasAllAppsHeaderExtra ? ALL_APPS_HEADER_EXTRA : HOTSEAT_ICONS);
+                    (launcher.getAppsView().getFloatingHeaderView().hasVisibleContent()
+                            ? ALL_APPS_HEADER_EXTRA : HOTSEAT_ICONS);
         }
     }
 
     @Override
-    public float getOverviewScrimAlpha(Launcher launcher) {
+    public float getWorkspaceScrimAlpha(Launcher launcher) {
         return 0.5f;
     }
 
@@ -172,7 +159,11 @@ public class OverviewState extends LauncherState {
     }
 
     public static float getDefaultSwipeHeight(Launcher launcher) {
-        return LayoutUtils.getDefaultSwipeHeight(launcher, launcher.getDeviceProfile());
+        return getDefaultSwipeHeight(launcher.getDeviceProfile());
+    }
+
+    public static float getDefaultSwipeHeight(DeviceProfile dp) {
+        return dp.allAppsCellHeightPx - dp.allAppsIconTextSizePx;
     }
 
     @Override
@@ -206,7 +197,6 @@ public class OverviewState extends LauncherState {
             builder.setInterpolator(ANIM_WORKSPACE_FADE, OVERSHOOT_1_2);
             builder.setInterpolator(ANIM_OVERVIEW_SCALE, OVERSHOOT_1_2);
             builder.setInterpolator(ANIM_OVERVIEW_TRANSLATE_X, OVERSHOOT_1_7);
-            builder.setInterpolator(ANIM_OVERVIEW_TRANSLATE_Y, OVERSHOOT_1_7);
             builder.setInterpolator(ANIM_OVERVIEW_FADE, OVERSHOOT_1_2);
         }
     }

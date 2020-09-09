@@ -15,8 +15,8 @@
  */
 package com.android.quickstep;
 
-import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
-import static com.android.systemui.shared.system.ActivityManagerWrapper.CLOSE_SYSTEM_WINDOWS_REASON_RECENTS;
+import static com.android.systemui.shared.system.ActivityManagerWrapper
+        .CLOSE_SYSTEM_WINDOWS_REASON_RECENTS;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -25,12 +25,11 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.ViewConfiguration;
 
 import com.android.launcher3.BaseDraggingActivity;
+import com.android.launcher3.MainThreadExecutor;
 import com.android.launcher3.logging.UserEventDispatcher;
-import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.quickstep.ActivityControlHelper.ActivityInitListener;
 import com.android.quickstep.views.RecentsView;
@@ -48,6 +47,7 @@ public class OverviewCommandHelper {
     private final Context mContext;
     private final ActivityManagerWrapper mAM;
     private final RecentsModel mRecentsModel;
+    private final MainThreadExecutor mMainThreadExecutor;
     private final OverviewComponentObserver mOverviewComponentObserver;
 
     private long mLastToggleTime;
@@ -55,6 +55,7 @@ public class OverviewCommandHelper {
     public OverviewCommandHelper(Context context, OverviewComponentObserver observer) {
         mContext = context;
         mAM = ActivityManagerWrapper.getInstance();
+        mMainThreadExecutor = new MainThreadExecutor();
         mRecentsModel = RecentsModel.INSTANCE.get(mContext);
         mOverviewComponentObserver = observer;
     }
@@ -66,19 +67,19 @@ public class OverviewCommandHelper {
         }
 
         mAM.closeSystemWindows(CLOSE_SYSTEM_WINDOWS_REASON_RECENTS);
-        MAIN_EXECUTOR.execute(new RecentsActivityCommand<>());
+        mMainThreadExecutor.execute(new RecentsActivityCommand<>());
     }
 
     public void onOverviewShown(boolean triggeredFromAltTab) {
-        MAIN_EXECUTOR.execute(new ShowRecentsCommand(triggeredFromAltTab));
+        mMainThreadExecutor.execute(new ShowRecentsCommand(triggeredFromAltTab));
     }
 
     public void onOverviewHidden() {
-        MAIN_EXECUTOR.execute(new HideRecentsCommand());
+        mMainThreadExecutor.execute(new HideRecentsCommand());
     }
 
     public void onTip(int actionType, int viewType) {
-        MAIN_EXECUTOR.execute(() ->
+        mMainThreadExecutor.execute(() ->
                 UserEventDispatcher.newInstance(mContext).logActionTip(actionType, viewType));
     }
 
@@ -98,7 +99,6 @@ public class OverviewCommandHelper {
 
         @Override
         protected void onTransitionComplete() {
-            // TODO(b/138729100) This doesn't execute first time launcher is run
             if (mTriggeredFromAltTab) {
                 RecentsView rv = (RecentsView) mHelper.getVisibleRecentsView();
                 if (rv == null) {
@@ -109,7 +109,7 @@ public class OverviewCommandHelper {
                 TaskView taskView = rv.getNextTaskView();
                 if (taskView == null) {
                     if (rv.getTaskViewCount() > 0) {
-                        taskView = rv.getTaskViewAt(0);
+                        taskView = (TaskView) rv.getPageAt(0);
                         taskView.requestFocus();
                     } else {
                         rv.requestFocus();
@@ -177,7 +177,7 @@ public class OverviewCommandHelper {
             // Otherwise, start overview.
             mListener = mHelper.createActivityInitListener(this::onActivityReady);
             mListener.registerAndStartActivity(mOverviewComponentObserver.getOverviewIntent(),
-                    this::createWindowAnimation, mContext, MAIN_EXECUTOR.getHandler(),
+                    this::createWindowAnimation, mContext, mMainThreadExecutor.getHandler(),
                     mAnimationProvider.getRecentsLaunchDuration());
         }
 

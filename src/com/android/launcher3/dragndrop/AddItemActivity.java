@@ -20,7 +20,6 @@ import static com.android.launcher3.logging.LoggerUtils.newCommandAction;
 import static com.android.launcher3.logging.LoggerUtils.newContainerTarget;
 import static com.android.launcher3.logging.LoggerUtils.newItemTarget;
 import static com.android.launcher3.logging.LoggerUtils.newLauncherEvent;
-import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 
 import android.annotation.TargetApi;
 import android.app.ActivityOptions;
@@ -48,6 +47,7 @@ import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherAppWidgetHost;
 import com.android.launcher3.LauncherAppWidgetProviderInfo;
+import com.android.launcher3.LauncherModel;
 import com.android.launcher3.R;
 import com.android.launcher3.compat.AppWidgetManagerCompat;
 import com.android.launcher3.compat.LauncherAppsCompatVO;
@@ -55,6 +55,7 @@ import com.android.launcher3.model.WidgetItem;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 import com.android.launcher3.util.InstantAppResolver;
+import com.android.launcher3.util.LooperExecutor;
 import com.android.launcher3.views.BaseDragLayer;
 import com.android.launcher3.widget.PendingAddShortcutInfo;
 import com.android.launcher3.widget.PendingAddWidgetInfo;
@@ -152,6 +153,16 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
         PinItemDragListener listener = new PinItemDragListener(mRequest, bounds,
                 img.getBitmap().getWidth(), img.getWidth());
 
+        Intent homeIntent = listener.addToIntent(
+                new Intent(Intent.ACTION_MAIN)
+                        .addCategory(Intent.CATEGORY_HOME)
+                        .setPackage(getPackageName())
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+
+        listener.initWhenReady();
+        startActivity(homeIntent,
+                ActivityOptions.makeCustomAnimation(this, 0, android.R.anim.fade_out).toBundle());
+        mFinishOnPause = true;
 
         // Start a system drag and drop. We use a transparent bitmap as preview for system drag
         // as the preview is handled internally by launcher.
@@ -168,18 +179,6 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
                 outShadowTouchPoint.set(SHADOW_SIZE / 2, SHADOW_SIZE / 2);
             }
         }, null, View.DRAG_FLAG_GLOBAL);
-
-
-        Intent homeIntent = listener.addToIntent(
-                new Intent(Intent.ACTION_MAIN)
-                        .addCategory(Intent.CATEGORY_HOME)
-                        .setPackage(getPackageName())
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-
-        listener.initWhenReady();
-        startActivity(homeIntent,
-                ActivityOptions.makeCustomAnimation(this, 0, android.R.anim.fade_out).toBundle());
-        mFinishOnPause = true;
         return false;
     }
 
@@ -233,7 +232,7 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
                 mWidgetCell.applyFromCellItem(item, mApp.getWidgetCache());
                 mWidgetCell.ensurePreview();
             }
-        }.executeOnExecutor(MODEL_EXECUTOR);
+        }.executeOnExecutor(new LooperExecutor(LauncherModel.getWorkerLooper()));
         // TODO: Create a worker looper executor and reuse that everywhere.
     }
 

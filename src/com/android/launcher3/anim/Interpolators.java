@@ -16,9 +16,8 @@
 
 package com.android.launcher3.anim;
 
-import static com.android.launcher3.util.DefaultDisplay.getSingleFrameMs;
+import static com.android.launcher3.Utilities.SINGLE_FRAME_MS;
 
-import android.content.Context;
 import android.graphics.Path;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -39,7 +38,6 @@ public class Interpolators {
     public static final Interpolator LINEAR = new LinearInterpolator();
 
     public static final Interpolator ACCEL = new AccelerateInterpolator();
-    public static final Interpolator ACCEL_0_75 = new AccelerateInterpolator(0.75f);
     public static final Interpolator ACCEL_1_5 = new AccelerateInterpolator(1.5f);
     public static final Interpolator ACCEL_2 = new AccelerateInterpolator(2);
 
@@ -49,7 +47,6 @@ public class Interpolators {
     public static final Interpolator DEACCEL_2 = new DecelerateInterpolator(2);
     public static final Interpolator DEACCEL_2_5 = new DecelerateInterpolator(2.5f);
     public static final Interpolator DEACCEL_3 = new DecelerateInterpolator(3f);
-    public static final Interpolator DEACCEL_5 = new DecelerateInterpolator(5f);
 
     public static final Interpolator ACCEL_DEACCEL = new AccelerateDecelerateInterpolator();
 
@@ -147,8 +144,7 @@ public class Interpolators {
     public static Interpolator clampToProgress(Interpolator interpolator, float lowerBound,
             float upperBound) {
         if (upperBound <= lowerBound) {
-            throw new IllegalArgumentException(String.format(
-                    "lowerBound (%f) must be less than upperBound (%f)", lowerBound, upperBound));
+            throw new IllegalArgumentException("lowerBound must be less than upperBound");
         }
         return t -> {
             if (t < lowerBound) {
@@ -191,13 +187,13 @@ public class Interpolators {
          * @param totalDistancePx The distance against which progress is calculated.
          */
         public OvershootParams(float startProgress, float overshootPastProgress,
-                float endProgress, float velocityPxPerMs, int totalDistancePx, Context context) {
+                float endProgress, float velocityPxPerMs, int totalDistancePx) {
             velocityPxPerMs = Math.abs(velocityPxPerMs);
             start = startProgress;
             int startPx = (int) (start * totalDistancePx);
             // Overshoot by about half a frame.
             float overshootBy = OVERSHOOT_FACTOR * velocityPxPerMs *
-                    getSingleFrameMs(context) / totalDistancePx / 2;
+                    SINGLE_FRAME_MS / totalDistancePx / 2;
             overshootBy = Utilities.boundToRange(overshootBy, 0.02f, 0.15f);
             end = overshootPastProgress + overshootBy;
             int endPx = (int) (end  * totalDistancePx);

@@ -16,7 +16,6 @@
 
 package com.android.launcher3.notification;
 
-import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 import static com.android.launcher3.util.SecureSettingsObserver.newNotificationSettingsObserver;
 
 import android.annotation.TargetApi;
@@ -32,8 +31,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
-import androidx.annotation.Nullable;
-
+import com.android.launcher3.LauncherModel;
 import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.SecureSettingsObserver;
@@ -44,6 +42,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.Nullable;
 
 /**
  * A {@link NotificationListenerService} that sends updates to its
@@ -141,7 +141,7 @@ public class NotificationListener extends NotificationListenerService {
 
     public NotificationListener() {
         super();
-        mWorkerHandler = new Handler(MODEL_EXECUTOR.getLooper(), mWorkerCallback);
+        mWorkerHandler = new Handler(LauncherModel.getWorkerLooper(), mWorkerCallback);
         mUiHandler = new Handler(Looper.getMainLooper(), mUiCallback);
         sNotificationListenerInstance = this;
     }

@@ -16,8 +16,6 @@
 
 package com.android.launcher3.model;
 
-import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
-
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -33,25 +31,23 @@ import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherAppWidgetHost;
 import com.android.launcher3.LauncherAppWidgetInfo;
 import com.android.launcher3.LauncherModel;
+import com.android.launcher3.LauncherModel.Callbacks;
 import com.android.launcher3.LauncherProvider;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.LauncherSettings.Settings;
-import com.android.launcher3.Utilities;
 import com.android.launcher3.WorkspaceItemInfo;
+import com.android.launcher3.Utilities;
 import com.android.launcher3.config.FeatureFlags;
-import com.android.launcher3.logging.FileLog;
-import com.android.launcher3.model.BgDataModel.Callbacks;
 import com.android.launcher3.util.ContentWriter;
 import com.android.launcher3.util.ItemInfoMatcher;
+import com.android.launcher3.util.LooperExecutor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Class for handling model updates.
@@ -65,6 +61,7 @@ public class ModelWriter {
     private final BgDataModel mBgDataModel;
     private final Handler mUiHandler;
 
+    private final Executor mWorkerExecutor;
     private final boolean mHasVerticalHotseat;
     private final boolean mVerifyChanges;
 
@@ -77,6 +74,7 @@ public class ModelWriter {
         mContext = context;
         mModel = model;
         mBgDataModel = dataModel;
+        mWorkerExecutor = new LooperExecutor(LauncherModel.getWorkerLooper());
         mHasVerticalHotseat = hasVerticalHotseat;
         mVerifyChanges = verifyChanges;
         mUiHandler = new Handler(Looper.getMainLooper());
@@ -103,7 +101,7 @@ public class ModelWriter {
      */
     public void addOrMoveItemInDatabase(ItemInfo item,
             int container, int screenId, int cellX, int cellY) {
-        if (item.id == ItemInfo.NO_ID) {
+        if (item.container == ItemInfo.NO_ID) {
             // From all apps
             addItemToDatabase(item, container, screenId, cellX, cellY);
         } else {
@@ -196,7 +194,7 @@ public class ModelWriter {
         item.spanX = spanX;
         item.spanY = spanY;
 
-        ((Executor) MODEL_EXECUTOR).execute(new UpdateItemRunnable(item, () ->
+        mWorkerExecutor.execute(new UpdateItemRunnable(item, () ->
                 new ContentWriter(mContext)
                         .put(Favorites.CONTAINER, item.container)
                         .put(Favorites.CELLX, item.cellX)
@@ -211,7 +209,7 @@ public class ModelWriter {
      * Update an item to the database in a specified container.
      */
     public void updateItemInDatabase(ItemInfo item) {
-        ((Executor) MODEL_EXECUTOR).execute(new UpdateItemRunnable(item, () -> {
+        mWorkerExecutor.execute(new UpdateItemRunnable(item, () -> {
             ContentWriter writer = new ContentWriter(mContext);
             item.onAddToDatabase(writer);
             return writer;
@@ -231,7 +229,7 @@ public class ModelWriter {
 
         ModelVerifier verifier = new ModelVerifier();
         final StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-        ((Executor) MODEL_EXECUTOR).execute(() -> {
+        mWorkerExecutor.execute(() -> {
             // Write the item on background thread, as some properties might have been updated in
             // the background.
             final ContentWriter writer = new ContentWriter(mContext);
@@ -265,12 +263,9 @@ public class ModelWriter {
     /**
      * Removes the specified items from the database
      */
-    public void deleteItemsFromDatabase(final Collection<? extends ItemInfo> items) {
+    public void deleteItemsFromDatabase(final Iterable<? extends ItemInfo> items) {
         ModelVerifier verifier = new ModelVerifier();
-        FileLog.d(TAG, "removing items from db " + items.stream().map(
-                (item) -> item.getTargetComponent() == null ? ""
-                        : item.getTargetComponent().getPackageName()).collect(
-                Collectors.joining(",")), new Exception());
+
         enqueueDeleteRunnable(() -> {
             for (ItemInfo item : items) {
                 final Uri uri = Favorites.getContentUri(item.id);
@@ -338,14 +333,14 @@ public class ModelWriter {
         if (mPreparingToUndo) {
             mDeleteRunnables.add(r);
         } else {
-            ((Executor) MODEL_EXECUTOR).execute(r);
+            mWorkerExecutor.execute(r);
         }
     }
 
     public void commitDelete() {
         mPreparingToUndo = false;
         for (Runnable runnable : mDeleteRunnables) {
-            ((Executor) MODEL_EXECUTOR).execute(runnable);
+            mWorkerExecutor.execute(runnable);
         }
         mDeleteRunnables.clear();
     }

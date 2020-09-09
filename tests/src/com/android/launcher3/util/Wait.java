@@ -1,7 +1,6 @@
 package com.android.launcher3.util;
 
 import android.os.SystemClock;
-import android.util.Log;
 
 import org.junit.Assert;
 
@@ -17,9 +16,7 @@ public class Wait {
     }
 
     public static void atMost(String message, Condition condition, long timeout, long sleepMillis) {
-        final long startTime = SystemClock.uptimeMillis();
-        long endTime = startTime + timeout;
-        Log.d("Wait", "atMost: " + startTime + " - " + endTime);
+        long endTime = SystemClock.uptimeMillis() + timeout;
         while (SystemClock.uptimeMillis() < endTime) {
             try {
                 if (condition.isTrue()) {
@@ -39,7 +36,6 @@ public class Wait {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
-        Log.d("Wait", "atMost: timed out: " + SystemClock.uptimeMillis());
         Assert.fail(message);
     }
 }

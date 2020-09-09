@@ -1,10 +1,5 @@
 package com.android.launcher3.icons;
 
-import static android.graphics.Paint.DITHER_FLAG;
-import static android.graphics.Paint.FILTER_BITMAP_FLAG;
-
-import static com.android.launcher3.icons.ShadowGenerator.BLUR_FACTOR;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -23,7 +18,9 @@ import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
 
-import androidx.annotation.NonNull;
+import static android.graphics.Paint.DITHER_FLAG;
+import static android.graphics.Paint.FILTER_BITMAP_FLAG;
+import static com.android.launcher3.icons.ShadowGenerator.BLUR_FACTOR;
 
 /**
  * This class will be moved to androidx library. There shouldn't be any dependency outside
@@ -35,8 +32,6 @@ public class BaseIconFactory implements AutoCloseable {
     private static final int DEFAULT_WRAPPER_BACKGROUND = Color.WHITE;
     static final boolean ATLEAST_OREO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
     static final boolean ATLEAST_P = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P;
-
-    private static final float ICON_BADGE_SCALE = 0.444f;
 
     private final Rect mOldBounds = new Rect();
     protected final Context mContext;
@@ -158,7 +153,7 @@ public class BaseIconFactory implements AutoCloseable {
      * @param scale                     returns the scale result from normalization
      * @return a bitmap suitable for disaplaying as an icon at various system UIs.
      */
-    public BitmapInfo createBadgedIconBitmap(@NonNull Drawable icon, UserHandle user,
+    public BitmapInfo createBadgedIconBitmap(Drawable icon, UserHandle user,
             boolean shrinkNonAdaptiveIcons, boolean isInstantApp, float[] scale) {
         if (scale == null) {
             scale = new float[1];
@@ -208,11 +203,8 @@ public class BaseIconFactory implements AutoCloseable {
         mDisableColorExtractor = true;
     }
 
-    private Drawable normalizeAndWrapToAdaptiveIcon(@NonNull Drawable icon,
-            boolean shrinkNonAdaptiveIcons, RectF outIconBounds, float[] outScale) {
-        if (icon == null) {
-            return null;
-        }
+    private Drawable normalizeAndWrapToAdaptiveIcon(Drawable icon, boolean shrinkNonAdaptiveIcons,
+            RectF outIconBounds, float[] outScale) {
         float scale = 1f;
 
         if (shrinkNonAdaptiveIcons && ATLEAST_OREO) {
@@ -254,7 +246,7 @@ public class BaseIconFactory implements AutoCloseable {
      * Adds the {@param badge} on top of {@param target} using the badge dimensions.
      */
     public void badgeWithDrawable(Canvas target, Drawable badge) {
-        int badgeSize = getBadgeSizeForIconSize(mIconBitmapSize);
+        int badgeSize = mContext.getResources().getDimensionPixelSize(R.dimen.profile_badge_size);
         badge.setBounds(mIconBitmapSize - badgeSize, mIconBitmapSize - badgeSize,
                 mIconBitmapSize, mIconBitmapSize);
         badge.draw(target);
@@ -268,7 +260,7 @@ public class BaseIconFactory implements AutoCloseable {
      * @param icon drawable that should be flattened to a bitmap
      * @param scale the scale to apply before drawing {@param icon} on the canvas
      */
-    public Bitmap createIconBitmap(@NonNull Drawable icon, float scale, int size) {
+    public Bitmap createIconBitmap(Drawable icon, float scale, int size) {
         Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         if (icon == null) {
             return bitmap;
@@ -332,13 +324,6 @@ public class BaseIconFactory implements AutoCloseable {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                         ? android.R.drawable.sym_def_app_icon : android.R.mipmap.sym_def_app_icon,
                 iconDpi);
-    }
-
-    /**
-     * Returns the correct badge size given an icon size
-     */
-    public static int getBadgeSizeForIconSize(int iconSize) {
-        return (int) (ICON_BADGE_SCALE * iconSize);
     }
 
     /**

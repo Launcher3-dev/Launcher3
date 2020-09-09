@@ -17,12 +17,12 @@ package com.android.launcher3.model;
 
 import android.util.Log;
 
-import com.android.launcher3.AppInfo;
+import com.android.launcher3.AllAppsList;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherModel.ModelUpdateTask;
 import com.android.launcher3.LauncherModel.CallbackTask;
-import com.android.launcher3.model.BgDataModel.Callbacks;
+import com.android.launcher3.LauncherModel.Callbacks;
 import com.android.launcher3.WorkspaceItemInfo;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.ItemInfoMatcher;
@@ -30,7 +30,6 @@ import com.android.launcher3.widget.WidgetListRowEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -96,7 +95,12 @@ public abstract class BaseModelUpdateTask implements ModelUpdateTask {
 
     public void bindUpdatedWorkspaceItems(final ArrayList<WorkspaceItemInfo> updatedShortcuts) {
         if (!updatedShortcuts.isEmpty()) {
-            scheduleCallbackTask(c -> c.bindWorkspaceItemsChanged(updatedShortcuts));
+            scheduleCallbackTask(new CallbackTask() {
+                @Override
+                public void execute(Callbacks callbacks) {
+                    callbacks.bindWorkspaceItemsChanged(updatedShortcuts);
+                }
+            });
         }
     }
 
@@ -109,20 +113,23 @@ public abstract class BaseModelUpdateTask implements ModelUpdateTask {
     public void bindUpdatedWidgets(BgDataModel dataModel) {
         final ArrayList<WidgetListRowEntry> widgets =
                 dataModel.widgetsModel.getWidgetsList(mApp.getContext());
-        scheduleCallbackTask(c -> c.bindAllWidgets(widgets));
+        scheduleCallbackTask(new CallbackTask() {
+            @Override
+            public void execute(Callbacks callbacks) {
+                callbacks.bindAllWidgets(widgets);
+            }
+        });
     }
 
     public void deleteAndBindComponentsRemoved(final ItemInfoMatcher matcher) {
         getModelWriter().deleteItemsFromDatabase(matcher);
 
         // Call the components-removed callback
-        scheduleCallbackTask(c -> c.bindWorkspaceComponentsRemoved(matcher));
-    }
-
-    public void bindApplicationsIfNeeded() {
-        if (mAllAppsList.getAndResetChangeFlag()) {
-            AppInfo[] apps = mAllAppsList.copyData();
-            scheduleCallbackTask(c -> c.bindAllApplications(apps));
-        }
+        scheduleCallbackTask(new CallbackTask() {
+            @Override
+            public void execute(Callbacks callbacks) {
+                callbacks.bindWorkspaceComponentsRemoved(matcher);
+            }
+        });
     }
 }

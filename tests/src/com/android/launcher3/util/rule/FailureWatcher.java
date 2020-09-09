@@ -15,16 +15,17 @@ import java.io.IOException;
 
 public class FailureWatcher extends TestWatcher {
     private static final String TAG = "FailureWatcher";
+    private static int sScreenshotCount = 0;
     final private UiDevice mDevice;
 
     public FailureWatcher(UiDevice device) {
         mDevice = device;
     }
 
-    private static void dumpViewHierarchy(UiDevice device) {
+    private void dumpViewHierarchy() {
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         try {
-            device.dumpWindowHierarchy(stream);
+            mDevice.dumpWindowHierarchy(stream);
             stream.flush();
             stream.close();
             for (String line : stream.toString().split("\\r?\\n")) {
@@ -37,27 +38,22 @@ public class FailureWatcher extends TestWatcher {
 
     @Override
     protected void failed(Throwable e, Description description) {
-        onError(mDevice, description, e);
-    }
-
-    public static void onError(UiDevice device, Description description, Throwable e) {
-        if (device == null) return;
+        if (mDevice == null) return;
         final String pathname = getInstrumentation().getTargetContext().
-                getFilesDir().getPath() + "/TestScreenshot-" + description.getMethodName()
-                + ".png";
+                getFilesDir().getPath() + "/TaplTestScreenshot" + sScreenshotCount++ + ".png";
         Log.e(TAG, "Failed test " + description.getMethodName() +
                 ", screenshot will be saved to " + pathname +
                 ", track trace is below, UI object dump is further below:\n" +
                 Log.getStackTraceString(e));
-        dumpViewHierarchy(device);
+        dumpViewHierarchy();
 
         try {
-            final String dumpsysResult = device.executeShellCommand(
+            final String dumpsysResult = mDevice.executeShellCommand(
                     "dumpsys activity service TouchInteractionService");
             Log.d(TAG, "TouchInteractionService: " + dumpsysResult);
         } catch (IOException ex) {
         }
 
-        device.takeScreenshot(new File(pathname));
+        mDevice.takeScreenshot(new File(pathname));
     }
 }

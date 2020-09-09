@@ -32,6 +32,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils.TruncateAt;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.Property;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -53,8 +54,8 @@ import com.android.launcher3.icons.DotRenderer;
 import com.android.launcher3.icons.IconCache.IconLoadRequest;
 import com.android.launcher3.icons.IconCache.ItemInfoUpdateReceiver;
 import com.android.launcher3.model.PackageItemInfo;
+import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.views.ActivityContext;
-import com.android.launcher3.views.IconLabelDotView;
 
 import java.text.NumberFormat;
 
@@ -63,8 +64,7 @@ import java.text.NumberFormat;
  * because we want to make the bubble taller than the text and TextView's clip is
  * too aggressive.
  */
-public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, OnResumeCallback,
-        IconLabelDotView {
+public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, OnResumeCallback {
 
     private static final int DISPLAY_WORKSPACE = 0;
     private static final int DISPLAY_ALL_APPS = 1;
@@ -104,8 +104,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     private Drawable mIcon;
     private final boolean mCenterVertically;
 
-    private final int mDisplay;
-
     private final CheckLongPressHelper mLongPressHelper;
     private final StylusEventHelper mStylusEventHelper;
     private final float mSlop;
@@ -135,9 +133,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     @ViewDebug.ExportedProperty(category = "launcher")
     private boolean mDisableRelayout = false;
 
-    @ViewDebug.ExportedProperty(category = "launcher")
-    private final boolean mIgnorePaddingTouch;
-
     private IconLoadRequest mIconLoadRequest;
 
     public BubbleTextView(Context context) {
@@ -157,32 +152,26 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
                 R.styleable.BubbleTextView, defStyle, 0);
         mLayoutHorizontal = a.getBoolean(R.styleable.BubbleTextView_layoutHorizontal, false);
 
-        mDisplay = a.getInteger(R.styleable.BubbleTextView_iconDisplay, DISPLAY_WORKSPACE);
+        int display = a.getInteger(R.styleable.BubbleTextView_iconDisplay, DISPLAY_WORKSPACE);
         final int defaultIconSize;
-        if (mDisplay == DISPLAY_WORKSPACE) {
+        if (display == DISPLAY_WORKSPACE) {
             DeviceProfile grid = mActivity.getWallpaperDeviceProfile();
             setTextSize(TypedValue.COMPLEX_UNIT_PX, grid.iconTextSizePx);
             setCompoundDrawablePadding(grid.iconDrawablePaddingPx);
             defaultIconSize = grid.iconSizePx;
-            mIgnorePaddingTouch = true;
-        } else if (mDisplay == DISPLAY_ALL_APPS) {
+        } else if (display == DISPLAY_ALL_APPS) {
             DeviceProfile grid = mActivity.getDeviceProfile();
             setTextSize(TypedValue.COMPLEX_UNIT_PX, grid.allAppsIconTextSizePx);
             setCompoundDrawablePadding(grid.allAppsIconDrawablePaddingPx);
             defaultIconSize = grid.allAppsIconSizePx;
-            mIgnorePaddingTouch = true;
-        } else if (mDisplay == DISPLAY_FOLDER) {
+        } else if (display == DISPLAY_FOLDER) {
             DeviceProfile grid = mActivity.getDeviceProfile();
             setTextSize(TypedValue.COMPLEX_UNIT_PX, grid.folderChildTextSizePx);
             setCompoundDrawablePadding(grid.folderChildDrawablePaddingPx);
             defaultIconSize = grid.folderChildIconSizePx;
-            mIgnorePaddingTouch = true;
         } else {
-            // widget_selection or shortcut_popup
             defaultIconSize = mActivity.getDeviceProfile().iconSizePx;
-            mIgnorePaddingTouch = false;
         }
-
         mCenterVertically = a.getBoolean(R.styleable.BubbleTextView_centerVertically, false);
 
         mIconSize = a.getDimensionPixelSize(R.styleable.BubbleTextView_iconSizeOverride,
@@ -330,15 +319,9 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // ignore events if they happen in padding area
-        if (event.getAction() == MotionEvent.ACTION_DOWN && mIgnorePaddingTouch
-                && (event.getY() < getPaddingTop()
-                || event.getX() < getPaddingLeft()
-                || event.getY() > getHeight() - getPaddingBottom()
-                || event.getX() > getWidth() - getPaddingRight())) {
-            return false;
+        if (TestProtocol.sDebugTracing) {
+            Log.d(TestProtocol.NO_START_TAG, "BubbleTextView.onTouchEvent " + event);
         }
-
         // Call the superclass onTouchEvent first, because sometimes it changes the state to
         // isPressed() on an ACTION_UP
         boolean result = super.onTouchEvent(event);
@@ -433,8 +416,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         }
     }
 
-    @Override
-    public void setForceHideDot(boolean forceHideDot) {
+    public void forceHideDot(boolean forceHideDot) {
         if (mForceHideDot == forceHideDot) {
             return;
         }
@@ -584,11 +566,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
             mDotInfo = mActivity.getDotInfoForItem(itemInfo);
             boolean isDotted = mDotInfo != null;
             float newDotScale = isDotted ? 1f : 0;
-            if (mDisplay == DISPLAY_ALL_APPS) {
-                mDotRenderer = mActivity.getDeviceProfile().mDotRendererAllApps;
-            } else {
-                mDotRenderer = mActivity.getDeviceProfile().mDotRendererWorkSpace;
-            }
+            mDotRenderer = mActivity.getDeviceProfile().mDotRenderer;
             if (wasDotted || isDotted) {
                 // Animate when a dot is first added or when it is removed.
                 if (animate && (wasDotted ^ isDotted) && isShown()) {
@@ -627,7 +605,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         }
     }
 
-    @Override
     public void setIconVisible(boolean visible) {
         mIsIconVisible = visible;
         Drawable icon = visible ? mIcon : new ColorDrawable(Color.TRANSPARENT);

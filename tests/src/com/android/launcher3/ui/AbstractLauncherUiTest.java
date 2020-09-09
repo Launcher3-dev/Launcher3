@@ -15,16 +15,16 @@
  */
 package com.android.launcher3.ui;
 
-import static com.android.launcher3.tapl.LauncherInstrumentation.ContainerType;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.launcher3.ui.TaplTestsLauncher3.getAppPackageName;
-import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static java.lang.System.exit;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,7 +39,9 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import com.android.launcher3.Launcher;
@@ -47,21 +49,17 @@ import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.LauncherState;
-import com.android.launcher3.LauncherStateManager;
+import com.android.launcher3.MainThreadExecutor;
+import com.android.launcher3.ResourceUtils;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.compat.LauncherAppsCompat;
 import com.android.launcher3.model.AppLaunchTracker;
 import com.android.launcher3.tapl.LauncherInstrumentation;
 import com.android.launcher3.tapl.TestHelpers;
-import com.android.launcher3.testcomponent.TestCommandReceiver;
-import com.android.launcher3.testing.TestProtocol;
-import com.android.launcher3.util.LooperExecutor;
-import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.Wait;
 import com.android.launcher3.util.rule.FailureWatcher;
 import com.android.launcher3.util.rule.LauncherActivityRule;
 import com.android.launcher3.util.rule.ShellCommandRule;
-import com.android.launcher3.util.rule.TestStabilityRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -88,12 +86,14 @@ public abstract class AbstractLauncherUiTest {
     public static final long DEFAULT_ACTIVITY_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     public static final long DEFAULT_BROADCAST_TIMEOUT_SECS = 5;
 
-    public static final long DEFAULT_UI_TIMEOUT = 60000; // b/136278866
+    public static final long SHORT_UI_TIMEOUT = 300;
+    public static final long DEFAULT_UI_TIMEOUT = 10000;
     private static final String TAG = "AbstractLauncherUiTest";
 
-    protected LooperExecutor mMainThreadExecutor = MAIN_EXECUTOR;
+    protected MainThreadExecutor mMainThreadExecutor = new MainThreadExecutor();
     protected final UiDevice mDevice = UiDevice.getInstance(getInstrumentation());
-    protected final LauncherInstrumentation mLauncher = new LauncherInstrumentation();
+    protected final LauncherInstrumentation mLauncher =
+            new LauncherInstrumentation(getInstrumentation());
     protected Context mTargetContext;
     protected String mTargetPackage;
 
@@ -103,17 +103,7 @@ public abstract class AbstractLauncherUiTest {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
-        if (TestHelpers.isInLauncherProcess()) {
-            Utilities.enableRunningInTestHarnessForTests();
-            mLauncher.setSystemHealthSupplier(startTime -> TestCommandReceiver.callCommand(
-                    TestCommandReceiver.GET_SYSTEM_HEALTH_MESSAGE, startTime.toString()).
-                    getString("result"));
-            mLauncher.setOnSettledStateAction(
-                    containerType -> executeOnLauncher(
-                            launcher ->
-                                    checkLauncherIntegrity(launcher, containerType)));
-        }
-        mLauncher.enableDebugTracing();
+        if (TestHelpers.isInLauncherProcess()) Utilities.enableRunningInTestHarnessForTests();
     }
 
     protected final LauncherActivityRule mActivityMonitor = new LauncherActivityRule();
@@ -125,23 +115,6 @@ public abstract class AbstractLauncherUiTest {
     @Rule
     public ShellCommandRule mDisableHeadsUpNotification =
             ShellCommandRule.disableHeadsUpNotification();
-
-    protected void clearPackageData(String pkg) throws IOException, InterruptedException {
-        final CountDownLatch count = new CountDownLatch(2);
-        final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                count.countDown();
-            }
-        };
-        mTargetContext.registerReceiver(broadcastReceiver,
-                PackageManagerHelper.getPackageFilter(pkg,
-                        Intent.ACTION_PACKAGE_RESTARTED, Intent.ACTION_PACKAGE_DATA_CLEARED));
-
-        mDevice.executeShellCommand("pm clear " + pkg);
-        assertTrue(pkg + " didn't restart", count.await(10, TimeUnit.SECONDS));
-        mTargetContext.unregisterReceiver(broadcastReceiver);
-    }
 
     // Annotation for tests that need to be run in portrait and landscape modes.
     @Retention(RetentionPolicy.RUNTIME)
@@ -157,8 +130,7 @@ public abstract class AbstractLauncherUiTest {
 
     @Rule
     public TestRule mOrderSensitiveRules = RuleChain.
-            outerRule(new TestStabilityRule()).
-            around(mActivityMonitor).
+            outerRule(mActivityMonitor).
             around(getRulesInsideActivityMonitor());
 
     public UiDevice getDevice() {
@@ -172,6 +144,8 @@ public abstract class AbstractLauncherUiTest {
 
         mTargetContext = InstrumentationRegistry.getTargetContext();
         mTargetPackage = mTargetContext.getPackageName();
+        // Unlock the phone
+        mDevice.executeShellCommand("input keyevent 82");
     }
 
     @After
@@ -188,14 +162,46 @@ public abstract class AbstractLauncherUiTest {
         }
     }
 
-    protected void clearLauncherData() throws IOException, InterruptedException {
+    protected void lockRotation(boolean naturalOrientation) throws RemoteException {
+        if (naturalOrientation) {
+            mDevice.setOrientationNatural();
+        } else {
+            mDevice.setOrientationRight();
+        }
+    }
+
+    protected void clearLauncherData() throws IOException {
         if (TestHelpers.isInLauncherProcess()) {
             LauncherSettings.Settings.call(mTargetContext.getContentResolver(),
                     LauncherSettings.Settings.METHOD_CREATE_EMPTY_DB);
             resetLoaderState();
         } else {
-            clearPackageData(mDevice.getLauncherPackageName());
-            mLauncher.enableDebugTracing();
+            mDevice.executeShellCommand("pm clear " + mDevice.getLauncherPackageName());
+        }
+    }
+
+    /**
+     * Scrolls the {@param container} until it finds an object matching {@param condition}.
+     *
+     * @return the matching object.
+     */
+    protected UiObject2 scrollAndFind(UiObject2 container, BySelector condition) {
+        final int margin = ResourceUtils.getNavbarSize(
+                ResourceUtils.NAVBAR_BOTTOM_GESTURE_SIZE, mLauncher.getResources()) + 1;
+        container.setGestureMargins(0, 0, 0, margin);
+
+        int i = 0;
+        for (; ; ) {
+            // findObject can only execute after spring settles.
+            mDevice.wait(Until.findObject(condition), SHORT_UI_TIMEOUT);
+            UiObject2 widget = container.findObject(condition);
+            if (widget != null && widget.getVisibleBounds().intersects(
+                    0, 0, mDevice.getDisplayWidth(),
+                    mDevice.getDisplayHeight() - margin)) {
+                return widget;
+            }
+            if (++i > 40) fail("Too many attempts");
+            container.scroll(Direction.DOWN, 1f);
         }
     }
 
@@ -269,30 +275,10 @@ public abstract class AbstractLauncherUiTest {
 
     // Cannot be used in TaplTests after injecting any gesture using Tapl because this can hide
     // flakiness.
-    protected <T> T getOnceNotNull(String message, Function<Launcher, T> f) {
-        return getOnceNotNull(message, f, DEFAULT_ACTIVITY_TIMEOUT);
-    }
-
-    // Cannot be used in TaplTests after injecting any gesture using Tapl because this can hide
-    // flakiness.
     protected void waitForLauncherCondition(
             String message, Function<Launcher, Boolean> condition, long timeout) {
         if (!TestHelpers.isInLauncherProcess()) return;
         Wait.atMost(message, () -> getFromLauncher(condition), timeout);
-    }
-
-    // Cannot be used in TaplTests after injecting any gesture using Tapl because this can hide
-    // flakiness.
-    protected <T> T getOnceNotNull(String message, Function<Launcher, T> f, long timeout) {
-        if (!TestHelpers.isInLauncherProcess()) return null;
-
-        final Object[] output = new Object[1];
-        Wait.atMost(message, () -> {
-            final Object fromLauncher = getFromLauncher(f);
-            output[0] = fromLauncher;
-            return fromLauncher != null;
-        }, timeout);
-        return (T) output[0];
     }
 
     // Cannot be used in TaplTests after injecting any gesture using Tapl because this can hide
@@ -345,33 +331,30 @@ public abstract class AbstractLauncherUiTest {
     }
 
     protected void startAppFast(String packageName) {
-        startIntent(
-                getInstrumentation().getContext().getPackageManager().getLaunchIntentForPackage(
-                        packageName),
-                By.pkg(packageName).depth(0),
-                true /* newTask */);
+        final Instrumentation instrumentation = getInstrumentation();
+        final Intent intent = instrumentation.getContext().getPackageManager().
+                getLaunchIntentForPackage(packageName);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        instrumentation.getTargetContext().startActivity(intent);
+        assertTrue(packageName + " didn't start",
+                mDevice.wait(Until.hasObject(By.pkg(packageName).depth(0)), DEFAULT_UI_TIMEOUT));
     }
 
     protected void startTestActivity(int activityNumber) {
         final String packageName = getAppPackageName();
-        final Intent intent = getInstrumentation().getContext().getPackageManager().
+        final Instrumentation instrumentation = getInstrumentation();
+        final Intent intent = instrumentation.getContext().getPackageManager().
                 getLaunchIntentForPackage(packageName);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setComponent(new ComponentName(packageName,
                 "com.android.launcher3.tests.Activity" + activityNumber));
-        startIntent(intent, By.pkg(packageName).text("TestActivity" + activityNumber),
-                false /* newTask */);
-    }
-
-    private void startIntent(Intent intent, BySelector selector, boolean newTask) {
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        if (newTask) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        } else {
-            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        }
-        getInstrumentation().getTargetContext().startActivity(intent);
-        assertTrue("App didn't start: " + selector,
-                mDevice.wait(Until.hasObject(selector), DEFAULT_UI_TIMEOUT));
+        instrumentation.getTargetContext().startActivity(intent);
+        assertTrue(packageName + " didn't start",
+                mDevice.wait(
+                        Until.hasObject(By.pkg(packageName).text("TestActivity" + activityNumber)),
+                        DEFAULT_UI_TIMEOUT));
     }
 
     public static String resolveSystemApp(String category) {
@@ -403,69 +386,5 @@ public abstract class AbstractLauncherUiTest {
 
     protected int getAllAppsScroll(Launcher launcher) {
         return launcher.getAppsView().getActiveRecyclerView().getCurrentScrollY();
-    }
-
-    private static void checkLauncherIntegrity(
-            Launcher launcher, ContainerType expectedContainerType) {
-        if (launcher != null) {
-            final LauncherStateManager stateManager = launcher.getStateManager();
-            final LauncherState stableState = stateManager.getCurrentStableState();
-
-            assertTrue("Stable state != state: " + stableState.getClass().getSimpleName() + ", "
-                            + stateManager.getState().getClass().getSimpleName(),
-                    stableState == stateManager.getState());
-
-            final boolean isResumed = launcher.hasBeenResumed();
-            assertTrue("hasBeenResumed() != isStarted(), hasBeenResumed(): " + isResumed,
-                    isResumed == launcher.isStarted());
-            assertTrue("hasBeenResumed() != isUserActive(), hasBeenResumed(): " + isResumed,
-                    isResumed == launcher.isUserActive());
-
-            final int ordinal = stableState.ordinal;
-
-            switch (expectedContainerType) {
-                case WORKSPACE:
-                case WIDGETS: {
-                    assertTrue(
-                            "Launcher is not resumed in state: " + expectedContainerType,
-                            isResumed);
-                    assertTrue(TestProtocol.stateOrdinalToString(ordinal),
-                            ordinal == TestProtocol.NORMAL_STATE_ORDINAL);
-                    break;
-                }
-                case ALL_APPS: {
-                    assertTrue(
-                            "Launcher is not resumed in state: " + expectedContainerType,
-                            isResumed);
-                    assertTrue(TestProtocol.stateOrdinalToString(ordinal),
-                            ordinal == TestProtocol.ALL_APPS_STATE_ORDINAL);
-                    break;
-                }
-                case OVERVIEW: {
-                    assertTrue(
-                            "Launcher is not resumed in state: " + expectedContainerType,
-                            isResumed);
-                    assertTrue(TestProtocol.stateOrdinalToString(ordinal),
-                            ordinal == TestProtocol.OVERVIEW_STATE_ORDINAL);
-                    break;
-                }
-                case BACKGROUND: {
-                    assertTrue("Launcher is resumed in state: " + expectedContainerType,
-                            !isResumed);
-                    assertTrue(TestProtocol.stateOrdinalToString(ordinal),
-                            ordinal == TestProtocol.NORMAL_STATE_ORDINAL);
-                    break;
-                }
-                default:
-                    throw new IllegalArgumentException(
-                            "Illegal container: " + expectedContainerType);
-            }
-        } else {
-            assertTrue(
-                    "Container type is not BACKGROUND or FALLBACK_OVERVIEW: "
-                            + expectedContainerType,
-                    expectedContainerType == ContainerType.BACKGROUND ||
-                            expectedContainerType == ContainerType.FALLBACK_OVERVIEW);
-        }
     }
 }

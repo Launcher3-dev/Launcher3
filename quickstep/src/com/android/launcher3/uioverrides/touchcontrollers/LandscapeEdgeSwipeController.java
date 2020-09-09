@@ -11,7 +11,7 @@ import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.LauncherStateManager.AnimationComponents;
 import com.android.launcher3.touch.AbstractStateChangeTouchController;
-import com.android.launcher3.touch.SingleAxisSwipeDetector;
+import com.android.launcher3.touch.SwipeDetector;
 import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action.Direction;
 import com.android.quickstep.RecentsModel;
@@ -24,7 +24,7 @@ public class LandscapeEdgeSwipeController extends AbstractStateChangeTouchContro
     private static final String TAG = "LandscapeEdgeSwipeCtrl";
 
     public LandscapeEdgeSwipeController(Launcher l) {
-        super(l, SingleAxisSwipeDetector.HORIZONTAL);
+        super(l, SwipeDetector.HORIZONTAL);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class LandscapeEdgeSwipeController extends AbstractStateChangeTouchContro
     }
 
     @Override
-    protected int getLogContainerTypeForNormalState(MotionEvent ev) {
+    protected int getLogContainerTypeForNormalState() {
         return LauncherLogProto.ContainerType.NAVBAR;
     }
 

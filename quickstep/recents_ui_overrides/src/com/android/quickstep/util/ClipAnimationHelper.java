@@ -37,7 +37,6 @@ import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
-import com.android.launcher3.anim.Interpolators;
 import com.android.launcher3.views.BaseDragLayer;
 import com.android.quickstep.RecentsModel;
 import com.android.quickstep.views.RecentsView;
@@ -50,6 +49,8 @@ import com.android.systemui.shared.system.SyncRtSurfaceTransactionApplierCompat;
 import com.android.systemui.shared.system.SyncRtSurfaceTransactionApplierCompat.SurfaceParams;
 import com.android.systemui.shared.system.TransactionCompat;
 import com.android.systemui.shared.system.WindowManagerWrapper;
+
+import java.util.function.BiFunction;
 
 /**
  * Utility class to handle window clip animation
@@ -98,8 +99,8 @@ public class ClipAnimationHelper {
     // Whether to boost the opening animation target layers, or the closing
     private int mBoostModeTargetLayers = -1;
 
-    private TargetAlphaProvider mTaskAlphaCallback = (t, a) -> a;
-    private TargetAlphaProvider mBaseAlphaCallback = (t, a) -> 1;
+    private BiFunction<RemoteAnimationTargetCompat, Float, Float> mTaskAlphaCallback =
+            (t, a1) -> a1;
 
     public ClipAnimationHelper(Context context) {
         mWindowCornerRadius = getWindowCornerRadius(context.getResources());
@@ -118,12 +119,8 @@ public class ClipAnimationHelper {
     }
 
     public void updateSource(Rect homeStackBounds, RemoteAnimationTargetCompat target) {
-        updateSourceStack(target);
-        updateHomeBounds(homeStackBounds);
-    }
-
-    public void updateHomeBounds(Rect homeStackBounds) {
         mHomeStackBounds.set(homeStackBounds);
+        updateSourceStack(target);
     }
 
     public void updateTargetRect(Rect targetRect) {
@@ -190,12 +187,12 @@ public class ClipAnimationHelper {
             Rect crop = mTmpRect;
             crop.set(app.sourceContainerBounds);
             crop.offsetTo(0, 0);
-            float alpha;
+            float alpha = 1f;
             int layer = RemoteAnimationProvider.getLayer(app, mBoostModeTargetLayers);
             float cornerRadius = 0f;
             float scale = Math.max(params.currentRect.width(), mTargetRect.width()) / crop.width();
             if (app.mode == targetSet.targetMode) {
-                alpha = mTaskAlphaCallback.getAlpha(app, params.targetAlpha);
+                alpha = mTaskAlphaCallback.apply(app, params.targetAlpha);
                 if (app.activityType != RemoteAnimationTargetCompat.ACTIVITY_TYPE_HOME) {
                     mTmpMatrix.setRectToRect(mSourceRect, params.currentRect, ScaleToFit.FILL);
                     mTmpMatrix.postTranslate(app.position.x, app.position.y);
@@ -212,22 +209,14 @@ public class ClipAnimationHelper {
                         }
                         mCurrentCornerRadius = cornerRadius;
                     }
-                    // Fade out Assistant overlay.
-                    if (app.activityType == RemoteAnimationTargetCompat.ACTIVITY_TYPE_ASSISTANT
-                            && app.isNotInRecents) {
-                        alpha = 1 - Interpolators.DEACCEL_2_5.getInterpolation(progress);
-                    }
                 } else if (targetSet.hasRecents) {
                     // If home has a different target then recents, reverse anim the
                     // home target.
                     alpha = 1 - (progress * params.targetAlpha);
                 }
-            } else {
-                alpha = mBaseAlphaCallback.getAlpha(app, progress);
-                if (ENABLE_QUICKSTEP_LIVE_TILE.get() && launcherOnTop) {
-                    crop = null;
-                    layer = Integer.MAX_VALUE;
-                }
+            } else if (ENABLE_QUICKSTEP_LIVE_TILE.get() && launcherOnTop) {
+                crop = null;
+                layer = Integer.MAX_VALUE;
             }
 
             // Since radius is in Surface space, but we draw the rounded corners in screen space, we
@@ -258,12 +247,9 @@ public class ClipAnimationHelper {
         }
     }
 
-    public void setTaskAlphaCallback(TargetAlphaProvider callback) {
+    public void setTaskAlphaCallback(
+            BiFunction<RemoteAnimationTargetCompat, Float, Float> callback) {
         mTaskAlphaCallback = callback;
-    }
-
-    public void setBaseAlphaCallback(TargetAlphaProvider callback) {
-        mBaseAlphaCallback = callback;
     }
 
     public void fromTaskThumbnailView(TaskThumbnailView ttv, RecentsView rv) {
@@ -369,10 +355,6 @@ public class ClipAnimationHelper {
 
     public float getCurrentCornerRadius() {
         return mCurrentCornerRadius;
-    }
-
-    public interface TargetAlphaProvider {
-        float getAlpha(RemoteAnimationTargetCompat target, float expectedAlpha);
     }
 
     public static class TransformParams {

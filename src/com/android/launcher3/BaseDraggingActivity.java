@@ -30,16 +30,16 @@ import android.view.ActionMode;
 import android.view.View;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
-
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.compat.LauncherAppsCompat;
 import com.android.launcher3.model.AppLaunchTracker;
 import com.android.launcher3.shortcuts.DeepShortcutManager;
+import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.uioverrides.DisplayRotationListener;
 import com.android.launcher3.uioverrides.WallpaperColorInfo;
-import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.Themes;
+
+import androidx.annotation.Nullable;
 
 /**
  * Extension of BaseActivity allowing support for drag-n-drop
@@ -120,10 +120,6 @@ public abstract class BaseDraggingActivity extends BaseActivity
 
     public abstract View getRootView();
 
-    public void returnToHomescreen() {
-        // no-op
-    }
-
     public Rect getViewBounds(View v) {
         int[] pos = new int[2];
         v.getLocationOnScreen(pos);
@@ -139,7 +135,11 @@ public abstract class BaseDraggingActivity extends BaseActivity
 
     public boolean startActivitySafely(View v, Intent intent, @Nullable ItemInfo item,
             @Nullable String sourceContainer) {
-        if (mIsSafeModeEnabled && !PackageManagerHelper.isSystemApp(this, intent)) {
+        if (TestProtocol.sDebugTracing) {
+            android.util.Log.d(TestProtocol.NO_START_TAG,
+                    "startActivitySafely 1");
+        }
+        if (mIsSafeModeEnabled && !Utilities.isSystemApp(this, intent)) {
             Toast.makeText(this, R.string.safemode_shortcut_error, Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -162,6 +162,10 @@ public abstract class BaseDraggingActivity extends BaseActivity
                 startShortcutIntentSafely(intent, optsBundle, item, sourceContainer);
             } else if (user == null || user.equals(Process.myUserHandle())) {
                 // Could be launching some bookkeeping activity
+                if (TestProtocol.sDebugTracing) {
+                    android.util.Log.d(TestProtocol.NO_START_TAG,
+                            "startActivitySafely 2");
+                }
                 startActivity(intent, optsBundle);
                 AppLaunchTracker.INSTANCE.get(this).onStartApp(intent.getComponent(),
                         Process.myUserHandle(), sourceContainer);
@@ -174,7 +178,7 @@ public abstract class BaseDraggingActivity extends BaseActivity
             getUserEventDispatcher().logAppLaunch(v, intent);
             getStatsLogManager().logAppLaunch(v, intent);
             return true;
-        } catch (NullPointerException|ActivityNotFoundException|SecurityException e) {
+        } catch (ActivityNotFoundException|SecurityException e) {
             Toast.makeText(this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
             Log.e(TAG, "Unable to launch. tag=" + item + " intent=" + intent, e);
         }
@@ -241,14 +245,14 @@ public abstract class BaseDraggingActivity extends BaseActivity
     protected void onDeviceProfileInitiated() {
         if (mDeviceProfile.isVerticalBarLayout()) {
             mRotationListener.enable();
-            mDeviceProfile.updateIsSeascape(this);
+            mDeviceProfile.updateIsSeascape(getWindowManager());
         } else {
             mRotationListener.disable();
         }
     }
 
     private void onDeviceRotationChanged() {
-        if (mDeviceProfile.updateIsSeascape(this)) {
+        if (mDeviceProfile.updateIsSeascape(getWindowManager())) {
             reapplyUi();
         }
     }

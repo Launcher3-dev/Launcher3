@@ -18,13 +18,13 @@ package com.android.launcher3.views;
 import static android.content.Context.ACCESSIBILITY_SERVICE;
 import static android.view.MotionEvent.ACTION_DOWN;
 
-import static androidx.core.graphics.ColorUtils.compositeColors;
-
 import static com.android.launcher3.LauncherState.ALL_APPS;
 import static com.android.launcher3.LauncherState.NORMAL;
 import static com.android.launcher3.anim.Interpolators.ACCEL;
 import static com.android.launcher3.anim.Interpolators.DEACCEL;
 import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
+
+import static androidx.core.graphics.ColorUtils.compositeColors;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -47,13 +47,6 @@ import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
-import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat;
-import androidx.customview.widget.ExploreByTouchHelper;
-
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Insettable;
 import com.android.launcher3.Launcher;
@@ -69,10 +62,15 @@ import com.android.launcher3.userevent.nano.LauncherLogProto.ControlType;
 import com.android.launcher3.util.MultiValueAlpha;
 import com.android.launcher3.util.MultiValueAlpha.AlphaProperty;
 import com.android.launcher3.util.Themes;
-import com.android.launcher3.widget.WidgetsFullSheet;
 
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat;
+import androidx.customview.widget.ExploreByTouchHelper;
 
 /**
  * Simple scrim which draws a flat color
@@ -288,7 +286,6 @@ public class ScrimView extends View implements Insettable, OnChangeListener,
             anim.addUpdateListener((v) -> invalidate(invalidateRegion));
             getOverlay().add(drawable);
             anim.start();
-            return true;
         }
         return value;
     }
@@ -328,7 +325,7 @@ public class ScrimView extends View implements Insettable, OnChangeListener,
 
         if (enabled) {
             stateManager.addStateListener(this);
-            handleStateChangedComplete(stateManager.getState());
+            handleStateChangedComplete(mLauncher.getStateManager().getState());
         } else {
             setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         }
@@ -440,24 +437,7 @@ public class ScrimView extends View implements Insettable, OnChangeListener,
             } else if (action == WALLPAPERS) {
                 return OptionsPopupView.startWallpaperPicker(ScrimView.this);
             } else if (action == WIDGETS) {
-                int originalImportanceForAccessibility = getImportantForAccessibility();
-                setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-                WidgetsFullSheet widgetsFullSheet = OptionsPopupView.openWidgets(mLauncher);
-                if (widgetsFullSheet == null) {
-                    setImportantForAccessibility(originalImportanceForAccessibility);
-                    return false;
-                }
-                widgetsFullSheet.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
-                    @Override
-                    public void onViewAttachedToWindow(View view) {}
-
-                    @Override
-                    public void onViewDetachedFromWindow(View view) {
-                        setImportantForAccessibility(originalImportanceForAccessibility);
-                        widgetsFullSheet.removeOnAttachStateChangeListener(this);
-                    }
-                });
-                return true;
+                return OptionsPopupView.onWidgetsClicked(ScrimView.this);
             } else if (action == SETTINGS) {
                 return OptionsPopupView.startSettings(ScrimView.this);
             }

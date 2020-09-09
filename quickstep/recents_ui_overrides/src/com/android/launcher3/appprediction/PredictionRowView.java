@@ -32,9 +32,6 @@ import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.LinearLayout;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import com.android.launcher3.AppInfo;
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.DeviceProfile;
@@ -43,7 +40,6 @@ import com.android.launcher3.ItemInfo;
 import com.android.launcher3.ItemInfoWithIcon;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
-import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
 import com.android.launcher3.WorkspaceItemInfo;
 import com.android.launcher3.allapps.AllAppsStore;
@@ -66,6 +62,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 @TargetApi(Build.VERSION_CODES.P)
 public class PredictionRowView extends LinearLayout implements
         LogContainerProvider, OnDeviceProfileChangeListener, FloatingHeaderRow {
@@ -81,7 +80,7 @@ public class PredictionRowView extends LinearLayout implements
 
                 @Override
                 public Integer get(PredictionRowView view) {
-                    return view.mIconLastSetTextAlpha;
+                    return view.mIconCurrentTextAlpha;
                 }
             };
 
@@ -93,7 +92,7 @@ public class PredictionRowView extends LinearLayout implements
 
     private final Launcher mLauncher;
     private final PredictionUiStateManager mPredictionUiStateManager;
-    private int mNumPredictedAppsPerRow;
+    private final int mNumPredictedAppsPerRow;
 
     // The set of predicted app component names
     private final List<ComponentKeyMapper> mPredictedAppComponents = new ArrayList<>();
@@ -104,8 +103,6 @@ public class PredictionRowView extends LinearLayout implements
 
     private final int mIconTextColor;
     private final int mIconFullTextAlpha;
-    private int mIconLastSetTextAlpha;
-    // Might use mIconFullTextAlpha instead of mIconLastSetTextAlpha if we are translucent.
     private int mIconCurrentTextAlpha;
 
     private FloatingHeaderView mParent;
@@ -129,7 +126,7 @@ public class PredictionRowView extends LinearLayout implements
 
         mFocusHelper = new SimpleFocusIndicatorHelper(this);
 
-        mNumPredictedAppsPerRow = LauncherAppState.getIDP(context).numAllAppsColumns;
+        mNumPredictedAppsPerRow = LauncherAppState.getIDP(context).numColumns;
         mLauncher = Launcher.getLauncher(context);
         mLauncher.addOnDeviceProfileChangeListener(this);
 
@@ -227,7 +224,6 @@ public class PredictionRowView extends LinearLayout implements
 
     @Override
     public void onDeviceProfileChanged(DeviceProfile dp) {
-        mNumPredictedAppsPerRow = dp.inv.numAllAppsColumns;
         removeAllViews();
         applyPredictionApps();
     }
@@ -276,14 +272,14 @@ public class PredictionRowView extends LinearLayout implements
         boolean predictionsEnabled = predictionCount > 0;
         if (predictionsEnabled != mPredictionsEnabled) {
             mPredictionsEnabled = predictionsEnabled;
-            mLauncher.reapplyUi(false /* cancelCurrentAnimation */);
+            mLauncher.reapplyUi();
             updateVisibility();
         }
         mParent.onHeightUpdated();
     }
 
     private List<ItemInfoWithIcon> processPredictedAppComponents(List<ComponentKeyMapper> components) {
-        if (getAppsStore().getApps().length == 0) {
+        if (getAppsStore().getApps().isEmpty()) {
             // Apps have not been bound yet.
             return Collections.emptyList();
         }
@@ -292,9 +288,7 @@ public class PredictionRowView extends LinearLayout implements
         for (ComponentKeyMapper mapper : components) {
             ItemInfoWithIcon info = mapper.getApp(getAppsStore());
             if (info != null) {
-                ItemInfoWithIcon predictedApp = info.clone();
-                predictedApp.container = LauncherSettings.Favorites.CONTAINER_PREDICTION;
-                predictedApps.add(predictedApp);
+                predictedApps.add(info);
             } else {
                 if (FeatureFlags.IS_DOGFOOD_BUILD) {
                     Log.e(TAG, "Predicted app not found: " + mapper);
@@ -321,25 +315,12 @@ public class PredictionRowView extends LinearLayout implements
         }
     }
 
-    public void setTextAlpha(int textAlpha) {
-        mIconLastSetTextAlpha = textAlpha;
-        if (getAlpha() < 1 && textAlpha > 0) {
-            // If the entire header is translucent, make sure the text is at full opacity so it's
-            // not double-translucent. However, we support keeping the text invisible (alpha == 0).
-            textAlpha = mIconFullTextAlpha;
-        }
-        mIconCurrentTextAlpha = textAlpha;
+    public void setTextAlpha(int alpha) {
+        mIconCurrentTextAlpha = alpha;
         int iconColor = setColorAlphaBound(mIconTextColor, mIconCurrentTextAlpha);
         for (int i = 0; i < getChildCount(); i++) {
             ((BubbleTextView) getChildAt(i)).setTextColor(iconColor);
         }
-    }
-
-    @Override
-    public void setAlpha(float alpha) {
-        super.setAlpha(alpha);
-        // Reapply text alpha so that we update it to be full alpha if the row is now translucent.
-        setTextAlpha(mIconLastSetTextAlpha);
     }
 
     @Override
@@ -370,15 +351,23 @@ public class PredictionRowView extends LinearLayout implements
     }
 
     @Override
-    public void setContentVisibility(boolean hasHeaderExtra, boolean hasAllAppsContent,
-            PropertySetter setter, Interpolator headerFade, Interpolator allAppsFade) {
-        // Text follows all apps visibility
-        int textAlpha = hasHeaderExtra && hasAllAppsContent ? mIconFullTextAlpha : 0;
-        setter.setInt(this, TEXT_ALPHA, textAlpha, allAppsFade);
+    public void setContentVisibility(boolean hasHeaderExtra, boolean hasContent,
+            PropertySetter setter, Interpolator fadeInterpolator) {
+        boolean isDrawn = getAlpha() > 0;
+        int textAlpha = hasHeaderExtra
+                ? (hasContent ? mIconFullTextAlpha : 0) // Text follows the content visibility
+                : mIconCurrentTextAlpha; // Leave as before
+        if (!isDrawn) {
+            // If the header is not drawn, no need to animate the text alpha
+            setTextAlpha(textAlpha);
+        } else {
+            setter.setInt(this, TEXT_ALPHA, textAlpha, fadeInterpolator);
+        }
+
         setter.setFloat(mOverviewScrollFactor, AnimatedFloat.VALUE,
-                (hasHeaderExtra && !hasAllAppsContent) ? 1 : 0, LINEAR);
+                (hasHeaderExtra && !hasContent) ? 1 : 0, LINEAR);
         setter.setFloat(mContentAlphaFactor, AnimatedFloat.VALUE, hasHeaderExtra ? 1 : 0,
-                headerFade);
+                fadeInterpolator);
     }
 
     @Override

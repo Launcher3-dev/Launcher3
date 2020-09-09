@@ -22,21 +22,18 @@ import static android.view.MotionEvent.ACTION_UP;
 
 import static com.android.launcher3.Utilities.squaredHypot;
 import static com.android.quickstep.TouchInteractionService.TOUCH_INTERACTION_LOG;
+import static com.android.systemui.shared.system.ActivityManagerWrapper.CLOSE_SYSTEM_WINDOWS_REASON_RECENTS;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.PointF;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 
-import com.android.launcher3.BaseActivity;
-import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.Utilities;
-import com.android.launcher3.logging.StatsLogUtils;
-import com.android.launcher3.userevent.nano.LauncherLogProto.Action.Direction;
-import com.android.launcher3.userevent.nano.LauncherLogProto.Action.Touch;
+import com.android.quickstep.OverviewCallbacks;
 import com.android.quickstep.util.NavBarPosition;
+import com.android.systemui.shared.system.ActivityManagerWrapper;
 import com.android.systemui.shared.system.InputMonitorCompat;
 
 public class OverviewWithoutFocusInputConsumer implements InputConsumer {
@@ -134,28 +131,19 @@ public class OverviewWithoutFocusInputConsumer implements InputConsumer {
                 ? -velocityX : (mNavBarPosition.isLeftEdge() ? velocityX : -velocityY);
 
         final boolean triggerQuickstep;
-        int touch = Touch.FLING;
         if (Math.abs(velocity) >= ViewConfiguration.get(mContext).getScaledMinimumFlingVelocity()) {
             triggerQuickstep = velocity > 0;
         } else {
             float displacementX = mDisableHorizontalSwipe ? 0 : (ev.getX() - mDownPos.x);
             float displacementY = ev.getY() - mDownPos.y;
             triggerQuickstep = squaredHypot(displacementX, displacementY) >= mSquaredTouchSlop;
-            touch = Touch.SWIPE;
         }
 
         if (triggerQuickstep) {
-            mContext.startActivity(new Intent(Intent.ACTION_MAIN)
-                    .addCategory(Intent.CATEGORY_HOME)
-                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            OverviewCallbacks.get(mContext).closeAllWindows();
+            ActivityManagerWrapper.getInstance()
+                    .closeSystemWindows(CLOSE_SYSTEM_WINDOWS_REASON_RECENTS);
             TOUCH_INTERACTION_LOG.addLog("startQuickstep");
-            BaseActivity activity = BaseDraggingActivity.fromContext(mContext);
-            int pageIndex = -1; // This number doesn't reflect workspace page index.
-                                // It only indicates that launcher client screen was shown.
-            int containerType = StatsLogUtils.getContainerTypeFromState(activity.getCurrentState());
-            activity.getUserEventDispatcher().logActionOnContainer(
-                    touch, Direction.UP, containerType, pageIndex);
-            activity.getUserEventDispatcher().setPreviousHomeGesture(true);
         } else {
             // ignore
         }

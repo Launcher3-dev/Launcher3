@@ -17,7 +17,6 @@ package com.android.quickstep.util;
 
 import android.animation.AnimatorSet;
 import android.app.ActivityOptions;
-import android.content.Context;
 import android.os.Handler;
 
 import com.android.launcher3.LauncherAnimationRunner;
@@ -33,14 +32,14 @@ public interface RemoteAnimationProvider {
 
     AnimatorSet createWindowAnimation(RemoteAnimationTargetCompat[] targets);
 
-    default ActivityOptions toActivityOptions(Handler handler, long duration, Context context) {
+    default ActivityOptions toActivityOptions(Handler handler, long duration) {
         LauncherAnimationRunner runner = new LauncherAnimationRunner(handler,
                 false /* startAtFrontOfQueue */) {
 
             @Override
             public void onCreateAnimation(RemoteAnimationTargetCompat[] targetCompats,
                     AnimationResult result) {
-                result.setAnimation(createWindowAnimation(targetCompats), context);
+                result.setAnimation(createWindowAnimation(targetCompats));
             }
         };
         return ActivityOptionsCompat.makeRemoteAnimation(

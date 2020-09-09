@@ -15,9 +15,6 @@
  */
 package com.android.launcher3.allapps;
 
-import static com.android.launcher3.AppInfo.COMPONENT_KEY_COMPARATOR;
-import static com.android.launcher3.AppInfo.EMPTY_ARRAY;
-
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -29,7 +26,8 @@ import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.PackageUserKey;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -41,37 +39,33 @@ public class AllAppsStore {
 
     // Defer updates flag used to defer all apps updates to the next draw.
     public static final int DEFER_UPDATES_NEXT_DRAW = 1 << 0;
+    // Defer updates flag used to defer all apps updates while the user interacts with all apps.
+    public static final int DEFER_UPDATES_USER_INTERACTION = 1 << 1;
     // Defer updates flag used to defer all apps updates by a test's request.
-    public static final int DEFER_UPDATES_TEST = 1 << 1;
+    public static final int DEFER_UPDATES_TEST = 1 << 2;
 
     private PackageUserKey mTempKey = new PackageUserKey(null, null);
-    private AppInfo mTempInfo = new AppInfo();
-
-    private AppInfo[] mApps = EMPTY_ARRAY;
-
+    private final HashMap<ComponentKey, AppInfo> mComponentToAppMap = new HashMap<>();
     private final List<OnUpdateListener> mUpdateListeners = new ArrayList<>();
     private final ArrayList<ViewGroup> mIconContainers = new ArrayList<>();
 
     private int mDeferUpdatesFlags = 0;
     private boolean mUpdatePending = false;
 
-    public AppInfo[] getApps() {
-        return mApps;
+    public Collection<AppInfo> getApps() {
+        return mComponentToAppMap.values();
     }
 
     /**
      * Sets the current set of apps.
      */
-    public void setApps(AppInfo[] apps) {
-        mApps = apps;
-        notifyUpdate();
+    public void setApps(List<AppInfo> apps) {
+        mComponentToAppMap.clear();
+        addOrUpdateApps(apps);
     }
 
     public AppInfo getApp(ComponentKey key) {
-        mTempInfo.componentName = key.componentName;
-        mTempInfo.user = key.user;
-        int index = Arrays.binarySearch(mApps, mTempInfo, COMPONENT_KEY_COMPARATOR);
-        return index < 0 ? null : mApps[index];
+        return mComponentToAppMap.get(key);
     }
 
     public void enableDeferUpdates(int flag) {
@@ -86,13 +80,30 @@ public class AllAppsStore {
         }
     }
 
-    public void disableDeferUpdatesSilently(int flag) {
-        mDeferUpdatesFlags &= ~flag;
-    }
-
     public int getDeferUpdatesFlags() {
         return mDeferUpdatesFlags;
     }
+
+    /**
+     * Adds or updates existing apps in the list
+     */
+    public void addOrUpdateApps(List<AppInfo> apps) {
+        for (AppInfo app : apps) {
+            mComponentToAppMap.put(app.toComponentKey(), app);
+        }
+        notifyUpdate();
+    }
+
+    /**
+     * Removes some apps from the list.
+     */
+    public void removeApps(List<AppInfo> apps) {
+        for (AppInfo app : apps) {
+            mComponentToAppMap.remove(app.toComponentKey());
+        }
+        notifyUpdate();
+    }
+
 
     private void notifyUpdate() {
         if (mDeferUpdatesFlags != 0) {

@@ -17,11 +17,9 @@
 package com.android.launcher3.uioverrides;
 
 import android.app.Activity;
-import android.app.Person;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.pm.ShortcutInfo;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 
@@ -29,7 +27,6 @@ import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState.ScaleAndTranslation;
 import com.android.launcher3.LauncherStateManager.StateHandler;
-import com.android.launcher3.Utilities;
 import com.android.launcher3.graphics.RotationMode;
 import com.android.launcher3.util.TouchController;
 
@@ -98,7 +95,4 @@ public class UiFactory {
 
     public static void clearSwipeSharedState(boolean finishAnimation) {}
 
-    public static Person[] getPersons(ShortcutInfo si) {
-        return Utilities.EMPTY_PERSON_ARRAY;
-    }
 }

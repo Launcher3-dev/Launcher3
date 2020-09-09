@@ -21,13 +21,16 @@ import android.content.pm.PackageManager;
 import com.android.launcher3.AppInfo;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.Utilities;
+import com.android.launcher3.compat.AlphabeticIndexCompat;
 import com.android.launcher3.shortcuts.DeepShortcutManager;
+import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.util.LabelComparator;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -142,7 +145,9 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
 
     // The of ordered component names as a result of a search query
     private ArrayList<ComponentKey> mSearchResults;
+    private HashMap<CharSequence, String> mCachedSectionNames = new HashMap<>();
     private AllAppsGridAdapter mAdapter;
+    private AlphabeticIndexCompat mIndexer;
     private AppInfoComparator mAppNameComparator;
     private final int mNumAppsPerRow;
     private int mNumAppRowsInAdapter;
@@ -151,6 +156,7 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
     public AlphabeticalAppsList(Context context, AllAppsStore appsStore, boolean isWork) {
         mAllAppsStore = appsStore;
         mLauncher = Launcher.getLauncher(context);
+        mIndexer = new AlphabeticIndexCompat(context);
         mAppNameComparator = new AppInfoComparator(context);
         mIsWork = isWork;
         mNumAppsPerRow = mLauncher.getDeviceProfile().inv.numColumns;
@@ -257,7 +263,7 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
             TreeMap<String, ArrayList<AppInfo>> sectionMap = new TreeMap<>(new LabelComparator());
             for (AppInfo info : mApps) {
                 // Add the section to the cache
-                String sectionName = info.sectionName;
+                String sectionName = getAndUpdateCachedSectionName(info.title);
 
                 // Add it to the mapping
                 ArrayList<AppInfo> sectionApps = sectionMap.get(sectionName);
@@ -272,6 +278,12 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
             mApps.clear();
             for (Map.Entry<String, ArrayList<AppInfo>> entry : sectionMap.entrySet()) {
                 mApps.addAll(entry.getValue());
+            }
+        } else {
+            // Just compute the section headers for use below
+            for (AppInfo info : mApps) {
+                // Add the section to the cache
+                getAndUpdateCachedSectionName(info.title);
             }
         }
 
@@ -289,6 +301,11 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
     }
 
     private void refreshRecyclerView() {
+        if (TestProtocol.sDebugTracing) {
+            android.util.Log.d(TestProtocol.NO_START_TAG,
+                    "refreshRecyclerView @ " + android.util.Log.getStackTraceString(
+                            new Throwable()));
+        }
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
@@ -308,7 +325,7 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
         // Recreate the filtered and sectioned apps (for convenience for the grid layout) from the
         // ordered set of sections
         for (AppInfo info : getFiltersAppInfos()) {
-            String sectionName = info.sectionName;
+            String sectionName = getAndUpdateCachedSectionName(info.title);
 
             // Create a new section if the section names do not match
             if (!sectionName.equals(lastSectionName)) {
@@ -416,4 +433,18 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
         }
         return result;
     }
+
+    /**
+     * Returns the cached section name for the given title, recomputing and updating the cache if
+     * the title has no cached section name.
+     */
+    private String getAndUpdateCachedSectionName(CharSequence title) {
+        String sectionName = mCachedSectionNames.get(title);
+        if (sectionName == null) {
+            sectionName = mIndexer.computeSectionName(title);
+            mCachedSectionNames.put(title, sectionName);
+        }
+        return sectionName;
+    }
+
 }

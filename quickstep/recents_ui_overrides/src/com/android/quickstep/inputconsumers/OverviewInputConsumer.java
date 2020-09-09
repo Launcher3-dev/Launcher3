@@ -19,7 +19,6 @@ import static com.android.launcher3.config.FeatureFlags.ENABLE_QUICKSTEP_LIVE_TI
 import static com.android.quickstep.TouchInteractionService.TOUCH_INTERACTION_LOG;
 import static com.android.systemui.shared.system.ActivityManagerWrapper.CLOSE_SYSTEM_WINDOWS_REASON_RECENTS;
 
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
@@ -27,7 +26,6 @@ import androidx.annotation.Nullable;
 
 import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.Utilities;
-import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.views.BaseDragLayer;
 import com.android.quickstep.OverviewCallbacks;
 import com.android.systemui.shared.system.ActivityManagerWrapper;

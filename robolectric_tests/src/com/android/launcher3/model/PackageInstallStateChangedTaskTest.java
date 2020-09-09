@@ -29,8 +29,7 @@ public class PackageInstallStateChangedTaskTest extends BaseModelUpdateTaskTestC
 
     private PackageInstallStateChangedTask newTask(String pkg, int progress) {
         int state = PackageInstallerCompat.STATUS_INSTALLING;
-        PackageInstallInfo installInfo = new PackageInstallInfo(pkg, state, progress,
-                android.os.Process.myUserHandle());
+        PackageInstallInfo installInfo = new PackageInstallInfo(pkg, state, progress);
         return new PackageInstallStateChangedTask(installInfo);
     }
 

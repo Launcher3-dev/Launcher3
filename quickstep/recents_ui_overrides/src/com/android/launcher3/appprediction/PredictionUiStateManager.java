@@ -24,33 +24,26 @@ import android.app.prediction.AppPredictor;
 import android.app.prediction.AppTarget;
 import android.content.ComponentName;
 import android.content.Context;
-
-import androidx.annotation.NonNull;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
 import com.android.launcher3.AppInfo;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.InvariantDeviceProfile.OnIDPChangeListener;
-import com.android.launcher3.ItemInfo;
 import com.android.launcher3.ItemInfoWithIcon;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
-import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.LauncherState;
-import com.android.launcher3.LauncherStateManager.StateListener;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.AllAppsContainerView;
 import com.android.launcher3.allapps.AllAppsStore.OnUpdateListener;
 import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.icons.IconCache.ItemInfoUpdateReceiver;
 import com.android.launcher3.shortcuts.ShortcutKey;
-import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.MainThreadInitializedObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * Handler responsible to updating the UI due to predicted apps changes. Operations:
@@ -65,7 +58,7 @@ import java.util.stream.IntStream;
  * 4) Maintains the current active client id (for the predictions) and all updates are performed on
  * that client id.
  */
-public class PredictionUiStateManager implements StateListener, ItemInfoUpdateReceiver,
+public class PredictionUiStateManager implements OnGlobalLayoutListener, ItemInfoUpdateReceiver,
         OnIDPChangeListener, OnUpdateListener {
 
     public static final String LAST_PREDICTION_ENABLED_STATE = "last_prediction_enabled_state";
@@ -160,10 +153,7 @@ public class PredictionUiStateManager implements StateListener, ItemInfoUpdateRe
     public void reapplyItemInfo(ItemInfoWithIcon info) { }
 
     @Override
-    public void onStateTransitionStart(LauncherState toState) { }
-
-    @Override
-    public void onStateTransitionComplete(LauncherState state) {
+    public void onGlobalLayout() {
         if (mAppsView == null) {
             return;
         }
@@ -172,8 +162,7 @@ public class PredictionUiStateManager implements StateListener, ItemInfoUpdateRe
             mPendingState = null;
         }
         if (mPendingState == null) {
-            Launcher.getLauncher(mAppsView.getContext()).getStateManager()
-                    .removeStateListener(this);
+            mAppsView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
         }
     }
 
@@ -181,8 +170,9 @@ public class PredictionUiStateManager implements StateListener, ItemInfoUpdateRe
         boolean registerListener = mPendingState == null;
         mPendingState = state;
         if (registerListener) {
-            // Add a listener and wait until appsView is invisible again.
-            Launcher.getLauncher(mAppsView.getContext()).getStateManager().addStateListener(this);
+            // OnGlobalLayoutListener is called whenever a view in the view tree changes
+            // visibility. Add a listener and wait until appsView is invisible again.
+            mAppsView.getViewTreeObserver().addOnGlobalLayoutListener(this);
         }
     }
 
@@ -326,30 +316,6 @@ public class PredictionUiStateManager implements StateListener, ItemInfoUpdateRe
 
     public PredictionState getCurrentState() {
         return mCurrentState;
-    }
-
-    /**
-     * Fill in predicted_rank field based on app prediction.
-     * Only applicable when {@link ItemInfo#itemType} is one of the followings:
-     * {@link LauncherSettings.Favorites#ITEM_TYPE_APPLICATION},
-     * {@link LauncherSettings.Favorites#ITEM_TYPE_SHORTCUT},
-     * {@link LauncherSettings.Favorites#ITEM_TYPE_DEEP_SHORTCUT}
-     */
-    public static void fillInPredictedRank(
-            @NonNull ItemInfo itemInfo, @NonNull LauncherLogProto.Target target) {
-        final PredictionUiStateManager manager = PredictionUiStateManager.INSTANCE.getNoCreate();
-        if (manager == null || itemInfo.getTargetComponent() == null || itemInfo.user == null
-                || (itemInfo.itemType != LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
-                && itemInfo.itemType != LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT
-                && itemInfo.itemType != LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT)) {
-            return;
-        }
-        final ComponentKey k = new ComponentKey(itemInfo.getTargetComponent(), itemInfo.user);
-        final List<ComponentKeyMapper> predictedApps = manager.getCurrentState().apps;
-        IntStream.range(0, predictedApps.size())
-                .filter((i) -> k.equals(predictedApps.get(i).getComponentKey()))
-                .findFirst()
-                .ifPresent((rank) -> target.predictedRank = rank);
     }
 
     public static class PredictionState {

@@ -27,10 +27,6 @@ import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.widget.LinearLayout;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Insettable;
 import com.android.launcher3.Launcher;
@@ -43,6 +39,10 @@ import com.android.systemui.plugins.PluginListener;
 
 import java.util.ArrayList;
 import java.util.Map;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class FloatingHeaderView extends LinearLayout implements
         ValueAnimator.AnimatorUpdateListener, PluginListener<AllAppsRow>, Insettable,
@@ -363,14 +363,14 @@ public class FloatingHeaderView extends LinearLayout implements
         p.y = getTop() - mCurrentRV.getTop() - mParent.getTop();
     }
 
-    public void setContentVisibility(boolean hasHeader, boolean hasAllAppsContent,
-            PropertySetter setter, Interpolator headerFade, Interpolator allAppsFade) {
+    public void setContentVisibility(boolean hasHeader, boolean hasContent, PropertySetter setter,
+            Interpolator fadeInterpolator) {
         for (FloatingHeaderRow row : mAllRows) {
-            row.setContentVisibility(hasHeader, hasAllAppsContent, setter, headerFade, allAppsFade);
+            row.setContentVisibility(hasHeader, hasContent, setter, fadeInterpolator);
         }
 
-        allowTouchForwarding(hasAllAppsContent);
-        setter.setFloat(mTabLayout, ALPHA, hasAllAppsContent ? 1 : 0, headerFade);
+        allowTouchForwarding(hasContent);
+        setter.setFloat(mTabLayout, ALPHA, hasContent ? 1 : 0, fadeInterpolator);
     }
 
     protected void allowTouchForwarding(boolean allow) {

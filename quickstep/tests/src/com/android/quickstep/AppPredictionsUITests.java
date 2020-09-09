@@ -88,7 +88,7 @@ public class AppPredictionsUITests extends AbstractQuickStepTest {
      */
     @Test
     public void testPredictionExistsInAllApps() {
-        mDevice.pressHome();
+        mActivityMonitor.startLauncher();
         mLauncher.pressHome().switchToAllApps();
 
         // Dispatch an update
@@ -103,7 +103,7 @@ public class AppPredictionsUITests extends AbstractQuickStepTest {
      */
     @Test
     public void testPredictionsDeferredUntilHome() {
-        mDevice.pressHome();
+        mActivityMonitor.startLauncher();
         sendPredictionUpdate(mSampleApp1, mSampleApp2);
         mLauncher.pressHome().switchToAllApps();
         waitForLauncherCondition("Predictions were not updated in loading state",
@@ -120,7 +120,7 @@ public class AppPredictionsUITests extends AbstractQuickStepTest {
 
     @Test
     public void testPredictionsDisabled() {
-        mDevice.pressHome();
+        mActivityMonitor.startLauncher();
         sendPredictionUpdate();
         mLauncher.pressHome().switchToAllApps();
 
@@ -150,10 +150,10 @@ public class AppPredictionsUITests extends AbstractQuickStepTest {
             List<AppTarget> targets = new ArrayList<>(activities.length);
             for (LauncherActivityInfo info : activities) {
                 ComponentName cn = info.getComponentName();
-                AppTarget target = new AppTarget.Builder(
-                        new AppTargetId("app:" + cn), cn.getPackageName(), info.getUser())
-                        .setClassName(cn.getClassName())
-                        .build();
+                AppTarget target =
+                        new AppTarget.Builder(new AppTargetId("app:" + cn), cn.getPackageName(), info.getUser())
+                            .setClassName(cn.getClassName())
+                            .build();
                 targets.add(target);
             }
             mCallback.onTargetsAvailable(targets);
