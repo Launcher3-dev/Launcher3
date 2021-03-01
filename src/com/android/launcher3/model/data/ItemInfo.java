@@ -25,7 +25,7 @@ import android.os.UserHandle;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.Workspace;
-import com.android.launcher3.logger.LauncherAtom;
+import com.android.launcher3.logger.nano.LauncherAtom;
 import com.android.launcher3.model.ModelWriter;
 import com.android.launcher3.util.ContentWriter;
 
