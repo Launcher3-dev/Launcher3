@@ -22,7 +22,7 @@ import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.Workspace;
-import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
+import com.android.launcher3.userevent.LauncherLogProto.ContainerType;
 
 /**
  * Definition for spring loaded state used during drag and drop.

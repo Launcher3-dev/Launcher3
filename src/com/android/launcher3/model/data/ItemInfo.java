@@ -16,6 +16,23 @@
 
 package com.android.launcher3.model.data;
 
+import android.content.ComponentName;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.os.Process;
+import android.os.UserHandle;
+
+import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.LauncherSettings.Favorites;
+import com.android.launcher3.Workspace;
+import com.android.launcher3.logger.LauncherAtom;
+import com.android.launcher3.model.ModelWriter;
+import com.android.launcher3.util.ContentWriter;
+
+import java.util.Optional;
+
+import androidx.annotation.Nullable;
+
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_ALL_APPS;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT;
@@ -31,31 +48,6 @@ import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPWIDG
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_TASK;
-import static com.android.launcher3.logger.LauncherAtom.ContainerInfo.ContainerCase.CONTAINER_NOT_SET;
-
-import android.content.ComponentName;
-import android.content.ContentValues;
-import android.content.Intent;
-import android.os.Process;
-import android.os.UserHandle;
-
-import androidx.annotation.Nullable;
-
-import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.LauncherSettings.Favorites;
-import com.android.launcher3.Workspace;
-import com.android.launcher3.logger.LauncherAtom;
-import com.android.launcher3.logger.LauncherAtom.AllAppsContainer;
-import com.android.launcher3.logger.LauncherAtom.ContainerInfo;
-import com.android.launcher3.logger.LauncherAtom.PredictionContainer;
-import com.android.launcher3.logger.LauncherAtom.SearchResultContainer;
-import com.android.launcher3.logger.LauncherAtom.SettingsContainer;
-import com.android.launcher3.logger.LauncherAtom.ShortcutsContainer;
-import com.android.launcher3.logger.LauncherAtom.TaskSwitcherContainer;
-import com.android.launcher3.model.ModelWriter;
-import com.android.launcher3.util.ContentWriter;
-
-import java.util.Optional;
 
 /**
  * Represents an item in the launcher.
@@ -328,9 +320,9 @@ public class ItemInfo {
                             .setGridX(fInfo.cellX).setGridY(fInfo.cellY));
                     break;
             }
-            itemBuilder.setContainerInfo(ContainerInfo.newBuilder().setFolder(folderBuilder));
+            itemBuilder.setContainerInfo(LauncherAtom.ContainerInfo.newBuilder().setFolder(folderBuilder));
         } else {
-            ContainerInfo containerInfo = getContainerInfo();
+            LauncherAtom.ContainerInfo containerInfo = getContainerInfo();
             if (!containerInfo.getContainerCase().equals(CONTAINER_NOT_SET)) {
                 itemBuilder.setContainerInfo(containerInfo);
             }
@@ -338,13 +330,13 @@ public class ItemInfo {
         return itemBuilder.build();
     }
 
-    LauncherAtom.ItemInfo.Builder getDefaultItemInfoBuilder() {
+    ItemInfo.Builder getDefaultItemInfoBuilder() {
         LauncherAtom.ItemInfo.Builder itemBuilder = LauncherAtom.ItemInfo.newBuilder();
         itemBuilder.setIsWork(user != Process.myUserHandle());
         return itemBuilder;
     }
 
-    protected ContainerInfo getContainerInfo() {
+    protected LauncherAtom.ContainerInfo getContainerInfo() {
         switch (container) {
             case CONTAINER_HOTSEAT:
                 return ContainerInfo.newBuilder()
@@ -363,38 +355,38 @@ public class ItemInfo {
                                         .setPageIndex(screenId))
                         .build();
             case CONTAINER_ALL_APPS:
-                return ContainerInfo.newBuilder()
+                return LauncherAtom.ContainerInfo.newBuilder()
                         .setAllAppsContainer(
-                                AllAppsContainer.getDefaultInstance())
+                                LauncherAtom.AllAppsContainer.emptyArray())
                         .build();
             case CONTAINER_WIDGETS_TRAY:
-                return ContainerInfo.newBuilder()
+                return LauncherAtom.ContainerInfo.newBuilder()
                         .setWidgetsContainer(
                                 LauncherAtom.WidgetsContainer.getDefaultInstance())
                         .build();
             case CONTAINER_PREDICTION:
-                return ContainerInfo.newBuilder()
-                        .setPredictionContainer(PredictionContainer.getDefaultInstance())
+                return LauncherAtom.ContainerInfo.newBuilder()
+                        .setPredictionContainer(LauncherAtom.PredictionContainer.getDefaultInstance())
                         .build();
             case CONTAINER_SEARCH_RESULTS:
-                return ContainerInfo.newBuilder()
-                        .setSearchResultContainer(SearchResultContainer.getDefaultInstance())
+                return LauncherAtom.ContainerInfo.newBuilder()
+                        .setSearchResultContainer(LauncherAtom.SearchResultContainer.getDefaultInstance())
                         .build();
             case CONTAINER_SHORTCUTS:
-                return ContainerInfo.newBuilder()
-                        .setShortcutsContainer(ShortcutsContainer.getDefaultInstance())
+                return LauncherAtom.ContainerInfo.newBuilder()
+                        .setShortcutsContainer(LauncherAtom.ShortcutsContainer.getDefaultInstance())
                         .build();
             case CONTAINER_SETTINGS:
-                return ContainerInfo.newBuilder()
-                        .setSettingsContainer(SettingsContainer.getDefaultInstance())
+                return LauncherAtom.ContainerInfo.newBuilder()
+                        .setSettingsContainer(LauncherAtom.SettingsContainer.getDefaultInstance())
                         .build();
             case CONTAINER_TASKSWITCHER:
-                return ContainerInfo.newBuilder()
-                        .setTaskSwitcherContainer(TaskSwitcherContainer.getDefaultInstance())
+                return LauncherAtom.ContainerInfo.newBuilder()
+                        .setTaskSwitcherContainer(LauncherAtom.TaskSwitcherContainer.getDefaultInstance())
                         .build();
 
         }
-        return ContainerInfo.getDefaultInstance();
+        return LauncherAtom.ContainerInfo.getDefaultInstance();
     }
 
     /**

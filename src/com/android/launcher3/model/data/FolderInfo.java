@@ -16,32 +16,13 @@
 
 package com.android.launcher3.model.data;
 
-import static android.text.TextUtils.isEmpty;
-
-import static androidx.core.util.Preconditions.checkNotNull;
-
-import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP;
-import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT;
-import static com.android.launcher3.logger.LauncherAtom.Attribute.EMPTY_LABEL;
-import static com.android.launcher3.logger.LauncherAtom.Attribute.MANUAL_LABEL;
-import static com.android.launcher3.logger.LauncherAtom.Attribute.SUGGESTED_LABEL;
-import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_CUSTOM;
-import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_EMPTY;
-import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_FOLDER_LABEL_STATE_UNSPECIFIED;
-import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_SUGGESTED;
-
 import android.os.Process;
-
-import androidx.annotation.Nullable;
 
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.folder.FolderNameInfos;
-import com.android.launcher3.logger.LauncherAtom;
-import com.android.launcher3.logger.LauncherAtom.Attribute;
-import com.android.launcher3.logger.LauncherAtom.FromState;
-import com.android.launcher3.logger.LauncherAtom.ToState;
+import com.android.launcher3.logger.nano.LauncherAtom;
 import com.android.launcher3.model.ModelWriter;
 import com.android.launcher3.userevent.LauncherLogProto;
 import com.android.launcher3.userevent.LauncherLogProto.Target;
@@ -52,6 +33,17 @@ import com.android.launcher3.util.ContentWriter;
 import java.util.ArrayList;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
+
+import androidx.annotation.Nullable;
+
+import static android.text.TextUtils.isEmpty;
+import static androidx.core.util.Preconditions.checkNotNull;
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP;
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT;
+import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_CUSTOM;
+import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_EMPTY;
+import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_FOLDER_LABEL_STATE_UNSPECIFIED;
+import static com.android.launcher3.userevent.LauncherLogProto.Target.FromFolderLabelState.FROM_SUGGESTED;
 
 
 /**

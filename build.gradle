@@ -171,15 +171,16 @@ protobuf {
     // Configure the protoc executable
     protoc {
         artifact = 'com.google.protobuf:protoc:3.0.0'
+//        artifact = 'com.google.protobuf:protoc:3.15.3'
 
         generateProtoTasks {
             all().each { task ->
                 task.builtins {
                     remove java
                     javanano {
-                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
-                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
-                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
+                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent"
+                        option "java_package=launcher_log.proto|com.android.launcher3.userevent"
+                        option "java_package=launcher_dump.proto|com.android.launcher3.model"
                         option "enum_style=java"
                     }
                 }
