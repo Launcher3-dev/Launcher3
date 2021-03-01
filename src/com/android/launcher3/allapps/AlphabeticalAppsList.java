@@ -15,22 +15,17 @@
  */
 package com.android.launcher3.allapps;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
 
-import com.android.launcher3.AppInfo;
-import com.android.launcher3.Launcher;
-import com.android.launcher3.Utilities;
-import com.android.launcher3.compat.AlphabeticIndexCompat;
-import com.android.launcher3.shortcuts.DeepShortcutManager;
-import com.android.launcher3.testing.TestProtocol;
+import android.content.Context;
+
+import com.android.launcher3.BaseDraggingActivity;
+import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.util.LabelComparator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -119,16 +114,9 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
             item.position = pos;
             return item;
         }
-
-        public static AdapterItem asWorkTabFooter(int pos) {
-            AdapterItem item = new AdapterItem();
-            item.viewType = AllAppsGridAdapter.VIEW_TYPE_WORK_TAB_FOOTER;
-            item.position = pos;
-            return item;
-        }
     }
 
-    private final Launcher mLauncher;
+    private final BaseDraggingActivity mLauncher;
 
     // The set of apps from the system
     private final List<AppInfo> mApps = new ArrayList<>();
@@ -145,9 +133,7 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
 
     // The of ordered component names as a result of a search query
     private ArrayList<ComponentKey> mSearchResults;
-    private HashMap<CharSequence, String> mCachedSectionNames = new HashMap<>();
     private AllAppsGridAdapter mAdapter;
-    private AlphabeticIndexCompat mIndexer;
     private AppInfoComparator mAppNameComparator;
     private final int mNumAppsPerRow;
     private int mNumAppRowsInAdapter;
@@ -155,8 +141,7 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
 
     public AlphabeticalAppsList(Context context, AllAppsStore appsStore, boolean isWork) {
         mAllAppsStore = appsStore;
-        mLauncher = Launcher.getLauncher(context);
-        mIndexer = new AlphabeticIndexCompat(context);
+        mLauncher = BaseDraggingActivity.fromContext(context);
         mAppNameComparator = new AppInfoComparator(context);
         mIsWork = isWork;
         mNumAppsPerRow = mLauncher.getDeviceProfile().inv.numColumns;
@@ -263,7 +248,7 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
             TreeMap<String, ArrayList<AppInfo>> sectionMap = new TreeMap<>(new LabelComparator());
             for (AppInfo info : mApps) {
                 // Add the section to the cache
-                String sectionName = getAndUpdateCachedSectionName(info.title);
+                String sectionName = info.sectionName;
 
                 // Add it to the mapping
                 ArrayList<AppInfo> sectionApps = sectionMap.get(sectionName);
@@ -278,12 +263,6 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
             mApps.clear();
             for (Map.Entry<String, ArrayList<AppInfo>> entry : sectionMap.entrySet()) {
                 mApps.addAll(entry.getValue());
-            }
-        } else {
-            // Just compute the section headers for use below
-            for (AppInfo info : mApps) {
-                // Add the section to the cache
-                getAndUpdateCachedSectionName(info.title);
             }
         }
 
@@ -301,11 +280,6 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
     }
 
     private void refreshRecyclerView() {
-        if (TestProtocol.sDebugTracing) {
-            android.util.Log.d(TestProtocol.NO_START_TAG,
-                    "refreshRecyclerView @ " + android.util.Log.getStackTraceString(
-                            new Throwable()));
-        }
         if (mAdapter != null) {
             mAdapter.notifyDataSetChanged();
         }
@@ -325,7 +299,7 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
         // Recreate the filtered and sectioned apps (for convenience for the grid layout) from the
         // ordered set of sections
         for (AppInfo info : getFiltersAppInfos()) {
-            String sectionName = getAndUpdateCachedSectionName(info.title);
+            String sectionName = info.sectionName;
 
             // Create a new section if the section names do not match
             if (!sectionName.equals(lastSectionName)) {
@@ -406,18 +380,6 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
                     break;
             }
         }
-
-        // Add the work profile footer if required.
-        if (shouldShowWorkFooter()) {
-            mAdapterItems.add(AdapterItem.asWorkTabFooter(position++));
-        }
-    }
-
-    private boolean shouldShowWorkFooter() {
-        return mIsWork && Utilities.ATLEAST_P &&
-                (DeepShortcutManager.getInstance(mLauncher).hasHostPermission()
-                        || mLauncher.checkSelfPermission("android.permission.MODIFY_QUIET_MODE")
-                        == PackageManager.PERMISSION_GRANTED);
     }
 
     private List<AppInfo> getFiltersAppInfos() {
@@ -433,18 +395,4 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
         }
         return result;
     }
-
-    /**
-     * Returns the cached section name for the given title, recomputing and updating the cache if
-     * the title has no cached section name.
-     */
-    private String getAndUpdateCachedSectionName(CharSequence title) {
-        String sectionName = mCachedSectionNames.get(title);
-        if (sectionName == null) {
-            sectionName = mIndexer.computeSectionName(title);
-            mCachedSectionNames.put(title, sectionName);
-        }
-        return sectionName;
-    }
-
 }

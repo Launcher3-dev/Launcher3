@@ -26,7 +26,11 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.os.DropBoxManager;
 
+import org.junit.Assert;
+
+import java.util.Date;
 import java.util.List;
 
 public class TestHelpers {
@@ -73,12 +77,81 @@ public class TestHelpers {
         return launchers.get(0).activityInfo;
     }
 
-    public static String getOverviewPackageName() {
+    public static ComponentName getOverviewComponentName() {
         Resources res = Resources.getSystem();
         int id = res.getIdentifier("config_recentsComponentName", "string", "android");
         if (id != 0) {
-            return ComponentName.unflattenFromString(res.getString(id)).getPackageName();
+            return ComponentName.unflattenFromString(res.getString(id));
         }
-        return "com.android.systemui";
+        return new ComponentName("com.android.systemui",
+                "com.android.systemui.recents.RecentsActivity");
+    }
+
+    public static String getOverviewPackageName() {
+        return getOverviewComponentName().getPackageName();
+    }
+
+    private static String truncateCrash(String text, int maxLines) {
+        String[] lines = text.split("\\r?\\n");
+        StringBuilder ret = new StringBuilder();
+        for (int i = 0; i < maxLines && i < lines.length; i++) {
+            ret.append(lines[i]);
+            ret.append('\n');
+        }
+        if (lines.length > maxLines) {
+            ret.append("... ");
+            ret.append(lines.length - maxLines);
+            ret.append(" more lines truncated ...\n");
+        }
+        return ret.toString();
+    }
+
+    private static String checkCrash(Context context, String label, long startTime) {
+        DropBoxManager dropbox = (DropBoxManager) context.getSystemService(Context.DROPBOX_SERVICE);
+        Assert.assertNotNull("Unable access the DropBoxManager service", dropbox);
+
+        long timestamp = startTime;
+        DropBoxManager.Entry entry;
+        StringBuilder errorDetails = new StringBuilder();
+        while (null != (entry = dropbox.getNextEntry(label, timestamp))) {
+            errorDetails.append("------------------------------\n");
+            timestamp = entry.getTimeMillis();
+            errorDetails.append(new Date(timestamp));
+            errorDetails.append(": ");
+            errorDetails.append(entry.getTag());
+            errorDetails.append(": ");
+            final String dropboxSnippet = entry.getText(4096);
+            if (dropboxSnippet != null) errorDetails.append(truncateCrash(dropboxSnippet, 40));
+            errorDetails.append("    ...\n");
+            entry.close();
+        }
+        return errorDetails.length() != 0 ? errorDetails.toString() : null;
+    }
+
+    public static String getSystemHealthMessage(Context context, long startTime) {
+        try {
+            StringBuilder errors = new StringBuilder();
+
+            final String[] labels = {
+                    "system_app_anr",
+                    "system_app_crash",
+                    "system_app_native_crash",
+                    "system_server_anr",
+                    "system_server_crash",
+                    "system_server_native_crash",
+                    "system_server_watchdog",
+            };
+
+            for (String label : labels) {
+                final String crash = checkCrash(context, label, startTime);
+                if (crash != null) errors.append(crash);
+            }
+
+            return errors.length() != 0
+                    ? "Current time: " + new Date(System.currentTimeMillis()) + "\n" + errors
+                    : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

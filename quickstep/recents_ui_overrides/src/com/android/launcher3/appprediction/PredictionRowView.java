@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2019 The Android Open Source Project
+/*
+ * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package com.android.launcher3.appprediction;
 
+import static com.android.launcher3.LauncherState.OVERVIEW;
 import static com.android.launcher3.anim.Interpolators.LINEAR;
 import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
+import static com.android.launcher3.logging.LoggerUtils.newContainerTarget;
+import static com.android.launcher3.logging.LoggerUtils.newTarget;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -28,20 +31,22 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.util.IntProperty;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.LinearLayout;
 
-import com.android.launcher3.AppInfo;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
-import com.android.launcher3.ItemInfo;
-import com.android.launcher3.ItemInfoWithIcon;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
+import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
-import com.android.launcher3.WorkspaceItemInfo;
 import com.android.launcher3.allapps.AllAppsStore;
 import com.android.launcher3.allapps.FloatingHeaderRow;
 import com.android.launcher3.allapps.FloatingHeaderView;
@@ -52,6 +57,10 @@ import com.android.launcher3.keyboard.FocusIndicatorHelper;
 import com.android.launcher3.keyboard.FocusIndicatorHelper.SimpleFocusIndicatorHelper;
 import com.android.launcher3.logging.StatsLogUtils.LogContainerProvider;
 import com.android.launcher3.model.AppLaunchTracker;
+import com.android.launcher3.model.data.AppInfo;
+import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.ItemInfoWithIcon;
+import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.touch.ItemClickHandler;
 import com.android.launcher3.touch.ItemLongClickListener;
 import com.android.launcher3.userevent.nano.LauncherLogProto;
@@ -61,9 +70,6 @@ import com.android.quickstep.AnimatedFloat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 @TargetApi(Build.VERSION_CODES.P)
 public class PredictionRowView extends LinearLayout implements
@@ -80,7 +86,7 @@ public class PredictionRowView extends LinearLayout implements
 
                 @Override
                 public Integer get(PredictionRowView view) {
-                    return view.mIconCurrentTextAlpha;
+                    return view.mIconLastSetTextAlpha;
                 }
             };
 
@@ -92,7 +98,7 @@ public class PredictionRowView extends LinearLayout implements
 
     private final Launcher mLauncher;
     private final PredictionUiStateManager mPredictionUiStateManager;
-    private final int mNumPredictedAppsPerRow;
+    private int mNumPredictedAppsPerRow;
 
     // The set of predicted app component names
     private final List<ComponentKeyMapper> mPredictedAppComponents = new ArrayList<>();
@@ -103,6 +109,8 @@ public class PredictionRowView extends LinearLayout implements
 
     private final int mIconTextColor;
     private final int mIconFullTextAlpha;
+    private int mIconLastSetTextAlpha;
+    // Might use mIconFullTextAlpha instead of mIconLastSetTextAlpha if we are translucent.
     private int mIconCurrentTextAlpha;
 
     private FloatingHeaderView mParent;
@@ -126,7 +134,7 @@ public class PredictionRowView extends LinearLayout implements
 
         mFocusHelper = new SimpleFocusIndicatorHelper(this);
 
-        mNumPredictedAppsPerRow = LauncherAppState.getIDP(context).numColumns;
+        mNumPredictedAppsPerRow = LauncherAppState.getIDP(context).numAllAppsColumns;
         mLauncher = Launcher.getLauncher(context);
         mLauncher.addOnDeviceProfileChangeListener(this);
 
@@ -184,7 +192,7 @@ public class PredictionRowView extends LinearLayout implements
     public int getExpectedHeight() {
         return getVisibility() == GONE ? 0 :
                 Launcher.getLauncher(getContext()).getDeviceProfile().allAppsCellHeightPx
-                + getPaddingTop() + getPaddingBottom();
+                        + getPaddingTop() + getPaddingBottom();
     }
 
     @Override
@@ -224,6 +232,7 @@ public class PredictionRowView extends LinearLayout implements
 
     @Override
     public void onDeviceProfileChanged(DeviceProfile dp) {
+        mNumPredictedAppsPerRow = dp.inv.numAllAppsColumns;
         removeAllViews();
         applyPredictionApps();
     }
@@ -233,8 +242,9 @@ public class PredictionRowView extends LinearLayout implements
             while (getChildCount() > mNumPredictedAppsPerRow) {
                 removeViewAt(0);
             }
+            LayoutInflater inflater = mLauncher.getAppsView().getLayoutInflater();
             while (getChildCount() < mNumPredictedAppsPerRow) {
-                BubbleTextView icon = (BubbleTextView) mLauncher.getLayoutInflater().inflate(
+                BubbleTextView icon = (BubbleTextView) inflater.inflate(
                         R.layout.all_apps_icon, this, false);
                 icon.setOnClickListener(PREDICTION_CLICK_LISTENER);
                 icon.setOnLongClickListener(ItemLongClickListener.INSTANCE_ALL_APPS);
@@ -272,14 +282,15 @@ public class PredictionRowView extends LinearLayout implements
         boolean predictionsEnabled = predictionCount > 0;
         if (predictionsEnabled != mPredictionsEnabled) {
             mPredictionsEnabled = predictionsEnabled;
-            mLauncher.reapplyUi();
+            mLauncher.reapplyUi(false /* cancelCurrentAnimation */);
             updateVisibility();
         }
         mParent.onHeightUpdated();
     }
 
-    private List<ItemInfoWithIcon> processPredictedAppComponents(List<ComponentKeyMapper> components) {
-        if (getAppsStore().getApps().isEmpty()) {
+    private List<ItemInfoWithIcon> processPredictedAppComponents(
+            List<ComponentKeyMapper> components) {
+        if (getAppsStore().getApps().length == 0) {
             // Apps have not been bound yet.
             return Collections.emptyList();
         }
@@ -288,9 +299,11 @@ public class PredictionRowView extends LinearLayout implements
         for (ComponentKeyMapper mapper : components) {
             ItemInfoWithIcon info = mapper.getApp(getAppsStore());
             if (info != null) {
-                predictedApps.add(info);
+                ItemInfoWithIcon predictedApp = info.clone();
+                predictedApp.container = LauncherSettings.Favorites.CONTAINER_PREDICTION;
+                predictedApps.add(predictedApp);
             } else {
-                if (FeatureFlags.IS_DOGFOOD_BUILD) {
+                if (FeatureFlags.IS_STUDIO_BUILD) {
                     Log.e(TAG, "Predicted app not found: " + mapper);
                 }
             }
@@ -303,24 +316,47 @@ public class PredictionRowView extends LinearLayout implements
     }
 
     @Override
-    public void fillInLogContainerData(View v, ItemInfo info, LauncherLogProto.Target target,
-            LauncherLogProto.Target targetParent) {
+    public void fillInLogContainerData(ItemInfo childInfo, LauncherLogProto.Target child,
+            ArrayList<LauncherLogProto.Target> parents) {
         for (int i = 0; i < mPredictedApps.size(); i++) {
             ItemInfoWithIcon appInfo = mPredictedApps.get(i);
-            if (appInfo == info) {
-                targetParent.containerType = LauncherLogProto.ContainerType.PREDICTION;
-                target.predictedRank = i;
+            if (appInfo == childInfo) {
+                child.predictedRank = i;
                 break;
             }
         }
+        parents.add(newContainerTarget(LauncherLogProto.ContainerType.PREDICTION));
+
+        // include where the prediction is coming this used to be Launcher#modifyUserEvent
+        LauncherLogProto.Target parent = newTarget(LauncherLogProto.Target.Type.CONTAINER);
+        LauncherState state = mLauncher.getStateManager().getState();
+        if (state == LauncherState.ALL_APPS) {
+            parent.containerType = LauncherLogProto.ContainerType.ALLAPPS;
+        } else if (state == OVERVIEW) {
+            parent.containerType = LauncherLogProto.ContainerType.TASKSWITCHER;
+        }
+        parents.add(parent);
     }
 
-    public void setTextAlpha(int alpha) {
-        mIconCurrentTextAlpha = alpha;
+    public void setTextAlpha(int textAlpha) {
+        mIconLastSetTextAlpha = textAlpha;
+        if (getAlpha() < 1 && textAlpha > 0) {
+            // If the entire header is translucent, make sure the text is at full opacity so it's
+            // not double-translucent. However, we support keeping the text invisible (alpha == 0).
+            textAlpha = mIconFullTextAlpha;
+        }
+        mIconCurrentTextAlpha = textAlpha;
         int iconColor = setColorAlphaBound(mIconTextColor, mIconCurrentTextAlpha);
         for (int i = 0; i < getChildCount(); i++) {
             ((BubbleTextView) getChildAt(i)).setTextColor(iconColor);
         }
+    }
+
+    @Override
+    public void setAlpha(float alpha) {
+        super.setAlpha(alpha);
+        // Reapply text alpha so that we update it to be full alpha if the row is now translucent.
+        setTextAlpha(mIconLastSetTextAlpha);
     }
 
     @Override
@@ -351,23 +387,15 @@ public class PredictionRowView extends LinearLayout implements
     }
 
     @Override
-    public void setContentVisibility(boolean hasHeaderExtra, boolean hasContent,
-            PropertySetter setter, Interpolator fadeInterpolator) {
-        boolean isDrawn = getAlpha() > 0;
-        int textAlpha = hasHeaderExtra
-                ? (hasContent ? mIconFullTextAlpha : 0) // Text follows the content visibility
-                : mIconCurrentTextAlpha; // Leave as before
-        if (!isDrawn) {
-            // If the header is not drawn, no need to animate the text alpha
-            setTextAlpha(textAlpha);
-        } else {
-            setter.setInt(this, TEXT_ALPHA, textAlpha, fadeInterpolator);
-        }
-
+    public void setContentVisibility(boolean hasHeaderExtra, boolean hasAllAppsContent,
+            PropertySetter setter, Interpolator headerFade, Interpolator allAppsFade) {
+        // Text follows all apps visibility
+        int textAlpha = hasHeaderExtra && hasAllAppsContent ? mIconFullTextAlpha : 0;
+        setter.setInt(this, TEXT_ALPHA, textAlpha, allAppsFade);
         setter.setFloat(mOverviewScrollFactor, AnimatedFloat.VALUE,
-                (hasHeaderExtra && !hasContent) ? 1 : 0, LINEAR);
+                (hasHeaderExtra && !hasAllAppsContent) ? 1 : 0, LINEAR);
         setter.setFloat(mContentAlphaFactor, AnimatedFloat.VALUE, hasHeaderExtra ? 1 : 0,
-                fadeInterpolator);
+                headerFade);
     }
 
     @Override

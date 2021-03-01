@@ -16,9 +16,10 @@
 
 package com.android.launcher3.util;
 
+import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
+
 import android.os.Looper;
 
-import com.android.launcher3.LauncherModel;
 import com.android.launcher3.config.FeatureFlags;
 
 /**
@@ -27,25 +28,25 @@ import com.android.launcher3.config.FeatureFlags;
 public class Preconditions {
 
     public static void assertNotNull(Object o) {
-        if (FeatureFlags.IS_DOGFOOD_BUILD && o == null) {
+        if (FeatureFlags.IS_STUDIO_BUILD && o == null) {
             throw new IllegalStateException();
         }
     }
 
     public static void assertWorkerThread() {
-        if (FeatureFlags.IS_DOGFOOD_BUILD && !isSameLooper(LauncherModel.getWorkerLooper())) {
+        if (FeatureFlags.IS_STUDIO_BUILD && !isSameLooper(MODEL_EXECUTOR.getLooper())) {
             throw new IllegalStateException();
         }
     }
 
     public static void assertUIThread() {
-        if (FeatureFlags.IS_DOGFOOD_BUILD && !isSameLooper(Looper.getMainLooper())) {
+        if (FeatureFlags.IS_STUDIO_BUILD && !isSameLooper(Looper.getMainLooper())) {
             throw new IllegalStateException();
         }
     }
 
     public static void assertNonUiThread() {
-        if (FeatureFlags.IS_DOGFOOD_BUILD && isSameLooper(Looper.getMainLooper())) {
+        if (FeatureFlags.IS_STUDIO_BUILD && isSameLooper(Looper.getMainLooper())) {
             throw new IllegalStateException();
         }
     }

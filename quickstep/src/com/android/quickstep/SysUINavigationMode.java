@@ -16,6 +16,9 @@
 
 package com.android.quickstep;
 
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_NAVIGATION_MODE_2_BUTTON;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_NAVIGATION_MODE_3_BUTTON;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_NAVIGATION_MODE_GESTURE_BUTTON;
 import static com.android.launcher3.util.PackageManagerHelper.getPackageFilter;
 
 import android.content.BroadcastReceiver;
@@ -24,8 +27,11 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.util.Log;
 
+import com.android.launcher3.logging.StatsLogManager.LauncherEvent;
+import com.android.launcher3.touch.PagedOrientationHandler;
 import com.android.launcher3.util.MainThreadInitializedObject;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,16 +41,18 @@ import java.util.List;
 public class SysUINavigationMode {
 
     public enum Mode {
-        THREE_BUTTONS(false, 0),
-        TWO_BUTTONS(true, 1),
-        NO_BUTTON(true, 2);
+        THREE_BUTTONS(false, 0, LAUNCHER_NAVIGATION_MODE_3_BUTTON),
+        TWO_BUTTONS(true, 1, LAUNCHER_NAVIGATION_MODE_2_BUTTON),
+        NO_BUTTON(true, 2, LAUNCHER_NAVIGATION_MODE_GESTURE_BUTTON);
 
         public final boolean hasGestures;
         public final int resValue;
+        public final LauncherEvent launcherEvent;
 
-        Mode(boolean hasGestures, int resValue) {
+        Mode(boolean hasGestures, int resValue, LauncherEvent launcherEvent) {
             this.hasGestures = hasGestures;
             this.resValue = resValue;
+            this.launcherEvent = launcherEvent;
         }
     }
 
@@ -52,12 +60,12 @@ public class SysUINavigationMode {
         return INSTANCE.get(context).getMode();
     }
 
-    public static MainThreadInitializedObject<SysUINavigationMode> INSTANCE =
+    public static final MainThreadInitializedObject<SysUINavigationMode> INSTANCE =
             new MainThreadInitializedObject<>(SysUINavigationMode::new);
 
     private static final String TAG = "SysUINavigationMode";
 
-    private final String ACTION_OVERLAY_CHANGED = "android.intent.action.OVERLAY_CHANGED";
+    private static final String ACTION_OVERLAY_CHANGED = "android.intent.action.OVERLAY_CHANGED";
     private static final String NAV_BAR_INTERACTION_MODE_RES_NAME =
             "config_navBarInteractionMode";
 
@@ -73,13 +81,18 @@ public class SysUINavigationMode {
         mContext.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Mode oldMode = mMode;
-                initializeMode();
-                if (mMode != oldMode) {
-                    dispatchModeChange();
-                }
+                updateMode();
             }
         }, getPackageFilter("android", ACTION_OVERLAY_CHANGED));
+    }
+
+    /** Updates navigation mode when needed. */
+    public void updateMode() {
+        Mode oldMode = mMode;
+        initializeMode();
+        if (mMode != oldMode) {
+            dispatchModeChange();
+        }
     }
 
     private void initializeMode() {
@@ -122,8 +135,24 @@ public class SysUINavigationMode {
         }
     }
 
-    public interface NavigationModeChangeListener {
+    /** @return Whether we can remove the shelf from overview. */
+    public static boolean removeShelfFromOverview(Context context) {
+        // The shelf is core to the two-button mode model, so we need to continue supporting it.
+        return getMode(context) != Mode.TWO_BUTTONS;
+    }
 
+    public static boolean hideShelfInTwoButtonLandscape(Context context,
+            PagedOrientationHandler pagedOrientationHandler) {
+        return  getMode(context) == Mode.TWO_BUTTONS &&
+                !pagedOrientationHandler.isLayoutNaturalToLauncher();
+    }
+
+    public void dump(PrintWriter pw) {
+        pw.println("SysUINavigationMode:");
+        pw.println("  mode=" + mMode.name());
+    }
+
+    public interface NavigationModeChangeListener {
         void onNavigationModeChanged(Mode newMode);
     }
 }

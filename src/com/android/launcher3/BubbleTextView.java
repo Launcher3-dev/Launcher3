@@ -16,6 +16,8 @@
 
 package com.android.launcher3;
 
+import static com.android.launcher3.FastBitmapDrawable.newIcon;
+import static com.android.launcher3.graphics.PreloadIconDrawable.newPendingIcon;
 import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
 
 import android.animation.Animator;
@@ -27,35 +29,40 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils.TruncateAt;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.Property;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewDebug;
 import android.widget.TextView;
 
 import com.android.launcher3.Launcher.OnResumeCallback;
 import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
 import com.android.launcher3.dot.DotInfo;
+import com.android.launcher3.dragndrop.DraggableView;
 import com.android.launcher3.folder.FolderIcon;
-import com.android.launcher3.graphics.DrawableFactory;
 import com.android.launcher3.graphics.IconPalette;
 import com.android.launcher3.graphics.IconShape;
 import com.android.launcher3.graphics.PreloadIconDrawable;
 import com.android.launcher3.icons.DotRenderer;
 import com.android.launcher3.icons.IconCache.IconLoadRequest;
 import com.android.launcher3.icons.IconCache.ItemInfoUpdateReceiver;
-import com.android.launcher3.model.PackageItemInfo;
-import com.android.launcher3.testing.TestProtocol;
+import com.android.launcher3.model.data.AppInfo;
+import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.ItemInfoWithIcon;
+import com.android.launcher3.model.data.PackageItemInfo;
+import com.android.launcher3.model.data.PromiseAppInfo;
+import com.android.launcher3.model.data.WorkspaceItemInfo;
+import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.views.ActivityContext;
+import com.android.launcher3.views.IconLabelDotView;
 
 import java.text.NumberFormat;
 
@@ -64,7 +71,8 @@ import java.text.NumberFormat;
  * because we want to make the bubble taller than the text and TextView's clip is
  * too aggressive.
  */
-public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, OnResumeCallback {
+public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, OnResumeCallback,
+        IconLabelDotView, DraggableView, Reorderable {
 
     private static final int DISPLAY_WORKSPACE = 0;
     private static final int DISPLAY_ALL_APPS = 1;
@@ -72,6 +80,10 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
     private static final int[] STATE_PRESSED = new int[] {android.R.attr.state_pressed};
 
+    private final PointF mTranslationForReorderBounce = new PointF(0, 0);
+    private final PointF mTranslationForReorderPreview = new PointF(0, 0);
+
+    private float mScaleForReorderBounce = 1f;
 
     private static final Property<BubbleTextView, Float> DOT_SCALE_PROPERTY
             = new Property<BubbleTextView, Float>(Float.TYPE, "dotScale") {
@@ -102,11 +114,11 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
     private final ActivityContext mActivity;
     private Drawable mIcon;
-    private final boolean mCenterVertically;
+    private boolean mCenterVertically;
+
+    private final int mDisplay;
 
     private final CheckLongPressHelper mLongPressHelper;
-    private final StylusEventHelper mStylusEventHelper;
-    private final float mSlop;
 
     private final boolean mLayoutHorizontal;
     private final int mIconSize;
@@ -146,32 +158,31 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     public BubbleTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mActivity = ActivityContext.lookupContext(context);
-        mSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
 
         TypedArray a = context.obtainStyledAttributes(attrs,
                 R.styleable.BubbleTextView, defStyle, 0);
         mLayoutHorizontal = a.getBoolean(R.styleable.BubbleTextView_layoutHorizontal, false);
+        DeviceProfile grid = mActivity.getDeviceProfile();
 
-        int display = a.getInteger(R.styleable.BubbleTextView_iconDisplay, DISPLAY_WORKSPACE);
+        mDisplay = a.getInteger(R.styleable.BubbleTextView_iconDisplay, DISPLAY_WORKSPACE);
         final int defaultIconSize;
-        if (display == DISPLAY_WORKSPACE) {
-            DeviceProfile grid = mActivity.getWallpaperDeviceProfile();
+        if (mDisplay == DISPLAY_WORKSPACE) {
             setTextSize(TypedValue.COMPLEX_UNIT_PX, grid.iconTextSizePx);
             setCompoundDrawablePadding(grid.iconDrawablePaddingPx);
             defaultIconSize = grid.iconSizePx;
-        } else if (display == DISPLAY_ALL_APPS) {
-            DeviceProfile grid = mActivity.getDeviceProfile();
+        } else if (mDisplay == DISPLAY_ALL_APPS) {
             setTextSize(TypedValue.COMPLEX_UNIT_PX, grid.allAppsIconTextSizePx);
             setCompoundDrawablePadding(grid.allAppsIconDrawablePaddingPx);
             defaultIconSize = grid.allAppsIconSizePx;
-        } else if (display == DISPLAY_FOLDER) {
-            DeviceProfile grid = mActivity.getDeviceProfile();
+        } else if (mDisplay == DISPLAY_FOLDER) {
             setTextSize(TypedValue.COMPLEX_UNIT_PX, grid.folderChildTextSizePx);
             setCompoundDrawablePadding(grid.folderChildDrawablePaddingPx);
             defaultIconSize = grid.folderChildIconSizePx;
         } else {
-            defaultIconSize = mActivity.getDeviceProfile().iconSizePx;
+            // widget_selection or shortcut_popup
+            defaultIconSize = grid.iconSizePx;
         }
+
         mCenterVertically = a.getBoolean(R.styleable.BubbleTextView_centerVertically, false);
 
         mIconSize = a.getDimensionPixelSize(R.styleable.BubbleTextView_iconSizeOverride,
@@ -179,7 +190,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         a.recycle();
 
         mLongPressHelper = new CheckLongPressHelper(this);
-        mStylusEventHelper = new StylusEventHelper(new SimpleOnStylusPressListener(this), this);
 
         mDotParams = new DotRenderer.DrawParams();
 
@@ -204,6 +214,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         cancelDotScaleAnim();
         mDotParams.scale = 0f;
         mForceHideDot = false;
+        setBackground(null);
     }
 
     private void cancelDotScaleAnim() {
@@ -276,9 +287,8 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     }
 
     private void applyIconAndLabel(ItemInfoWithIcon info) {
-        FastBitmapDrawable iconDrawable = DrawableFactory.INSTANCE.get(getContext())
-                .newIcon(getContext(), info);
-        mDotParams.color = IconPalette.getMutedColor(info.iconColor, 0.54f);
+        FastBitmapDrawable iconDrawable = newIcon(getContext(), info);
+        mDotParams.color = IconPalette.getMutedColor(info.bitmap.color, 0.54f);
 
         setIcon(iconDrawable);
         setText(info.title);
@@ -319,37 +329,29 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (TestProtocol.sDebugTracing) {
-            Log.d(TestProtocol.NO_START_TAG, "BubbleTextView.onTouchEvent " + event);
+        // ignore events if they happen in padding area
+        if (event.getAction() == MotionEvent.ACTION_DOWN
+                && shouldIgnoreTouchDown(event.getX(), event.getY())) {
+            return false;
         }
-        // Call the superclass onTouchEvent first, because sometimes it changes the state to
-        // isPressed() on an ACTION_UP
-        boolean result = super.onTouchEvent(event);
+        if (isLongClickable()) {
+            super.onTouchEvent(event);
+            mLongPressHelper.onTouchEvent(event);
+            // Keep receiving the rest of the events
+            return true;
+        } else {
+            return super.onTouchEvent(event);
+        }
+    }
 
-        // Check for a stylus button press, if it occurs cancel any long press checks.
-        if (mStylusEventHelper.onMotionEvent(event)) {
-            mLongPressHelper.cancelLongPress();
-            result = true;
-        }
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                // If we're in a stylus button press, don't check for long press.
-                if (!mStylusEventHelper.inStylusButtonPressed()) {
-                    mLongPressHelper.postCheckForLongPress();
-                }
-                break;
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                mLongPressHelper.cancelLongPress();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (!Utilities.pointInView(this, event.getX(), event.getY(), mSlop)) {
-                    mLongPressHelper.cancelLongPress();
-                }
-                break;
-        }
-        return result;
+    /**
+     * Returns true if the touch down at the provided position be ignored
+     */
+    protected boolean shouldIgnoreTouchDown(float x, float y) {
+        return y < getPaddingTop()
+                || x < getPaddingLeft()
+                || y > getHeight() - getPaddingBottom()
+                || x > getWidth() - getPaddingRight();
     }
 
     void setStayPressed(boolean stayPressed) {
@@ -416,7 +418,8 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         }
     }
 
-    public void forceHideDot(boolean forceHideDot) {
+    @Override
+    public void setForceHideDot(boolean forceHideDot) {
         if (mForceHideDot == forceHideDot) {
             return;
         }
@@ -478,7 +481,8 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         // Text should be visible everywhere but the hotseat.
         Object tag = getParent() instanceof FolderIcon ? ((View) getParent()).getTag() : getTag();
         ItemInfo info = tag instanceof ItemInfo ? (ItemInfo) tag : null;
-        return info == null || info.container != LauncherSettings.Favorites.CONTAINER_HOTSEAT;
+        return info == null || (info.container != LauncherSettings.Favorites.CONTAINER_HOTSEAT
+                && info.container != LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION);
     }
 
     public void setTextVisibility(boolean visible) {
@@ -510,7 +514,6 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
     @Override
     public void cancelLongPress() {
         super.cancelLongPress();
-
         mLongPressHelper.cancelLongPress();
     }
 
@@ -549,8 +552,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
                     preloadDrawable = (PreloadIconDrawable) mIcon;
                     preloadDrawable.setLevel(progressLevel);
                 } else {
-                    preloadDrawable = DrawableFactory.INSTANCE.get(getContext())
-                            .newPendingIcon(getContext(), info);
+                    preloadDrawable = newPendingIcon(getContext(), info);
                     preloadDrawable.setLevel(progressLevel);
                     setIcon(preloadDrawable);
                 }
@@ -566,7 +568,11 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
             mDotInfo = mActivity.getDotInfoForItem(itemInfo);
             boolean isDotted = mDotInfo != null;
             float newDotScale = isDotted ? 1f : 0;
-            mDotRenderer = mActivity.getDeviceProfile().mDotRenderer;
+            if (mDisplay == DISPLAY_ALL_APPS) {
+                mDotRenderer = mActivity.getDeviceProfile().mDotRendererAllApps;
+            } else {
+                mDotRenderer = mActivity.getDeviceProfile().mDotRendererWorkSpace;
+            }
             if (wasDotted || isDotted) {
                 // Animate when a dot is first added or when it is removed.
                 if (animate && (wasDotted ^ isDotted) && isShown()) {
@@ -605,8 +611,12 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
         }
     }
 
+    @Override
     public void setIconVisible(boolean visible) {
         mIsIconVisible = visible;
+        if (!mIsIconVisible) {
+            resetIconScale();
+        }
         Drawable icon = visible ? mIcon : new ColorDrawable(Color.TRANSPARENT);
         applyCompoundDrawables(icon);
     }
@@ -642,7 +652,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
             mDisableRelayout = true;
 
             // Optimization: Starting in N, pre-uploads the bitmap to RenderThread.
-            info.iconBitmap.prepareToDraw();
+            info.bitmap.icon.prepareToDraw();
 
             if (info instanceof AppInfo) {
                 applyFromApplicationInfo((AppInfo) info);
@@ -676,5 +686,84 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver, 
 
     public int getIconSize() {
         return mIconSize;
+    }
+
+    private void updateTranslation() {
+        super.setTranslationX(mTranslationForReorderBounce.x + mTranslationForReorderPreview.x);
+        super.setTranslationY(mTranslationForReorderBounce.y + mTranslationForReorderPreview.y);
+    }
+
+    public void setReorderBounceOffset(float x, float y) {
+        mTranslationForReorderBounce.set(x, y);
+        updateTranslation();
+    }
+
+    public void getReorderBounceOffset(PointF offset) {
+        offset.set(mTranslationForReorderBounce);
+    }
+
+    @Override
+    public void setReorderPreviewOffset(float x, float y) {
+        mTranslationForReorderPreview.set(x, y);
+        updateTranslation();
+    }
+
+    @Override
+    public void getReorderPreviewOffset(PointF offset) {
+        offset.set(mTranslationForReorderPreview);
+    }
+
+    public void setReorderBounceScale(float scale) {
+        mScaleForReorderBounce = scale;
+        super.setScaleX(scale);
+        super.setScaleY(scale);
+    }
+
+    public float getReorderBounceScale() {
+        return mScaleForReorderBounce;
+    }
+
+    public View getView() {
+        return this;
+    }
+
+    @Override
+    public int getViewType() {
+        return DRAGGABLE_ICON;
+    }
+
+    @Override
+    public void getWorkspaceVisualDragBounds(Rect bounds) {
+        DeviceProfile grid = mActivity.getDeviceProfile();
+        BubbleTextView.getIconBounds(this, bounds, grid.iconSizePx);
+    }
+
+    private int getIconSizeForDisplay(int display) {
+        DeviceProfile grid = mActivity.getDeviceProfile();
+        switch (display) {
+            case DISPLAY_ALL_APPS:
+                return grid.allAppsIconSizePx;
+            case DISPLAY_WORKSPACE:
+            case DISPLAY_FOLDER:
+            default:
+                return grid.iconSizePx;
+        }
+    }
+
+    public void getSourceVisualDragBounds(Rect bounds) {
+        BubbleTextView.getIconBounds(this, bounds, getIconSizeForDisplay(mDisplay));
+    }
+
+    @Override
+    public SafeCloseable prepareDrawDragView() {
+        resetIconScale();
+        setForceHideDot(true);
+        return () -> { };
+    }
+
+    private void resetIconScale() {
+        if (mIcon instanceof FastBitmapDrawable) {
+            ((FastBitmapDrawable) mIcon).setScale(1f);
+        }
     }
 }

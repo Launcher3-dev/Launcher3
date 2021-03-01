@@ -17,7 +17,9 @@
 package com.android.launcher3;
 
 import static com.android.launcher3.Utilities.getDevicePrefs;
+import static com.android.launcher3.Utilities.getPointString;
 import static com.android.launcher3.config.FeatureFlags.APPLY_CONFIG_AT_RUNTIME;
+import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.PackageManagerHelper.getPackageFilter;
 
 import android.annotation.TargetApi;
@@ -40,10 +42,14 @@ import android.util.SparseArray;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.Display;
-import android.view.WindowManager;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.android.launcher3.graphics.IconShape;
 import com.android.launcher3.util.ConfigMonitor;
+import com.android.launcher3.util.DefaultDisplay;
+import com.android.launcher3.util.DefaultDisplay.Info;
 import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.MainThreadInitializedObject;
 import com.android.launcher3.util.Themes;
@@ -55,15 +61,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
-
 public class InvariantDeviceProfile {
 
     public static final String TAG = "IDP";
     // We do not need any synchronization for this variable as its only written on UI thread.
     public static final MainThreadInitializedObject<InvariantDeviceProfile> INSTANCE =
             new MainThreadInitializedObject<>(InvariantDeviceProfile::new);
+
+    public static final String KEY_MIGRATION_SRC_WORKSPACE_SIZE = "migration_src_workspace_size";
+    public static final String KEY_MIGRATION_SRC_HOTSEAT_COUNT = "migration_src_hotseat_count";
 
     private static final String KEY_IDP_GRID_NAME = "idp_grid_name";
 
@@ -102,6 +108,8 @@ public class InvariantDeviceProfile {
     public int iconBitmapSize;
     public int fillResIconDpi;
     public float iconTextSize;
+    public float allAppsIconSize;
+    public float allAppsIconTextSize;
 
     private SparseArray<TypedValue> mExtraAttrs;
 
@@ -110,6 +118,12 @@ public class InvariantDeviceProfile {
      */
     public int numHotseatIcons;
 
+    /**
+     * Number of columns in the all apps list.
+     */
+    public int numAllAppsColumns;
+
+    public String dbFile;
     public int defaultLayoutId;
     int demoModeLayoutId;
 
@@ -134,8 +148,13 @@ public class InvariantDeviceProfile {
         iconSize = p.iconSize;
         iconShapePath = p.iconShapePath;
         landscapeIconSize = p.landscapeIconSize;
+        iconBitmapSize = p.iconBitmapSize;
         iconTextSize = p.iconTextSize;
         numHotseatIcons = p.numHotseatIcons;
+        numAllAppsColumns = p.numAllAppsColumns;
+        dbFile = p.dbFile;
+        allAppsIconSize = p.allAppsIconSize;
+        allAppsIconTextSize = p.allAppsIconTextSize;
         defaultLayoutId = p.defaultLayoutId;
         demoModeLayoutId = p.demoModeLayoutId;
         mExtraAttrs = p.mExtraAttrs;
@@ -144,7 +163,16 @@ public class InvariantDeviceProfile {
 
     @TargetApi(23)
     private InvariantDeviceProfile(Context context) {
-        initGrid(context, Utilities.getPrefs(context).getString(KEY_IDP_GRID_NAME, null));
+        String gridName = getCurrentGridName(context);
+        String newGridName = initGrid(context, gridName);
+        if (!newGridName.equals(gridName)) {
+            Utilities.getPrefs(context).edit().putString(KEY_IDP_GRID_NAME, newGridName).apply();
+        }
+        Utilities.getPrefs(context).edit()
+                .putInt(KEY_MIGRATION_SRC_HOTSEAT_COUNT, numHotseatIcons)
+                .putString(KEY_MIGRATION_SRC_WORKSPACE_SIZE, getPointString(numColumns, numRows))
+                .apply();
+
         mConfigMonitor = new ConfigMonitor(context,
                 APPLY_CONFIG_AT_RUNTIME.get() ? this::onConfigChanged : this::killProcess);
         mOverlayMonitor = new OverlayMonitor(context);
@@ -161,6 +189,37 @@ public class InvariantDeviceProfile {
     }
 
     /**
+     * This constructor should NOT have any monitors by design.
+     */
+    public InvariantDeviceProfile(Context context, Display display) {
+        // Ensure that the main device profile is initialized
+        InvariantDeviceProfile originalProfile = INSTANCE.get(context);
+        String gridName = getCurrentGridName(context);
+
+        // Get the display info based on default display and interpolate it to existing display
+        DisplayOption defaultDisplayOption = invDistWeightedInterpolate(
+                DefaultDisplay.INSTANCE.get(context).getInfo(),
+                getPredefinedDeviceProfiles(context, gridName));
+
+        Info myInfo = new Info(context, display);
+        DisplayOption myDisplayOption = invDistWeightedInterpolate(
+                myInfo, getPredefinedDeviceProfiles(context, gridName));
+
+        DisplayOption result = new DisplayOption(defaultDisplayOption.grid)
+                .add(myDisplayOption);
+        result.iconSize = defaultDisplayOption.iconSize;
+        result.landscapeIconSize = defaultDisplayOption.landscapeIconSize;
+        result.allAppsIconSize = Math.min(
+                defaultDisplayOption.allAppsIconSize, myDisplayOption.allAppsIconSize);
+        initGrid(context, myInfo, result);
+    }
+
+    public static String getCurrentGridName(Context context) {
+        return Utilities.isGridOptionsEnabled(context)
+                ? Utilities.getPrefs(context).getString(KEY_IDP_GRID_NAME, null) : null;
+    }
+
+    /**
      * Retrieve system defined or RRO overriden icon shape.
      */
     private static String getIconShapePath(Context context) {
@@ -172,63 +231,60 @@ public class InvariantDeviceProfile {
     }
 
     private String initGrid(Context context, String gridName) {
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-        DisplayMetrics dm = new DisplayMetrics();
-        display.getMetrics(dm);
-
-        Point smallestSize = new Point();
-        Point largestSize = new Point();
-        display.getCurrentSizeRange(smallestSize, largestSize);
-
+        DefaultDisplay.Info displayInfo = DefaultDisplay.INSTANCE.get(context).getInfo();
         ArrayList<DisplayOption> allOptions = getPredefinedDeviceProfiles(context, gridName);
-        // This guarantees that width < height
-        float minWidthDps = Utilities.dpiFromPx(Math.min(smallestSize.x, smallestSize.y), dm);
-        float minHeightDps = Utilities.dpiFromPx(Math.min(largestSize.x, largestSize.y), dm);
-        // Sort the profiles based on the closeness to the device size
-        Collections.sort(allOptions, (a, b) ->
-                Float.compare(dist(minWidthDps, minHeightDps, a.minWidthDps, a.minHeightDps),
-                        dist(minWidthDps, minHeightDps, b.minWidthDps, b.minHeightDps)));
-        DisplayOption interpolatedDisplayOption =
-                invDistWeightedInterpolate(minWidthDps,  minHeightDps, allOptions);
 
-        GridOption closestProfile = allOptions.get(0).grid;
+        DisplayOption displayOption = invDistWeightedInterpolate(displayInfo, allOptions);
+        initGrid(context, displayInfo, displayOption);
+        return displayOption.grid.name;
+    }
+
+    private void initGrid(
+            Context context, DefaultDisplay.Info displayInfo, DisplayOption displayOption) {
+        GridOption closestProfile = displayOption.grid;
         numRows = closestProfile.numRows;
         numColumns = closestProfile.numColumns;
         numHotseatIcons = closestProfile.numHotseatIcons;
+        dbFile = closestProfile.dbFile;
         defaultLayoutId = closestProfile.defaultLayoutId;
         demoModeLayoutId = closestProfile.demoModeLayoutId;
         numFolderRows = closestProfile.numFolderRows;
         numFolderColumns = closestProfile.numFolderColumns;
+        numAllAppsColumns = closestProfile.numAllAppsColumns;
+
         mExtraAttrs = closestProfile.extraAttrs;
 
-        if (!closestProfile.name.equals(gridName)) {
-            Utilities.getPrefs(context).edit()
-                    .putString(KEY_IDP_GRID_NAME, closestProfile.name).apply();
-        }
-
-        iconSize = interpolatedDisplayOption.iconSize;
+        iconSize = displayOption.iconSize;
         iconShapePath = getIconShapePath(context);
-        landscapeIconSize = interpolatedDisplayOption.landscapeIconSize;
-        iconBitmapSize = ResourceUtils.pxFromDp(iconSize, dm);
-        iconTextSize = interpolatedDisplayOption.iconTextSize;
+        landscapeIconSize = displayOption.landscapeIconSize;
+        iconBitmapSize = ResourceUtils.pxFromDp(iconSize, displayInfo.metrics);
+        iconTextSize = displayOption.iconTextSize;
         fillResIconDpi = getLauncherIconDensity(iconBitmapSize);
+
+        if (Utilities.isGridOptionsEnabled(context)) {
+            allAppsIconSize = displayOption.allAppsIconSize;
+            allAppsIconTextSize = displayOption.allAppsIconTextSize;
+        } else {
+            allAppsIconSize = iconSize;
+            allAppsIconTextSize = iconTextSize;
+        }
 
         // If the partner customization apk contains any grid overrides, apply them
         // Supported overrides: numRows, numColumns, iconSize
-        applyPartnerDeviceProfileOverrides(context, dm);
+        applyPartnerDeviceProfileOverrides(context, displayInfo.metrics);
 
-        Point realSize = new Point();
-        display.getRealSize(realSize);
+        Point realSize = new Point(displayInfo.realSize);
         // The real size never changes. smallSide and largeSide will remain the
         // same in any orientation.
         int smallSide = Math.min(realSize.x, realSize.y);
         int largeSide = Math.max(realSize.x, realSize.y);
 
-        landscapeProfile = new DeviceProfile(context, this, smallestSize, largestSize,
-                largeSide, smallSide, true /* isLandscape */, false /* isMultiWindowMode */);
-        portraitProfile = new DeviceProfile(context, this, smallestSize, largestSize,
-                smallSide, largeSide, false /* isLandscape */, false /* isMultiWindowMode */);
+        DeviceProfile.Builder builder = new DeviceProfile.Builder(context, this, displayInfo)
+                .setSizeRange(new Point(displayInfo.smallestSize),
+                        new Point(displayInfo.largestSize));
+
+        landscapeProfile = builder.setSize(largeSide, smallSide).build();
+        portraitProfile = builder.setSize(smallSide, largeSide).build();
 
         // We need to ensure that there is enough extra space in the wallpaper
         // for the intended parallax effects
@@ -242,8 +298,6 @@ public class InvariantDeviceProfile {
 
         ComponentName cn = new ComponentName(context.getPackageName(), getClass().getName());
         defaultWidgetPadding = AppWidgetHostView.getDefaultPaddingForWidget(context, cn, null);
-
-        return closestProfile.name;
     }
 
     @Nullable
@@ -280,7 +334,7 @@ public class InvariantDeviceProfile {
     public void setCurrentGrid(Context context, String gridName) {
         Context appContext = context.getApplicationContext();
         Utilities.getPrefs(appContext).edit().putString(KEY_IDP_GRID_NAME, gridName).apply();
-        new MainThreadExecutor().execute(() -> onConfigChanged(appContext));
+        MAIN_EXECUTOR.execute(() -> onConfigChanged(appContext));
     }
 
     private void onConfigChanged(Context context) {
@@ -288,9 +342,8 @@ public class InvariantDeviceProfile {
         InvariantDeviceProfile oldProfile = new InvariantDeviceProfile(this);
 
         // Re-init grid
-        // TODO(b/131867841): We pass in null here so that we can calculate the closest profile
-        // without the bias of the grid name.
-        initGrid(context, null);
+        String gridName = getCurrentGridName(context);
+        initGrid(context, gridName);
 
         int changeFlags = 0;
         if (numRows != oldProfile.numRows ||
@@ -412,8 +465,43 @@ public class InvariantDeviceProfile {
     }
 
     @VisibleForTesting
+    static DisplayOption invDistWeightedInterpolate(
+            DefaultDisplay.Info displayInfo, ArrayList<DisplayOption> points) {
+        Point smallestSize = new Point(displayInfo.smallestSize);
+        Point largestSize = new Point(displayInfo.largestSize);
+
+        // This guarantees that width < height
+        float width = Utilities.dpiFromPx(Math.min(smallestSize.x, smallestSize.y),
+                displayInfo.metrics);
+        float height = Utilities.dpiFromPx(Math.min(largestSize.x, largestSize.y),
+                displayInfo.metrics);
+
+        // Sort the profiles based on the closeness to the device size
+        Collections.sort(points, (a, b) ->
+                Float.compare(dist(width, height, a.minWidthDps, a.minHeightDps),
+                        dist(width, height, b.minWidthDps, b.minHeightDps)));
+
+        GridOption closestOption = points.get(0).grid;
+        float weights = 0;
+
+        DisplayOption p = points.get(0);
+        if (dist(width, height, p.minWidthDps, p.minHeightDps) == 0) {
+            return p;
+        }
+
+        DisplayOption out = new DisplayOption(closestOption);
+        for (int i = 0; i < points.size() && i < KNEARESTNEIGHBOR; ++i) {
+            p = points.get(i);
+            float w = weight(width, height, p.minWidthDps, p.minHeightDps, WEIGHT_POWER);
+            weights += w;
+            out.add(new DisplayOption().add(p).multiply(w));
+        }
+        return out.multiply(1.0f / weights);
+    }
+
+    @VisibleForTesting
     static DisplayOption invDistWeightedInterpolate(float width, float height,
-                ArrayList<DisplayOption> points) {
+            ArrayList<DisplayOption> points) {
         float weights = 0;
 
         DisplayOption p = points.get(0);
@@ -492,6 +580,9 @@ public class InvariantDeviceProfile {
 
         private final int numHotseatIcons;
 
+        private final String dbFile;
+        private final int numAllAppsColumns;
+
         private final int defaultLayoutId;
         private final int demoModeLayoutId;
 
@@ -504,6 +595,7 @@ public class InvariantDeviceProfile {
             numRows = a.getInt(R.styleable.GridDisplayOption_numRows, 0);
             numColumns = a.getInt(R.styleable.GridDisplayOption_numColumns, 0);
 
+            dbFile = a.getString(R.styleable.GridDisplayOption_dbFile);
             defaultLayoutId = a.getResourceId(
                     R.styleable.GridDisplayOption_defaultLayoutId, 0);
             demoModeLayoutId = a.getResourceId(
@@ -514,6 +606,9 @@ public class InvariantDeviceProfile {
                     R.styleable.GridDisplayOption_numFolderRows, numRows);
             numFolderColumns = a.getInt(
                     R.styleable.GridDisplayOption_numFolderColumns, numColumns);
+            numAllAppsColumns = a.getInt(
+                    R.styleable.GridDisplayOption_numAllAppsColumns, numColumns);
+
             a.recycle();
 
             extraAttrs = Themes.createValueMap(context, attrs,
@@ -524,14 +619,15 @@ public class InvariantDeviceProfile {
     private static final class DisplayOption {
         private final GridOption grid;
 
-        private final String name;
         private final float minWidthDps;
         private final float minHeightDps;
         private final boolean canBeDefault;
 
         private float iconSize;
-        private float landscapeIconSize;
         private float iconTextSize;
+        private float landscapeIconSize;
+        private float allAppsIconSize;
+        private float allAppsIconTextSize;
 
         DisplayOption(GridOption grid, Context context, AttributeSet attrs) {
             this.grid = grid;
@@ -539,7 +635,6 @@ public class InvariantDeviceProfile {
             TypedArray a = context.obtainStyledAttributes(
                     attrs, R.styleable.ProfileDisplayOption);
 
-            name = a.getString(R.styleable.ProfileDisplayOption_name);
             minWidthDps = a.getFloat(R.styleable.ProfileDisplayOption_minWidthDps, 0);
             minHeightDps = a.getFloat(R.styleable.ProfileDisplayOption_minHeightDps, 0);
             canBeDefault = a.getBoolean(
@@ -549,12 +644,20 @@ public class InvariantDeviceProfile {
             landscapeIconSize = a.getFloat(R.styleable.ProfileDisplayOption_landscapeIconSize,
                     iconSize);
             iconTextSize = a.getFloat(R.styleable.ProfileDisplayOption_iconTextSize, 0);
+
+            allAppsIconSize = a.getFloat(R.styleable.ProfileDisplayOption_allAppsIconSize,
+                    iconSize);
+            allAppsIconTextSize = a.getFloat(R.styleable.ProfileDisplayOption_allAppsIconTextSize,
+                    iconTextSize);
             a.recycle();
         }
 
         DisplayOption() {
-            grid = null;
-            name = null;
+            this(null);
+        }
+
+        DisplayOption(GridOption grid) {
+            this.grid = grid;
             minWidthDps = 0;
             minHeightDps = 0;
             canBeDefault = false;
@@ -563,14 +666,18 @@ public class InvariantDeviceProfile {
         private DisplayOption multiply(float w) {
             iconSize *= w;
             landscapeIconSize *= w;
+            allAppsIconSize *= w;
             iconTextSize *= w;
+            allAppsIconTextSize *= w;
             return this;
         }
 
         private DisplayOption add(DisplayOption p) {
             iconSize += p.iconSize;
             landscapeIconSize += p.landscapeIconSize;
+            allAppsIconSize += p.allAppsIconSize;
             iconTextSize += p.iconTextSize;
+            allAppsIconTextSize += p.allAppsIconTextSize;
             return this;
         }
     }

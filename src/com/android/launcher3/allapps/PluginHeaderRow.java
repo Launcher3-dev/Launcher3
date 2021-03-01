@@ -15,9 +15,10 @@
  */
 package com.android.launcher3.allapps;
 
-import static android.view.View.ALPHA;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
+
+import static com.android.launcher3.LauncherAnimUtils.VIEW_ALPHA;
 
 import android.graphics.Rect;
 import android.view.View;
@@ -64,10 +65,10 @@ public class PluginHeaderRow implements FloatingHeaderRow {
     }
 
     @Override
-    public void setContentVisibility(boolean hasHeaderExtra, boolean hasContent,
-            PropertySetter setter, Interpolator fadeInterpolator) {
+    public void setContentVisibility(boolean hasHeaderExtra, boolean hasAllAppsContent,
+            PropertySetter setter, Interpolator headerFade, Interpolator allAppsFade) {
         // Don't use setViewAlpha as we want to control the visibility ourselves.
-        setter.setFloat(mView, ALPHA, hasContent ? 1 : 0, fadeInterpolator);
+        setter.setFloat(mView, VIEW_ALPHA, hasAllAppsContent ? 1 : 0, headerFade);
     }
 
     @Override

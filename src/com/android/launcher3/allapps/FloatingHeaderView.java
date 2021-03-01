@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.allapps;
 
+import static com.android.launcher3.LauncherAnimUtils.VIEW_ALPHA;
+
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Point;
@@ -27,9 +29,13 @@ import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Insettable;
-import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.PropertySetter;
 import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
@@ -39,10 +45,6 @@ import com.android.systemui.plugins.PluginListener;
 
 import java.util.ArrayList;
 import java.util.Map;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class FloatingHeaderView extends LinearLayout implements
         ValueAnimator.AnimatorUpdateListener, PluginListener<AllAppsRow>, Insettable,
@@ -363,14 +365,14 @@ public class FloatingHeaderView extends LinearLayout implements
         p.y = getTop() - mCurrentRV.getTop() - mParent.getTop();
     }
 
-    public void setContentVisibility(boolean hasHeader, boolean hasContent, PropertySetter setter,
-            Interpolator fadeInterpolator) {
+    public void setContentVisibility(boolean hasHeader, boolean hasAllAppsContent,
+            PropertySetter setter, Interpolator headerFade, Interpolator allAppsFade) {
         for (FloatingHeaderRow row : mAllRows) {
-            row.setContentVisibility(hasHeader, hasContent, setter, fadeInterpolator);
+            row.setContentVisibility(hasHeader, hasAllAppsContent, setter, headerFade, allAppsFade);
         }
 
-        allowTouchForwarding(hasContent);
-        setter.setFloat(mTabLayout, ALPHA, hasContent ? 1 : 0, fadeInterpolator);
+        allowTouchForwarding(hasAllAppsContent);
+        setter.setFloat(mTabLayout, VIEW_ALPHA, hasAllAppsContent ? 1 : 0, headerFade);
     }
 
     protected void allowTouchForwarding(boolean allow) {
@@ -393,7 +395,7 @@ public class FloatingHeaderView extends LinearLayout implements
 
     @Override
     public void setInsets(Rect insets) {
-        DeviceProfile grid = Launcher.getLauncher(getContext()).getDeviceProfile();
+        DeviceProfile grid = BaseDraggingActivity.fromContext(getContext()).getDeviceProfile();
         for (FloatingHeaderRow row : mAllRows) {
             row.setInsets(insets, grid);
         }

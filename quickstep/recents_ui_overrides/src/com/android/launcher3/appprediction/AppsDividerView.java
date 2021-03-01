@@ -16,6 +16,7 @@
 
 package com.android.launcher3.appprediction;
 
+import static com.android.launcher3.LauncherAnimUtils.VIEW_ALPHA;
 import static com.android.launcher3.LauncherState.ALL_APPS;
 
 import android.annotation.TargetApi;
@@ -31,24 +32,24 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.Interpolator;
 
+import androidx.annotation.ColorInt;
+import androidx.core.content.ContextCompat;
+
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
-import com.android.launcher3.LauncherStateManager;
 import com.android.launcher3.R;
 import com.android.launcher3.allapps.FloatingHeaderRow;
 import com.android.launcher3.allapps.FloatingHeaderView;
 import com.android.launcher3.anim.PropertySetter;
+import com.android.launcher3.statemanager.StateManager.StateListener;
 import com.android.launcher3.util.Themes;
-
-import androidx.annotation.ColorInt;
-import androidx.core.content.ContextCompat;
 
 /**
  * A view which shows a horizontal divider
  */
 @TargetApi(Build.VERSION_CODES.O)
-public class AppsDividerView extends View implements LauncherStateManager.StateListener,
+public class AppsDividerView extends View implements StateListener<LauncherState>,
         FloatingHeaderRow {
 
     private static final String ALL_APPS_VISITED_COUNT = "launcher.all_apps_visited_count";
@@ -250,9 +251,6 @@ public class AppsDividerView extends View implements LauncherStateManager.StateL
     }
 
     @Override
-    public void onStateTransitionStart(LauncherState toState) { }
-
-    @Override
     public void onStateTransitionComplete(LauncherState finalState) {
         if (finalState == ALL_APPS) {
             setAllAppsVisitedCount(getAllAppsVisitedCount() + 1);
@@ -288,10 +286,10 @@ public class AppsDividerView extends View implements LauncherStateManager.StateL
     }
 
     @Override
-    public void setContentVisibility(boolean hasHeaderExtra, boolean hasContent,
-            PropertySetter setter, Interpolator fadeInterpolator) {
+    public void setContentVisibility(boolean hasHeaderExtra, boolean hasAllAppsContent,
+            PropertySetter setter, Interpolator headerFade, Interpolator allAppsFade) {
         // Don't use setViewAlpha as we want to control the visibility ourselves.
-        setter.setFloat(this, ALPHA, hasContent ? 1 : 0, fadeInterpolator);
+        setter.setFloat(this, VIEW_ALPHA, hasAllAppsContent ? 1 : 0, allAppsFade);
     }
 
     @Override
