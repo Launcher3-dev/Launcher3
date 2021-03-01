@@ -178,9 +178,9 @@ protobuf {
                 task.builtins {
                     remove java
                     javanano {
-                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent"
-                        option "java_package=launcher_log.proto|com.android.launcher3.userevent"
-                        option "java_package=launcher_dump.proto|com.android.launcher3.model"
+                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
                         option "enum_style=java"
                     }
                 }
