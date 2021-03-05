@@ -174,22 +174,61 @@ dependencies {
     androidTestImplementation "androidx.annotation:annotation:${ANDROID_X_VERSION}"
 }
 
+//protobuf {
+//    // Configure the protoc executable
+//    protoc {
+//        artifact = 'com.google.protobuf:protoc:3.0.0'
+////        artifact = 'com.google.protobuf:protoc:3.15.3'
+//
+//        generateProtoTasks {
+//            all().each { task ->
+//                task.builtins {
+//                    remove java
+//                    javanano {
+//                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+//                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+//                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
+//                        option "enum_style=java"
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+
 protobuf {
     // Configure the protoc executable
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.0.0'
-//        artifact = 'com.google.protobuf:protoc:3.15.3'
-
-        generateProtoTasks {
-            all().each { task ->
-                task.builtins {
-                    remove java
-                    javanano {
-                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
-                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
-                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
-                        option "enum_style=java"
-                    }
+        artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3'
+    }
+    plugins {
+        javalite {
+            // The codegen for lite comes as a separate artifact
+            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+//            task.builtins {
+//                remove java
+//                javanano {
+//                    option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+//                    option "java_package=launcher_atom|com.android.launcher3.logger.nano"
+//                    option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+//                    option "java_package=launcher_trace.proto|com.android.launcher3.tracing.nano"
+//                    option "java_package=launcher_trace_file|com.android.launcher3.model.nano"
+//                    option "enum_style=java"
+//                }
+//            }
+            task.plugins {
+                remove java
+                javalite {
+                    option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+                    option "java_package=launcher_atom|com.android.launcher3.logger.nano"
+                    option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+                    option "java_package=launcher_trace.proto|com.android.launcher3.tracing.nano"
+                    option "java_package=launcher_trace_file|com.android.launcher3.model.nano"
+                    option "enum_style=java"
                 }
             }
         }
