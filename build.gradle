@@ -135,9 +135,12 @@ android {
 
 allprojects {
     repositories {
-//        maven { url "../../../prebuilts/sdk/current/androidx/m2repository" }
-//        maven { url "../../../prebuilts/fullsdk-darwin/extras/android/m2repository" }
-//        maven { url "../../../prebuilts/fullsdk-linux/extras/android/m2repository" }
+        gradle.projectsEvaluated {
+            tasks.withType(JavaCompile) {
+                //放在项目的根目录下
+                options.compilerArgs.add("-Xbootclasspath/p:${FRAMEWORK_PREBUILTS_DIR}/libs/framework.jar")
+            }
+        }
         mavenCentral()
         google()
     }
@@ -150,9 +153,13 @@ dependencies {
     implementation project(':IconLoader')
 //    withQuickstepImplementation project(':SharedLibWrapper')
     implementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'launcher_protos.jar')
+    implementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'launcher_protos_nano.jar')
 
     // Recents lib dependency
-    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
+    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs/quickstep", include: 'sysui_statsd.jar')
+    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'SystemUISharedLib.jar')
+//    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')
+//    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'framework.jar')
 
     // Required for AOSP to compile. This is already included in the sysui_shared.jar
     withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')

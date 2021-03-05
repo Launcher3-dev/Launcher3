@@ -25,7 +25,7 @@ import android.os.UserHandle;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.Workspace;
-import com.android.launcher3.logger.nano.LauncherAtom;
+import com.android.launcher3.logger.LauncherAtom;
 import com.android.launcher3.model.ModelWriter;
 import com.android.launcher3.util.ContentWriter;
 
@@ -48,6 +48,7 @@ import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPWIDG
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_TASK;
+import static com.android.launcher3.logger.LauncherAtom.ContainerInfo.ContainerCase.CONTAINER_NOT_SET;
 
 /**
  * Represents an item in the launcher.
@@ -330,7 +331,7 @@ public class ItemInfo {
         return itemBuilder.build();
     }
 
-    ItemInfo.Builder getDefaultItemInfoBuilder() {
+    LauncherAtom.ItemInfo.Builder getDefaultItemInfoBuilder() {
         LauncherAtom.ItemInfo.Builder itemBuilder = LauncherAtom.ItemInfo.newBuilder();
         itemBuilder.setIsWork(user != Process.myUserHandle());
         return itemBuilder;
@@ -339,15 +340,15 @@ public class ItemInfo {
     protected LauncherAtom.ContainerInfo getContainerInfo() {
         switch (container) {
             case CONTAINER_HOTSEAT:
-                return ContainerInfo.newBuilder()
+                return LauncherAtom.ContainerInfo.newBuilder()
                         .setHotseat(LauncherAtom.HotseatContainer.newBuilder().setIndex(screenId))
                         .build();
             case CONTAINER_HOTSEAT_PREDICTION:
-                return ContainerInfo.newBuilder().setPredictedHotseatContainer(
+                return LauncherAtom.ContainerInfo.newBuilder().setPredictedHotseatContainer(
                         LauncherAtom.PredictedHotseatContainer.newBuilder().setIndex(screenId))
                         .build();
             case CONTAINER_DESKTOP:
-                return ContainerInfo.newBuilder()
+                return LauncherAtom.ContainerInfo.newBuilder()
                         .setWorkspace(
                                 LauncherAtom.WorkspaceContainer.newBuilder()
                                         .setGridX(cellX)
