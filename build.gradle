@@ -153,7 +153,9 @@ dependencies {
     implementation project(':IconLoader')
 //    withQuickstepImplementation project(':SharedLibWrapper')
 //    implementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'launcher_protos.jar')
-    implementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'launcher_protos_nano.jar')
+//    implementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'launcher_protos_nano.jar')
+    implementation PROTOBUF_DEPENDENCY
+    implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.10.0'
 
     // Recents lib dependency
     withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs/quickstep", include: 'sysui_statsd.jar')
@@ -199,9 +201,9 @@ dependencies {
 protobuf {
     // Configure the protoc executable
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3'
+        artifact = 'com.google.protobuf:protoc:3.0.0'
     }
-    plugins {
+    plugins {LauncherAtom
         javalite {
             // The codegen for lite comes as a separate artifact
             artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
