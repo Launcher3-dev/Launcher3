@@ -17,15 +17,15 @@ package com.android.launcher3.anim;
 
 import android.content.Context;
 
+import com.android.launcher3.R;
+import com.android.launcher3.util.DynamicResource;
+import com.android.systemui.plugins.ResourceProvider;
+
 import androidx.dynamicanimation.animation.DynamicAnimation.OnAnimationEndListener;
 import androidx.dynamicanimation.animation.FlingAnimation;
 import androidx.dynamicanimation.animation.FloatPropertyCompat;
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
-
-import com.android.launcher3.R;
-import com.android.launcher3.util.DynamicResource;
-import com.android.systemui.plugins.ResourceProvider;
 
 /**
  * Given a property to animate and a target value and starting velocity, first apply friction to

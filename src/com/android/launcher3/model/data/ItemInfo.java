@@ -25,7 +25,7 @@ import android.os.UserHandle;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.Workspace;
-import com.android.launcher3.logger.LauncherAtom;
+import com.android.launcher3.logger.nano.LauncherAtom;
 import com.android.launcher3.model.ModelWriter;
 import com.android.launcher3.util.ContentWriter;
 
@@ -48,7 +48,7 @@ import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPWIDG
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_TASK;
-import static com.android.launcher3.logger.LauncherAtom.ContainerInfo.ContainerCase.CONTAINER_NOT_SET;
+import static com.android.launcher3.logger.nano.LauncherAtom.ContainerInfo.ContainerCase.CONTAINER_NOT_SET;
 
 /**
  * Represents an item in the launcher.

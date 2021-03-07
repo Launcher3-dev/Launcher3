@@ -16,8 +16,6 @@
 
 package com.android.launcher3.pm;
 
-import static com.android.launcher3.Utilities.getPrefs;
-
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
@@ -28,9 +26,6 @@ import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
 import android.text.TextUtils;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.SessionCommitReceiver;
@@ -47,6 +42,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+
+import static com.android.launcher3.Utilities.getPrefs;
 
 /**
  * Utility class to tracking install sessions

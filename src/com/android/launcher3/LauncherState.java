@@ -25,7 +25,7 @@ import com.android.launcher3.states.SpringLoadedState;
 import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.uioverrides.states.AllAppsState;
 import com.android.launcher3.uioverrides.states.OverviewState;
-import com.android.launcher3.userevent.LauncherLogProto.ContainerType;
+import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 
 import java.util.Arrays;
 

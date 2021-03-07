@@ -16,8 +16,6 @@
 
 package com.android.launcher3.pm;
 
-import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
-
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
@@ -27,11 +25,13 @@ import android.content.pm.ShortcutInfo;
 import android.os.Build;
 import android.os.Parcelable;
 
-import androidx.annotation.Nullable;
-
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.icons.ShortcutCachingLogic;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
+
+import androidx.annotation.Nullable;
+
+import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 
 public class PinRequestHelper {
 

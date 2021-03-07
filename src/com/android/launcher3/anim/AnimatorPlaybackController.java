@@ -15,12 +15,6 @@
  */
 package com.android.launcher3.anim;
 
-import static com.android.launcher3.Utilities.boundToRange;
-import static com.android.launcher3.anim.Interpolators.LINEAR;
-import static com.android.launcher3.anim.Interpolators.clampToProgress;
-import static com.android.launcher3.anim.Interpolators.scrollInterpolatorForVelocity;
-import static com.android.launcher3.util.DefaultDisplay.getSingleFrameMs;
-
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.animation.AnimatorListenerAdapter;
@@ -29,13 +23,19 @@ import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 
-import androidx.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import androidx.annotation.Nullable;
+
+import static com.android.launcher3.Utilities.boundToRange;
+import static com.android.launcher3.anim.Interpolators.LINEAR;
+import static com.android.launcher3.anim.Interpolators.clampToProgress;
+import static com.android.launcher3.anim.Interpolators.scrollInterpolatorForVelocity;
+import static com.android.launcher3.util.DefaultDisplay.getSingleFrameMs;
 
 /**
  * Helper class to control the playback of an {@link AnimatorSet}, with custom interpolators

@@ -26,11 +26,11 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.R;
-import com.android.launcher3.logger.LauncherAtom.ContainerInfo;
-import com.android.launcher3.logger.LauncherAtom.FromState;
-import com.android.launcher3.logger.LauncherAtom.ToState;
+import com.android.launcher3.logger.nano.LauncherAtom.ContainerInfo;
+import com.android.launcher3.logger.nano.LauncherAtom.FromState;
+import com.android.launcher3.logger.nano.LauncherAtom.ToState;
 import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.userevent.LauncherLogProto;
+import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.util.ResourceBasedOverride;
 
 import java.util.List;

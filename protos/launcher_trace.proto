@@ -16,7 +16,7 @@
 
 syntax = "proto2";
 
-package com.android.launcher3.tracing;
+package com.android.launcher3.tracing.nano;
 
 option java_multiple_files = true;
 

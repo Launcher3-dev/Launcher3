@@ -16,13 +16,13 @@
 
 package com.android.launcher3.dot;
 
-import androidx.annotation.NonNull;
-
 import com.android.launcher3.notification.NotificationInfo;
 import com.android.launcher3.notification.NotificationKeyData;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.annotation.NonNull;
 
 /**
  * Contains data to be used for a notification dot.

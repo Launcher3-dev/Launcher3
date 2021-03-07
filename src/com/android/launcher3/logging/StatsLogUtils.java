@@ -4,7 +4,7 @@ import android.view.View;
 import android.view.ViewParent;
 
 import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.userevent.LauncherLogProto.Target;
+import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
 
 import java.util.ArrayList;
 

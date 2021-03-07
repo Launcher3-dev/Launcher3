@@ -15,17 +15,17 @@
  */
 package com.android.launcher3.anim;
 
-import static com.android.launcher3.anim.Interpolators.LINEAR;
-
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.FloatProperty;
 
+import com.android.launcher3.util.DefaultDisplay;
+
 import androidx.annotation.FloatRange;
 import androidx.dynamicanimation.animation.SpringForce;
 
-import com.android.launcher3.util.DefaultDisplay;
+import static com.android.launcher3.anim.Interpolators.LINEAR;
 
 /**
  * Utility class to build an object animator which follows the same path as a spring animation for
