@@ -16,12 +16,6 @@
 
 package com.android.launcher3.dragndrop;
 
-import static com.android.launcher3.logging.LoggerUtils.newCommandAction;
-import static com.android.launcher3.logging.LoggerUtils.newContainerTarget;
-import static com.android.launcher3.logging.LoggerUtils.newItemTarget;
-import static com.android.launcher3.logging.LoggerUtils.newLauncherEvent;
-import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
-
 import android.annotation.TargetApi;
 import android.app.ActivityOptions;
 import android.appwidget.AppWidgetManager;
@@ -63,6 +57,12 @@ import com.android.launcher3.widget.WidgetImageView;
 import com.android.launcher3.widget.WidgetManagerHelper;
 
 import java.util.function.Supplier;
+
+import static com.android.launcher3.logging.LoggerUtils.newCommandAction;
+import static com.android.launcher3.logging.LoggerUtils.newContainerTarget;
+import static com.android.launcher3.logging.LoggerUtils.newItemTarget;
+import static com.android.launcher3.logging.LoggerUtils.newLauncherEvent;
+import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 
 @TargetApi(Build.VERSION_CODES.O)
 public class AddItemActivity extends BaseActivity implements OnLongClickListener, OnTouchListener {
@@ -319,10 +319,10 @@ public class AddItemActivity extends BaseActivity implements OnLongClickListener
         throw new UnsupportedOperationException();
     }
 
-    private void logCommand(int command) {
+    private void logCommand(Action.Command command) {
         getUserEventDispatcher().dispatchUserEvent(newLauncherEvent(
                 newCommandAction(command),
                 newItemTarget(mWidgetCell.getWidgetView(), mInstantAppResolver),
-                newContainerTarget(ContainerType.PINITEM)), null);
+                newContainerTarget(ContainerType.PINITEM.getNumber())), null);
     }
 }

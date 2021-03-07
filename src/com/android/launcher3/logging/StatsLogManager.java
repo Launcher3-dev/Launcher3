@@ -15,25 +15,24 @@
  */
 package com.android.launcher3.logging;
 
-import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.IGNORE;
+import android.content.Context;
+
+import com.android.launcher3.R;
+import com.android.launcher3.logger.nano.LauncherAtom.FromState;
+import com.android.launcher3.logger.nano.LauncherAtom.ToState;
+import com.android.launcher3.logger.nano.LauncherAtom;
+import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.userevent.nano.LauncherLogProto;
+import com.android.launcher3.util.ResourceBasedOverride;
+
+import java.util.List;
+
+import androidx.annotation.Nullable;
+
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALLAPPS_CLOSE_DOWN;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALLAPPS_OPEN_UP;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_HOME_GESTURE;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_OVERVIEW_GESTURE;
-
-import android.content.Context;
-
-import androidx.annotation.Nullable;
-
-import com.android.launcher3.R;
-import com.android.launcher3.logger.LauncherAtom.ContainerInfo;
-import com.android.launcher3.logger.LauncherAtom.FromState;
-import com.android.launcher3.logger.LauncherAtom.ToState;
-import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.userevent.LauncherLogProto;
-import com.android.launcher3.util.ResourceBasedOverride;
-
-import java.util.List;
 
 /**
  * Handles the user event logging in R+.
@@ -72,7 +71,7 @@ public class StatsLogManager implements ResourceBasedOverride {
     }
 
     /**
-     * Returns event enum based on the two {@link ContainerType} transition information when swipe
+     * Returns event enum based on the two {@link com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType} transition information when swipe
      * gesture happens(to be removed during UserEventDispatcher cleanup).
      */
     public static EventEnum getLauncherAtomEvent(int startContainerType,
@@ -423,7 +422,7 @@ public class StatsLogManager implements ResourceBasedOverride {
          * By default container related fields are derived from {@link ItemInfo}, this method would
          * override those values.
          */
-        default StatsLogger withContainerInfo(ContainerInfo containerInfo) {
+        default StatsLogger withContainerInfo(LauncherAtom.ContainerInfo containerInfo) {
             return this;
         }
 
