@@ -23,7 +23,8 @@ import com.android.launcher3.ButtonDropTarget;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.userevent.nano.LauncherLogExtensions.TargetExtension;
+import com.android.launcher3.userevent.LauncherLogExtensions.TargetExtension;
+import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ItemType;
 import com.android.launcher3.userevent.nano.LauncherLogProto.LauncherEvent;
@@ -135,7 +136,7 @@ public class LoggerUtils {
         return t;
     }
 
-    public static Target newContainerTarget(int containerType) {
+    public static Target newContainerTarget(LauncherLogProto.ContainerType containerType) {
         Target t = newTarget(Target.Type.CONTAINER);
         t.containerType = containerType;
         return t;

@@ -35,6 +35,8 @@ import android.os.UserHandle;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
@@ -45,8 +47,6 @@ import com.android.launcher3.util.PackageUserKey;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.annotation.Nullable;
 
 /**
  * Wrapper class for representing a shortcut configure activity.

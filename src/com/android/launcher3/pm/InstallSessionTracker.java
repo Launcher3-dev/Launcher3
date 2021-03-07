@@ -15,16 +15,16 @@
  */
 package com.android.launcher3.pm;
 
+import static com.android.launcher3.pm.InstallSessionHelper.getUserHandle;
+import static com.android.launcher3.pm.PackageInstallInfo.STATUS_FAILED;
+import static com.android.launcher3.pm.PackageInstallInfo.STATUS_INSTALLED;
+
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionInfo;
 import android.os.UserHandle;
 import android.util.SparseArray;
 
 import com.android.launcher3.util.PackageUserKey;
-
-import static com.android.launcher3.pm.InstallSessionHelper.getUserHandle;
-import static com.android.launcher3.pm.PackageInstallInfo.STATUS_FAILED;
-import static com.android.launcher3.pm.PackageInstallInfo.STATUS_INSTALLED;
 
 public class InstallSessionTracker extends PackageInstaller.SessionCallback {
 

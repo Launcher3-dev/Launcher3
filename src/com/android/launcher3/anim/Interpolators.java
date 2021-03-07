@@ -16,6 +16,8 @@
 
 package com.android.launcher3.anim;
 
+import static com.android.launcher3.util.DefaultDisplay.getSingleFrameMs;
+
 import android.content.Context;
 import android.graphics.Path;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -27,8 +29,6 @@ import android.view.animation.OvershootInterpolator;
 import android.view.animation.PathInterpolator;
 
 import com.android.launcher3.Utilities;
-
-import static com.android.launcher3.util.DefaultDisplay.getSingleFrameMs;
 
 
 /**

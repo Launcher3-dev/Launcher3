@@ -3,12 +3,12 @@ package com.android.launcher3.logging;
 import android.view.View;
 import android.view.ViewParent;
 
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
 
 import java.util.ArrayList;
-
-import androidx.annotation.Nullable;
 
 public class StatsLogUtils {
     private final static int MAXIMUM_VIEW_HIERARCHY_LEVEL = 5;

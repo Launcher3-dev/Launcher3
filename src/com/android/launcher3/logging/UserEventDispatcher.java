@@ -50,7 +50,7 @@ import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.logging.StatsLogUtils.LogContainerProvider;
 import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.userevent.nano.LauncherLogProto;
+import com.android.launcher3.userevent.LauncherLogProto;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.LauncherEvent;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
@@ -135,7 +135,7 @@ public class UserEventDispatcher implements ResourceBasedOverride {
     @Deprecated
     public void logAppLaunch(View v, Intent intent, @Nullable UserHandle userHandle) {
         Target itemTarget = newItemTarget(v, mInstantAppResolver);
-        Action action = newTouchAction(Action.Touch.TAP.getNumber());
+        Action action = newTouchAction(Action.Touch.TAP);
         ArrayList<Target> targets = makeTargetsList(itemTarget);
         if (fillLogContainer(v, itemTarget, targets)) {
             onFillInLogContainerData((ItemInfo) v.getTag(), itemTarget, targets);
@@ -156,8 +156,8 @@ public class UserEventDispatcher implements ResourceBasedOverride {
     public void logTaskLaunchOrDismiss(int action, int direction, int taskIndex,
             ComponentKey componentKey) {
         LauncherEvent event = newLauncherEvent(newTouchAction(action), // TAP or SWIPE or FLING
-                newTarget(Target.Type.ITEM.getNumber()));
-        if (action == Action.Touch.SWIPE.getNumber() || action == Action.Touch.FLING.getNumber()) {
+                newTarget(Target.Type.ITEM));
+        if (action == Action.Touch.SWIPE || action == Action.Touch.FLING) {
             // Direction DOWN means the task was launched, UP means it was dismissed.
             event.action.dir = direction;
         }
@@ -182,8 +182,8 @@ public class UserEventDispatcher implements ResourceBasedOverride {
     }
 
     public void logNotificationLaunch(View v, PendingIntent intent) {
-        LauncherEvent event = newLauncherEvent(newTouchAction(Action.Touch.TAP.getNumber()),
-                newItemTarget(v, mInstantAppResolver), newTarget(Target.Type.CONTAINER.getNumber()));
+        LauncherEvent event = newLauncherEvent(newTouchAction(Action.Touch.TAP),
+                newItemTarget(v, mInstantAppResolver), newTarget(Target.Type.CONTAINER));
         Target itemTarget = newItemTarget(v, mInstantAppResolver);
         ArrayList<Target> targets = makeTargetsList(itemTarget);
 
@@ -259,7 +259,7 @@ public class UserEventDispatcher implements ResourceBasedOverride {
      */
     public void logActionOnControl(int actionType, int controlType,
             @Nullable View controlInContainer, int... parentTypes) {
-        Target control = newTarget(Target.Type.CONTROL.getNumber());
+        Target control = newTarget(Target.Type.CONTROL);
         control.controlType = controlType;
         Action action = newAction(actionType);
 
@@ -272,21 +272,21 @@ public class UserEventDispatcher implements ResourceBasedOverride {
             targets.add(newContainerTarget(parentContainerType));
         }
         LauncherEvent event = newLauncherEvent(action, targets);
-        if (actionType == Action.Touch.DRAGDROP.getNumber()) {
+        if (actionType == Action.Touch.DRAGDROP) {
             event.actionDurationMillis = SystemClock.uptimeMillis() - mActionDurationMillis;
         }
         dispatchUserEvent(event, null);
     }
 
     public void logActionTapOutside(Target target) {
-        LauncherEvent event = newLauncherEvent(newTouchAction(Action.Type.TOUCH.getNumber()),
+        LauncherEvent event = newLauncherEvent(newTouchAction(Action.Type.TOUCH),
                 target);
         event.action.isOutside = true;
         dispatchUserEvent(event, null);
     }
 
     public void logActionBounceTip(int containerType) {
-        LauncherEvent event = newLauncherEvent(newAction(Action.Type.TIP.getNumber()),
+        LauncherEvent event = newLauncherEvent(newAction(Action.Type.TIP),
                 newContainerTarget(containerType));
         event.srcTarget[0].tipType = TipType.BOUNCE;
         dispatchUserEvent(event, null);

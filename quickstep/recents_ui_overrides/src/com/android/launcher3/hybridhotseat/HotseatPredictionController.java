@@ -30,7 +30,6 @@ import android.app.prediction.AppPredictor;
 import android.app.prediction.AppTarget;
 import android.app.prediction.AppTargetEvent;
 import android.content.ComponentName;
-import android.os.Build;
 import android.os.Process;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
@@ -39,7 +38,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import com.android.launcher3.DragSource;
 import com.android.launcher3.DropTarget;
@@ -309,7 +307,6 @@ public class HotseatPredictionController implements DragController.DragListener,
     /**
      * Creates App Predictor with all the current apps pinned on the hotseat
      */
-    @RequiresApi(api = Build.VERSION_CODES.P)
     public void createPredictor() {
         AppPredictionManager apm = mLauncher.getSystemService(AppPredictionManager.class);
         if (apm == null) {

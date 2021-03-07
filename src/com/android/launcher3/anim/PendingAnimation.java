@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.anim;
 
+import static com.android.launcher3.anim.AnimatorPlaybackController.addAnimationHoldersRecur;
+
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.animation.AnimatorSet;
@@ -29,8 +31,6 @@ import com.android.launcher3.anim.AnimatorPlaybackController.Holder;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
-
-import static com.android.launcher3.anim.AnimatorPlaybackController.addAnimationHoldersRecur;
 
 /**
  * Utility class to keep track of a running animation.

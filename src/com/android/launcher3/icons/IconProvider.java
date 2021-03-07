@@ -34,6 +34,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.launcher3.R;
+import com.android.launcher3.icons.BitmapInfo.Extender;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.SafeCloseable;
@@ -93,7 +94,7 @@ public class IconProvider {
     public Drawable getIconForUI(LauncherActivityInfo info, int iconDpi) {
         Drawable icon = getIcon(info, iconDpi);
         if (icon instanceof BitmapInfo.Extender) {
-            ((BitmapInfo.Extender) icon).prepareToDrawOnUi();
+            ((Extender) icon).prepareToDrawOnUi();
         }
         return icon;
     }

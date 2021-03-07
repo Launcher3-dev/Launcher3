@@ -21,11 +21,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.android.launcher3.util.ViewPool.Reusable;
-
 import androidx.annotation.AnyThread;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
+
+import com.android.launcher3.util.ViewPool.Reusable;
 
 /**
  * Utility class to maintain a pool of reusable views.
