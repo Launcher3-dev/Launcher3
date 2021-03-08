@@ -15,24 +15,19 @@
  */
 package com.android.launcher3.icons;
 
-import static android.content.Intent.ACTION_MANAGED_PROFILE_ADDED;
-import static android.content.Intent.ACTION_MANAGED_PROFILE_REMOVED;
-
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.UserHandle;
-import android.os.UserManager;
+import android.os.*;
 import android.util.SparseLongArray;
 
 import com.android.launcher3.icons.cache.BaseIconCache;
+
+import static android.content.Intent.ACTION_MANAGED_PROFILE_ADDED;
+import static android.content.Intent.ACTION_MANAGED_PROFILE_REMOVED;
 
 /**
  * Wrapper class to provide access to {@link BaseIconFactory} and also to provide pool of this class
@@ -48,7 +43,7 @@ public class SimpleIconCache extends BaseIconCache {
     private final UserManager mUserManager;
 
     public SimpleIconCache(Context context, String dbFileName, Looper bgLooper, int iconDpi,
-            int iconPixelSize, boolean inMemoryCache) {
+                           int iconPixelSize, boolean inMemoryCache) {
         super(context, dbFileName, bgLooper, iconDpi, iconPixelSize, inMemoryCache);
         mUserManager = context.getSystemService(UserManager.class);
 
@@ -66,12 +61,14 @@ public class SimpleIconCache extends BaseIconCache {
     @Override
     protected long getSerialNumberForUser(UserHandle user) {
         synchronized (mUserSerialMap) {
-            int index = mUserSerialMap.indexOfKey(usertus.getIdentifier());
+//            int index = mUserSerialMap.indexOfKey(usertus.getIdentifier());
+            int index = 0;
             if (index >= 0) {
                 return mUserSerialMap.valueAt(index);
             }
             long serial = mUserManager.getSerialNumberForUser(user);
-            mUserSerialMap.put(user.getIdentifier(), serial);
+//            mUserSerialMap.put(user.getIdentifier(), serial);
+            mUserSerialMap.put(index, serial);
             return serial;
         }
     }
@@ -84,7 +81,8 @@ public class SimpleIconCache extends BaseIconCache {
 
     @Override
     protected boolean isInstantApp(ApplicationInfo info) {
-        return info.isInstantApp();
+//        return info.isInstantApp();
+        return false;
     }
 
     @Override

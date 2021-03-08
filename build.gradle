@@ -17,11 +17,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 25
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
 
@@ -167,52 +167,52 @@ dependencies {
     androidTestImplementation "androidx.annotation:annotation:${ANDROID_X_VERSION}"
 }
 
-protobuf {
-    // Configure the protoc executable
-    protoc {
-        artifact = 'com.google.protobuf:protoc:3.0.0'
-
-        generateProtoTasks {
-            all().each { task ->
-                task.builtins {
-                    remove java
-                    javanano {
-                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
-                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
-                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
-                        option "enum_style=java"
-                    }
-                }
-            }
-        }
-    }
-}
-
-// 可编译配置
 //protobuf {
 //    // Configure the protoc executable
 //    protoc {
 //        artifact = 'com.google.protobuf:protoc:3.0.0'
-//    }
-//    plugins {
-//        javalite {
-//            // The codegen for lite comes as a separate artifact
-//            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
-//        }
-//    }
-//    generateProtoTasks {
-//        all().each { task ->
-//            task.plugins {
-//                remove java
-//                javalite {
-//                    option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
-//                    option "java_package=launcher_atom|com.android.launcher3.logger.nano"
-//                    option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
-//                    option "java_package=launcher_trace.proto|com.android.launcher3.tracing.nano"
-//                    option "java_package=launcher_trace_file|com.android.launcher3.model.nano"
-//                    option "enum_style=java"
+//
+//        generateProtoTasks {
+//            all().each { task ->
+//                task.builtins {
+//                    remove java
+//                    javanano {
+//                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+//                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+//                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
+//                        option "enum_style=java"
+//                    }
 //                }
 //            }
 //        }
 //    }
 //}
+
+// 可编译配置
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.0.0'
+    }
+    plugins {
+        javalite {
+            // The codegen for lite comes as a separate artifact
+            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                remove java
+                javalite {
+                    option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+                    option "java_package=launcher_atom|com.android.launcher3.logger.nano"
+                    option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+                    option "java_package=launcher_trace.proto|com.android.launcher3.tracing.nano"
+                    option "java_package=launcher_trace_file|com.android.launcher3.model.nano"
+                    option "enum_style=java"
+                }
+            }
+        }
+    }
+}
