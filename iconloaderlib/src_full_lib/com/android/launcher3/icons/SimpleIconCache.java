@@ -66,7 +66,7 @@ public class SimpleIconCache extends BaseIconCache {
     @Override
     protected long getSerialNumberForUser(UserHandle user) {
         synchronized (mUserSerialMap) {
-            int index = mUserSerialMap.indexOfKey(user.getIdentifier());
+            int index = mUserSerialMap.indexOfKey(usertus.getIdentifier());
             if (index >= 0) {
                 return mUserSerialMap.valueAt(index);
             }
