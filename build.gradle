@@ -5,7 +5,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath GRADLE_CLASS_PATH
+        classpath "com.android.tools.build:gradle:4.0.2"
         classpath PROTOBUF_CLASS_PATH
     }
 }
