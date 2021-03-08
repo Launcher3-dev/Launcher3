@@ -44,7 +44,7 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.anim.AnimationSuccessListener;
 import com.android.launcher3.anim.AnimatorPlaybackController;
 import com.android.launcher3.anim.PendingAnimation;
-import com.android.launcher3.logger.nano.LauncherAtom;
+import com.android.launcher3.logger.LauncherAtom;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.states.StateAnimationConfig;
 import com.android.launcher3.states.StateAnimationConfig.AnimationFlags;
@@ -302,11 +302,11 @@ public abstract class AbstractStateChangeTouchController
     public boolean onDrag(float displacement, MotionEvent ev) {
         if (!mIsLogContainerSet) {
             if (mStartState == ALL_APPS) {
-                mStartContainerType = ContainerType.ALLAPPS.getNumber();
+                mStartContainerType = ContainerType.ALLAPPS;
             } else if (mStartState == NORMAL) {
                 mStartContainerType = getLogContainerTypeForNormalState(ev);
             } else if (mStartState == OVERVIEW) {
-                mStartContainerType = ContainerType.TASKSWITCHER.getNumber();
+                mStartContainerType = ContainerType.TASKSWITCHER;
             }
             mIsLogContainerSet = true;
         }
@@ -396,7 +396,7 @@ public abstract class AbstractStateChangeTouchController
     @Override
     public void onDragEnd(float velocity) {
         boolean fling = mDetector.isFling(velocity);
-        final int logAction = (fling ? Touch.FLING : Touch.SWIPE).getNumber();
+        final int logAction = fling ? Touch.FLING : Touch.SWIPE;
 
         boolean blockedFling = fling && mFlingBlockCheck.isBlocked();
         if (blockedFling) {
@@ -526,7 +526,7 @@ public abstract class AbstractStateChangeTouchController
     }
 
     protected int getDirectionForLog() {
-        return (mToState.ordinal > mFromState.ordinal ? Direction.UP : Direction.DOWN).getNumber();
+        return mToState.ordinal > mFromState.ordinal ? Direction.UP : Direction.DOWN;
     }
 
     protected void onSwipeInteractionCompleted(LauncherState targetState, int logAction) {

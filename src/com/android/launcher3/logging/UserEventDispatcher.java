@@ -16,6 +16,21 @@
 
 package com.android.launcher3.logging;
 
+import static com.android.launcher3.logging.LoggerUtils.newAction;
+import static com.android.launcher3.logging.LoggerUtils.newCommandAction;
+import static com.android.launcher3.logging.LoggerUtils.newContainerTarget;
+import static com.android.launcher3.logging.LoggerUtils.newControlTarget;
+import static com.android.launcher3.logging.LoggerUtils.newDropTarget;
+import static com.android.launcher3.logging.LoggerUtils.newItemTarget;
+import static com.android.launcher3.logging.LoggerUtils.newLauncherEvent;
+import static com.android.launcher3.logging.LoggerUtils.newTarget;
+import static com.android.launcher3.logging.LoggerUtils.newTouchAction;
+import static com.android.launcher3.userevent.nano.LauncherLogProto.ControlType;
+import static com.android.launcher3.userevent.nano.LauncherLogProto.ItemType;
+import static com.android.launcher3.userevent.nano.LauncherLogProto.TipType;
+
+import static java.util.Optional.ofNullable;
+
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -27,12 +42,15 @@ import android.os.UserHandle;
 import android.util.Log;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.DropTarget;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.logging.StatsLogUtils.LogContainerProvider;
 import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.userevent.nano.LauncherLogProto;
+import com.android.launcher3.userevent.LauncherLogProto;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.LauncherEvent;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
@@ -40,31 +58,13 @@ import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.InstantAppResolver;
 import com.android.launcher3.util.LogConfig;
 import com.android.launcher3.util.ResourceBasedOverride;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
 import com.google.protobuf.nano.MessageNano;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import static com.android.launcher3.logging.LoggerUtils.newAction;
-import static com.android.launcher3.logging.LoggerUtils.newCommandAction;
-import static com.android.launcher3.logging.LoggerUtils.newContainerTarget;
-import static com.android.launcher3.logging.LoggerUtils.newControlTarget;
-import static com.android.launcher3.logging.LoggerUtils.newDropTarget;
-import static com.android.launcher3.logging.LoggerUtils.newItemTarget;
-import static com.android.launcher3.logging.LoggerUtils.newLauncherEvent;
-import static com.android.launcher3.logging.LoggerUtils.newLauncherEventBuilder;
-import static com.android.launcher3.logging.LoggerUtils.newTarget;
-import static com.android.launcher3.logging.LoggerUtils.newTouchAction;
-import static com.android.launcher3.userevent.nano.LauncherLogProto.ControlType;
-import static com.android.launcher3.userevent.nano.LauncherLogProto.ItemType;
-import static com.android.launcher3.userevent.nano.LauncherLogProto.TipType;
-import static java.util.Optional.ofNullable;
 
 /**
  * Manages the creation of {@link LauncherEvent}.
@@ -141,7 +141,7 @@ public class UserEventDispatcher implements ResourceBasedOverride {
             onFillInLogContainerData((ItemInfo) v.getTag(), itemTarget, targets);
             fillIntentInfo(itemTarget, intent, userHandle);
         }
-        LauncherEvent.Builder event = newLauncherEventBuilder(action, targets.toArray(new Target[targets.size()]));
+        LauncherEvent event = newLauncherEvent(action,  targets);
         dispatchUserEvent(event, intent);
         mAppOrTaskLaunch = true;
     }
@@ -155,19 +155,15 @@ public class UserEventDispatcher implements ResourceBasedOverride {
     @Deprecated
     public void logTaskLaunchOrDismiss(int action, int direction, int taskIndex,
             ComponentKey componentKey) {
-        LauncherEvent.Builder event = newLauncherEventBuilder(newTouchAction(action), // TAP or SWIPE or FLING
+        LauncherEvent event = newLauncherEvent(newTouchAction(action), // TAP or SWIPE or FLING
                 newTarget(Target.Type.ITEM));
-        if (action == Action.Touch.SWIPE.getNumber() || action == Action.Touch.FLING.getNumber()) {
+        if (action == Action.Touch.SWIPE || action == Action.Touch.FLING) {
             // Direction DOWN means the task was launched, UP means it was dismissed.
-            Action.Builder builder = Action.newBuilder();
-            builder.setDir(Action.Direction.forNumber(direction));
-            event.setAction(builder.build());
+            event.action.dir = direction;
         }
-        Target.Builder builder = Target.newBuilder();
-        builder.setItemType(ItemType.TASK);
-        builder.setPageIndex(taskIndex);
-        event.setSrcTarget(0, builder.build());
-        fillComponentInfo(event.build().getSrcTarget(0), componentKey.componentName);
+        event.srcTarget[0].itemType = ItemType.TASK;
+        event.srcTarget[0].pageIndex = taskIndex;
+        fillComponentInfo(event.srcTarget[0], componentKey.componentName);
         dispatchUserEvent(event, null);
         mAppOrTaskLaunch = true;
     }
@@ -465,13 +461,13 @@ public class UserEventDispatcher implements ResourceBasedOverride {
         mActionDurationMillis = SystemClock.uptimeMillis();
     }
 
-    public void dispatchUserEvent(LauncherEvent.Builder ev, Intent intent) {
+    public void dispatchUserEvent(LauncherEvent ev, Intent intent) {
         if (mPreviousHomeGesture) {
             mPreviousHomeGesture = false;
         }
         mAppOrTaskLaunch = false;
-        ev.setElapsedContainerMillis(SystemClock.uptimeMillis() - mElapsedContainerMillis);
-        ev.setElapsedSessionMillis(SystemClock.uptimeMillis() - mElapsedSessionMillis);
+        ev.elapsedContainerMillis = SystemClock.uptimeMillis() - mElapsedContainerMillis;
+        ev.elapsedSessionMillis = SystemClock.uptimeMillis() - mElapsedSessionMillis;
         if (!IS_VERBOSE) {
             return;
         }

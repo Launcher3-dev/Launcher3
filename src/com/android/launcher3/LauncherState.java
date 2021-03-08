@@ -15,6 +15,17 @@
  */
 package com.android.launcher3;
 
+import static com.android.launcher3.anim.Interpolators.ACCEL_2;
+import static com.android.launcher3.testing.TestProtocol.ALL_APPS_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.BACKGROUND_APP_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.HINT_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.NORMAL_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.OVERVIEW_MODAL_TASK_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.OVERVIEW_PEEK_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.OVERVIEW_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.QUICK_SWITCH_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.SPRING_LOADED_STATE_ORDINAL;
+
 import android.content.Context;
 import android.view.animation.Interpolator;
 
@@ -28,17 +39,6 @@ import com.android.launcher3.uioverrides.states.OverviewState;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 
 import java.util.Arrays;
-
-import static com.android.launcher3.anim.Interpolators.ACCEL_2;
-import static com.android.launcher3.testing.TestProtocol.ALL_APPS_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.BACKGROUND_APP_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.HINT_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.NORMAL_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.OVERVIEW_MODAL_TASK_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.OVERVIEW_PEEK_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.OVERVIEW_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.QUICK_SWITCH_STATE_ORDINAL;
-import static com.android.launcher3.testing.TestProtocol.SPRING_LOADED_STATE_ORDINAL;
 
 /**
  * Base state for various states used for the Launcher
@@ -98,7 +98,7 @@ public abstract class LauncherState implements BaseState<LauncherState> {
      * TODO: Create a separate class for NORMAL state.
      */
     public static final LauncherState NORMAL = new LauncherState(NORMAL_STATE_ORDINAL,
-            ContainerType.WORKSPACE.getNumber(),
+            ContainerType.WORKSPACE,
             FLAG_DISABLE_RESTORE | FLAG_WORKSPACE_ICONS_CAN_BE_DRAGGED | FLAG_HIDE_BACK_BUTTON |
                     FLAG_HAS_SYS_UI_SCRIM) {
         @Override
