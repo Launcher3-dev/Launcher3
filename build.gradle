@@ -1,8 +1,8 @@
 buildscript {
     repositories {
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public' }
         mavenCentral()
         google()
-        jcenter()
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.0.2"
@@ -79,10 +79,6 @@ android {
             res.srcDirs = ['res']
             java.srcDirs = ['src', 'src_plugins']
             manifest.srcFile 'AndroidManifest-common.xml'
-            proto {
-                srcDir 'protos/'
-                srcDir 'proto_overrides/'
-            }
         }
 
         androidTest {
@@ -135,11 +131,14 @@ android {
 
 allprojects {
     repositories {
-        maven { url "../../../prebuilts/sdk/current/androidx/m2repository" }
-        maven { url "../../../prebuilts/fullsdk-darwin/extras/android/m2repository" }
-        maven { url "../../../prebuilts/fullsdk-linux/extras/android/m2repository" }
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public' }
         mavenCentral()
         google()
+    }
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs.add("-Xbootclasspath/p:${FRAMEWORK_PREBUILTS_DIR}/libs/framework.jar")
+        }
     }
 }
 
@@ -148,13 +147,16 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:${ANDROID_X_VERSION}"
     implementation "androidx.preference:preference:${ANDROID_X_VERSION}"
     implementation project(':IconLoader')
-    withQuickstepImplementation project(':SharedLibWrapper')
-    implementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'launcher_protos.jar')
+
+    implementation project(':protolib')
+    implementation PROTOBUF_DEPENDENCY
+    implementation PROTOBUF_JAVANANO_DEPENDENCY
 
     // Recents lib dependency
+    // Required for AOSP to compile. This is already included in the sysui_shared.jar
+    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
     withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
 
-    // Required for AOSP to compile. This is already included in the sysui_shared.jar
     withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')
 
     testImplementation 'junit:junit:4.13.2'
@@ -167,52 +169,3 @@ dependencies {
     androidTestImplementation "androidx.annotation:annotation:${ANDROID_X_VERSION}"
 }
 
-//protobuf {
-//    // Configure the protoc executable
-//    protoc {
-//        artifact = 'com.google.protobuf:protoc:3.0.0'
-//
-//        generateProtoTasks {
-//            all().each { task ->
-//                task.builtins {
-//                    remove java
-//                    javanano {
-//                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
-//                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
-//                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
-//                        option "enum_style=java"
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-
-// 可编译配置
-protobuf {
-    // Configure the protoc executable
-    protoc {
-        artifact = 'com.google.protobuf:protoc:3.0.0'
-    }
-    plugins {
-        javalite {
-            // The codegen for lite comes as a separate artifact
-            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
-        }
-    }
-    generateProtoTasks {
-        all().each { task ->
-            task.plugins {
-                remove java
-                javalite {
-                    option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
-                    option "java_package=launcher_atom|com.android.launcher3.logger.nano"
-                    option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
-                    option "java_package=launcher_trace.proto|com.android.launcher3.tracing.nano"
-                    option "java_package=launcher_trace_file|com.android.launcher3.model.nano"
-                    option "enum_style=java"
-                }
-            }
-        }
-    }
-}
