@@ -77,7 +77,7 @@ import com.android.launcher3.folder.FolderIcon;
 import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.keyboard.CustomActionsPopup;
 import com.android.launcher3.keyboard.ViewGroupFocusHelper;
-import com.android.launcher3.logger.nano.LauncherAtom;
+import com.android.launcher3.logger.LauncherAtom;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.logging.UserEventDispatcher;
@@ -107,9 +107,9 @@ import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.touch.AllAppsSwipeController;
 import com.android.launcher3.touch.ItemClickHandler;
 import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
+import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
-import com.android.launcher3.userevent.nano.LauncherLogProto.Target;
 import com.android.launcher3.util.ActivityResultInfo;
 import com.android.launcher3.util.ActivityTracker;
 import com.android.launcher3.util.ComponentKey;
@@ -948,6 +948,7 @@ public class Launcher extends StatefulActivity<LauncherState> implements Launche
         if (containerType == ContainerType.WORKSPACE && mWorkspace != null) {
             getUserEventDispatcher().logActionCommand(command,
                     containerType, -1, pageIndex);
+
             logger.withContainerInfo(LauncherAtom.ContainerInfo.newBuilder()
                     .setWorkspace(
                             LauncherAtom.WorkspaceContainer.newBuilder()
@@ -1455,7 +1456,7 @@ public class Launcher extends StatefulActivity<LauncherState> implements Launche
 
             // Handle HOME_INTENT
             UserEventDispatcher ued = getUserEventDispatcher();
-            Target target = newContainerTarget(mStateManager.getState().containerType);
+            LauncherLogProto.Target target = newContainerTarget(mStateManager.getState().containerType);
             target.pageIndex = mWorkspace.getCurrentPage();
             ued.logActionCommand(Action.Command.HOME_INTENT, target,
                     newContainerTarget(ContainerType.WORKSPACE));

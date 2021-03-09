@@ -6,7 +6,6 @@ apply plugin: 'com.google.protobuf'
 
 android {
     compileSdkVersion COMPILE_SDK
-    buildToolsVersion BUILD_TOOLS_VERSION
 
     defaultConfig {
         minSdkVersion 21
@@ -53,6 +52,27 @@ dependencies {
     implementation PROTOBUF_DEPENDENCY
     implementation PROTOBUF_JAVANANO_DEPENDENCY
 }
+
+//protobuf {
+//    // Configure the protoc executable
+//    protoc {
+//        artifact = 'com.google.protobuf:protoc:3.0.0'
+//
+//        generateProtoTasks {
+//            all().each { task ->
+//                task.builtins {
+//                    remove java
+//                    javanano {
+//                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+//                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+//                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
+//                        option "enum_style=java"
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 protobuf {
     // Configure the protoc executable

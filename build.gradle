@@ -5,7 +5,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:4.0.2"
+        classpath GRADLE_CLASS_PATH
         classpath PROTOBUF_CLASS_PATH
     }
 }
@@ -17,7 +17,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion COMPILE_SDK
 
     defaultConfig {
         minSdkVersion 25
@@ -153,9 +153,8 @@ dependencies {
     implementation PROTOBUF_JAVANANO_DEPENDENCY
 
     // Recents lib dependency
-    // Required for AOSP to compile. This is already included in the sysui_shared.jar
-    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
-    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
+    withQuickstepImplementation fileTree(dir: "quickstep/libs", include: 'sysui_shared.jar')
+    withQuickstepImplementation fileTree(dir: "quickstep/libs", include: 'sysui_statsd.jar')
 
     withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')
 
