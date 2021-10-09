@@ -176,7 +176,7 @@ public class LauncherAppWidgetHostView extends NavigableAppWidgetHostView
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN: {
                 DragLayer dragLayer = Launcher.getLauncher(getContext()).getDragLayer();
-
+                // 会导致带有滑动功能的插件点击事件被拦截
                 if (mIsScrollable) {
                      dragLayer.requestDisallowInterceptTouchEvent(true);
                 }
