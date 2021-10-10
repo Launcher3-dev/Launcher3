@@ -1,11 +1,11 @@
 buildscript {
     repositories {
-        maven { url 'http://maven.aliyun.com/nexus/content/groups/public' }
         mavenCentral()
         google()
+        jcenter()
     }
     dependencies {
-        classpath GRADLE_CLASS_PATH
+        classpath 'com.android.tools.build:gradle:7.0.2'
         classpath PROTOBUF_CLASS_PATH
     }
 }
@@ -18,10 +18,11 @@ apply plugin: 'com.google.protobuf'
 
 android {
     compileSdkVersion COMPILE_SDK
+    buildToolsVersion BUILD_TOOLS_VERSION
 
     defaultConfig {
-        minSdkVersion 25
-        targetSdkVersion 30
+        minSdkVersion 26
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
 
@@ -79,6 +80,9 @@ android {
             res.srcDirs = ['res']
             java.srcDirs = ['src', 'src_plugins']
             manifest.srcFile 'AndroidManifest-common.xml'
+            proto {
+                srcDirs = ['protos/', 'protos_overrides/']
+            }
         }
 
         androidTest {
@@ -131,14 +135,8 @@ android {
 
 allprojects {
     repositories {
-        maven { url 'http://maven.aliyun.com/nexus/content/groups/public' }
         mavenCentral()
         google()
-    }
-    gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
-            options.compilerArgs.add("-Xbootclasspath/p:${FRAMEWORK_PREBUILTS_DIR}/libs/framework.jar")
-        }
     }
 }
 
@@ -147,19 +145,16 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:${ANDROID_X_VERSION}"
     implementation "androidx.preference:preference:${ANDROID_X_VERSION}"
     implementation project(':IconLoader')
-
-    implementation project(':protolib')
-    implementation PROTOBUF_DEPENDENCY
-    implementation PROTOBUF_JAVANANO_DEPENDENCY
+//    withQuickstepImplementation project(':SharedLibWrapper')
 
     // Recents lib dependency
-    withQuickstepImplementation fileTree(dir: "quickstep/libs", include: 'sysui_shared.jar')
-    withQuickstepImplementation fileTree(dir: "quickstep/libs", include: 'sysui_statsd.jar')
+    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
 
+    // Required for AOSP to compile. This is already included in the sysui_shared.jar
     withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')
 
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation "org.mockito:mockito-core:3.5.13"
+    androidTestImplementation "org.mockito:mockito-core:3.2.4"
     androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
     androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
@@ -168,3 +163,19 @@ dependencies {
     androidTestImplementation "androidx.annotation:annotation:${ANDROID_X_VERSION}"
 }
 
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        artifact = "com.google.protobuf:protoc:${PROTOC_VERSION}"
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                remove java
+                java {
+                    option "lite"
+                }
+            }
+        }
+    }
+}
