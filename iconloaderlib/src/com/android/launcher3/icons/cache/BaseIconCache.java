@@ -15,10 +15,6 @@
  */
 package com.android.launcher3.icons.cache;
 
-import static com.android.launcher3.icons.BaseIconFactory.getFullResDefaultActivityIcon;
-import static com.android.launcher3.icons.BitmapInfo.LOW_RES_ICON;
-import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
-
 import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
@@ -32,7 +28,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
@@ -43,14 +38,8 @@ import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
-
 import com.android.launcher3.icons.BaseIconFactory;
 import com.android.launcher3.icons.BitmapInfo;
-import com.android.launcher3.icons.BitmapRenderer;
-import com.android.launcher3.icons.GraphicsUtils;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.SQLiteCacheHelper;
 
@@ -61,6 +50,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+
+import static com.android.launcher3.icons.BaseIconFactory.getFullResDefaultActivityIcon;
+import static com.android.launcher3.icons.BitmapInfo.LOW_RES_ICON;
+import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
 
 public abstract class BaseIconCache {
 
@@ -94,11 +91,10 @@ public abstract class BaseIconCache {
     protected String mSystemState = "";
 
     private final String mDbFileName;
-    private final BitmapFactory.Options mDecodeOptions;
     private final Looper mBgLooper;
 
     public BaseIconCache(Context context, String dbFileName, Looper bgLooper,
-            int iconDpi, int iconPixelSize, boolean inMemoryCache) {
+                         int iconDpi, int iconPixelSize, boolean inMemoryCache) {
         mContext = context;
         mDbFileName = dbFileName;
         mPackageManager = context.getPackageManager();
@@ -122,13 +118,6 @@ public abstract class BaseIconCache {
             };
         }
 
-        if (BitmapRenderer.USE_HARDWARE_BITMAP && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mDecodeOptions = new BitmapFactory.Options();
-            mDecodeOptions.inPreferredConfig = Bitmap.Config.HARDWARE;
-        } else {
-            mDecodeOptions = null;
-        }
-
         updateSystemState();
         mIconDpi = iconDpi;
         mIconDb = new IconDB(context, dbFileName, iconPixelSize);
@@ -148,7 +137,7 @@ public abstract class BaseIconCache {
     /**
      * Opens and returns an icon factory. The factory is recycled by the caller.
      */
-    protected abstract BaseIconFactory getIconFactory();
+    public abstract BaseIconFactory getIconFactory();
 
     public void updateIconParams(int iconDpi, int iconPixelSize) {
         mWorkerHandler.post(() -> updateIconParamsBg(iconDpi, iconPixelSize));
@@ -254,7 +243,7 @@ public abstract class BaseIconCache {
      */
     @VisibleForTesting
     public synchronized <T> void addIconToDBAndMemCache(T object, CachingLogic<T> cachingLogic,
-            PackageInfo info, long userSerial, boolean replaceExisting) {
+                                                        PackageInfo info, long userSerial, boolean replaceExisting) {
         UserHandle user = cachingLogic.getUser(object);
         ComponentName componentName = cachingLogic.getComponent(object);
 
@@ -290,7 +279,7 @@ public abstract class BaseIconCache {
      * @param values {@link ContentValues} containing icon & title
      */
     private void addIconToDB(ContentValues values, ComponentName key,
-            PackageInfo info, long userSerial, long lastUpdateTime) {
+                             PackageInfo info, long userSerial, long lastUpdateTime) {
         values.put(IconDB.COLUMN_COMPONENT, key.flattenToString());
         values.put(IconDB.COLUMN_USER, userSerial);
         values.put(IconDB.COLUMN_LAST_UPDATED, lastUpdateTime);
@@ -381,7 +370,7 @@ public abstract class BaseIconCache {
      * when the cache is flushed.
      */
     protected synchronized void cachePackageInstallInfo(String packageName, UserHandle user,
-            Bitmap icon, CharSequence title) {
+                                                        Bitmap icon, CharSequence title) {
         removeFromMemCacheLocked(packageName, user);
 
         ComponentKey cacheKey = getPackageKey(packageName, user);
@@ -396,7 +385,7 @@ public abstract class BaseIconCache {
         }
         if (icon != null) {
             BaseIconFactory li = getIconFactory();
-            entry.bitmap = li.createIconBitmap(icon);
+            entry.bitmap = li.createShapedIconBitmap(icon, user);
             li.close();
         }
         if (!TextUtils.isEmpty(title) && entry.bitmap.icon != null) {
@@ -414,7 +403,7 @@ public abstract class BaseIconCache {
      * This method is not thread safe, it must be called from a synchronized method.
      */
     protected CacheEntry getEntryForPackageLocked(String packageName, UserHandle user,
-            boolean useLowResIcon) {
+                                                  boolean useLowResIcon) {
         assertWorkerThread();
         ComponentKey cacheKey = getPackageKey(packageName, user);
         CacheEntry entry = mCache.get(cacheKey);
@@ -490,14 +479,14 @@ public abstract class BaseIconCache {
                 }
 
                 if (!lowRes) {
-                    byte[] data = c.getBlob(2);
                     try {
-                        entry.bitmap = BitmapInfo.of(
-                                BitmapFactory.decodeByteArray(data, 0, data.length, mDecodeOptions),
-                                entry.bitmap.color);
-                    } catch (Exception e) { }
+                        entry.bitmap = BitmapInfo.fromByteArray(
+                                c.getBlob(2), entry.bitmap.color, cacheKey.user, this, mContext);
+                    } catch (Exception e) {
+                        return false;
+                    }
                 }
-                return true;
+                return entry.bitmap != null;
             }
         } catch (SQLiteException e) {
             Log.d(TAG, "Error reading icon cache", e);
@@ -513,7 +502,7 @@ public abstract class BaseIconCache {
      * Returns a cursor for an arbitrary query to the cache db
      */
     public synchronized Cursor queryCacheDb(String[] columns, String selection,
-            String[] selectionArgs) {
+                                            String[] selectionArgs) {
         return mIconDb.query(columns, selection, selectionArgs);
     }
 
@@ -521,7 +510,7 @@ public abstract class BaseIconCache {
      * Cache class to store the actual entries on disk
      */
     public static final class IconDB extends SQLiteCacheHelper {
-        private static final int RELEASE_VERSION = 27;
+        private static final int RELEASE_VERSION = 31;
 
         public static final String TABLE_NAME = "icons";
         public static final String COLUMN_ROWID = "rowid";
@@ -562,10 +551,9 @@ public abstract class BaseIconCache {
     }
 
     private ContentValues newContentValues(BitmapInfo bitmapInfo, String label,
-            String packageName, @Nullable String keywords) {
+                                           String packageName, @Nullable String keywords) {
         ContentValues values = new ContentValues();
-        values.put(IconDB.COLUMN_ICON,
-                bitmapInfo.isLowRes() ? null : GraphicsUtils.flattenBitmap(bitmapInfo.icon));
+        values.put(IconDB.COLUMN_ICON, bitmapInfo.toByteArray());
         values.put(IconDB.COLUMN_ICON_COLOR, bitmapInfo.color);
 
         values.put(IconDB.COLUMN_LABEL, label);

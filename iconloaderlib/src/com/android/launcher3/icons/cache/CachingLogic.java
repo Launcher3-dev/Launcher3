@@ -21,10 +21,10 @@ import android.content.pm.PackageInfo;
 import android.os.LocaleList;
 import android.os.UserHandle;
 
+import com.android.launcher3.icons.BitmapInfo;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.android.launcher3.icons.BitmapInfo;
 
 public interface CachingLogic<T> {
 

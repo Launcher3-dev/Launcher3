@@ -52,9 +52,6 @@
     <attr name="workspaceAccentColor" format="color" />
     <attr name="dropTargetHoverTextColor" format="color" />
 
-    <attr name="loadingIconColor" format="color" />
-    <attr name="disabledIconAlpha" format="float" />
-
     <!-- BubbleTextView specific attributes. -->
     <declare-styleable name="BubbleTextView">
         <attr name="layoutHorizontal" format="boolean" />
