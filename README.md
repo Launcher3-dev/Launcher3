@@ -2,7 +2,9 @@
 
 ## 更新：20200430
 * 基于 Android P Launcher-master源码
-* 源码最新提交日期：20200305
+* 源码最新提交日期：20220123
+  
+* AospWithoutQuickstep可以打包成功
 
 ## 主要分支
 
