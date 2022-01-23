@@ -1,19 +1,8 @@
-# Launcher3-mx
+# Launcher3
 
-## 更新：20200430
-* 基于 Android P Launcher-master源码
-* 源码最新提交日期：20220123
-  
-* AospWithoutQuickstep可以打包成功
-
-## 主要分支
-
-* Launcher3-6.0
-* Launcher3-7.0
-* Launcher3-8.0.0_r24
-* Launcher3-9.0
+## 更新：20220111
 * Launcher3-10.0 (android-10.0.0_r46)
-* master
+* AospWithoutQuickstep可以打包成功
 
 ## 教程
 注：本教程是基于Android6.0的Launcher3讲解的，最新版与现在版本差异较大，我尽量在关键位置添加相应的注释，方便大家修改。
