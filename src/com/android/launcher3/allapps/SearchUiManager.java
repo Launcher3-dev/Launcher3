@@ -15,11 +15,11 @@
  */
 package com.android.launcher3.allapps;
 
-import android.graphics.Rect;
 import android.view.KeyEvent;
-import android.view.animation.Interpolator;
 
-import com.android.launcher3.anim.PropertySetter;
+import androidx.annotation.Nullable;
+
+import com.android.launcher3.ExtendedEditText;
 
 /**
  * Interface for controlling the Apps search UI.
@@ -29,7 +29,7 @@ public interface SearchUiManager {
     /**
      * Initializes the search manager.
      */
-    void initialize(AllAppsContainerView containerView);
+    void initializeSearch(AllAppsContainerView containerView);
 
     /**
      * Notifies the search manager to close any active search session.
@@ -40,16 +40,16 @@ public interface SearchUiManager {
      * Called before dispatching a key event, in case the search manager wants to initialize
      * some UI beforehand.
      */
-    void preDispatchKeyEvent(KeyEvent keyEvent);
+    default void preDispatchKeyEvent(KeyEvent keyEvent) { };
 
     /**
-     * Returns the vertical shift for the all-apps view, so that it aligns with the hotseat.
+     * @return the edit text object
      */
-    float getScrollRangeDelta(Rect insets);
+    @Nullable
+    ExtendedEditText getEditText();
 
     /**
-     * Called as part of state transition to update the content UI
+     * sets highlight result's title
      */
-    void setContentVisibility(int visibleElements, PropertySetter setter,
-            Interpolator interpolator);
+    default void setFocusedResultTitle(@Nullable  CharSequence title) { }
 }

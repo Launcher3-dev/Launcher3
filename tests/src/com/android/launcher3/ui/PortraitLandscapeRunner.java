@@ -4,6 +4,7 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.android.launcher3.tapl.TestHelpers;
+import com.android.launcher3.testing.TestProtocol;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -38,8 +39,8 @@ class PortraitLandscapeRunner implements TestRule {
 
                     evaluateInPortrait();
                     evaluateInLandscape();
-                } catch (Exception e) {
-                    Log.e(TAG, "Exception", e);
+                } catch (Throwable e) {
+                    Log.e(TAG, "Error", e);
                     throw e;
                 } finally {
                     mTest.mDevice.setOrientationNatural();
@@ -56,6 +57,7 @@ class PortraitLandscapeRunner implements TestRule {
             private void evaluateInPortrait() throws Throwable {
                 mTest.mDevice.setOrientationNatural();
                 mTest.mLauncher.setExpectedRotation(Surface.ROTATION_0);
+                AbstractLauncherUiTest.checkDetectedLeaks(mTest.mLauncher);
                 base.evaluate();
                 mTest.getDevice().pressHome();
             }
@@ -63,6 +65,7 @@ class PortraitLandscapeRunner implements TestRule {
             private void evaluateInLandscape() throws Throwable {
                 mTest.mDevice.setOrientationLeft();
                 mTest.mLauncher.setExpectedRotation(Surface.ROTATION_90);
+                AbstractLauncherUiTest.checkDetectedLeaks(mTest.mLauncher);
                 base.evaluate();
                 mTest.getDevice().pressHome();
             }

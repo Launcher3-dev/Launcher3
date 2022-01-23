@@ -28,15 +28,16 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Process;
 
-import com.android.launcher3.FastBitmapDrawable;
-import com.android.launcher3.WorkspaceItemInfo;
-import com.android.launcher3.icons.IconCache;
+import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAnimUtils;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
-import com.android.launcher3.compat.LauncherAppsCompatVO;
-import com.android.launcher3.compat.ShortcutConfigActivityInfo;
+import com.android.launcher3.icons.IconCache;
+import com.android.launcher3.model.data.WorkspaceItemInfo;
+import com.android.launcher3.pm.PinRequestHelper;
+import com.android.launcher3.pm.ShortcutConfigActivityInfo;
 
 /**
  * Extension of ShortcutConfigActivityInfo to be used in the confirmation prompt for pin item
@@ -47,14 +48,14 @@ class PinShortcutRequestActivityInfo extends ShortcutConfigActivityInfo {
 
     // Class name used in the target component, such that it will never represent an
     // actual existing class.
-    private static final String DUMMY_COMPONENT_CLASS = "pinned-shortcut";
+    private static final String STUB_COMPONENT_CLASS = "pinned-shortcut";
 
     private final PinItemRequest mRequest;
     private final ShortcutInfo mInfo;
     private final Context mContext;
 
     public PinShortcutRequestActivityInfo(PinItemRequest request, Context context) {
-        super(new ComponentName(request.getShortcutInfo().getPackage(), DUMMY_COMPONENT_CLASS),
+        super(new ComponentName(request.getShortcutInfo().getPackage(), STUB_COMPONENT_CLASS),
                 request.getShortcutInfo().getUserHandle());
         mRequest = request;
         mInfo = request.getShortcutInfo();
@@ -76,7 +77,7 @@ class PinShortcutRequestActivityInfo extends ShortcutConfigActivityInfo {
         Drawable d = mContext.getSystemService(LauncherApps.class)
                 .getShortcutIconDrawable(mInfo, LauncherAppState.getIDP(mContext).fillResIconDpi);
         if (d == null) {
-            d = new FastBitmapDrawable(cache.getDefaultIcon(Process.myUserHandle()));
+            d = cache.getDefaultIcon(Process.myUserHandle()).newIcon(mContext);
         }
         return d;
     }
@@ -86,9 +87,9 @@ class PinShortcutRequestActivityInfo extends ShortcutConfigActivityInfo {
         // Total duration for the drop animation to complete.
         long duration = mContext.getResources().getInteger(R.integer.config_dropAnimMaxDuration) +
                 LauncherAnimUtils.SPRING_LOADED_EXIT_DELAY +
-                LauncherAnimUtils.SPRING_LOADED_TRANSITION_MS;
+                LauncherState.SPRING_LOADED.getTransitionDuration(Launcher.getLauncher(mContext));
         // Delay the actual accept() call until the drop animation is complete.
-        return LauncherAppsCompatVO.createWorkspaceItemFromPinItemRequest(
+        return PinRequestHelper.createWorkspaceItemFromPinItemRequest(
                 mContext, mRequest, duration);
     }
 

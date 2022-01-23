@@ -17,8 +17,6 @@
 
 package com.android.launcher3.graphics;
 
-import static com.android.launcher3.graphics.IconShape.DEFAULT_PATH_SIZE;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -30,12 +28,17 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Rect;
+import android.util.Pair;
 import android.util.Property;
 import android.util.SparseArray;
+import android.view.ContextThemeWrapper;
 
-import com.android.launcher3.FastBitmapDrawable;
-import com.android.launcher3.ItemInfoWithIcon;
+import com.android.launcher3.Utilities;
 import com.android.launcher3.anim.Interpolators;
+import com.android.launcher3.icons.FastBitmapDrawable;
+import com.android.launcher3.icons.GraphicsUtils;
+import com.android.launcher3.model.data.ItemInfoWithIcon;
+import com.android.launcher3.util.Themes;
 
 import java.lang.ref.WeakReference;
 
@@ -57,6 +60,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
                 }
             };
 
+    private static final int DEFAULT_PATH_SIZE = 100;
     private static final float PROGRESS_WIDTH = 7;
     private static final float PROGRESS_GAP = 2;
     private static final int MAX_PAINT_ALPHA = 255;
@@ -72,7 +76,11 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
 
     private static final float SMALL_SCALE = 0.6f;
 
-    private static final SparseArray<WeakReference<Bitmap>> sShadowCache = new SparseArray<>();
+    private static final SparseArray<WeakReference<Pair<Path, Bitmap>>> sShadowCache =
+            new SparseArray<>();
+
+    private static final int PRELOAD_ACCENT_COLOR_INDEX = 0;
+    private static final int PRELOAD_BACKGROUND_COLOR_INDEX = 1;
 
     private final Matrix mTmpMatrix = new Matrix();
     private final PathMeasure mPathMeasure = new PathMeasure();
@@ -80,7 +88,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
     private final ItemInfoWithIcon mItem;
 
     // Path in [0, 100] bounds.
-    private final Path mProgressPath;
+    private final Path mShapePath;
 
     private final Path mScaledTrackPath;
     private final Path mScaledProgressPath;
@@ -88,6 +96,9 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
 
     private Bitmap mShadowBitmap;
     private final int mIndicatorColor;
+    private final int mSystemAccentColor;
+    private final int mSystemBackgroundColor;
+    private final boolean mIsDarkMode;
 
     private int mTrackAlpha;
     private float mTrackLength;
@@ -101,22 +112,38 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
 
     private ObjectAnimator mCurrentAnim;
 
-    /**
-     * @param progressPath fixed path in the bounds [0, 0, 100, 100] representing a progress bar.
-     */
-    public PreloadIconDrawable(ItemInfoWithIcon info, Path progressPath, Context context) {
-        super(info);
+    private boolean mIsStartable;
+
+    public PreloadIconDrawable(ItemInfoWithIcon info, Context context) {
+        this(
+                info,
+                IconPalette.getPreloadProgressColor(context, info.bitmap.color),
+                getPreloadColors(context),
+                Utilities.isDarkTheme(context));
+    }
+
+    public PreloadIconDrawable(
+            ItemInfoWithIcon info,
+            int indicatorColor,
+            int[] preloadColors,
+            boolean isDarkMode) {
+        super(info.bitmap);
         mItem = info;
-        mProgressPath = progressPath;
+        mShapePath = GraphicsUtils.getShapePath(DEFAULT_PATH_SIZE);
         mScaledTrackPath = new Path();
         mScaledProgressPath = new Path();
 
         mProgressPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
         mProgressPaint.setStyle(Paint.Style.STROKE);
         mProgressPaint.setStrokeCap(Paint.Cap.ROUND);
-        mIndicatorColor = IconPalette.getPreloadProgressColor(context, mIconColor);
+        mIndicatorColor = indicatorColor;
 
-        setInternalProgress(0);
+        mSystemAccentColor = preloadColors[PRELOAD_ACCENT_COLOR_INDEX];
+        mSystemBackgroundColor = preloadColors[PRELOAD_BACKGROUND_COLOR_INDEX];
+        mIsDarkMode = isDarkMode;
+
+        setInternalProgress(info.getProgressLevel());
+        setIsStartable(info.isAppStartable());
     }
 
     @Override
@@ -129,7 +156,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
                 bounds.left + PROGRESS_WIDTH + PROGRESS_GAP,
                 bounds.top + PROGRESS_WIDTH + PROGRESS_GAP);
 
-        mProgressPath.transform(mTmpMatrix, mScaledTrackPath);
+        mShapePath.transform(mTmpMatrix, mScaledTrackPath);
         float scale = bounds.width() / DEFAULT_PATH_SIZE;
         mProgressPaint.setStrokeWidth(PROGRESS_WIDTH * scale);
 
@@ -142,22 +169,24 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
     }
 
     private Bitmap getShadowBitmap(int width, int height, float shadowRadius) {
-        int key = (width << 16) | height;
-        WeakReference<Bitmap> shadowRef = sShadowCache.get(key);
-        Bitmap shadow = shadowRef != null ? shadowRef.get() : null;
+        int key = ((width << 16) | height) * (mIsDarkMode ? -1 : 1);
+        WeakReference<Pair<Path, Bitmap>> shadowRef = sShadowCache.get(key);
+        Pair<Path, Bitmap> cache = shadowRef != null ? shadowRef.get() : null;
+        Bitmap shadow = cache != null && cache.first.equals(mShapePath) ? cache.second : null;
         if (shadow != null) {
             return shadow;
         }
         shadow = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(shadow);
-        mProgressPaint.setShadowLayer(shadowRadius, 0, 0, COLOR_SHADOW);
-        mProgressPaint.setColor(COLOR_TRACK);
+        mProgressPaint.setShadowLayer(shadowRadius, 0, 0, mIsStartable
+                ? COLOR_SHADOW : mSystemAccentColor);
+        mProgressPaint.setColor(mIsStartable ? COLOR_TRACK : mSystemBackgroundColor);
         mProgressPaint.setAlpha(MAX_PAINT_ALPHA);
         c.drawPath(mScaledTrackPath, mProgressPaint);
         mProgressPaint.clearShadowLayer();
         c.setBitmap(null);
 
-        sShadowCache.put(key, new WeakReference<>(shadow));
+        sShadowCache.put(key, new WeakReference<>(Pair.create(mShapePath, shadow)));
         return shadow;
     }
 
@@ -169,7 +198,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
         }
 
         // Draw track.
-        mProgressPaint.setColor(mIndicatorColor);
+        mProgressPaint.setColor(mIsStartable ? mIndicatorColor : mSystemAccentColor);
         mProgressPaint.setAlpha(mTrackAlpha);
         if (mShadowBitmap != null) {
             canvas.drawBitmap(mShadowBitmap, bounds.left, bounds.top, mProgressPaint);
@@ -206,6 +235,14 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
 
     public boolean hasNotCompleted() {
         return !mRanFinishAnimation;
+    }
+
+    /** Sets whether this icon should display the startable app UI. */
+    public void setIsStartable(boolean isStartable) {
+        if (mIsStartable != isStartable) {
+            mIsStartable = isStartable;
+            setIsDisabled(!isStartable);
+        }
     }
 
     private void updateInternalState(float finalProgress, boolean shouldAnimate, boolean isFinish) {
@@ -265,14 +302,12 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
             mIconScale = SMALL_SCALE;
             mScaledTrackPath.reset();
             mTrackAlpha = MAX_PAINT_ALPHA;
-            setIsDisabled(true);
         }
 
         if (progress < 1 && progress > 0) {
             mPathMeasure.getSegment(0, progress * mTrackLength, mScaledProgressPath, true);
             mIconScale = SMALL_SCALE;
             mTrackAlpha = MAX_PAINT_ALPHA;
-            setIsDisabled(true);
         } else if (progress >= 1) {
             setIsDisabled(mItem.isDisabled());
             mScaledTrackPath.set(mScaledProgressPath);
@@ -288,5 +323,75 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
             }
         }
         invalidateSelf();
+    }
+
+    private static int[] getPreloadColors(Context context) {
+        Context dayNightThemeContext = new ContextThemeWrapper(
+                context, android.R.style.Theme_DeviceDefault_DayNight);
+        int[] preloadColors = new int[2];
+
+        preloadColors[PRELOAD_ACCENT_COLOR_INDEX] = Themes.getColorAccent(dayNightThemeContext);
+        preloadColors[PRELOAD_BACKGROUND_COLOR_INDEX] = Themes.getColorBackgroundFloating(
+                dayNightThemeContext);
+
+        return preloadColors;
+    }
+
+    /**
+     * Returns a FastBitmapDrawable with the icon.
+     */
+    public static PreloadIconDrawable newPendingIcon(Context context, ItemInfoWithIcon info) {
+        return new PreloadIconDrawable(info, context);
+    }
+
+    @Override
+    public ConstantState getConstantState() {
+        return new PreloadIconConstantState(
+                mBitmap,
+                mIconColor,
+                !mItem.isAppStartable(),
+                mItem,
+                mIndicatorColor,
+                new int[] {mSystemAccentColor, mSystemBackgroundColor},
+                mIsDarkMode);
+    }
+
+    protected static class PreloadIconConstantState extends FastBitmapConstantState {
+
+        protected final ItemInfoWithIcon mInfo;
+        protected final int mIndicatorColor;
+        protected final int[] mPreloadColors;
+        protected final boolean mIsDarkMode;
+        protected final int mLevel;
+
+        public PreloadIconConstantState(
+                Bitmap bitmap,
+                int iconColor,
+                boolean isDisabled,
+                ItemInfoWithIcon info,
+                int indicatorColor,
+                int[] preloadColors,
+                boolean isDarkMode) {
+            super(bitmap, iconColor, isDisabled);
+            mInfo = info;
+            mIndicatorColor = indicatorColor;
+            mPreloadColors = preloadColors;
+            mIsDarkMode = isDarkMode;
+            mLevel = info.getProgressLevel();
+        }
+
+        @Override
+        public PreloadIconDrawable newDrawable() {
+            return new PreloadIconDrawable(
+                    mInfo,
+                    mIndicatorColor,
+                    mPreloadColors,
+                    mIsDarkMode);
+        }
+
+        @Override
+        public int getChangingConfigurations() {
+            return 0;
+        }
     }
 }

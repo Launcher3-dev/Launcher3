@@ -16,11 +16,15 @@
 package com.android.launcher3.widget;
 
 import android.appwidget.AppWidgetHostView;
+import android.content.Context;
 import android.os.Bundle;
 
-import com.android.launcher3.LauncherAppWidgetProviderInfo;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.PendingAddItemInfo;
+import com.android.launcher3.logger.LauncherAtom;
+import com.android.launcher3.model.data.FolderInfo;
+import com.android.launcher3.model.data.LauncherAppWidgetInfo;
+import com.android.launcher3.widget.util.WidgetSizes;
 
 /**
  * Meta data used for late binding of {@link LauncherAppWidgetProviderInfo}.
@@ -33,8 +37,9 @@ public class PendingAddWidgetInfo extends PendingAddItemInfo {
     public LauncherAppWidgetProviderInfo info;
     public AppWidgetHostView boundWidget;
     public Bundle bindOptions = null;
+    public int sourceContainer;
 
-    public PendingAddWidgetInfo(LauncherAppWidgetProviderInfo i) {
+    public PendingAddWidgetInfo(LauncherAppWidgetProviderInfo i, int container) {
         if (i.isCustomWidget()) {
             itemType = LauncherSettings.Favorites.ITEM_TYPE_CUSTOM_APPWIDGET;
         } else {
@@ -50,9 +55,22 @@ public class PendingAddWidgetInfo extends PendingAddItemInfo {
         spanY = i.spanY;
         minSpanX = i.minSpanX;
         minSpanY = i.minSpanY;
+        this.sourceContainer = this.container = container;
     }
 
     public WidgetAddFlowHandler getHandler() {
         return new WidgetAddFlowHandler(info);
+    }
+
+    public Bundle getDefaultSizeOptions(Context context) {
+        return WidgetSizes.getWidgetSizeOptions(context, componentName, spanX, spanY);
+    }
+
+    @Override
+    public LauncherAtom.ItemInfo buildProto(FolderInfo folderInfo) {
+        LauncherAtom.ItemInfo info = super.buildProto(folderInfo);
+        return info.toBuilder()
+                .setAttribute(LauncherAppWidgetInfo.getAttribute(sourceContainer))
+                .build();
     }
 }

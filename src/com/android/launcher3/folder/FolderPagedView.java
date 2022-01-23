@@ -16,9 +16,13 @@
 
 package com.android.launcher3.folder;
 
+import static com.android.launcher3.AbstractFloatingView.TYPE_ALL;
+import static com.android.launcher3.AbstractFloatingView.TYPE_FOLDER;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 import android.util.ArrayMap;
 import android.util.AttributeSet;
@@ -27,26 +31,26 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewDebug;
 
-import com.android.launcher3.BaseActivity;
+import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.CellLayout;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.InvariantDeviceProfile;
-import com.android.launcher3.ItemInfo;
-import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.PagedView;
 import com.android.launcher3.R;
 import com.android.launcher3.ShortcutAndWidgetContainer;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.Workspace.ItemOperator;
-import com.android.launcher3.WorkspaceItemInfo;
-import com.android.launcher3.anim.Interpolators;
 import com.android.launcher3.keyboard.ViewGroupFocusHelper;
+import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pageindicators.PageIndicatorDots;
 import com.android.launcher3.touch.ItemClickHandler;
 import com.android.launcher3.util.Thunk;
 import com.android.launcher3.util.ViewCache;
+import com.android.launcher3.views.ActivityContext;
+import com.android.launcher3.views.ClipPathView;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -55,7 +59,7 @@ import java.util.Map;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
-public class FolderPagedView extends PagedView<PageIndicatorDots> {
+public class FolderPagedView extends PagedView<PageIndicatorDots> implements ClipPathView {
 
     private static final String TAG = "FolderPagedView";
 
@@ -87,6 +91,8 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
 
     private Folder mFolder;
 
+    private Path mClipPath;
+
     // If the views are attached to the folder or not. A folder should be bound when its
     // animating or is open.
     private boolean mViewsBound = false;
@@ -100,7 +106,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
 
         mFocusIndicatorHelper = new ViewGroupFocusHelper(this);
-        mViewCache = BaseActivity.fromContext(context).getViewCache();
+        mViewCache = ActivityContext.lookupContext(context).getViewCache();
     }
 
     public void setFolder(Folder folder) {
@@ -126,8 +132,16 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        mFocusIndicatorHelper.draw(canvas);
-        super.dispatchDraw(canvas);
+        if (mClipPath != null) {
+            int count = canvas.save();
+            canvas.clipPath(mClipPath);
+            mFocusIndicatorHelper.draw(canvas);
+            super.dispatchDraw(canvas);
+            canvas.restoreToCount(count);
+        } else {
+            mFocusIndicatorHelper.draw(canvas);
+            super.dispatchDraw(canvas);
+        }
     }
 
     /**
@@ -149,6 +163,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
             CellLayout page = (CellLayout) getChildAt(i);
             ShortcutAndWidgetContainer container = page.getShortcutsAndWidgets();
             for (int j = container.getChildCount() - 1; j >= 0; j--) {
+                container.getChildAt(j).setVisibility(View.VISIBLE);
                 mViewCache.recycleView(R.layout.folder_application, container.getChildAt(j));
             }
             page.removeAllViews();
@@ -188,7 +203,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
         int pageNo = rank / mOrganizer.getMaxItemsPerPage();
 
         CellLayout.LayoutParams lp = (CellLayout.LayoutParams) view.getLayoutParams();
-        lp.setXY(mOrganizer.getPosForRank(rank));
+        lp.setCellXY(mOrganizer.getPosForRank(rank));
         getPageAt(pageNo).addViewToCellLayout(view, -1, item.getViewId(), lp, true);
     }
 
@@ -225,7 +240,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
     }
 
     private CellLayout createAndAddNewPage() {
-        DeviceProfile grid = Launcher.getLauncher(getContext()).getDeviceProfile();
+        DeviceProfile grid = mFolder.mActivityContext.getDeviceProfile();
         CellLayout page = mViewCache.getView(R.layout.folder_page, getContext(), this);
         page.setCellDimensions(grid.folderCellWidthPx, grid.folderCellHeightPx);
         page.getShortcutsAndWidgets().setMotionEventSplittingEnabled(false);
@@ -258,7 +273,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
-        mPageIndicator.setScroll(l, mMaxScrollX);
+        if (mMaxScroll > 0) mPageIndicator.setScroll(l, mMaxScroll);
     }
 
     /**
@@ -301,7 +316,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
             if (v != null) {
                 CellLayout.LayoutParams lp = (CellLayout.LayoutParams) v.getLayoutParams();
                 ItemInfo info = (ItemInfo) v.getTag();
-                lp.setXY(mOrganizer.getPosForRank(rank));
+                lp.setCellXY(mOrganizer.getPosForRank(rank));
                 currentPage.addViewToCellLayout(v, -1, info.getViewId(), lp, true);
 
                 if (mOrganizer.isItemInPreview(rank) && v instanceof BubbleTextView) {
@@ -429,8 +444,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
         int scroll = getScrollForPage(getNextPage()) + hint;
         int delta = scroll - getScrollX();
         if (delta != 0) {
-            mScroller.setInterpolator(Interpolators.DEACCEL);
-            mScroller.startScroll(getScrollX(), delta, Folder.SCROLL_HINT_DURATION);
+            mScroller.startScroll(getScrollX(), 0, delta, 0, Folder.SCROLL_HINT_DURATION);
             invalidate();
         }
     }
@@ -479,7 +493,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
                 icon.verifyHighRes();
                 // Set the callback back to the actual icon, in case
                 // it was captured by the FolderIcon
-                Drawable d = icon.getCompoundDrawables()[1];
+                Drawable d = icon.getIcon();
                 if (d != null) {
                     d.setCallback(icon);
                 }
@@ -495,6 +509,9 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
      * Reorders the items such that the {@param empty} spot moves to {@param target}
      */
     public void realTimeReorder(int empty, int target) {
+        if (!mViewsBound) {
+            return;
+        }
         completePendingPageChanges();
         int delay = 0;
         float delayAmount = START_VIEW_REORDER_DELAY;
@@ -614,7 +631,19 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> {
         }
     }
 
+    @Override
+    protected boolean canScroll(float absVScroll, float absHScroll) {
+        return AbstractFloatingView.getTopOpenViewWithType(mFolder.mActivityContext,
+                TYPE_ALL & ~TYPE_FOLDER) == null;
+    }
+
     public int itemsPerPage() {
         return mOrganizer.getMaxItemsPerPage();
+    }
+
+    @Override
+    public void setClipPath(Path clipPath) {
+        mClipPath = clipPath;
+        invalidate();
     }
 }

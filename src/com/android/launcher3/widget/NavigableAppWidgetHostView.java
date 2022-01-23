@@ -17,25 +17,52 @@
 package com.android.launcher3.widget;
 
 import android.appwidget.AppWidgetHostView;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewDebug;
 import android.view.ViewGroup;
 
+import com.android.launcher3.DeviceProfile;
+import com.android.launcher3.Reorderable;
+import com.android.launcher3.dragndrop.DraggableView;
+import com.android.launcher3.views.ActivityContext;
+
 import java.util.ArrayList;
 
 /**
  * Extension of AppWidgetHostView with support for controlled keyboard navigation.
  */
-public abstract class NavigableAppWidgetHostView extends AppWidgetHostView {
+public abstract class NavigableAppWidgetHostView extends AppWidgetHostView
+        implements DraggableView, Reorderable {
+
+    /**
+     * The scaleX and scaleY value such that the widget fits within its cellspans, scaleX = scaleY.
+     */
+    private float mScaleToFit = 1f;
+
+    /**
+     * The translation values to center the widget within its cellspans.
+     */
+    private final PointF mTranslationForCentering = new PointF(0, 0);
+
+    private final PointF mTranslationForReorderBounce = new PointF(0, 0);
+    private final PointF mTranslationForReorderPreview = new PointF(0, 0);
+    private float mScaleForReorderBounce = 1f;
+
+    private final Rect mTempRect = new Rect();
 
     @ViewDebug.ExportedProperty(category = "launcher")
     private boolean mChildrenFocused;
 
+    protected final ActivityContext mActivity;
+
     public NavigableAppWidgetHostView(Context context) {
         super(context);
+        mActivity = ActivityContext.lookupContext(context);
     }
 
     @Override
@@ -132,5 +159,96 @@ public abstract class NavigableAppWidgetHostView extends AppWidgetHostView {
     private void dispatchChildFocus(boolean childIsFocused) {
         // The host view's background changes when selected, to indicate the focus is inside.
         setSelected(childIsFocused);
+    }
+
+    public View getView() {
+        return this;
+    }
+
+    private void updateTranslation() {
+        super.setTranslationX(mTranslationForReorderBounce.x + mTranslationForReorderPreview.x
+                + mTranslationForCentering.x);
+        super.setTranslationY(mTranslationForReorderBounce.y + mTranslationForReorderPreview.y
+                + mTranslationForCentering.y);
+    }
+
+    public void setTranslationForCentering(float x, float y) {
+        mTranslationForCentering.set(x, y);
+        updateTranslation();
+    }
+
+    public void setReorderBounceOffset(float x, float y) {
+        mTranslationForReorderBounce.set(x, y);
+        updateTranslation();
+    }
+
+    public void getReorderBounceOffset(PointF offset) {
+        offset.set(mTranslationForReorderBounce);
+    }
+
+    @Override
+    public void setReorderPreviewOffset(float x, float y) {
+        mTranslationForReorderPreview.set(x, y);
+        updateTranslation();
+    }
+
+    @Override
+    public void getReorderPreviewOffset(PointF offset) {
+        offset.set(mTranslationForReorderPreview);
+    }
+
+    private void updateScale() {
+        super.setScaleX(mScaleToFit * mScaleForReorderBounce);
+        super.setScaleY(mScaleToFit * mScaleForReorderBounce);
+    }
+
+    public void setReorderBounceScale(float scale) {
+        mScaleForReorderBounce = scale;
+        updateScale();
+    }
+
+    public float getReorderBounceScale() {
+        return mScaleForReorderBounce;
+    }
+
+    public void setScaleToFit(float scale) {
+        mScaleToFit = scale;
+        updateScale();
+    }
+
+    public float getScaleToFit() {
+        return mScaleToFit;
+    }
+
+    @Override
+    public int getViewType() {
+        return DRAGGABLE_WIDGET;
+    }
+
+    @Override
+    public void getWorkspaceVisualDragBounds(Rect bounds) {
+        int width = (int) (getMeasuredWidth() * mScaleToFit);
+        int height = (int) (getMeasuredHeight() * mScaleToFit);
+
+        getWidgetInset(mActivity.getDeviceProfile(), mTempRect);
+        bounds.set(mTempRect.left, mTempRect.top, width - mTempRect.right,
+                height - mTempRect.bottom);
+    }
+
+    /**
+     * Widgets have padding added by the system. We may choose to inset this padding if the grid
+     * supports it.
+     */
+    public void getWidgetInset(DeviceProfile grid, Rect out) {
+        if (!grid.shouldInsetWidgets()) {
+            out.setEmpty();
+            return;
+        }
+        AppWidgetProviderInfo info = getAppWidgetInfo();
+        if (info == null) {
+            out.set(grid.inv.defaultWidgetPadding);
+        } else {
+            AppWidgetHostView.getDefaultPaddingForWidget(getContext(), info.provider, out);
+        }
     }
 }

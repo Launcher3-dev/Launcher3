@@ -44,6 +44,8 @@ import com.android.launcher3.LauncherProvider.SqlArguments;
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.icons.GraphicsUtils;
 import com.android.launcher3.icons.LauncherIcons;
+import com.android.launcher3.model.data.LauncherAppWidgetInfo;
+import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.qsb.QsbContainerView;
 import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.PackageManagerHelper;
@@ -87,7 +89,7 @@ public class AutoInstallsLayout {
 
         // Try with grid size and hotseat count
         String layoutName = String.format(Locale.ENGLISH, FORMATTED_LAYOUT_RES_WITH_HOSTEAT,
-                grid.numColumns, grid.numRows, grid.numHotseatIcons);
+                grid.numColumns, grid.numRows, grid.numDatabaseHotseatIcons);
         int layoutId = targetRes.getIdentifier(layoutName, "xml", pkg);
 
         // Try with only grid size
@@ -130,6 +132,7 @@ public class AutoInstallsLayout {
     private static final String ATTR_PACKAGE_NAME = "packageName";
     private static final String ATTR_CLASS_NAME = "className";
     private static final String ATTR_TITLE = "title";
+    private static final String ATTR_TITLE_TEXT = "titleText";
     private static final String ATTR_SCREEN = "screen";
 
     // x and y can be specified as negative integers, in which case -1 represents the
@@ -583,7 +586,8 @@ public class AutoInstallsLayout {
             if (titleResId != 0) {
                 title = mSourceRes.getString(titleResId);
             } else {
-                title = "";
+                String titleText = getAttributeValue(parser, ATTR_TITLE_TEXT);
+                title = TextUtils.isEmpty(titleText) ? "" : titleText;
             }
 
             mValues.put(Favorites.TITLE, title);
@@ -654,7 +658,7 @@ public class AutoInstallsLayout {
         }
     }
 
-    protected static void beginDocument(XmlPullParser parser, String firstElementName)
+    public static void beginDocument(XmlPullParser parser, String firstElementName)
             throws XmlPullParserException, IOException {
         int type;
         while ((type = parser.next()) != XmlPullParser.START_TAG

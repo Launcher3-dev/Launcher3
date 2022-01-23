@@ -15,22 +15,23 @@
  */
 package com.android.launcher3.uioverrides.states;
 
-import static com.android.launcher3.LauncherAnimUtils.ALL_APPS_TRANSITION_MS;
 import static com.android.launcher3.anim.Interpolators.DEACCEL_2;
+import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_ALLAPPS;
 
-import com.android.launcher3.AbstractFloatingView;
+import android.content.Context;
+
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
+import com.android.launcher3.R;
 import com.android.launcher3.allapps.AllAppsContainerView;
-import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
-import com.android.quickstep.SysUINavigationMode;
+import com.android.launcher3.util.Themes;
 
 /**
  * Definition for AllApps state
  */
 public class AllAppsState extends LauncherState {
 
-    private static final int STATE_FLAGS = FLAG_DISABLE_ACCESSIBILITY;
+    private static final int STATE_FLAGS = FLAG_WORKSPACE_INACCESSIBLE | FLAG_CLOSE_POPUPS;
 
     private static final PageAlphaProvider PAGE_ALPHA_PROVIDER = new PageAlphaProvider(DEACCEL_2) {
         @Override
@@ -40,13 +41,12 @@ public class AllAppsState extends LauncherState {
     };
 
     public AllAppsState(int id) {
-        super(id, ContainerType.ALLAPPS, ALL_APPS_TRANSITION_MS, STATE_FLAGS);
+        super(id, LAUNCHER_STATE_ALLAPPS, STATE_FLAGS);
     }
 
     @Override
-    public void onStateEnabled(Launcher launcher) {
-        AbstractFloatingView.closeAllOpenViews(launcher);
-        dispatchWindowStateChanged(launcher);
+    public int getTransitionDuration(Context context) {
+        return 320;
     }
 
     @Override
@@ -64,14 +64,15 @@ public class AllAppsState extends LauncherState {
     public ScaleAndTranslation getWorkspaceScaleAndTranslation(Launcher launcher) {
         ScaleAndTranslation scaleAndTranslation = LauncherState.OVERVIEW
                 .getWorkspaceScaleAndTranslation(launcher);
-        if (SysUINavigationMode.getMode(launcher) == SysUINavigationMode.Mode.NO_BUTTON) {
-            float normalScale = 1;
-            // Scale down halfway to where we'd be in overview, to prepare for a potential pause.
-            scaleAndTranslation.scale = (scaleAndTranslation.scale + normalScale) / 2;
-        } else {
-            scaleAndTranslation.scale = 1;
-        }
+        scaleAndTranslation.scale = 1;
         return scaleAndTranslation;
+    }
+
+    @Override
+    protected float getDepthUnchecked(Context context) {
+        // The scrim fades in at approximately 50% of the swipe gesture.
+        // This means that the depth should be greater than 1, in order to fully zoom out.
+        return 2f;
     }
 
     @Override
@@ -81,17 +82,16 @@ public class AllAppsState extends LauncherState {
 
     @Override
     public int getVisibleElements(Launcher launcher) {
-        return ALL_APPS_HEADER | ALL_APPS_HEADER_EXTRA | ALL_APPS_CONTENT;
-    }
-
-    @Override
-    public ScaleAndTranslation getOverviewScaleAndTranslation(Launcher launcher) {
-        float slightParallax = -launcher.getDeviceProfile().allAppsCellHeightPx * 0.3f;
-        return new ScaleAndTranslation(0.9f, 0f, slightParallax);
+        return ALL_APPS_CONTENT;
     }
 
     @Override
     public LauncherState getHistoryForState(LauncherState previousState) {
         return previousState == OVERVIEW ? OVERVIEW : NORMAL;
+    }
+
+    @Override
+    public int getWorkspaceScrimColor(Launcher launcher) {
+        return Themes.getAttrColor(launcher, R.attr.allAppsScrimColor);
     }
 }

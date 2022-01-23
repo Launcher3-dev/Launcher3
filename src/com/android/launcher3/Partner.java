@@ -53,21 +53,12 @@ public class Partner {
     public static final String RES_GRID_NUM_COLUMNS = "grid_num_columns";
     public static final String RES_GRID_ICON_SIZE_DP = "grid_icon_size_dp";
 
-    private static boolean sSearched = false;
-    private static Partner sPartner;
-
     /**
      * Find and return partner details, or {@code null} if none exists.
      */
     public static synchronized Partner get(PackageManager pm) {
-        if (!sSearched) {
-            Pair<String, Resources> apkInfo = findSystemApk(ACTION_PARTNER_CUSTOMIZATION, pm);
-            if (apkInfo != null) {
-                sPartner = new Partner(apkInfo.first, apkInfo.second);
-            }
-            sSearched = true;
-        }
-        return sPartner;
+        Pair<String, Resources> apkInfo = findSystemApk(ACTION_PARTNER_CUSTOMIZATION, pm);
+        return apkInfo != null ? new Partner(apkInfo.first, apkInfo.second) : null;
     }
 
     private final String mPackageName;
@@ -138,7 +129,7 @@ public class Partner {
                     "dimen", getPackageName());
             if (resId > 0) {
                 int px = getResources().getDimensionPixelSize(resId);
-                iconSize = Utilities.dpiFromPx(px, dm);
+                iconSize = Utilities.dpiFromPx((float) px, dm.densityDpi);
             }
         } catch (Resources.NotFoundException ex) {
             Log.e(TAG, "Invalid Partner grid resource!", ex);

@@ -16,6 +16,8 @@
 
 package com.android.quickstep;
 
+import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -23,10 +25,11 @@ import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.util.Log;
 
-import com.android.launcher3.compat.LauncherAppsCompat;
-import com.android.launcher3.compat.UserManagerCompat;
+import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.util.ComponentKey;
+import com.android.launcher3.util.PackageManagerHelper;
 import com.android.systemui.shared.recents.model.Task;
+import com.android.systemui.shared.system.ActivityManagerWrapper;
 import com.android.systemui.shared.system.RemoteAnimationTargetCompat;
 
 import java.util.List;
@@ -44,15 +47,14 @@ public final class TaskUtils {
      * TODO: remove this once we switch to getting the icon and label from IconCache.
      */
     public static CharSequence getTitle(Context context, Task task) {
-        LauncherAppsCompat launcherAppsCompat = LauncherAppsCompat.getInstance(context);
-        PackageManager packageManager = context.getPackageManager();
         UserHandle user = UserHandle.of(task.key.userId);
-        ApplicationInfo applicationInfo = launcherAppsCompat.getApplicationInfo(
-            task.getTopComponent().getPackageName(), 0, user);
+        ApplicationInfo applicationInfo = new PackageManagerHelper(context)
+                .getApplicationInfo(task.getTopComponent().getPackageName(), user, 0);
         if (applicationInfo == null) {
             Log.e(TAG, "Failed to get title for task " + task);
             return "";
         }
+        PackageManager packageManager = context.getPackageManager();
         return packageManager.getUserBadgedLabel(
             applicationInfo.loadLabel(packageManager), user);
     }
@@ -79,12 +81,20 @@ public final class TaskUtils {
         if (currentUserId == UserHandle.myUserId()) {
             return true;
         }
-        List<UserHandle> allUsers = UserManagerCompat.getInstance(context).getUserProfiles();
+        List<UserHandle> allUsers = UserCache.INSTANCE.get(context).getUserProfiles();
         for (int i = allUsers.size() - 1; i >= 0; i--) {
             if (currentUserId == allUsers.get(i).getIdentifier()) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Requests that the system close any open system windows (including other SystemUI).
+     */
+    public static void closeSystemWindowsAsync(String reason) {
+        UI_HELPER_EXECUTOR.execute(
+                () -> ActivityManagerWrapper.getInstance().closeSystemWindows(reason));
     }
 }

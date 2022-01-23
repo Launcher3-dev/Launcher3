@@ -130,7 +130,7 @@ public class DbDowngradeHelperTest {
         }
         helper.close();
 
-        helper = new DatabaseHelper(mContext, null, DB_FILE) {
+        helper = new DatabaseHelper(mContext, DB_FILE, false) {
             @Override
             public void onOpen(SQLiteDatabase db) { }
         };
@@ -161,11 +161,11 @@ public class DbDowngradeHelperTest {
 
         DbDowngradeHelper.updateSchemaFile(mSchemaFile, LauncherProvider.SCHEMA_VERSION, mContext);
 
-        DatabaseHelper dbHelper = new DatabaseHelper(mContext, null, DB_FILE) {
+        DatabaseHelper dbHelper = new DatabaseHelper(mContext, DB_FILE, false) {
             @Override
             public void onOpen(SQLiteDatabase db) { }
         };
-        // Insert dummy data
+        // Insert mock data
         for (int i = 0; i < 10; i++) {
             ContentValues values = new ContentValues();
             values.put(Favorites._ID, i);

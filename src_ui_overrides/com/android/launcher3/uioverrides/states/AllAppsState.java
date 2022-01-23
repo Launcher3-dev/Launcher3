@@ -15,15 +15,15 @@
  */
 package com.android.launcher3.uioverrides.states;
 
-import static com.android.launcher3.LauncherAnimUtils.ALL_APPS_TRANSITION_MS;
-import static com.android.launcher3.allapps.DiscoveryBounce.HOME_BOUNCE_SEEN;
 import static com.android.launcher3.anim.Interpolators.DEACCEL_2;
+import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_ALLAPPS;
 
-import com.android.launcher3.AbstractFloatingView;
+import android.content.Context;
+
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
-import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
+import com.android.launcher3.util.Themes;
 
 /**
  * Definition for AllApps state
@@ -32,7 +32,7 @@ public class AllAppsState extends LauncherState {
 
     private static final float PARALLAX_COEFFICIENT = .125f;
 
-    private static final int STATE_FLAGS = FLAG_DISABLE_ACCESSIBILITY;
+    private static final int STATE_FLAGS = FLAG_WORKSPACE_INACCESSIBLE;
 
     private static final PageAlphaProvider PAGE_ALPHA_PROVIDER = new PageAlphaProvider(DEACCEL_2) {
         @Override
@@ -42,17 +42,12 @@ public class AllAppsState extends LauncherState {
     };
 
     public AllAppsState(int id) {
-        super(id, ContainerType.ALLAPPS, ALL_APPS_TRANSITION_MS, STATE_FLAGS);
+        super(id, LAUNCHER_STATE_ALLAPPS, STATE_FLAGS);
     }
 
     @Override
-    public void onStateEnabled(Launcher launcher) {
-        if (!launcher.getSharedPrefs().getBoolean(HOME_BOUNCE_SEEN, false)) {
-            launcher.getSharedPrefs().edit().putBoolean(HOME_BOUNCE_SEEN, true).apply();
-        }
-
-        AbstractFloatingView.closeAllOpenViews(launcher);
-        dispatchWindowStateChanged(launcher);
+    public int getTransitionDuration(Context context) {
+        return 320;
     }
 
     @Override
@@ -62,7 +57,7 @@ public class AllAppsState extends LauncherState {
 
     @Override
     public int getVisibleElements(Launcher launcher) {
-        return ALL_APPS_HEADER | ALL_APPS_CONTENT;
+        return ALL_APPS_CONTENT;
     }
 
     @Override
@@ -79,5 +74,10 @@ public class AllAppsState extends LauncherState {
     @Override
     public float getVerticalProgress(Launcher launcher) {
         return 0f;
+    }
+
+    @Override
+    public int getWorkspaceScrimColor(Launcher launcher) {
+        return Themes.getAttrColor(launcher, R.attr.allAppsScrimColor);
     }
 }

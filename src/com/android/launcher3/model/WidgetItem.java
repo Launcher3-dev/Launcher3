@@ -1,28 +1,25 @@
 package com.android.launcher3.model;
 
+import static com.android.launcher3.Utilities.ATLEAST_S;
+
+import android.annotation.SuppressLint;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.os.Process;
-import android.os.UserHandle;
+import android.content.res.Resources;
 
 import com.android.launcher3.InvariantDeviceProfile;
-import com.android.launcher3.LauncherAppWidgetProviderInfo;
 import com.android.launcher3.Utilities;
-import com.android.launcher3.compat.ShortcutConfigActivityInfo;
 import com.android.launcher3.icons.IconCache;
+import com.android.launcher3.pm.ShortcutConfigActivityInfo;
 import com.android.launcher3.util.ComponentKey;
-
-import java.text.Collator;
+import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
 
 /**
  * An wrapper over various items displayed in a widget picker,
  * {@link LauncherAppWidgetProviderInfo} & {@link ActivityInfo}. This provides easier access to
  * common attributes like spanX and spanY.
  */
-public class WidgetItem extends ComponentKey implements Comparable<WidgetItem> {
-
-    private static UserHandle sMyUserHandle;
-    private static Collator sCollator;
+public class WidgetItem extends ComponentKey {
 
     public final LauncherAppWidgetProviderInfo widgetInfo;
     public final ShortcutConfigActivityInfo activityInfo;
@@ -51,33 +48,30 @@ public class WidgetItem extends ComponentKey implements Comparable<WidgetItem> {
         spanX = spanY = 1;
     }
 
-    @Override
-    public int compareTo(WidgetItem another) {
-        if (sMyUserHandle == null) {
-            // Delay these object creation until required.
-            sMyUserHandle = Process.myUserHandle();
-            sCollator = Collator.getInstance();
+    /**
+     * Returns {@code true} if this {@link WidgetItem} has the same type as the given
+     * {@code otherItem}.
+     *
+     * For example, both items are widgets or both items are shortcuts.
+     */
+    public boolean hasSameType(WidgetItem otherItem) {
+        if (widgetInfo != null && otherItem.widgetInfo != null) {
+            return true;
         }
-
-        // Independent of how the labels compare, if only one of the two widget info belongs to
-        // work profile, put that one in the back.
-        boolean thisWorkProfile = !sMyUserHandle.equals(user);
-        boolean otherWorkProfile = !sMyUserHandle.equals(another.user);
-        if (thisWorkProfile ^ otherWorkProfile) {
-            return thisWorkProfile ? 1 : -1;
+        if (activityInfo != null && otherItem.activityInfo != null) {
+            return true;
         }
+        return false;
+    }
 
-        int labelCompare = sCollator.compare(label, another.label);
-        if (labelCompare != 0) {
-            return labelCompare;
-        }
+    /** Returns whether this {@link WidgetItem} has a preview layout that can be used. */
+    @SuppressLint("NewApi") // Already added API check.
+    public boolean hasPreviewLayout() {
+        return ATLEAST_S && widgetInfo != null && widgetInfo.previewLayout != Resources.ID_NULL;
+    }
 
-        // If the label is same, put the smaller widget before the larger widget. If the area is
-        // also same, put the widget with smaller height before.
-        int thisArea = spanX * spanY;
-        int otherArea = another.spanX * another.spanY;
-        return thisArea == otherArea
-                ? Integer.compare(spanY, another.spanY)
-                : Integer.compare(thisArea, otherArea);
+    /** Returns whether this {@link WidgetItem} is for a shortcut rather than an app widget. */
+    public boolean isShortcut() {
+        return activityInfo != null;
     }
 }

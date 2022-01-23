@@ -21,11 +21,13 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.compat.AccessibilityManagerCompat;
 import com.android.launcher3.views.RecyclerViewFastScroller;
-
-import androidx.recyclerview.widget.RecyclerView;
 
 
 /**
@@ -138,7 +140,7 @@ public abstract class BaseRecyclerView extends RecyclerView  {
         if (getCurrentScrollY() == 0) {
             return true;
         }
-        return false;
+        return getAdapter() == null || getAdapter().getItemCount() == 0;
     }
 
     /**
@@ -180,5 +182,28 @@ public abstract class BaseRecyclerView extends RecyclerView  {
         if (state == SCROLL_STATE_IDLE) {
             AccessibilityManagerCompat.sendScrollFinishedEventToTest(getContext());
         }
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        if (isLayoutSuppressed()) info.setScrollable(false);
+    }
+
+    /**
+     * Scrolls this recycler view to the top.
+     */
+    public void scrollToTop() {
+        if (mScrollbar != null) {
+            mScrollbar.reattachThumbToScroll();
+        }
+        if (getLayoutManager() instanceof LinearLayoutManager) {
+            LinearLayoutManager layoutManager = (LinearLayoutManager) getLayoutManager();
+            if (layoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
+                // We are at the top, so don't scrollToPosition (would cause unnecessary relayout).
+                return;
+            }
+        }
+        scrollToPosition(0);
     }
 }

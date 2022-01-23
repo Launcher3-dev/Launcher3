@@ -15,22 +15,25 @@
  */
 package com.android.launcher3.allapps;
 
-import static com.android.launcher3.AppInfo.COMPONENT_KEY_COMPARATOR;
-import static com.android.launcher3.AppInfo.EMPTY_ARRAY;
+import static com.android.launcher3.model.data.AppInfo.COMPONENT_KEY_COMPARATOR;
+import static com.android.launcher3.model.data.AppInfo.EMPTY_ARRAY;
+import static com.android.launcher3.model.data.ItemInfoWithIcon.FLAG_SHOW_DOWNLOAD_PROGRESS_MASK;
 
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.android.launcher3.AppInfo;
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.BubbleTextView;
-import com.android.launcher3.ItemInfo;
-import com.android.launcher3.PromiseAppInfo;
+import com.android.launcher3.model.data.AppInfo;
+import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.PackageUserKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -49,8 +52,9 @@ public class AllAppsStore {
 
     private AppInfo[] mApps = EMPTY_ARRAY;
 
-    private final List<OnUpdateListener> mUpdateListeners = new ArrayList<>();
+    private final List<OnUpdateListener> mUpdateListeners = new CopyOnWriteArrayList<>();
     private final ArrayList<ViewGroup> mIconContainers = new ArrayList<>();
+    private int mModelFlags;
 
     private int mDeferUpdatesFlags = 0;
     private boolean mUpdatePending = false;
@@ -62,11 +66,26 @@ public class AllAppsStore {
     /**
      * Sets the current set of apps.
      */
-    public void setApps(AppInfo[] apps) {
+    public void setApps(AppInfo[] apps, int flags) {
         mApps = apps;
+        mModelFlags = flags;
         notifyUpdate();
     }
 
+    /**
+     * @see com.android.launcher3.model.BgDataModel.Callbacks#FLAG_QUIET_MODE_ENABLED
+     * @see com.android.launcher3.model.BgDataModel.Callbacks#FLAG_HAS_SHORTCUT_PERMISSION
+     * @see com.android.launcher3.model.BgDataModel.Callbacks#FLAG_QUIET_MODE_CHANGE_PERMISSION
+     */
+    public boolean hasModelFlag(int mask) {
+        return (mModelFlags & mask) != 0;
+    }
+
+    /**
+     * Returns {@link AppInfo} if any apps matches with provided {@link ComponentKey}, otherwise
+     * null.
+     */
+    @Nullable
     public AppInfo getApp(ComponentKey key) {
         mTempInfo.componentName = key.componentName;
         mTempInfo.user = key.user;
@@ -99,9 +118,8 @@ public class AllAppsStore {
             mUpdatePending = true;
             return;
         }
-        int count = mUpdateListeners.size();
-        for (int i = 0; i < count; i++) {
-            mUpdateListeners.get(i).onAppsUpdated();
+        for (OnUpdateListener listener : mUpdateListeners) {
+            listener.onAppsUpdated();
         }
     }
 
@@ -114,7 +132,7 @@ public class AllAppsStore {
     }
 
     public void registerIconContainer(ViewGroup container) {
-        if (container != null) {
+        if (container != null && !mIconContainers.contains(container)) {
             mIconContainers.add(container);
         }
     }
@@ -134,10 +152,23 @@ public class AllAppsStore {
         });
     }
 
-    public void updatePromiseAppProgress(PromiseAppInfo app) {
+    /**
+     * Sets the AppInfo's associated icon's progress bar.
+     *
+     * If this app is installed and supports incremental downloads, the progress bar will be updated
+     * the app's total download progress. Otherwise, the progress bar will be updated to the app's
+     * installation progress.
+     *
+     * If this app is fully downloaded, the app icon will be reapplied.
+     */
+    public void updateProgressBar(AppInfo app) {
         updateAllIcons((child) -> {
             if (child.getTag() == app) {
-                child.applyProgressLevel(app.level);
+                if ((app.runtimeStatusFlags & FLAG_SHOW_DOWNLOAD_PROGRESS_MASK) == 0) {
+                    child.applyFromApplicationInfo(app);
+                } else {
+                    child.applyProgressLevel();
+                }
             }
         });
     }

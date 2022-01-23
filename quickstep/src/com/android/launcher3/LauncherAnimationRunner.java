@@ -16,9 +16,10 @@
 package com.android.launcher3;
 
 import static com.android.launcher3.Utilities.postAsyncCallback;
-import static com.android.launcher3.util.DefaultDisplay.getSingleFrameMs;
-import static com.android.systemui.shared.recents.utilities.Utilities
-        .postAtFrontOfQueueAsynchronously;
+import static com.android.launcher3.util.DisplayController.getSingleFrameMs;
+import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
+import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
+import static com.android.systemui.shared.recents.utilities.Utilities.postAtFrontOfQueueAsynchronously;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -28,35 +29,68 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 
+import androidx.annotation.BinderThread;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+
 import com.android.systemui.shared.system.RemoteAnimationRunnerCompat;
 import com.android.systemui.shared.system.RemoteAnimationTargetCompat;
 
-import androidx.annotation.BinderThread;
-import androidx.annotation.UiThread;
+import java.lang.ref.WeakReference;
 
+/**
+ * This class is needed to wrap any animation runner that is a part of the
+ * RemoteAnimationDefinition:
+ * - Launcher creates a new instance of the LauncherAppTransitionManagerImpl whenever it is
+ *   created, which in turn registers a new definition
+ * - When the definition is registered, window manager retains a strong binder reference to the
+ *   runner passed in
+ * - If the Launcher activity is recreated, the new definition registered will replace the old
+ *   reference in the system's activity record, but until the system server is GC'd, the binder
+ *   reference will still exist, which references the runner in the Launcher process, which
+ *   references the (old) Launcher activity through this class
+ *
+ * Instead we make the runner provided to the definition static only holding a weak reference to
+ * the runner implementation.  When this animation manager is destroyed, we remove the Launcher
+ * reference to the runner, leaving only the weak ref from the runner.
+ */
 @TargetApi(Build.VERSION_CODES.P)
-public abstract class LauncherAnimationRunner implements RemoteAnimationRunnerCompat {
+public class LauncherAnimationRunner implements RemoteAnimationRunnerCompat {
+
+    private static final RemoteAnimationFactory DEFAULT_FACTORY =
+            (transit, appTargets, wallpaperTargets, nonAppTargets, result) ->
+                    result.setAnimation(null, null);
 
     private final Handler mHandler;
     private final boolean mStartAtFrontOfQueue;
+    private final WeakReference<RemoteAnimationFactory> mFactory;
+
     private AnimationResult mAnimationResult;
 
     /**
      * @param startAtFrontOfQueue If true, the animation start will be posted at the front of the
      *                            queue to minimize latency.
      */
-    public LauncherAnimationRunner(Handler handler, boolean startAtFrontOfQueue) {
+    public LauncherAnimationRunner(Handler handler, RemoteAnimationFactory factory,
+            boolean startAtFrontOfQueue) {
         mHandler = handler;
+        mFactory = new WeakReference<>(factory);
         mStartAtFrontOfQueue = startAtFrontOfQueue;
     }
 
+    // Called only in S+ platform
     @BinderThread
-    @Override
-    public void onAnimationStart(RemoteAnimationTargetCompat[] targetCompats, Runnable runnable) {
+    public void onAnimationStart(
+            int transit,
+            RemoteAnimationTargetCompat[] appTargets,
+            RemoteAnimationTargetCompat[] wallpaperTargets,
+            RemoteAnimationTargetCompat[] nonAppTargets,
+            Runnable runnable) {
         Runnable r = () -> {
             finishExistingAnimation();
-            mAnimationResult = new AnimationResult(runnable);
-            onCreateAnimation(targetCompats, mAnimationResult);
+            mAnimationResult = new AnimationResult(() -> mAnimationResult = null, runnable);
+            getFactory().onCreateAnimation(transit, appTargets, wallpaperTargets, nonAppTargets,
+                    mAnimationResult);
         };
         if (mStartAtFrontOfQueue) {
             postAtFrontOfQueueAsynchronously(mHandler, r);
@@ -65,13 +99,26 @@ public abstract class LauncherAnimationRunner implements RemoteAnimationRunnerCo
         }
     }
 
-    /**
-     * Called on the UI thread when the animation targets are received. The implementation must
-     * call {@link AnimationResult#setAnimation} with the target animation to be run.
-     */
-    @UiThread
-    public abstract void onCreateAnimation(
-            RemoteAnimationTargetCompat[] targetCompats, AnimationResult result);
+    // Called only in R platform
+    @BinderThread
+    public void onAnimationStart(RemoteAnimationTargetCompat[] appTargets,
+            RemoteAnimationTargetCompat[] wallpaperTargets, Runnable runnable) {
+        onAnimationStart(0 /* transit */, appTargets, wallpaperTargets,
+                new RemoteAnimationTargetCompat[0], runnable);
+    }
+
+    // Called only in Q platform
+    @BinderThread
+    @Deprecated
+    public void onAnimationStart(RemoteAnimationTargetCompat[] appTargets, Runnable runnable) {
+        onAnimationStart(appTargets, new RemoteAnimationTargetCompat[0], runnable);
+    }
+
+
+    private RemoteAnimationFactory getFactory() {
+        RemoteAnimationFactory factory = mFactory.get();
+        return factory != null ? factory : DEFAULT_FACTORY;
+    }
 
     @UiThread
     private void finishExistingAnimation() {
@@ -87,42 +134,69 @@ public abstract class LauncherAnimationRunner implements RemoteAnimationRunnerCo
     @BinderThread
     @Override
     public void onAnimationCancelled() {
-        postAsyncCallback(mHandler, this::finishExistingAnimation);
+        postAsyncCallback(mHandler, () -> {
+            finishExistingAnimation();
+            getFactory().onAnimationCancelled();
+        });
     }
 
     public static final class AnimationResult {
 
-        private final Runnable mFinishRunnable;
+        private final Runnable mSyncFinishRunnable;
+        private final Runnable mASyncFinishRunnable;
 
         private AnimatorSet mAnimator;
+        private Runnable mOnCompleteCallback;
         private boolean mFinished = false;
         private boolean mInitialized = false;
 
-        private AnimationResult(Runnable finishRunnable) {
-            mFinishRunnable = finishRunnable;
+        private AnimationResult(Runnable syncFinishRunnable, Runnable asyncFinishRunnable) {
+            mSyncFinishRunnable = syncFinishRunnable;
+            mASyncFinishRunnable = asyncFinishRunnable;
         }
 
         @UiThread
         private void finish() {
             if (!mFinished) {
-                mFinishRunnable.run();
+                mSyncFinishRunnable.run();
+                UI_HELPER_EXECUTOR.execute(() -> {
+                    mASyncFinishRunnable.run();
+                    if (mOnCompleteCallback != null) {
+                        MAIN_EXECUTOR.execute(mOnCompleteCallback);
+                    }
+                });
                 mFinished = true;
             }
         }
 
         @UiThread
         public void setAnimation(AnimatorSet animation, Context context) {
+            setAnimation(animation, context, null, true);
+        }
+
+        /**
+         * Sets the animation to play for this app launch
+         * @param skipFirstFrame Iff true, we skip the first frame of the animation.
+         *                       We set to false when skipping first frame causes jank.
+         */
+        @UiThread
+        public void setAnimation(AnimatorSet animation, Context context,
+                @Nullable Runnable onCompleteCallback, boolean skipFirstFrame) {
             if (mInitialized) {
                 throw new IllegalStateException("Animation already initialized");
             }
             mInitialized = true;
             mAnimator = animation;
+            mOnCompleteCallback = onCompleteCallback;
             if (mAnimator == null) {
                 finish();
             } else if (mFinished) {
                 // Animation callback was already finished, skip the animation.
                 mAnimator.start();
                 mAnimator.end();
+                if (mOnCompleteCallback != null) {
+                    mOnCompleteCallback.run();
+                }
             } else {
                 // Start the animation
                 mAnimator.addListener(new AnimatorListenerAdapter() {
@@ -133,10 +207,37 @@ public abstract class LauncherAnimationRunner implements RemoteAnimationRunnerCo
                 });
                 mAnimator.start();
 
-                // Because t=0 has the app icon in its original spot, we can skip the
-                // first frame and have the same movement one frame earlier.
-                mAnimator.setCurrentPlayTime(getSingleFrameMs(context));
+                if (skipFirstFrame) {
+                    // Because t=0 has the app icon in its original spot, we can skip the
+                    // first frame and have the same movement one frame earlier.
+                    mAnimator.setCurrentPlayTime(
+                            Math.min(getSingleFrameMs(context), mAnimator.getTotalDuration()));
+                }
             }
         }
+    }
+
+    /**
+     * Used with LauncherAnimationRunner as an interface for the runner to call back to the
+     * implementation.
+     */
+    @FunctionalInterface
+    public interface RemoteAnimationFactory {
+
+        /**
+         * Called on the UI thread when the animation targets are received. The implementation must
+         * call {@link AnimationResult#setAnimation} with the target animation to be run.
+         */
+        void onCreateAnimation(int transit,
+                RemoteAnimationTargetCompat[] appTargets,
+                RemoteAnimationTargetCompat[] wallpaperTargets,
+                RemoteAnimationTargetCompat[] nonAppTargets,
+                LauncherAnimationRunner.AnimationResult result);
+
+        /**
+         * Called when the animation is cancelled. This can happen with or without
+         * the create being called.
+         */
+        default void onAnimationCancelled() { }
     }
 }

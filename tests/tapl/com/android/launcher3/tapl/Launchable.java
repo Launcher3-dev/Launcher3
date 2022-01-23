@@ -46,41 +46,63 @@ abstract class Launchable {
      * Clicks the object to launch its app.
      */
     public Background launch(String expectedPackageName) {
-        return launch(By.pkg(expectedPackageName));
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
+            return launch(By.pkg(expectedPackageName));
+        }
     }
 
+    protected abstract void expectActivityStartEvents();
+
+    protected abstract String launchableType();
+
     private Background launch(BySelector selector) {
-        LauncherInstrumentation.log("Launchable.launch before click " +
-                mObject.getVisibleCenter() + " in " + mObject.getVisibleBounds());
+        LauncherInstrumentation.log("Launchable.launch before click "
+                + mObject.getVisibleCenter() + " in " + mLauncher.getVisibleBounds(mObject));
+        final String label = mObject.getText();
 
         mLauncher.executeAndWaitForEvent(
-                () -> mObject.click(),
+                () -> {
+                    mLauncher.clickLauncherObject(mObject);
+                    expectActivityStartEvents();
+                },
                 event -> event.getEventType() == TYPE_WINDOW_STATE_CHANGED,
-                "Launching an app didn't open a new window: " + mObject.getText());
+                () -> "Launching an app didn't open a new window: " + label,
+                "clicking " + launchableType());
 
         mLauncher.assertTrue(
-                "App didn't start: " + selector,
-                mLauncher.getDevice().wait(Until.hasObject(selector),
+                "App didn't start: " + label + " (" + selector + ")",
+                TestHelpers.wait(Until.hasObject(selector),
                         LauncherInstrumentation.WAIT_TIME_MS));
         return new Background(mLauncher);
     }
 
     /**
      * Drags an object to the center of homescreen.
+     *
+     * @param startsActivity   whether it's expected to start an activity.
+     * @param isWidgetShortcut whether we drag a widget shortcut
      */
-    public void dragToWorkspace() {
-        final Point launchableCenter = getObject().getVisibleCenter();
-        final Point displaySize = mLauncher.getRealDisplaySize();
-        final int width = displaySize.x / 2;
-        Workspace.dragIconToWorkspace(
-                mLauncher,
-                this,
-                new Point(
-                        launchableCenter.x >= width ?
-                                launchableCenter.x - width / 2 : launchableCenter.x + width / 2,
-                        displaySize.y / 2),
-                getLongPressIndicator());
+    public void dragToWorkspace(boolean startsActivity, boolean isWidgetShortcut) {
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
+            final Point launchableCenter = getObject().getVisibleCenter();
+            final Point displaySize = mLauncher.getRealDisplaySize();
+            final int width = displaySize.x / 2;
+            Workspace.dragIconToWorkspace(
+                    mLauncher,
+                    this,
+                    new Point(
+                            launchableCenter.x >= width
+                                    ? launchableCenter.x - width / 2
+                                    : launchableCenter.x + width / 2,
+                            displaySize.y / 2),
+                    getLongPressIndicator(),
+                    startsActivity,
+                    isWidgetShortcut,
+                    () -> addExpectedEventsForLongClick());
+        }
     }
+
+    protected abstract void addExpectedEventsForLongClick();
 
     protected abstract String getLongPressIndicator();
 }

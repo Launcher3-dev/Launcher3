@@ -28,7 +28,7 @@ import com.android.launcher3.AbstractFloatingView;
  */
 public class ListenerView extends AbstractFloatingView {
 
-    public Runnable mCloseListener;
+    private Runnable mCloseListener;
 
     public ListenerView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -66,11 +66,6 @@ public class ListenerView extends AbstractFloatingView {
     }
 
     @Override
-    public void logActionCommand(int command) {
-        // Users do not interact with FloatingIconView, so there is nothing to log here.
-    }
-
-    @Override
     protected boolean isOfType(int type) {
         return (type & TYPE_LISTENER) != 0;
     }
@@ -82,5 +77,10 @@ public class ListenerView extends AbstractFloatingView {
         }
         // We want other views to be able to intercept the touch so we return false here.
         return false;
+    }
+
+    @Override
+    public boolean canInterceptEventsInSystemGestureRegion() {
+        return true;
     }
 }

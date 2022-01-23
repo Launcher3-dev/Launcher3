@@ -27,6 +27,11 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.os.DropBoxManager;
+import android.os.SystemClock;
+import android.util.Log;
+
+import androidx.test.uiautomator.SearchCondition;
+import androidx.test.uiautomator.UiDevice;
 
 import org.junit.Assert;
 
@@ -35,6 +40,7 @@ import java.util.List;
 
 public class TestHelpers {
 
+    private static final String TAG = "Tapl";
     private static Boolean sIsInLauncherProcess;
 
     public static boolean isInLauncherProcess() {
@@ -77,13 +83,18 @@ public class TestHelpers {
         return launchers.get(0).activityInfo;
     }
 
-    public static String getOverviewPackageName() {
+    public static ComponentName getOverviewComponentName() {
         Resources res = Resources.getSystem();
         int id = res.getIdentifier("config_recentsComponentName", "string", "android");
         if (id != 0) {
-            return ComponentName.unflattenFromString(res.getString(id)).getPackageName();
+            return ComponentName.unflattenFromString(res.getString(id));
         }
-        return "com.android.systemui";
+        return new ComponentName("com.android.systemui",
+                "com.android.systemui.recents.RecentsActivity");
+    }
+
+    public static String getOverviewPackageName() {
+        return getOverviewComponentName().getPackageName();
     }
 
     private static String truncateCrash(String text, int maxLines) {
@@ -146,8 +157,15 @@ public class TestHelpers {
                     ? "Current time: " + new Date(System.currentTimeMillis()) + "\n" + errors
                     : null;
         } catch (Exception e) {
-            return "Failed to get system health diags, maybe build your test via .bp instead of "
-                    + ".mk? " + android.util.Log.getStackTraceString(e);
+            return null;
         }
+    }
+
+    public static <R> R wait(SearchCondition<R> condition, long timeout) {
+        Log.d(TAG,
+                "TestHelpers.wait, condition=" + timeout + ", time=" + SystemClock.uptimeMillis());
+        final R result = UiDevice.getInstance(getInstrumentation()).wait(condition, timeout);
+        Log.d(TAG, "TestHelpers.wait, result=" + result + ", time=" + SystemClock.uptimeMillis());
+        return result;
     }
 }

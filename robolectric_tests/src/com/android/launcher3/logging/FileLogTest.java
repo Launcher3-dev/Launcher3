@@ -1,30 +1,32 @@
 package com.android.launcher3.logging;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.LooperMode;
+import org.robolectric.annotation.LooperMode.Mode;
 
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Calendar;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 /**
  * Tests for {@link FileLog}
  */
 @RunWith(RobolectricTestRunner.class)
+@LooperMode(Mode.PAUSED)
 public class FileLogTest {
 
     private File mTempDir;
-
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         int count = 0;
         do {
             mTempDir = new File(RuntimeEnvironment.application.getCacheDir(),
@@ -35,10 +37,11 @@ public class FileLogTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         // Clear existing logs
-        new File(mTempDir, "log-0").delete();
-        new File(mTempDir, "log-1").delete();
+        for (int i = 0; i < FileLog.LOG_DAYS; i++) {
+            new File(mTempDir, "log-" + i).delete();
+        }
         mTempDir.delete();
     }
 
@@ -49,12 +52,12 @@ public class FileLogTest {
         }
         FileLog.print("Testing", "hoolalala");
         StringWriter writer = new StringWriter();
-        FileLog.flushAll(new PrintWriter(writer));
+        assertTrue(FileLog.flushAll(new PrintWriter(writer)));
         assertTrue(writer.toString().contains("hoolalala"));
 
         FileLog.print("Testing", "abracadabra", new Exception("cat! cat!"));
         writer = new StringWriter();
-        FileLog.flushAll(new PrintWriter(writer));
+        assertTrue(FileLog.flushAll(new PrintWriter(writer)));
         assertTrue(writer.toString().contains("abracadabra"));
         // Exception is also printed
         assertTrue(writer.toString().contains("cat! cat!"));
@@ -70,17 +73,18 @@ public class FileLogTest {
         }
         FileLog.print("Testing", "hoolalala");
         StringWriter writer = new StringWriter();
-        FileLog.flushAll(new PrintWriter(writer));
+        assertTrue(FileLog.flushAll(new PrintWriter(writer)));
         assertTrue(writer.toString().contains("hoolalala"));
 
         Calendar threeDaysAgo = Calendar.getInstance();
         threeDaysAgo.add(Calendar.HOUR, -72);
-        new File(mTempDir, "log-0").setLastModified(threeDaysAgo.getTimeInMillis());
-        new File(mTempDir, "log-1").setLastModified(threeDaysAgo.getTimeInMillis());
+        for (int i = 0; i < FileLog.LOG_DAYS; i++) {
+            new File(mTempDir, "log-" + i).setLastModified(threeDaysAgo.getTimeInMillis());
+        }
 
         FileLog.print("Testing", "abracadabra", new Exception("cat! cat!"));
         writer = new StringWriter();
-        FileLog.flushAll(new PrintWriter(writer));
+        assertTrue(FileLog.flushAll(new PrintWriter(writer)));
         assertTrue(writer.toString().contains("abracadabra"));
         // Exception is also printed
         assertTrue(writer.toString().contains("cat! cat!"));

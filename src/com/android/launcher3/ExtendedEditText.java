@@ -15,6 +15,8 @@
  */
 package com.android.launcher3;
 
+import static com.android.launcher3.util.UiThreadHelper.hideKeyboardAsync;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -24,11 +26,13 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
-import com.android.launcher3.util.UiThreadHelper;
+import com.android.launcher3.config.FeatureFlags;
+import com.android.launcher3.views.ActivityContext;
 
 
 /**
  * The edit text that reports back when the back key has been pressed.
+ * Note: AppCompatEditText doesn't fully support #displayCompletions and #onCommitCompletion
  */
 public class ExtendedEditText extends EditText {
 
@@ -39,7 +43,7 @@ public class ExtendedEditText extends EditText {
      * Implemented by listeners of the back key.
      */
     public interface OnBackKeyListener {
-        public boolean onBackKey();
+        boolean onBackKey();
     }
 
     private OnBackKeyListener mBackKeyListener;
@@ -66,6 +70,9 @@ public class ExtendedEditText extends EditText {
     public boolean onKeyPreIme(int keyCode, KeyEvent event) {
         // If this is a back key, propagate the key back to the listener
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+            if (TextUtils.isEmpty(getText())) {
+                hideKeyboard();
+            }
             if (mBackKeyListener != null) {
                 return mBackKeyListener.onBackKey();
             }
@@ -85,14 +92,24 @@ public class ExtendedEditText extends EditText {
         super.onLayout(changed, left, top, right, bottom);
         if (mShowImeAfterFirstLayout) {
             // soft input only shows one frame after the layout of the EditText happens,
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    showSoftInput();
-                    mShowImeAfterFirstLayout = false;
-                }
+            post(() -> {
+                showSoftInput();
+                mShowImeAfterFirstLayout = false;
             });
         }
+    }
+
+    /**
+     * Sets whether EditText background should be visible
+     * @param maxAlpha defines the maximum alpha the background should animates to
+     */
+    public void setBackgroundVisibility(boolean visible, float maxAlpha) {}
+
+    /**
+     * Returns whether a visible background is set on EditText
+     */
+    public boolean getBackgroundVisibility() {
+        return getBackground() != null;
     }
 
     public void showKeyboard() {
@@ -100,12 +117,12 @@ public class ExtendedEditText extends EditText {
     }
 
     public void hideKeyboard() {
-        UiThreadHelper.hideKeyboardAsync(getContext(), getWindowToken());
+        hideKeyboardAsync(ActivityContext.lookupContext(getContext()), getWindowToken());
     }
 
     private boolean showSoftInput() {
         return requestFocus() &&
-                ((InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
+                getContext().getSystemService(InputMethodManager.class)
                     .showSoftInput(this, InputMethodManager.SHOW_IMPLICIT);
     }
 
@@ -132,6 +149,9 @@ public class ExtendedEditText extends EditText {
     public void reset() {
         if (!TextUtils.isEmpty(getText())) {
             setText("");
+        }
+        if (FeatureFlags.ENABLE_DEVICE_SEARCH.get()) {
+            return;
         }
         if (isFocused()) {
             View nextFocus = focusSearch(View.FOCUS_DOWN);

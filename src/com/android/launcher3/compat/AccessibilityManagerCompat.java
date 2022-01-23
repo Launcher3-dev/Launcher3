@@ -18,15 +18,16 @@ package com.android.launcher3.compat;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
-import android.view.accessibility.AccessibilityNodeInfo;
 
-import com.android.launcher3.testing.TestProtocol;
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.Utilities;
-
-import java.util.function.Consumer;
+import com.android.launcher3.testing.TestProtocol;
 
 public class AccessibilityManagerCompat {
 
@@ -39,11 +40,21 @@ public class AccessibilityManagerCompat {
         return isAccessibilityEnabled(context);
     }
 
-    public static void sendCustomAccessibilityEvent(View target, int type, String text) {
-        if (isObservedEventType(target.getContext(), type)) {
+    /**
+     *
+     * @param target The view the accessibility event is initialized on.
+     *               If null, this method has no effect.
+     * @param type See TYPE_ constants defined in {@link AccessibilityEvent}.
+     * @param text Optional text to add to the event, which will be announced to the user.
+     */
+    public static void sendCustomAccessibilityEvent(@Nullable View target, int type,
+            @Nullable String text) {
+        if (target != null && isObservedEventType(target.getContext(), type)) {
             AccessibilityEvent event = AccessibilityEvent.obtain(type);
             target.onInitializeAccessibilityEvent(event);
-            event.getText().add(text);
+            if (!TextUtils.isEmpty(text)) {
+                event.getText().add(text);
+            }
             getManager(target.getContext()).sendAccessibilityEvent(event);
         }
     }
@@ -59,29 +70,33 @@ public class AccessibilityManagerCompat {
         final Bundle parcel = new Bundle();
         parcel.putInt(TestProtocol.STATE_FIELD, stateOrdinal);
 
-        sendEventToTest(accessibilityManager, TestProtocol.SWITCHED_TO_STATE_MESSAGE, parcel);
+        sendEventToTest(
+                accessibilityManager, context, TestProtocol.SWITCHED_TO_STATE_MESSAGE, parcel);
+        Log.d(TestProtocol.PERMANENT_DIAG_TAG, "sendStateEventToTest: " + stateOrdinal);
     }
 
     public static void sendScrollFinishedEventToTest(Context context) {
         final AccessibilityManager accessibilityManager = getAccessibilityManagerForTest(context);
         if (accessibilityManager == null) return;
 
-        sendEventToTest(accessibilityManager, TestProtocol.SCROLL_FINISHED_MESSAGE, null);
+        sendEventToTest(accessibilityManager, context, TestProtocol.SCROLL_FINISHED_MESSAGE, null);
     }
 
     public static void sendPauseDetectedEventToTest(Context context) {
         final AccessibilityManager accessibilityManager = getAccessibilityManagerForTest(context);
         if (accessibilityManager == null) return;
 
-        sendEventToTest(accessibilityManager, TestProtocol.PAUSE_DETECTED_MESSAGE, null);
+        sendEventToTest(accessibilityManager, context, TestProtocol.PAUSE_DETECTED_MESSAGE, null);
     }
 
     private static void sendEventToTest(
-            AccessibilityManager accessibilityManager, String eventTag, Bundle data) {
+            AccessibilityManager accessibilityManager,
+            Context context, String eventTag, Bundle data) {
         final AccessibilityEvent e = AccessibilityEvent.obtain(
                 AccessibilityEvent.TYPE_ANNOUNCEMENT);
         e.setClassName(eventTag);
         e.setParcelableData(data);
+        e.setPackageName(context.getApplicationContext().getPackageName());
         accessibilityManager.sendAccessibilityEvent(e);
     }
 
@@ -101,24 +116,6 @@ public class AccessibilityManagerCompat {
         if (!accessibilityManager.isEnabled()) return null;
 
         return accessibilityManager;
-    }
-
-    public static boolean processTestRequest(Context context, String eventTag, int action,
-            Bundle request, Consumer<Bundle> responseFiller) {
-        final AccessibilityManager accessibilityManager = getAccessibilityManagerForTest(context);
-        if (accessibilityManager == null) return false;
-
-        // The test sends a request via a ACTION_SET_TEXT.
-        if (action == AccessibilityNodeInfo.ACTION_SET_TEXT &&
-                eventTag.equals(request.getCharSequence(
-                        AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE))) {
-            final Bundle response = new Bundle();
-            responseFiller.accept(response);
-            AccessibilityManagerCompat.sendEventToTest(
-                    accessibilityManager, eventTag + TestProtocol.RESPONSE_MESSAGE_POSTFIX, response);
-            return true;
-        }
-        return false;
     }
 
     public static int getRecommendedTimeoutMillis(Context context, int originalTimeout, int flags) {

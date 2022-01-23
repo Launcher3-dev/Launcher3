@@ -16,14 +16,15 @@
 
 package com.android.launcher3.model;
 
+import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
+
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.model.BgDataModel.Callbacks;
 import com.android.launcher3.util.ComponentKey;
-import com.android.launcher3.widget.WidgetListRowEntry;
+import com.android.launcher3.widget.model.WidgetsListBaseEntry;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Helper class to handle results of {@link com.android.launcher3.model.LoaderTask}.
@@ -31,8 +32,8 @@ import java.util.HashMap;
 public class LoaderResults extends BaseLoaderResults {
 
     public LoaderResults(LauncherAppState app, BgDataModel dataModel,
-            AllAppsList allAppsList, int pageToBindFirst, WeakReference<Callbacks> callbacks) {
-        super(app, dataModel, allAppsList, pageToBindFirst, callbacks);
+            AllAppsList allAppsList, Callbacks[] callbacks) {
+        super(app, dataModel, allAppsList, callbacks, MAIN_EXECUTOR);
     }
 
     @Override
@@ -46,8 +47,8 @@ public class LoaderResults extends BaseLoaderResults {
 
     @Override
     public void bindWidgets() {
-        final ArrayList<WidgetListRowEntry> widgets =
-                mBgDataModel.widgetsModel.getWidgetsList(mApp.getContext());
+        final List<WidgetsListBaseEntry> widgets =
+                mBgDataModel.widgetsModel.getWidgetsListForPicker(mApp.getContext());
         executeCallbacksTask(c -> c.bindAllWidgets(widgets), mUiExecutor);
     }
 }

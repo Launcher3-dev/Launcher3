@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2019 The Android Open Source Project
+     Copyright (C) 2021 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,17 +14,30 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
+
 <resources>
-    <dimen name="recents_list_width">320dp</dimen>
+    <dimen name="go_button_corner_radius">20dp</dimen>
 
-    <dimen name="task_item_height">60dp</dimen>
-    <dimen name="task_item_top_margin">16dp</dimen>
-    <dimen name="task_thumbnail_icon_horiz_margin">16dp</dimen>
+    <!-- Overview -->
+    <dimen name="go_overview_button_width">60dp</dimen>
+    <dimen name="go_overview_button_height">60dp</dimen>
+    <dimen name="go_overview_button_container_width">80dp</dimen>
+    <dimen name="go_overview_button_container_margin">16dp</dimen>
+    <dimen name="go_overview_button_caption_margin">8dp</dimen>
+    <dimen name="overview_actions_height">96dp</dimen>
+    <dimen name="overview_proactive_row_height">0dp</dimen>
+    <dimen name="overview_proactive_row_bottom_margin">24dp</dimen>
+    <dimen name="task_corner_radius_override">28dp</dimen>
 
-    <dimen name="task_thumbnail_corner_radius">3dp</dimen>
+    <!-- Modal Dialogs -->
+    <dimen name="modal_dialog_width">288dp</dimen>
+    <dimen name="modal_dialog_padding">24dp</dimen>
+    <dimen name="modal_dialog_padding_bottom">8dp</dimen>
+    <dimen name="modal_dialog_vertical_spacer">12dp</dimen>
+    <dimen name="modal_dialog_corner_radius">8dp</dimen>
+    <dimen name="modal_dialog_text_height">216dp</dimen>
 
-    <dimen name="clear_all_item_view_height">36dp</dimen>
-    <dimen name="clear_all_item_view_top_margin">20dp</dimen>
-    <dimen name="clear_all_item_view_bottom_margin">20dp</dimen>
-    <dimen name="clear_all_button_width">106dp</dimen>
+    <!-- Tooltip -->
+    <dimen name="tooltip_corner_radius">8dp</dimen>
+    <dimen name="tooltip_top_margin">3dp</dimen>
 </resources>

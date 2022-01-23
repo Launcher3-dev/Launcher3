@@ -17,6 +17,8 @@
 package com.android.launcher3.tapl;
 
 import static com.android.launcher3.testing.TestProtocol.ALL_APPS_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.NORMAL_STATE_ORDINAL;
+import static com.android.launcher3.testing.TestProtocol.SPRING_LOADED_STATE_ORDINAL;
 
 import static junit.framework.TestCase.assertTrue;
 
@@ -32,14 +34,25 @@ import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiObject2;
 
+import com.android.launcher3.ResourceUtils;
 import com.android.launcher3.testing.TestProtocol;
+
+import java.util.regex.Pattern;
 
 /**
  * Operations on the workspace screen.
  */
 public final class Workspace extends Home {
-    private static final int DRAG_DURACTION = 2000;
     private static final int FLING_STEPS = 10;
+
+    static final Pattern EVENT_CTRL_W_DOWN = Pattern.compile(
+            "Key event: KeyEvent.*?action=ACTION_DOWN.*?keyCode=KEYCODE_W"
+                    + ".*?metaState=META_CTRL_ON");
+    static final Pattern EVENT_CTRL_W_UP = Pattern.compile(
+            "Key event: KeyEvent.*?action=ACTION_UP.*?keyCode=KEYCODE_W"
+                    + ".*?metaState=META_CTRL_ON");
+    private static final Pattern LONG_CLICK_EVENT = Pattern.compile("onWorkspaceItemLongClick");
+
     private final UiObject2 mHotseat;
 
     Workspace(LauncherInstrumentation launcher) {
@@ -54,26 +67,30 @@ public final class Workspace extends Home {
      */
     @NonNull
     public AllApps switchToAllApps() {
-        try (LauncherInstrumentation.Closable c =
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck();
+             LauncherInstrumentation.Closable c =
                      mLauncher.addContextLayer("want to switch from workspace to all apps")) {
             verifyActiveContainer();
-            final UiObject2 hotseat = mHotseat;
-            final Point start = hotseat.getVisibleCenter();
-            start.y = hotseat.getVisibleBounds().bottom - 1;
+            final int deviceHeight = mLauncher.getDevice().getDisplayHeight();
+            final int bottomGestureMargin = ResourceUtils.getNavbarSize(
+                    ResourceUtils.NAVBAR_BOTTOM_GESTURE_SIZE, mLauncher.getResources());
+            final int windowCornerRadius = (int) Math.ceil(mLauncher.getWindowCornerRadius());
+            final int startY = deviceHeight - Math.max(bottomGestureMargin, windowCornerRadius) - 1;
             final int swipeHeight = mLauncher.getTestInfo(
                     TestProtocol.REQUEST_HOME_TO_ALL_APPS_SWIPE_HEIGHT).
                     getInt(TestProtocol.TEST_INFO_RESPONSE_FIELD);
             LauncherInstrumentation.log(
-                    "switchToAllApps: swipeHeight = " + swipeHeight + ", slop = "
+                    "switchToAllApps: deviceHeight = " + deviceHeight + ", startY = " + startY
+                            + ", swipeHeight = " + swipeHeight + ", slop = "
                             + mLauncher.getTouchSlop());
 
             mLauncher.swipeToState(
-                    start.x,
-                    start.y,
-                    start.x,
-                    start.y - swipeHeight - mLauncher.getTouchSlop(),
-                    60,
-                    ALL_APPS_STATE_ORDINAL);
+                    0,
+                    startY,
+                    0,
+                    startY - swipeHeight - mLauncher.getTouchSlop(),
+                    12,
+                    ALL_APPS_STATE_ORDINAL, LauncherInstrumentation.GestureScope.INSIDE);
 
             try (LauncherInstrumentation.Closable c1 = mLauncher.addContextLayer(
                     "swiped to all apps")) {
@@ -122,21 +139,27 @@ public final class Workspace extends Home {
      * second screen.
      */
     public void ensureWorkspaceIsScrollable() {
-        final UiObject2 workspace = verifyActiveContainer();
-        if (!isWorkspaceScrollable(workspace)) {
-            try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer(
-                    "dragging icon to a second page of workspace to make it scrollable")) {
-                dragIconToWorkspace(
-                        mLauncher,
-                        getHotseatAppIcon("Chrome"),
-                        new Point(mLauncher.getDevice().getDisplayWidth(),
-                                workspace.getVisibleBounds().centerY()),
-                        "deep_shortcuts_container");
-                verifyActiveContainer();
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
+            final UiObject2 workspace = verifyActiveContainer();
+            if (!isWorkspaceScrollable(workspace)) {
+                try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer(
+                        "dragging icon to a second page of workspace to make it scrollable")) {
+                    dragIconToWorkspace(
+                            mLauncher,
+                            getHotseatAppIcon("Chrome"),
+                            new Point(mLauncher.getDevice().getDisplayWidth(),
+                                    mLauncher.getVisibleBounds(workspace).centerY()),
+                            "popup_container",
+                            false,
+                            false,
+                            () -> mLauncher.expectEvent(
+                                    TestProtocol.SEQUENCE_MAIN, LONG_CLICK_EVENT));
+                    verifyActiveContainer();
+                }
             }
+            assertTrue("Home screen workspace didn't become scrollable",
+                    isWorkspaceScrollable(workspace));
         }
-        assertTrue("Home screen workspace didn't become scrollable",
-                isWorkspaceScrollable(workspace));
     }
 
     private boolean isWorkspaceScrollable(UiObject2 workspace) {
@@ -149,29 +172,38 @@ public final class Workspace extends Home {
                 mHotseat, AppIcon.getAppIconSelector(appName, mLauncher)));
     }
 
-    @NonNull
-    public Folder getHotseatFolder(String appName) {
-        return new Folder(mLauncher, mLauncher.waitForObjectInContainer(
-                mHotseat, Folder.getSelector(appName, mLauncher)));
-    }
-
     static void dragIconToWorkspace(
             LauncherInstrumentation launcher, Launchable launchable, Point dest,
-            String longPressIndicator) {
+            String longPressIndicator, boolean startsActivity, boolean isWidgetShortcut,
+            Runnable expectLongClickEvents) {
         LauncherInstrumentation.log("dragIconToWorkspace: begin");
         final Point launchableCenter = launchable.getObject().getVisibleCenter();
         final long downTime = SystemClock.uptimeMillis();
-        launcher.sendPointer(downTime, downTime, MotionEvent.ACTION_DOWN, launchableCenter);
-        LauncherInstrumentation.log("dragIconToWorkspace: sent down");
-        launcher.waitForLauncherObject(longPressIndicator);
-        LauncherInstrumentation.log("dragIconToWorkspace: indicator");
-        launcher.movePointer(
-                downTime, SystemClock.uptimeMillis(), DRAG_DURACTION, launchableCenter, dest);
+        launcher.runToState(
+                () -> {
+                    launcher.sendPointer(downTime, downTime, MotionEvent.ACTION_DOWN,
+                            launchableCenter, LauncherInstrumentation.GestureScope.INSIDE);
+                    LauncherInstrumentation.log("dragIconToWorkspace: sent down");
+                    expectLongClickEvents.run();
+                    launcher.waitForLauncherObject(longPressIndicator);
+                    LauncherInstrumentation.log("dragIconToWorkspace: indicator");
+                    launcher.movePointer(launchableCenter, dest, 10, downTime, true,
+                            LauncherInstrumentation.GestureScope.INSIDE);
+                },
+                SPRING_LOADED_STATE_ORDINAL,
+                "long-pressing and moving");
         LauncherInstrumentation.log("dragIconToWorkspace: moved pointer");
-        launcher.sendPointer(
-                downTime, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, dest);
+        launcher.runToState(
+                () -> launcher.sendPointer(
+                        downTime, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, dest,
+                        LauncherInstrumentation.GestureScope.INSIDE),
+                NORMAL_STATE_ORDINAL,
+                "sending UP event");
+        if (startsActivity || isWidgetShortcut) {
+            launcher.expectEvent(TestProtocol.SEQUENCE_MAIN, LauncherInstrumentation.EVENT_START);
+        }
         LauncherInstrumentation.log("dragIconToWorkspace: end");
-        launcher.waitUntilGone("drop_target_bar");
+        launcher.waitUntilLauncherObjectGone("drop_target_bar");
     }
 
     /**
@@ -179,11 +211,13 @@ public final class Workspace extends Home {
      * recoil to complete.
      */
     public void flingForward() {
-        final UiObject2 workspace = verifyActiveContainer();
-        mLauncher.scroll(workspace, Direction.RIGHT,
-                new Rect(0, 0, mLauncher.getEdgeSensitivityWidth(), 0),
-                FLING_STEPS);
-        verifyActiveContainer();
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
+            final UiObject2 workspace = verifyActiveContainer();
+            mLauncher.scroll(workspace, Direction.RIGHT,
+                    new Rect(0, 0, mLauncher.getEdgeSensitivityWidth() + 1, 0),
+                    FLING_STEPS, false);
+            verifyActiveContainer();
+        }
     }
 
     /**
@@ -191,11 +225,13 @@ public final class Workspace extends Home {
      * recoil to complete.
      */
     public void flingBackward() {
-        final UiObject2 workspace = verifyActiveContainer();
-        mLauncher.scroll(workspace, Direction.LEFT,
-                new Rect(mLauncher.getEdgeSensitivityWidth(), 0, 0, 0),
-                FLING_STEPS);
-        verifyActiveContainer();
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
+            final UiObject2 workspace = verifyActiveContainer();
+            mLauncher.scroll(workspace, Direction.LEFT,
+                    new Rect(mLauncher.getEdgeSensitivityWidth() + 1, 0, 0, 0),
+                    FLING_STEPS, false);
+            verifyActiveContainer();
+        }
     }
 
     /**
@@ -205,10 +241,14 @@ public final class Workspace extends Home {
      */
     @NonNull
     public Widgets openAllWidgets() {
-        verifyActiveContainer();
-        mLauncher.getDevice().pressKeyCode(KeyEvent.KEYCODE_W, KeyEvent.META_CTRL_ON);
-        try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer("pressed Ctrl+W")) {
-            return new Widgets(mLauncher);
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
+            verifyActiveContainer();
+            mLauncher.expectEvent(TestProtocol.SEQUENCE_MAIN, EVENT_CTRL_W_DOWN);
+            mLauncher.expectEvent(TestProtocol.SEQUENCE_MAIN, EVENT_CTRL_W_UP);
+            mLauncher.getDevice().pressKeyCode(KeyEvent.KEYCODE_W, KeyEvent.META_CTRL_ON);
+            try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer("pressed Ctrl+W")) {
+                return new Widgets(mLauncher);
+            }
         }
     }
 
@@ -224,16 +264,22 @@ public final class Workspace extends Home {
 
     @Nullable
     public Widget tryGetWidget(String label, long timeout) {
-        final UiObject2 widget = mLauncher.tryWaitForLauncherObject(
-                By.clazz("com.android.launcher3.widget.LauncherAppWidgetHostView").desc(label),
-                timeout);
-        return widget != null ? new Widget(mLauncher, widget) : null;
+        try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer(
+                "getting widget " + label + " on workspace with timeout " + timeout)) {
+            final UiObject2 widget = mLauncher.tryWaitForLauncherObject(
+                    By.clazz("com.android.launcher3.widget.LauncherAppWidgetHostView").desc(label),
+                    timeout);
+            return widget != null ? new Widget(mLauncher, widget) : null;
+        }
     }
 
     @Nullable
     public Widget tryGetPendingWidget(long timeout) {
-        final UiObject2 widget = mLauncher.tryWaitForLauncherObject(
-                By.clazz("com.android.launcher3.widget.PendingAppWidgetHostView"), timeout);
-        return widget != null ? new Widget(mLauncher, widget) : null;
+        try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer(
+                "getting pending widget on workspace with timeout " + timeout)) {
+            final UiObject2 widget = mLauncher.tryWaitForLauncherObject(
+                    By.clazz("com.android.launcher3.widget.PendingAppWidgetHostView"), timeout);
+            return widget != null ? new Widget(mLauncher, widget) : null;
+        }
     }
 }

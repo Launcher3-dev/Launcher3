@@ -19,33 +19,29 @@ package com.android.launcher3.graphics;
 import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
 
 import android.graphics.Canvas;
-import android.util.Property;
+import android.util.FloatProperty;
 import android.view.View;
 
-import com.android.launcher3.Launcher;
-import com.android.launcher3.uioverrides.WallpaperColorInfo;
+import com.android.launcher3.R;
 
 /**
  * Contains general scrim properties such as wallpaper-extracted color that subclasses can use.
  */
-public class Scrim implements View.OnAttachStateChangeListener,
-        WallpaperColorInfo.OnChangeListener {
+public class Scrim {
 
-    public static Property<Scrim, Float> SCRIM_PROGRESS =
-            new Property<Scrim, Float>(Float.TYPE, "scrimProgress") {
+    public static final FloatProperty<Scrim> SCRIM_PROGRESS =
+            new FloatProperty<Scrim>("scrimProgress") {
                 @Override
                 public Float get(Scrim scrim) {
                     return scrim.mScrimProgress;
                 }
 
                 @Override
-                public void set(Scrim scrim, Float value) {
-                    scrim.setScrimProgress(value);
+                public void setValue(Scrim scrim, float v) {
+                    scrim.setScrimProgress(v);
                 }
             };
 
-    protected final Launcher mLauncher;
-    protected final WallpaperColorInfo mWallpaperColorInfo;
     protected final View mRoot;
 
     protected float mScrimProgress;
@@ -54,10 +50,7 @@ public class Scrim implements View.OnAttachStateChangeListener,
 
     public Scrim(View view) {
         mRoot = view;
-        mLauncher = Launcher.getLauncher(view.getContext());
-        mWallpaperColorInfo = WallpaperColorInfo.getInstance(mLauncher);
-
-        view.addOnAttachStateChangeListener(this);
+        mScrimColor = mRoot.getContext().getColor(R.color.wallpaper_popup_scrim);
     }
 
     public void draw(Canvas canvas) {
@@ -68,30 +61,7 @@ public class Scrim implements View.OnAttachStateChangeListener,
         if (mScrimProgress != progress) {
             mScrimProgress = progress;
             mScrimAlpha = Math.round(255 * mScrimProgress);
-            invalidate();
+            mRoot.invalidate();
         }
-    }
-
-    @Override
-    public void onViewAttachedToWindow(View view) {
-        mWallpaperColorInfo.addOnChangeListener(this);
-        onExtractedColorsChanged(mWallpaperColorInfo);
-    }
-
-    @Override
-    public void onViewDetachedFromWindow(View view) {
-        mWallpaperColorInfo.removeOnChangeListener(this);
-    }
-
-    @Override
-    public void onExtractedColorsChanged(WallpaperColorInfo wallpaperColorInfo) {
-        mScrimColor = wallpaperColorInfo.getMainColor();
-        if (mScrimAlpha > 0) {
-            invalidate();
-        }
-    }
-
-    public void invalidate() {
-        mRoot.invalidate();
     }
 }

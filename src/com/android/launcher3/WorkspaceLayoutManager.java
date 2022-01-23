@@ -21,13 +21,14 @@ import android.view.ViewGroup;
 
 import com.android.launcher3.folder.Folder;
 import com.android.launcher3.folder.FolderIcon;
+import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.touch.ItemLongClickListener;
 
 public interface WorkspaceLayoutManager {
 
     String TAG = "Launcher.Workspace";
 
-    // The screen id used for the empty screen always present to the right.
+    // The screen id used for the empty screen always present at the end.
     int EXTRA_EMPTY_SCREEN_ID = -201;
     // The is the first screen. It is always present, even if its empty.
     int FIRST_SCREEN_ID = 0;
@@ -39,7 +40,8 @@ public interface WorkspaceLayoutManager {
     default void addInScreenFromBind(View child, ItemInfo info) {
         int x = info.cellX;
         int y = info.cellY;
-        if (info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT) {
+        if (info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT
+                || info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION) {
             int screenId = info.screenId;
             x = getHotseat().getCellXFromOrder(screenId);
             y = getHotseat().getCellYFromOrder(screenId);
@@ -83,7 +85,8 @@ public interface WorkspaceLayoutManager {
         }
 
         final CellLayout layout;
-        if (container == LauncherSettings.Favorites.CONTAINER_HOTSEAT) {
+        if (container == LauncherSettings.Favorites.CONTAINER_HOTSEAT
+                || container == LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION) {
             layout = getHotseat();
 
             // Hide folder title in the hotseat
@@ -127,10 +130,14 @@ public interface WorkspaceLayoutManager {
         }
 
         child.setHapticFeedbackEnabled(false);
-        child.setOnLongClickListener(ItemLongClickListener.INSTANCE_WORKSPACE);
+        child.setOnLongClickListener(getWorkspaceChildOnLongClickListener());
         if (child instanceof DropTarget) {
             onAddDropTarget((DropTarget) child);
         }
+    }
+
+    default View.OnLongClickListener getWorkspaceChildOnLongClickListener() {
+        return ItemLongClickListener.INSTANCE_WORKSPACE;
     }
 
     Hotseat getHotseat();

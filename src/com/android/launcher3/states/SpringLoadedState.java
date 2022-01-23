@@ -15,29 +15,33 @@
  */
 package com.android.launcher3.states;
 
-import static com.android.launcher3.LauncherAnimUtils.SPRING_LOADED_TRANSITION_MS;
-import static com.android.launcher3.states.RotationHelper.REQUEST_LOCK;
+import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_HOME;
 
+import android.content.Context;
 import android.graphics.Rect;
 
 import com.android.launcher3.DeviceProfile;
-import com.android.launcher3.InstallShortcutReceiver;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.Workspace;
-import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 
 /**
  * Definition for spring loaded state used during drag and drop.
  */
 public class SpringLoadedState extends LauncherState {
 
-    private static final int STATE_FLAGS = FLAG_MULTI_PAGE |
-            FLAG_DISABLE_ACCESSIBILITY | FLAG_DISABLE_RESTORE | FLAG_WORKSPACE_ICONS_CAN_BE_DRAGGED |
-            FLAG_DISABLE_PAGE_CLIPPING | FLAG_PAGE_BACKGROUNDS | FLAG_HIDE_BACK_BUTTON;
+    private static final int STATE_FLAGS = FLAG_MULTI_PAGE
+            | FLAG_WORKSPACE_INACCESSIBLE | FLAG_DISABLE_RESTORE
+            | FLAG_WORKSPACE_ICONS_CAN_BE_DRAGGED | FLAG_WORKSPACE_HAS_BACKGROUNDS
+            | FLAG_HIDE_BACK_BUTTON;
 
     public SpringLoadedState(int id) {
-        super(id, ContainerType.OVERVIEW, SPRING_LOADED_TRANSITION_MS, STATE_FLAGS);
+        super(id, LAUNCHER_STATE_HOME, STATE_FLAGS);
+    }
+
+    @Override
+    public int getTransitionDuration(Context context) {
+        return 150;
     }
 
     @Override
@@ -55,10 +59,11 @@ public class SpringLoadedState extends LauncherState {
 
         float scale = grid.workspaceSpringLoadShrinkFactor;
         Rect insets = launcher.getDragLayer().getInsets();
+        int insetsBottom = grid.isTaskbarPresent ? grid.taskbarSize : insets.bottom;
 
         float scaledHeight = scale * ws.getNormalChildHeight();
         float shrunkTop = insets.top + grid.dropTargetBarSizePx;
-        float shrunkBottom = ws.getMeasuredHeight() - insets.bottom
+        float shrunkBottom = ws.getMeasuredHeight() - insetsBottom
                 - grid.workspacePadding.bottom
                 - grid.workspaceSpringLoadedBottomSpace;
         float totalShrunkSpace = shrunkBottom - shrunkTop;
@@ -73,33 +78,22 @@ public class SpringLoadedState extends LauncherState {
     }
 
     @Override
+    protected float getDepthUnchecked(Context context) {
+        return 0.5f;
+    }
+
+    @Override
     public ScaleAndTranslation getHotseatScaleAndTranslation(Launcher launcher) {
         return new ScaleAndTranslation(1, 0, 0);
     }
 
     @Override
-    public void onStateEnabled(Launcher launcher) {
-        Workspace ws = launcher.getWorkspace();
-        ws.showPageIndicatorAtCurrentScroll();
-        ws.getPageIndicator().setShouldAutoHide(false);
-
-        // Prevent any Un/InstallShortcutReceivers from updating the db while we are
-        // in spring loaded mode
-        InstallShortcutReceiver.enableInstallQueue(InstallShortcutReceiver.FLAG_DRAG_AND_DROP);
-        launcher.getRotationHelper().setCurrentStateRequest(REQUEST_LOCK);
+    public float getWorkspaceBackgroundAlpha(Launcher launcher) {
+        return 0.2f;
     }
 
     @Override
-    public float getWorkspaceScrimAlpha(Launcher launcher) {
-        return 0.3f;
-    }
-
-    @Override
-    public void onStateDisabled(final Launcher launcher) {
-        launcher.getWorkspace().getPageIndicator().setShouldAutoHide(true);
-
-        // Re-enable any Un/InstallShortcutReceiver and now process any queued items
-        InstallShortcutReceiver.disableAndFlushInstallQueue(
-                InstallShortcutReceiver.FLAG_DRAG_AND_DROP, launcher);
+    public int getVisibleElements(Launcher launcher) {
+        return (super.getVisibleElements(launcher) | HOTSEAT_ICONS) & ~TASKBAR;
     }
 }

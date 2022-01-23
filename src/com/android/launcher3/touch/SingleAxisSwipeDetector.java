@@ -54,10 +54,15 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
         }
 
         @Override
-        boolean canScrollStart(PointF displacement, float touchSlop) {
-            return Math.abs(displacement.y) >= Math.max(Math.abs(displacement.x), touchSlop);
+        float extractOrthogonalDirection(PointF direction) {
+            return direction.x;
         }
 
+        @NonNull
+        @Override
+        public String toString() {
+            return "VERTICAL";
+        }
     };
 
     public static final Direction HORIZONTAL = new Direction() {
@@ -80,8 +85,14 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
         }
 
         @Override
-        boolean canScrollStart(PointF displacement, float touchSlop) {
-            return Math.abs(displacement.x) >= Math.max(Math.abs(displacement.y), touchSlop);
+        float extractOrthogonalDirection(PointF direction) {
+            return direction.y;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return "HORIZONTAL";
         }
     };
 
@@ -90,6 +101,8 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
     private final Listener mListener;
 
     private int mScrollDirections;
+
+    private float mTouchSlopMultiplier = 1f;
 
     public SingleAxisSwipeDetector(@NonNull Context context, @NonNull Listener l,
             @NonNull Direction dir) {
@@ -104,13 +117,22 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
         mDir = dir;
     }
 
+    /**
+     * Provides feasibility to adjust touch slop when visible window size changed. When visible
+     * bounds translate become smaller, multiply a larger multiplier could ensure the UX
+     * more consistent.
+     *
+     * @see #shouldScrollStart(PointF)
+     *
+     * @param touchSlopMultiplier the value to multiply original touch slop.
+     */
+    public void setTouchSlopMultiplier(float touchSlopMultiplier) {
+        mTouchSlopMultiplier = touchSlopMultiplier;
+    }
+
     public void setDetectableScrollConditions(int scrollDirectionFlags, boolean ignoreSlop) {
         mScrollDirections = scrollDirectionFlags;
         mIgnoreSlopWhenSettling = ignoreSlop;
-    }
-
-    public int getScrollDirections() {
-        return mScrollDirections;
     }
 
     /**
@@ -126,7 +148,9 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
     @Override
     protected boolean shouldScrollStart(PointF displacement) {
         // Reject cases where the angle or slop condition is not met.
-        if (!mDir.canScrollStart(displacement, mTouchSlop)) {
+        float minDisplacement = Math.max(mTouchSlop * mTouchSlopMultiplier,
+                Math.abs(mDir.extractOrthogonalDirection(displacement)));
+        if (Math.abs(mDir.extractDirection(displacement)) < minDisplacement) {
             return false;
         }
 
@@ -145,12 +169,14 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
 
     @Override
     protected void reportDragStartInternal(boolean recatch) {
-        mListener.onDragStart(!recatch);
+        float startDisplacement = mDir.extractDirection(mSubtractDisplacement);
+        mListener.onDragStart(!recatch, startDisplacement);
     }
 
     @Override
     protected void reportDraggingInternal(PointF displacement, MotionEvent event) {
-        mListener.onDrag(mDir.extractDirection(displacement), event);
+        mListener.onDrag(mDir.extractDirection(displacement),
+                mDir.extractOrthogonalDirection(displacement), event);
     }
 
     @Override
@@ -161,14 +187,22 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
 
     /** Listener to receive updates on the swipe. */
     public interface Listener {
-        /** @param start whether this was the original drag start, as opposed to a recatch. */
-        void onDragStart(boolean start);
+        /**
+         * TODO(b/150256055) consolidate all the different onDrag() methods into one
+         * @param start whether this was the original drag start, as opposed to a recatch.
+         * @param startDisplacement the initial touch displacement for the primary direction as
+         *        given by by {@link Direction#extractDirection(PointF)}
+         */
+        void onDragStart(boolean start, float startDisplacement);
 
-        // TODO remove
         boolean onDrag(float displacement);
 
         default boolean onDrag(float displacement, MotionEvent event) {
             return onDrag(displacement);
+        }
+
+        default boolean onDrag(float displacement, float orthogonalDisplacement, MotionEvent ev) {
+            return onDrag(displacement, ev);
         }
 
         void onDragEnd(float velocity);
@@ -183,8 +217,7 @@ public class SingleAxisSwipeDetector extends BaseSwipeDetector {
         /** Returns the part of the given {@link PointF} that is relevant to this direction. */
         abstract float extractDirection(PointF point);
 
-        /** Reject cases where the angle or slop condition is not met. */
-        abstract boolean canScrollStart(PointF displacement, float touchSlop);
+        abstract float extractOrthogonalDirection(PointF point);
 
     }
 }

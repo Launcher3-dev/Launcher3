@@ -16,9 +16,14 @@
 
 package com.android.launcher3;
 
+import android.animation.Animator;
+import android.animation.Animator.AnimatorListener;
+import android.animation.AnimatorListenerAdapter;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.FloatProperty;
-import android.util.Property;
+import android.util.IntProperty;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 
@@ -27,23 +32,20 @@ public class LauncherAnimUtils {
      * Durations for various state animations. These are not defined in resources to allow
      * easier access from static classes and enums
      */
-    public static final int ALL_APPS_TRANSITION_MS = 320;
-    public static final int OVERVIEW_TRANSITION_MS = 250;
-    public static final int SPRING_LOADED_TRANSITION_MS = 150;
     public static final int SPRING_LOADED_EXIT_DELAY = 500;
 
-    // The progress of an animation to all apps must be at least this far along to snap to all apps.
-    public static final float MIN_PROGRESS_TO_ALL_APPS = 0.5f;
+    // Progress after which the transition is assumed to be a success
+    public static final float SUCCESS_TRANSITION_PROGRESS = 0.5f;
 
-    public static final Property<Drawable, Integer> DRAWABLE_ALPHA =
-            new Property<Drawable, Integer>(Integer.TYPE, "drawableAlpha") {
+    public static final IntProperty<Drawable> DRAWABLE_ALPHA =
+            new IntProperty<Drawable>("drawableAlpha") {
                 @Override
                 public Integer get(Drawable drawable) {
                     return drawable.getAlpha();
                 }
 
                 @Override
-                public void set(Drawable drawable, Integer alpha) {
+                public void setValue(Drawable drawable, int alpha) {
                     drawable.setAlpha(alpha);
                 }
             };
@@ -67,28 +69,28 @@ public class LauncherAnimUtils {
         return (int) Utilities.boundToRange(Math.abs(velocity) / 2, 2f, 6f);
     }
 
-    public static final Property<LayoutParams, Integer> LAYOUT_WIDTH =
-            new Property<LayoutParams, Integer>(Integer.TYPE, "width") {
+    public static final IntProperty<LayoutParams> LAYOUT_WIDTH =
+            new IntProperty<LayoutParams>("width") {
                 @Override
                 public Integer get(LayoutParams lp) {
                     return lp.width;
                 }
 
                 @Override
-                public void set(LayoutParams lp, Integer width) {
+                public void setValue(LayoutParams lp, int width) {
                     lp.width = width;
                 }
             };
 
-    public static final Property<LayoutParams, Integer> LAYOUT_HEIGHT =
-            new Property<LayoutParams, Integer>(Integer.TYPE, "height") {
+    public static final IntProperty<LayoutParams> LAYOUT_HEIGHT =
+            new IntProperty<LayoutParams>("height") {
                 @Override
                 public Integer get(LayoutParams lp) {
                     return lp.height;
                 }
 
                 @Override
-                public void set(LayoutParams lp, Integer height) {
+                public void setValue(LayoutParams lp, int height) {
                     lp.height = height;
                 }
             };
@@ -120,4 +122,53 @@ public class LauncherAnimUtils {
                             return view.getTranslationY();
                         }
                     };
+
+    public static final FloatProperty<View> VIEW_ALPHA =
+            View.ALPHA instanceof FloatProperty ? (FloatProperty) View.ALPHA
+                    : new FloatProperty<View>("alpha") {
+                        @Override
+                        public void setValue(View view, float v) {
+                            view.setAlpha(v);
+                        }
+
+                        @Override
+                        public Float get(View view) {
+                            return view.getAlpha();
+                        }
+                    };
+
+    public static final IntProperty<View> VIEW_BACKGROUND_COLOR =
+            new IntProperty<View>("backgroundColor") {
+                @Override
+                public void setValue(View view, int color) {
+                    view.setBackgroundColor(color);
+                }
+
+                @Override
+                public Integer get(View view) {
+                    if (!(view.getBackground() instanceof ColorDrawable)) {
+                        return Color.TRANSPARENT;
+                    }
+                    return ((ColorDrawable) view.getBackground()).getColor();
+                }
+            };
+
+    /**
+     * Utility method to create an {@link AnimatorListener} which executes a callback on animation
+     * cancel.
+     */
+    public static AnimatorListener newCancelListener(Runnable callback) {
+        return new AnimatorListenerAdapter() {
+
+            boolean mDispatched = false;
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                if (!mDispatched) {
+                    mDispatched = true;
+                    callback.run();
+                }
+            }
+        };
+    }
 }

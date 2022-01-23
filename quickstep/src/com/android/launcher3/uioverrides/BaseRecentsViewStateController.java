@@ -16,31 +16,32 @@
 
 package com.android.launcher3.uioverrides;
 
-import static com.android.launcher3.LauncherAnimUtils.SCALE_PROPERTY;
-import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_FADE;
-import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_SCALE;
-import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_SCRIM_FADE;
-import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_TRANSLATE_X;
-import static com.android.launcher3.anim.AnimatorSetBuilder.ANIM_OVERVIEW_TRANSLATE_Y;
-import static com.android.launcher3.anim.AnimatorSetBuilder.FLAG_DONT_ANIMATE_OVERVIEW;
 import static com.android.launcher3.anim.Interpolators.AGGRESSIVE_EASE_IN_OUT;
 import static com.android.launcher3.anim.Interpolators.LINEAR;
-import static com.android.launcher3.graphics.Scrim.SCRIM_PROGRESS;
+import static com.android.launcher3.states.StateAnimationConfig.ANIM_OVERVIEW_FADE;
+import static com.android.launcher3.states.StateAnimationConfig.ANIM_OVERVIEW_MODAL;
+import static com.android.launcher3.states.StateAnimationConfig.ANIM_OVERVIEW_SCALE;
+import static com.android.launcher3.states.StateAnimationConfig.ANIM_OVERVIEW_TRANSLATE_X;
+import static com.android.launcher3.states.StateAnimationConfig.ANIM_OVERVIEW_TRANSLATE_Y;
+import static com.android.launcher3.states.StateAnimationConfig.SKIP_OVERVIEW;
+import static com.android.quickstep.views.RecentsView.ADJACENT_PAGE_HORIZONTAL_OFFSET;
+import static com.android.quickstep.views.RecentsView.RECENTS_GRID_PROGRESS;
+import static com.android.quickstep.views.RecentsView.RECENTS_SCALE_PROPERTY;
+import static com.android.quickstep.views.RecentsView.TASK_PRIMARY_SPLIT_TRANSLATION;
+import static com.android.quickstep.views.RecentsView.TASK_SECONDARY_SPLIT_TRANSLATION;
+import static com.android.quickstep.views.RecentsView.TASK_SECONDARY_TRANSLATION;
 
 import android.util.FloatProperty;
-import android.view.View;
-import android.view.animation.Interpolator;
 
 import androidx.annotation.NonNull;
 
-import com.android.launcher3.Launcher;
+import com.android.launcher3.BaseQuickstepLauncher;
 import com.android.launcher3.LauncherState;
-import com.android.launcher3.LauncherState.ScaleAndTranslation;
-import com.android.launcher3.LauncherStateManager.AnimationConfig;
-import com.android.launcher3.LauncherStateManager.StateHandler;
-import com.android.launcher3.anim.AnimatorSetBuilder;
-import com.android.launcher3.anim.PropertySetter;
-import com.android.launcher3.graphics.OverviewScrim;
+import com.android.launcher3.anim.PendingAnimation;
+import com.android.launcher3.statemanager.StateManager.StateHandler;
+import com.android.launcher3.states.StateAnimationConfig;
+import com.android.launcher3.touch.PagedOrientationHandler;
+import com.android.quickstep.views.RecentsView;
 
 /**
  * State handler for recents view. Manages UI changes and animations for recents view based off the
@@ -48,77 +49,74 @@ import com.android.launcher3.graphics.OverviewScrim;
  *
  * @param <T> the recents view
  */
-public abstract class BaseRecentsViewStateController<T extends View>
-        implements StateHandler {
+public abstract class BaseRecentsViewStateController<T extends RecentsView>
+        implements StateHandler<LauncherState> {
     protected final T mRecentsView;
-    protected final Launcher mLauncher;
+    protected final BaseQuickstepLauncher mLauncher;
 
-    public BaseRecentsViewStateController(@NonNull Launcher launcher) {
+    public BaseRecentsViewStateController(@NonNull BaseQuickstepLauncher launcher) {
         mLauncher = launcher;
         mRecentsView = launcher.getOverviewPanel();
     }
 
     @Override
     public void setState(@NonNull LauncherState state) {
-        ScaleAndTranslation scaleAndTranslation = state
-                .getOverviewScaleAndTranslation(mLauncher);
-        SCALE_PROPERTY.set(mRecentsView, scaleAndTranslation.scale);
-        float translationX = scaleAndTranslation.translationX;
-        if (mRecentsView.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
-            translationX = -translationX;
-        }
-        mRecentsView.setTranslationX(translationX);
-        mRecentsView.setTranslationY(scaleAndTranslation.translationY);
+        float[] scaleAndOffset = state.getOverviewScaleAndOffset(mLauncher);
+        RECENTS_SCALE_PROPERTY.set(mRecentsView, scaleAndOffset[0]);
+        ADJACENT_PAGE_HORIZONTAL_OFFSET.set(mRecentsView, scaleAndOffset[1]);
+        TASK_SECONDARY_TRANSLATION.set(mRecentsView, 0f);
+
         getContentAlphaProperty().set(mRecentsView, state.overviewUi ? 1f : 0);
-        OverviewScrim scrim = mLauncher.getDragLayer().getOverviewScrim();
-        SCRIM_PROGRESS.set(scrim, state.getOverviewScrimAlpha(mLauncher));
+        getTaskModalnessProperty().set(mRecentsView, state.getOverviewModalness());
+        RECENTS_GRID_PROGRESS.set(mRecentsView,
+                state.displayOverviewTasksAsGrid(mLauncher.getDeviceProfile()) ? 1f : 0f);
     }
 
     @Override
-    public final void setStateWithAnimation(@NonNull final LauncherState toState,
-            @NonNull AnimatorSetBuilder builder, @NonNull AnimationConfig config) {
-        boolean playAtomicOverviewComponent = config.playAtomicOverviewScaleComponent()
-                || config.playAtomicOverviewPeekComponent();
-        if (!playAtomicOverviewComponent) {
-            // The entire recents animation is played atomically.
+    public void setStateWithAnimation(LauncherState toState, StateAnimationConfig config,
+            PendingAnimation builder) {
+        if (config.hasAnimationFlag(SKIP_OVERVIEW)) {
             return;
         }
-        if (builder.hasFlag(FLAG_DONT_ANIMATE_OVERVIEW)) {
-            return;
-        }
-        setStateWithAnimationInternal(toState, builder, config);
+        setStateWithAnimationInternal(toState, config, builder);
     }
 
     /**
      * Core logic for animating the recents view UI.
      *
      * @param toState state to animate to
-     * @param builder animator set builder
      * @param config current animation config
+     * @param setter animator set builder
      */
     void setStateWithAnimationInternal(@NonNull final LauncherState toState,
-            @NonNull AnimatorSetBuilder builder, @NonNull AnimationConfig config) {
-        PropertySetter setter = config.getPropertySetter(builder);
-        ScaleAndTranslation scaleAndTranslation = toState.getOverviewScaleAndTranslation(mLauncher);
-        Interpolator scaleInterpolator = builder.getInterpolator(ANIM_OVERVIEW_SCALE, LINEAR);
-        setter.setFloat(mRecentsView, SCALE_PROPERTY, scaleAndTranslation.scale, scaleInterpolator);
-        Interpolator translateXInterpolator = builder.getInterpolator(
-                ANIM_OVERVIEW_TRANSLATE_X, LINEAR);
-        Interpolator translateYInterpolator = builder.getInterpolator(
-                ANIM_OVERVIEW_TRANSLATE_Y, LINEAR);
-        float translationX = scaleAndTranslation.translationX;
-        if (mRecentsView.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
-            translationX = -translationX;
-        }
-        setter.setFloat(mRecentsView, View.TRANSLATION_X, translationX, translateXInterpolator);
-        setter.setFloat(mRecentsView, View.TRANSLATION_Y, scaleAndTranslation.translationY,
-                translateYInterpolator);
+            @NonNull StateAnimationConfig config, @NonNull PendingAnimation setter) {
+        float[] scaleAndOffset = toState.getOverviewScaleAndOffset(mLauncher);
+        setter.setFloat(mRecentsView, RECENTS_SCALE_PROPERTY, scaleAndOffset[0],
+                config.getInterpolator(ANIM_OVERVIEW_SCALE, LINEAR));
+        setter.setFloat(mRecentsView, ADJACENT_PAGE_HORIZONTAL_OFFSET, scaleAndOffset[1],
+                config.getInterpolator(ANIM_OVERVIEW_TRANSLATE_X, LINEAR));
+        setter.setFloat(mRecentsView, TASK_SECONDARY_TRANSLATION, 0f,
+                config.getInterpolator(ANIM_OVERVIEW_TRANSLATE_Y, LINEAR));
+        PagedOrientationHandler orientationHandler =
+                ((RecentsView) mLauncher.getOverviewPanel()).getPagedOrientationHandler();
+        FloatProperty taskViewsFloat = orientationHandler.getSplitSelectTaskOffset(
+                TASK_PRIMARY_SPLIT_TRANSLATION, TASK_SECONDARY_SPLIT_TRANSLATION,
+                mLauncher.getDeviceProfile());
+        setter.setFloat(mRecentsView, taskViewsFloat,
+                toState.getSplitSelectTranslation(mLauncher), LINEAR);
+
         setter.setFloat(mRecentsView, getContentAlphaProperty(), toState.overviewUi ? 1 : 0,
-                builder.getInterpolator(ANIM_OVERVIEW_FADE, AGGRESSIVE_EASE_IN_OUT));
-        OverviewScrim scrim = mLauncher.getDragLayer().getOverviewScrim();
-        setter.setFloat(scrim, SCRIM_PROGRESS, toState.getOverviewScrimAlpha(mLauncher),
-                builder.getInterpolator(ANIM_OVERVIEW_SCRIM_FADE, LINEAR));
+                config.getInterpolator(ANIM_OVERVIEW_FADE, AGGRESSIVE_EASE_IN_OUT));
+
+        setter.setFloat(
+                mRecentsView, getTaskModalnessProperty(),
+                toState.getOverviewModalness(),
+                config.getInterpolator(ANIM_OVERVIEW_MODAL, LINEAR));
+        setter.setFloat(mRecentsView, RECENTS_GRID_PROGRESS,
+                toState.displayOverviewTasksAsGrid(mLauncher.getDeviceProfile()) ? 1f : 0f, LINEAR);
     }
+
+    abstract FloatProperty getTaskModalnessProperty();
 
     /**
      * Get property for content alpha for the recents view.
