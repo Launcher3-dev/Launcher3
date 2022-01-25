@@ -15,43 +15,13 @@
  */
 package com.android.launcher3.ui;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
-import static com.android.launcher3.ui.TaplTestsLauncher3.getAppPackageName;
-import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
-import android.content.pm.LauncherActivityInfo;
-import android.content.pm.LauncherApps;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.os.Debug;
+import android.content.*;
+import android.content.pm.*;
 import android.os.Process;
-import android.os.RemoteException;
-import android.os.StrictMode;
-import android.os.UserHandle;
-import android.os.UserManager;
+import android.os.*;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.BySelector;
-import androidx.test.uiautomator.UiDevice;
-import androidx.test.uiautomator.Until;
-
-import com.android.launcher3.Launcher;
-import com.android.launcher3.LauncherAppState;
-import com.android.launcher3.LauncherSettings;
-import com.android.launcher3.LauncherState;
-import com.android.launcher3.Utilities;
+import com.android.launcher3.*;
 import com.android.launcher3.common.WidgetUtils;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.statemanager.StateManager;
@@ -62,12 +32,9 @@ import com.android.launcher3.testcomponent.TestCommandReceiver;
 import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.util.LooperExecutor;
 import com.android.launcher3.util.PackageManagerHelper;
+import com.android.launcher3.util.PlatformUtil;
 import com.android.launcher3.util.Wait;
-import com.android.launcher3.util.rule.FailureWatcher;
-import com.android.launcher3.util.rule.LauncherActivityRule;
-import com.android.launcher3.util.rule.ScreenRecordRule;
-import com.android.launcher3.util.rule.ShellCommandRule;
-import com.android.launcher3.util.rule.TestStabilityRule;
+import com.android.launcher3.util.rule.*;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -87,6 +54,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.Until;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static com.android.launcher3.ui.TaplTestsLauncher3.getAppPackageName;
+import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Base class for all instrumentation tests providing various utility methods.
@@ -280,11 +259,10 @@ public abstract class AbstractLauncherUiTest {
             final Context context = InstrumentationRegistry.getContext();
             final PackageManager pm = context.getPackageManager();
             final PackageInfo launcherPackage = pm.getPackageInfo(launcherPackageName, 0);
-
             if (!launcherPackage.versionName.equals("BuildFromAndroidStudio")) {
                 Assert.assertEquals("Launcher version doesn't match tests version",
-                        pm.getPackageInfo(context.getPackageName(), 0).getLongVersionCode(),
-                        launcherPackage.getLongVersionCode());
+                        PlatformUtil.getVersion(pm.getPackageInfo(context.getPackageName(), 0)),
+                        PlatformUtil.getVersion(launcherPackage));
             }
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);

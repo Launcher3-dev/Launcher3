@@ -41,6 +41,7 @@ import android.util.Log;
 import com.android.launcher3.icons.BaseIconFactory;
 import com.android.launcher3.icons.BitmapInfo;
 import com.android.launcher3.util.ComponentKey;
+import com.android.launcher3.util.PlatformUtil;
 import com.android.launcher3.util.SQLiteCacheHelper;
 
 import java.util.AbstractMap;
@@ -155,7 +156,7 @@ public abstract class BaseIconCache {
     private Drawable getFullResIcon(Resources resources, int iconId) {
         if (resources != null && iconId != 0) {
             try {
-                return resources.getDrawableForDensity(iconId, mIconDpi);
+                return resources.getDrawableForDensity(iconId, mIconDpi, null);
             } catch (Resources.NotFoundException e) { }
         }
         return getFullResDefaultActivityIcon(mIconDpi);
@@ -283,7 +284,7 @@ public abstract class BaseIconCache {
         values.put(IconDB.COLUMN_COMPONENT, key.flattenToString());
         values.put(IconDB.COLUMN_USER, userSerial);
         values.put(IconDB.COLUMN_LAST_UPDATED, lastUpdateTime);
-        values.put(IconDB.COLUMN_VERSION, info.versionCode);
+        values.put(IconDB.COLUMN_VERSION, PlatformUtil.getVersion(info));
         mIconDb.insertOrReplace(values);
     }
 
@@ -416,7 +417,7 @@ public abstract class BaseIconCache {
             if (!getEntryFromDB(cacheKey, entry, useLowResIcon)) {
                 try {
                     int flags = Process.myUserHandle().equals(user) ? 0 :
-                            PackageManager.GET_UNINSTALLED_PACKAGES;
+                            PackageManager.MATCH_UNINSTALLED_PACKAGES;
                     PackageInfo info = mPackageManager.getPackageInfo(packageName, flags);
                     ApplicationInfo appInfo = info.applicationInfo;
                     if (appInfo == null) {

@@ -320,7 +320,6 @@ public class IconCache extends BaseIconCache {
         applyCacheEntry(entry, infoInOut);
     }
 
-
     /**
      * Fill in {@param infoInOut} with the corresponding icon and label.
      */

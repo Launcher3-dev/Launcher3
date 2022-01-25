@@ -19,6 +19,10 @@ final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/framework_inter
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 
+ext {
+
+}
+
 android {
     compileSdkVersion 31
 
@@ -49,7 +53,7 @@ android {
     productFlavors {
         aosp {
             dimension "app"
-            applicationId 'com.android.launcher3'
+            applicationId 'com.android.ttlauncher3'
             testApplicationId 'com.android.launcher3.tests'
         }
 
@@ -152,8 +156,6 @@ dependencies {
     implementation "androidx.preference:preference:${ANDROID_X_VERSION}"
     implementation "androidx.slice:slice-builders:1.0.0"
     implementation project(':IconLoader')
-//    withQuickstepImplementation project(':SharedLibWrapper')
-
     // Recents lib dependency
     withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'sysui_shared.jar')
 

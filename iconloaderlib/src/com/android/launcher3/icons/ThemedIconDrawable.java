@@ -215,7 +215,7 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         }
 
         Drawable loadMonochromeDrawable(int accentColor) {
-            Drawable d = mResources.getDrawable(mResID).mutate();
+            Drawable d = mResources.getDrawable(mResID, null).mutate();
             d.setTint(accentColor);
             d = new InsetDrawable(d, .2f);
             return d;
