@@ -29,14 +29,10 @@ import android.util.Log;
 import android.util.SparseBooleanArray;
 
 import com.android.launcher3.icons.cache.BaseIconCache.IconDB;
+import com.android.launcher3.util.PlatformUtil;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Stack;
 
 /**
  * Utility class to handle updating the Icon cache
@@ -101,10 +97,11 @@ public class IconCacheUpdateHandler {
     /**
      * Updates the persistent DB, such that only entries corresponding to {@param apps} remain in
      * the DB and are updated.
+     *
      * @return The set of packages for which icons have updated.
      */
     public <T> void updateIcons(List<T> apps, CachingLogic<T> cachingLogic,
-            OnUpdateCallback onUpdateCallback) {
+                                OnUpdateCallback onUpdateCallback) {
         // Filter the list per user
         HashMap<UserHandle, HashMap<ComponentName, T>> userComponentMap = new HashMap<>();
         int count = apps.size();
@@ -130,11 +127,12 @@ public class IconCacheUpdateHandler {
     /**
      * Updates the persistent DB, such that only entries corresponding to {@param apps} remain in
      * the DB and are updated.
+     *
      * @return The set of packages for which icons have updated.
      */
     @SuppressWarnings("unchecked")
     private <T> void updateIconsPerUser(UserHandle user, HashMap<ComponentName, T> componentMap,
-            CachingLogic<T> cachingLogic, OnUpdateCallback onUpdateCallback) {
+                                        CachingLogic<T> cachingLogic, OnUpdateCallback onUpdateCallback) {
         Set<String> ignorePackages = mPackagesToIgnore.get(user);
         if (ignorePackages == null) {
             ignorePackages = Collections.emptySet();
@@ -180,10 +178,9 @@ public class IconCacheUpdateHandler {
                 long updateTime = c.getLong(indexLastUpdate);
                 int version = c.getInt(indexVersion);
                 T app = componentMap.remove(component);
-                if (version == info.versionCode && updateTime == info.lastUpdateTime
+                if (version == PlatformUtil.getVersion(info) && updateTime == info.lastUpdateTime
                         && TextUtils.equals(c.getString(systemStateIndex),
-                                mIconCache.getIconSystemState(info.packageName))) {
-
+                        mIconCache.getIconSystemState(info.packageName))) {
                     if (mFilterMode == MODE_CLEAR_VALID_ITEMS) {
                         mItemsToDelete.put(rowId, false);
                     }
@@ -225,7 +222,7 @@ public class IconCacheUpdateHandler {
                 .append(" IN (");
 
         int count = mItemsToDelete.size();
-        for (int i = 0;  i < count; i++) {
+        for (int i = 0; i < count; i++) {
             if (mItemsToDelete.valueAt(i)) {
                 if (deleteCount > 0) {
                     queryBuilder.append(", ");
@@ -256,8 +253,8 @@ public class IconCacheUpdateHandler {
         private final OnUpdateCallback mOnUpdateCallback;
 
         SerializedIconUpdateTask(long userSerial, UserHandle userHandle,
-                Stack<T> appsToAdd, Stack<T> appsToUpdate, CachingLogic<T> cachingLogic,
-                OnUpdateCallback onUpdateCallback) {
+                                 Stack<T> appsToAdd, Stack<T> appsToUpdate, CachingLogic<T> cachingLogic,
+                                 OnUpdateCallback onUpdateCallback) {
             mUserHandle = userHandle;
             mUserSerial = userSerial;
             mAppsToAdd = appsToAdd;

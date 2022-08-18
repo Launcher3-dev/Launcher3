@@ -3,6 +3,17 @@
 ## 更新：20220123
 * Android-12 Launcher-master-20220111版本源码
 
+## 主要分支
+
+* Launcher3-6.0
+* Launcher3-7.0
+* Launcher3-8.0 (android-8.0.0_r24)
+* Launcher3-9.0
+* Launcher3-10.0 (android-10.0.0_r46)
+* Launcher3-11
+* Launcher3-12
+* master (Launcher-master-20220111(与Launcher3-12相同))--Android-12
+
 ## 源码参考
 https://cs.android.com/android/platform/superproject/+/master:packages/apps/Launcher3/
 

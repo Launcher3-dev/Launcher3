@@ -15,42 +15,32 @@
  */
 package com.android.launcher3.icons;
 
-import static com.android.launcher3.icons.ThemedIconDrawable.getColors;
-
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
+import android.graphics.*;
 import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.Rect;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
-import android.os.Build;
-import android.os.Bundle;
 import android.os.Process;
-import android.os.SystemClock;
-import android.os.UserHandle;
+import android.os.*;
 import android.util.Log;
 import android.util.TypedValue;
-
-import androidx.annotation.Nullable;
 
 import com.android.launcher3.icons.ThemedIconDrawable.ThemeData;
 
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+
+import androidx.annotation.Nullable;
+
+import static com.android.launcher3.icons.ThemedIconDrawable.getColors;
 
 /**
  * Wrapper over {@link AdaptiveIconDrawable} to intercept icon flattening logic for dynamic
@@ -106,7 +96,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
                     PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.GET_META_DATA);
             Resources res = pm.getResourcesForApplication(appInfo);
             return forExtras(appInfo, appInfo.metaData,
-                    resId -> res.getDrawableForDensity(resId, iconDpi));
+                    resId -> res.getDrawableForDensity(resId, iconDpi, null));
         } catch (Exception e) {
             Log.d(TAG, "Unable to load clock drawable info", e);
         }
@@ -129,7 +119,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
                     context.getApplicationInfo(), extras, resId -> {
                         int[] colors = getColors(context);
                         Drawable bg = new ColorDrawable(colors[0]);
-                        Drawable fg = themeData.mResources.getDrawable(resId).mutate();
+                        Drawable fg = themeData.mResources.getDrawable(resId, null).mutate();
                         fg.setTint(colors[1]);
                         return new AdaptiveIconDrawable(bg, fg);
                     });

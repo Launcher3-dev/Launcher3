@@ -174,7 +174,7 @@ public class IconProvider {
             try {
                 final Resources resources = mContext.getPackageManager()
                         .getResourcesForApplication(ai.applicationInfo);
-                icon = resources.getDrawableForDensity(iconRes, density);
+                icon = resources.getDrawableForDensity(iconRes, density, null);
             } catch (NameNotFoundException | Resources.NotFoundException exc) { }
         }
         // Get the default density icon
@@ -227,7 +227,7 @@ public class IconProvider {
         try {
             final Bundle metadata = pm.getActivityInfo(
                     mCalendar,
-                    PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_META_DATA)
+                    PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.GET_META_DATA)
                     .metaData;
             final Resources resources = pm.getResourcesForApplication(mCalendar.getPackageName());
             final int id = getDynamicIconId(metadata, resources);

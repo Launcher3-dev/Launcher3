@@ -416,7 +416,7 @@ public class BaseIconFactory implements AutoCloseable {
         return Resources.getSystem().getDrawableForDensity(
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                         ? android.R.drawable.sym_def_app_icon : android.R.mipmap.sym_def_app_icon,
-                iconDpi);
+                iconDpi, null);
     }
 
     /**
