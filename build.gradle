@@ -19,9 +19,6 @@ final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/framework_inter
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 
-ext {
-
-}
 
 android {
     compileSdkVersion 31
