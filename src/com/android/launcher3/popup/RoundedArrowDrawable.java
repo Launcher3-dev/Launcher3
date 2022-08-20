@@ -16,11 +16,19 @@
 
 package com.android.launcher3.popup;
 
-import android.graphics.*;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
+import static java.lang.Math.atan;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+import static java.lang.Math.toDegrees;
 
-import static java.lang.Math.*;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Matrix;
+import android.graphics.Outline;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
 
 /**
  * A drawable for a very specific purpose. Used for the caret arrow on a rounded rectangle popup
@@ -70,6 +78,32 @@ public class RoundedArrowDrawable extends Drawable {
         mPath.transform(pathTransform);
     }
 
+    /**
+     * Constructor for an arrow that points to the left or right.
+     *
+     * @param width        of the arrow.
+     * @param height       of the arrow.
+     * @param radius       of the tip of the arrow.
+     * @param isPointingLeft or not.
+     * @param color        to draw the triangle.
+     */
+    public RoundedArrowDrawable(float width, float height, float radius, boolean isPointingLeft,
+            int color) {
+        mPath = new Path();
+        mPaint = new Paint();
+        mPaint.setColor(color);
+        mPaint.setStyle(Paint.Style.FILL);
+        mPaint.setAntiAlias(true);
+
+        // Make the drawable with the triangle pointing down...
+        addDownPointingRoundedTriangleToPath(width, height, radius, mPath);
+
+        // ... then rotate it to the side it needs to point.
+        Matrix pathTransform = new Matrix();
+        pathTransform.setRotate(isPointingLeft ? 90 : -90, width * 0.5f, height * 0.5f);
+        mPath.transform(pathTransform);
+    }
+
     @Override
     public void draw(Canvas canvas) {
         canvas.drawPath(mPath, mPaint);
@@ -77,9 +111,7 @@ public class RoundedArrowDrawable extends Drawable {
 
     @Override
     public void getOutline(Outline outline) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            outline.setPath(mPath);
-        }
+        outline.setPath(mPath);
     }
 
     @Override

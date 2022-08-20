@@ -27,7 +27,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -73,6 +72,7 @@ public class DeepShortcutView extends FrameLayout implements BubbleTextHolder {
     protected void onFinishInflate() {
         super.onFinishInflate();
         mBubbleText = findViewById(R.id.bubble_text);
+        mBubbleText.setHideBadge(true);
         mIconView = findViewById(R.id.icon);
         tryUpdateTextBackground();
     }
@@ -102,17 +102,12 @@ public class DeepShortcutView extends FrameLayout implements BubbleTextHolder {
         GradientDrawable backgroundMask = new GradientDrawable();
         backgroundMask.setColor(color);
         backgroundMask.setShape(GradientDrawable.RECTANGLE);
-        if (background != null) {
-            try {
-                if (background.getCornerRadii() != null) {
-                    backgroundMask.setCornerRadii(background.getCornerRadii());
-                } else {
-                    backgroundMask.setCornerRadius(background.getCornerRadius());
-                }
-            } catch (Exception e) {
-                Log.e("DeepShortcutView", e.getMessage());
-            }
+        if (background.getCornerRadii() != null) {
+            backgroundMask.setCornerRadii(background.getCornerRadii());
+        } else {
+            backgroundMask.setCornerRadius(background.getCornerRadius());
         }
+
         RippleDrawable drawable = new RippleDrawable(ColorStateList.valueOf(color),
                 mTransparentDrawable, backgroundMask);
         mBubbleText.setBackground(drawable);
@@ -142,11 +137,9 @@ public class DeepShortcutView extends FrameLayout implements BubbleTextHolder {
         return sTempPoint;
     }
 
-    /**
-     * package private
-     **/
+    /** package private **/
     public void applyShortcutInfo(WorkspaceItemInfo info, ShortcutInfo detail,
-                                  PopupContainerWithArrow container) {
+            PopupContainerWithArrow container) {
         mInfo = info;
         mDetail = detail;
         mBubbleText.applyFromWorkspaceItem(info);

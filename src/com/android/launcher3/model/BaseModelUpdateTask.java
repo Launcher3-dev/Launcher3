@@ -17,6 +17,8 @@ package com.android.launcher3.model;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherModel.CallbackTask;
@@ -27,7 +29,6 @@ import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.util.ComponentKey;
-import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.widget.model.WidgetsListBaseEntry;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -90,7 +92,7 @@ public abstract class BaseModelUpdateTask implements ModelUpdateTask {
     public ModelWriter getModelWriter() {
         // Updates from model task, do not deal with icon position in hotseat. Also no need to
         // verify changes as the ModelTasks always push the changes to callbacks
-        return mModel.getWriter(false /* hasVerticalHotseat */, false /* verifyChanges */);
+        return mModel.getWriter(false /* hasVerticalHotseat */, false /* verifyChanges */, null);
     }
 
     public void bindUpdatedWorkspaceItems(List<WorkspaceItemInfo> allUpdates) {
@@ -128,8 +130,9 @@ public abstract class BaseModelUpdateTask implements ModelUpdateTask {
         scheduleCallbackTask(c -> c.bindAllWidgets(widgets));
     }
 
-    public void deleteAndBindComponentsRemoved(final ItemInfoMatcher matcher) {
-        getModelWriter().deleteItemsFromDatabase(matcher);
+    public void deleteAndBindComponentsRemoved(final Predicate<ItemInfo> matcher,
+            @Nullable final String reason) {
+        getModelWriter().deleteItemsFromDatabase(matcher, reason);
 
         // Call the components-removed callback
         scheduleCallbackTask(c -> c.bindWorkspaceComponentsRemoved(matcher));

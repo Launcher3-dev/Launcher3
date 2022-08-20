@@ -39,6 +39,9 @@
     <!-- Accessibility title for the list of recent apps [CHAR_LIMIT=none] -->
     <string name="accessibility_recent_apps">Recent apps</string>
 
+    <!-- Accessibility confirmation for task closed -->
+    <string name="task_view_closed">Task Closed</string>
+
     <!-- Accessibility title for an app card in Recents for apps that have time limit set
      [CHAR_LIMIT=none] -->
     <string name="task_contents_description_with_remaining_time"><xliff:g id="task_description" example="GMail">%1$s</xliff:g>, <xliff:g id="remaining_time" example="7 minutes left today">%2$s</xliff:g></string>
@@ -53,8 +56,6 @@
 
     <!-- Accessibility title for the row of all-apps containing app predictions. [CHAR LIMIT=50] -->
     <string name="title_app_suggestions">App suggestions</string>
-    <!-- Label for the header text of the All Apps section in All Apps view, used to separate Predicted Apps and Actions section from All Apps section. [CHAR_LIMIT=50] -->
-    <string name="all_apps_label">All apps</string>
     <!-- Text of the tip when user lands in all apps view for the first time, indicating where the tip toast points to is the predicted apps section. [CHAR_LIMIT=50] -->
     <string name="all_apps_prediction_tip">Your predicted apps</string>
 
@@ -108,6 +109,8 @@
     <string name="back_gesture_intro_title">Swipe to go back</string>
     <!-- Introduction subtitle for the Back gesture tutorial. [CHAR LIMIT=200] -->
     <string name="back_gesture_intro_subtitle">To go back to the last screen, swipe from the left or right edge to the middle of the screen.</string>
+    <!-- Introduction subtitle for the Back gesture tutorial that will be spoken by screen readers. [CHAR LIMIT=200] -->
+    <string name="back_gesture_spoken_intro_subtitle">To go back to the last screen, swipe with 2 fingers from the left or right edge to the middle of the screen.</string>
 
     <string name="home_gesture_feedback_swipe_too_far_from_edge">Make sure you swipe up from the bottom edge of the screen.</string>
     <!-- Feedback shown during interactive parts of Home gesture tutorial when the Overview gesture is detected. [CHAR LIMIT=100] -->
@@ -122,6 +125,8 @@
     <string name="home_gesture_intro_title">Swipe to go home</string>
     <!-- Introduction subtitle for the Home gesture tutorial. [CHAR LIMIT=100] -->
     <string name="home_gesture_intro_subtitle">Swipe up from the bottom of your screen. This gesture always takes you to the Home screen.</string>
+    <!-- Introduction subtitle for the Home gesture tutorial that will be spoken by screen readers. [CHAR LIMIT=100] -->
+    <string name="home_gesture_spoken_intro_subtitle">Swipe up with 2 fingers from the bottom of the screen. This gesture always takes you to the Home screen.</string>
 
     <!-- Feedback shown during interactive parts of Overview gesture tutorial when the gesture is started too far from the edge. [CHAR LIMIT=100] -->
     <string name="overview_gesture_feedback_swipe_too_far_from_edge">Make sure you swipe up from the bottom edge of the screen.</string>
@@ -137,6 +142,8 @@
     <string name="overview_gesture_intro_title">Swipe to switch apps</string>
     <!-- Introduction subtitle for the Overview gesture tutorial. [CHAR LIMIT=100] -->
     <string name="overview_gesture_intro_subtitle">To switch between apps, swipe up from the bottom of your screen, hold, then release.</string>
+    <!-- Introduction subtitle for the Overview gesture tutorial that will be spoken by screen readers. [CHAR LIMIT=100] -->
+    <string name="overview_gesture_spoken_intro_subtitle">To switch between apps, swipe up with 2 fingers from the bottom of your screen, hold, then release.</string>
 
     <!-- Title shown during interactive part of Assistant gesture tutorial. [CHAR LIMIT=30] -->
     <string name="assistant_gesture_tutorial_playground_title" translatable="false">Tutorial: Assistant</string>
@@ -181,8 +188,10 @@
     <string name="allset_title">All set!</string>
     <!-- Hint string at the bottom of "All Set" page [CHAR LIMIT=NONE] -->
     <string name="allset_hint">Swipe up to go Home</string>
-    <!-- Description of "All Set" page [CHAR LIMIT=NONE] -->
+    <!-- Description of "All Set" page on phones [CHAR LIMIT=NONE] -->
     <string name="allset_description">You\u2019re ready to start using your phone</string>
+    <!-- Description of "All Set" page on tablets [CHAR LIMIT=NONE] -->
+    <string name="allset_description_tablet">You\u2019re ready to start using your tablet</string>
     <!-- String linking to navigation settings on "All Set" page [CHAR LIMIT=NONE] -->
     <string name="allset_navigation_settings"><annotation id="link">System navigation settings</annotation></string>
 
@@ -191,6 +200,12 @@
     <string name="action_share">Share</string>
     <!-- Label for a button that causes a screen shot of the current app to be taken. [CHAR_LIMIT=40] -->
     <string name="action_screenshot">Screenshot</string>
+    <!-- Label for a button that enters split screen selection mode. [CHAR_LIMIT=20] -->
+    <string name="action_split">Split</string>
+    <!-- Label for toast with instructions for split screen selection mode. [CHAR_LIMIT=50] -->
+    <string name="toast_split_select_app">Tap another app to use splitscreen</string>
+    <!-- Label for toast when app selected for split isn't supported. [CHAR_LIMIT=50] -->
+    <string name="toast_split_app_unsupported">App does not support split-screen.</string>
     <!-- Message shown when an action is blocked by a policy enforced by the app or the organization managing the device. [CHAR_LIMIT=NONE] -->
     <string name="blocked_by_policy">This action isn\'t allowed by the app or your organization</string>
 
@@ -203,4 +218,49 @@
     <string name="gesture_tutorial_action_button_label_cancel">Cancel</string>
     <!-- Button text shown on a button on the tutorial skip dialog to exit the tutorial. [CHAR LIMIT=14] -->
     <string name="gesture_tutorial_action_button_label_skip">Skip</string>
+
+    <!-- Accessibility label for the rotation suggestion button -->
+    <string name="accessibility_rotate_button">Rotate screen</string>
+
+    <!-- ******* Taskbar Edu ******* -->
+    <!-- Accessibility text spoken when the taskbar education panel appears [CHAR_LIMIT=NONE] -->
+    <string name="taskbar_edu_opened">Taskbar education appeared</string>
+    <!-- Accessibility text spoken when the taskbar education panel disappears [CHAR_LIMIT=NONE] -->
+    <string name="taskbar_edu_closed">Taskbar education closed</string>
+    <!-- Text in dialog that lets a user know how they can use the taskbar to switch apps on their device.
+         [CHAR_LIMIT=60] -->
+    <string name="taskbar_edu_switch_apps">Use the taskbar to switch apps</string>
+    <!-- Text in dialog that lets a user know how they can use the taskbar to use multiple apps at once on their device.
+         [CHAR_LIMIT=60] -->
+    <string name="taskbar_edu_splitscreen">Drag to the side to use two apps at once</string>
+    <!-- Text in dialog that lets a user know how they can hide the taskbar on their device.
+         [CHAR_LIMIT=60] -->
+    <string name="taskbar_edu_stashing">Touch &amp; hold to hide the taskbar</string>
+    <!-- Text on button to go to the next screen of a tutorial [CHAR_LIMIT=16] -->
+    <string name="taskbar_edu_next">Next</string>
+    <!-- Text on button to go to the previous screen of a tutorial [CHAR_LIMIT=16] -->
+    <string name="taskbar_edu_previous">Back</string>
+    <!-- Text on button to exit a tutorial [CHAR_LIMIT=16] -->
+    <string name="taskbar_edu_close">Close</string>
+    <!-- Text on button to finish a tutorial [CHAR_LIMIT=16] -->
+    <string name="taskbar_edu_done">Done</string>
+        <!-- Content description for home button [CHAR_LIMIT=16] -->
+    <string name="taskbar_button_home">Home</string>
+    <!-- Content description for accessibility button [CHAR_LIMIT=16] -->
+    <string name="taskbar_button_a11y">Accessibility</string>
+    <!-- Content description for back button [CHAR_LIMIT=16] -->
+    <string name="taskbar_button_back">Back</string>
+    <!-- Content description for ime switcher button [CHAR_LIMIT=16] -->
+    <string name="taskbar_button_ime_switcher">IME switcher</string>
+    <!-- Content description for recents button [CHAR_LIMIT=16] -->
+    <string name="taskbar_button_recents">Recents</string>
+    <!-- Content description for notifications button [CHAR_LIMIT=16] -->
+    <string name="taskbar_button_notifications">Notifications</string>
+    <!-- Content description for quick settings button [CHAR_LIMIT=16] -->
+    <string name="taskbar_button_quick_settings">Quick Settings</string>
+
+    <!-- Label for moving drop target to the top or left side of the screen, depending on orientation (from the taskbar only). -->
+    <string name="move_drop_target_top_or_left">Move to top&#47;left</string>
+    <!-- Label for moving drop target to the bottom or right side of the screen, depending on orientation (from the taskbar only). -->
+    <string name="move_drop_target_bottom_or_right">Move to bottom&#47;right</string>
 </resources>

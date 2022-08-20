@@ -15,6 +15,16 @@
  */
 package com.android.launcher3.taskbar;
 
+import android.view.View;
+
+import androidx.annotation.CallSuper;
+
+import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.ItemInfoWithIcon;
+
+import java.io.PrintWriter;
+import java.util.stream.Stream;
+
 /**
  * Base class for providing different taskbar UI
  */
@@ -22,20 +32,72 @@ public class TaskbarUIController {
 
     public static final TaskbarUIController DEFAULT = new TaskbarUIController();
 
-    /**
-     * Pads the Hotseat to line up exactly with Taskbar's copy of the Hotseat.
-     */
-    public void alignRealHotseatWithTaskbar() { }
+    // Initialized in init.
+    protected TaskbarControllers mControllers;
 
-    protected void onCreate() { }
+    @CallSuper
+    protected void init(TaskbarControllers taskbarControllers) {
+        mControllers = taskbarControllers;
+    }
 
-    protected void onDestroy() { }
+    @CallSuper
+    protected void onDestroy() {
+        mControllers = null;
+    }
 
     protected boolean isTaskbarTouchable() {
         return true;
     }
 
-    protected void onImeVisible(TaskbarDragLayer container, boolean isVisible) {
-        container.updateImeBarVisibilityAlpha(isVisible ? 1 : 0);
+    public boolean supportsVisualStashing() {
+        if (mControllers == null) return false;
+        return !mControllers.taskbarActivityContext.isThreeButtonNav();
+    }
+
+    protected void onStashedInAppChanged() { }
+
+    public Stream<ItemInfoWithIcon> getAppIconsForEdu() {
+        return Stream.empty();
+    }
+
+    /** Called when an icon is launched. */
+    public void onTaskbarIconLaunched(ItemInfo item) { }
+
+    public View getRootView() {
+        return mControllers.taskbarActivityContext.getDragLayer();
+    }
+
+    /**
+     * Called when swiping from the bottom nav region in fully gestural mode.
+     * @param inProgress True if the animation started, false if we just settled on an end target.
+     */
+    public void setSystemGestureInProgress(boolean inProgress) {
+        mControllers.taskbarStashController.setSystemGestureInProgress(inProgress);
+    }
+
+    /**
+     * Manually closes the all apps window.
+     */
+    public void hideAllApps() {
+        mControllers.taskbarAllAppsController.hide();
+    }
+
+    /**
+     * User expands PiP to full-screen (or split-screen) mode, try to hide the Taskbar.
+     */
+    public void onExpandPip() {
+        if (mControllers != null) {
+            final TaskbarStashController stashController = mControllers.taskbarStashController;
+            stashController.updateStateForFlag(TaskbarStashController.FLAG_IN_APP, true);
+            stashController.applyState();
+        }
+    }
+
+    @CallSuper
+    protected void dumpLogs(String prefix, PrintWriter pw) {
+        pw.println(String.format(
+                "%sTaskbarUIController: using an instance of %s",
+                prefix,
+                getClass().getSimpleName()));
     }
 }

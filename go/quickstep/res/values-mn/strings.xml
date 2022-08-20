@@ -4,7 +4,7 @@
     <string name="app_share_drop_target_label" msgid="5804774105974539508">"Аппыг хуваалцах"</string>
     <string name="action_listen" msgid="2370304050784689486">"Сонсох"</string>
     <string name="action_translate" msgid="8028378961867277746">"Орчуулах"</string>
-    <string name="action_search" msgid="6269564710943755464">"Дуран"</string>
+    <string name="action_search" msgid="6269564710943755464">"Lens"</string>
     <string name="dialog_acknowledge" msgid="2804025517675853172">"ОЙЛГОЛОО"</string>
     <string name="dialog_cancel" msgid="6464336969134856366">"ЦУЦЛАХ"</string>
     <string name="dialog_settings" msgid="6564397136021186148">"ТОХИРГОО"</string>
@@ -16,4 +16,5 @@
     <string name="assistant_not_supported_text" msgid="1708031078549268884">"Дэлгэц дээрээ текст сонсох эсвэл орчуулахын тулд Тохиргоо хэсэгт дижитал туслах аппаа өөрчилнө үү"</string>
     <string name="tooltip_listen" msgid="7634466447860989102">"Энэ дэлгэц дээр текст сонсохын тулд энд товшино уу"</string>
     <string name="tooltip_translate" msgid="4184845868901542567">"Энэ дэлгэц дээр текст орчуулахын тулд энд товшино уу"</string>
+    <string name="toast_p2p_app_not_shareable" msgid="7229739094132131536">"Энэ аппыг хуваалцах боломжгүй"</string>
 </resources>

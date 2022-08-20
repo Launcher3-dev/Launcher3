@@ -59,8 +59,8 @@ public final class WidgetsPredictionUpdateTask extends BaseModelUpdateTask {
         Map<PackageUserKey, List<WidgetItem>> allWidgets =
                 dataModel.widgetsModel.getAllWidgetsWithoutShortcuts();
 
-        FixedContainerItems fixedContainerItems = mPredictorState.items;
-        fixedContainerItems.items.clear();
+        FixedContainerItems fixedContainerItems =
+                new FixedContainerItems(mPredictorState.containerId);
 
         if (FeatureFlags.ENABLE_LOCAL_RECOMMENDED_WIDGETS_FILTER.get()) {
             for (AppTarget app : mTargets) {
@@ -83,7 +83,7 @@ public final class WidgetsPredictionUpdateTask extends BaseModelUpdateTask {
             }
         } else {
             Map<ComponentKey, WidgetItem> widgetItems =
-                    allWidgets.values().stream().flatMap(List::stream)
+                    allWidgets.values().stream().flatMap(List::stream).distinct()
                             .collect(Collectors.toMap(widget -> (ComponentKey) widget,
                                     widget -> widget));
             for (AppTarget app : mTargets) {
@@ -100,6 +100,7 @@ public final class WidgetsPredictionUpdateTask extends BaseModelUpdateTask {
                 }
             }
         }
+        dataModel.extraItems.put(mPredictorState.containerId, fixedContainerItems);
         bindExtraContainerItems(fixedContainerItems);
 
         // Don't store widgets prediction to disk because it is not used frequently.

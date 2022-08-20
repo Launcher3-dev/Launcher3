@@ -56,12 +56,12 @@ import com.android.launcher3.touch.ItemLongClickListener;
 import com.android.launcher3.uioverrides.PredictedAppIcon;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
 import com.android.launcher3.util.OnboardingPrefs;
-import com.android.launcher3.views.ArrowTipView;
 import com.android.launcher3.views.Snackbar;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -152,35 +152,12 @@ public class HotseatPredictionController implements DragController.DragListener,
      */
     public void showEdu() {
         mLauncher.getStateManager().goToState(NORMAL, true, forSuccessCallback(() -> {
-            if (mPredictedItems.isEmpty()) {
-                // launcher has empty predictions set
-                Snackbar.show(mLauncher, R.string.hotsaet_tip_prediction_disabled,
-                        R.string.hotseat_prediction_settings, null,
-                        () -> mLauncher.startActivity(getSettingsIntent()));
-            } else if (getPredictedIcons().size() >= (mHotSeatItemsCount + 1) / 2) {
-                showDiscoveryTip();
-            } else {
-                HotseatEduController eduController = new HotseatEduController(mLauncher);
-                eduController.setPredictedApps(mPredictedItems.stream()
-                        .map(i -> (WorkspaceItemInfo) i)
-                        .collect(Collectors.toList()));
-                eduController.showEdu();
-            }
+            HotseatEduController eduController = new HotseatEduController(mLauncher);
+            eduController.setPredictedApps(mPredictedItems.stream()
+                    .map(i -> (WorkspaceItemInfo) i)
+                    .collect(Collectors.toList()));
+            eduController.showEdu();
         }));
-    }
-
-    /**
-     * Shows educational tip for hotseat if user does not go through Tips app.
-     */
-    private void showDiscoveryTip() {
-        if (getPredictedIcons().isEmpty()) {
-            new ArrowTipView(mLauncher).show(
-                    mLauncher.getString(R.string.hotseat_tip_no_empty_slots), mHotseat.getTop());
-        } else {
-            Snackbar.show(mLauncher, R.string.hotseat_tip_gaps_filled,
-                    R.string.hotseat_prediction_settings, null,
-                    () -> mLauncher.startActivity(getSettingsIntent()));
-        }
     }
 
     /**
@@ -200,6 +177,7 @@ public class HotseatPredictionController implements DragController.DragListener,
         }
 
         int predictionIndex = 0;
+        int numViewsAnimated = 0;
         ArrayList<WorkspaceItemInfo> newItems = new ArrayList<>();
         // make sure predicted icon removal and filling predictions don't step on each other
         if (mIconRemoveAnimators != null && mIconRemoveAnimators.isRunning()) {
@@ -233,7 +211,11 @@ public class HotseatPredictionController implements DragController.DragListener,
                     (WorkspaceItemInfo) mPredictedItems.get(predictionIndex++);
             if (isPredictedIcon(child) && child.isEnabled()) {
                 PredictedAppIcon icon = (PredictedAppIcon) child;
-                icon.applyFromWorkspaceItem(predictedItem);
+                boolean animateIconChange = icon.shouldAnimateIconChange(predictedItem);
+                icon.applyFromWorkspaceItem(predictedItem, animateIconChange, numViewsAnimated);
+                if (animateIconChange) {
+                    numViewsAnimated++;
+                }
                 icon.finishBinding(mPredictionLongClickListener);
             } else {
                 newItems.add(predictedItem);
@@ -261,10 +243,6 @@ public class HotseatPredictionController implements DragController.DragListener,
             animationSet.start();
         } else {
             removeOutlineDrawings();
-        }
-
-        if (mLauncher.getTaskbarUIController() != null) {
-            mLauncher.getTaskbarUIController().onHotseatUpdated();
         }
     }
 
@@ -431,11 +409,11 @@ public class HotseatPredictionController implements DragController.DragListener,
     @Nullable
     @Override
     public SystemShortcut<QuickstepLauncher> getShortcut(QuickstepLauncher activity,
-            ItemInfo itemInfo) {
+            ItemInfo itemInfo, View originalView) {
         if (itemInfo.container != LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION) {
             return null;
         }
-        return new PinPrediction(activity, itemInfo);
+        return new PinPrediction(activity, itemInfo, originalView);
     }
 
     private void preparePredictionInfo(WorkspaceItemInfo itemInfo, int rank) {
@@ -496,11 +474,33 @@ public class HotseatPredictionController implements DragController.DragListener,
                 .log(LAUNCHER_HOTSEAT_RANKED);
     }
 
+    /**
+     * Called when app/shortcut icon is removed by system. This is used to prune visible stale
+     * predictions while while waiting for AppAPrediction service to send new batch of predictions.
+     *
+     * @param matcher filter matching items that have been removed
+     */
+    public void onModelItemsRemoved(Predicate<ItemInfo> matcher) {
+        if (mPredictedItems.removeIf(matcher)) {
+            fillGapsWithPrediction(true);
+        }
+    }
+
+    /**
+     * Called when user completes adding item requiring a config activity to the hotseat
+     */
+    public void onDeferredDrop(int cellX, int cellY) {
+        View child = mHotseat.getChildAt(cellX, cellY);
+        if (child instanceof PredictedAppIcon) {
+            removeIconWithoutNotify((PredictedAppIcon) child);
+        }
+    }
+
     private class PinPrediction extends SystemShortcut<QuickstepLauncher> {
 
-        private PinPrediction(QuickstepLauncher target, ItemInfo itemInfo) {
+        private PinPrediction(QuickstepLauncher target, ItemInfo itemInfo, View originalView) {
             super(R.drawable.ic_pin, R.string.pin_prediction, target,
-                    itemInfo);
+                    itemInfo, originalView);
         }
 
         @Override

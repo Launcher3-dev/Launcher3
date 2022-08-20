@@ -68,6 +68,11 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
     public static final int FLAG_SUPPORTS_WEB_UI = 1 << 3;
 
     /**
+     *
+     */
+    public static final int FLAG_START_FOR_RESULT = 1 << 4;
+
+    /**
      * The intent used to start the application.
      */
     public Intent intent;
@@ -91,6 +96,8 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
      * represents a deep shortcut.
      */
     @NonNull private String[] personKeys = Utilities.EMPTY_STRING_ARRAY;
+
+    public int options;
 
 
     public WorkspaceItemInfo() {
@@ -127,6 +134,7 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
         super.onAddToDatabase(writer);
         writer.put(Favorites.TITLE, title)
                 .put(Favorites.INTENT, getIntent())
+                .put(Favorites.OPTIONS, options)
                 .put(Favorites.RESTORED, status);
 
         if (!usingLowResIcon()) {
@@ -172,10 +180,23 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
             runtimeStatusFlags |= FLAG_DISABLED_BY_PUBLISHER;
         }
         disabledMessage = shortcutInfo.getDisabledMessage();
+        if (Utilities.ATLEAST_P
+                && shortcutInfo.getDisabledReason() == ShortcutInfo.DISABLED_REASON_VERSION_LOWER) {
+            runtimeStatusFlags |= FLAG_DISABLED_VERSION_LOWER;
+        } else {
+            runtimeStatusFlags &= ~FLAG_DISABLED_VERSION_LOWER;
+        }
 
         Person[] persons = ApiWrapper.getPersons(shortcutInfo);
         personKeys = persons.length == 0 ? Utilities.EMPTY_STRING_ARRAY
             : Arrays.stream(persons).map(Person::getKey).sorted().toArray(String[]::new);
+    }
+
+    /**
+     * {@code true} if the shortcut is disabled due to its app being a lower version.
+     */
+    public boolean isDisabledVersionLower() {
+        return (runtimeStatusFlags & FLAG_DISABLED_VERSION_LOWER) != 0;
     }
 
     /** Returns the WorkspaceItemInfo id associated with the deep shortcut. */
@@ -204,7 +225,7 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
     }
 
     @Override
-    public ItemInfoWithIcon clone() {
+    public WorkspaceItemInfo clone() {
         return new WorkspaceItemInfo(this);
     }
 }

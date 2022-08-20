@@ -16,7 +16,6 @@
 
 package com.android.launcher3;
 
-import static com.android.launcher3.model.WidgetsModel.GO_DISABLE_WIDGETS;
 import static com.android.launcher3.util.SystemUiController.UI_STATE_FULLSCREEN_TASK;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -25,30 +24,28 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.pm.LauncherApps;
 import android.content.res.Configuration;
-import android.graphics.Rect;
-import android.os.Bundle;
-import android.os.UserHandle;
-import android.util.Log;
 
 import androidx.annotation.IntDef;
 
+import com.android.launcher3.DeviceProfile.DeviceProfileListenable;
 import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.util.SystemUiController;
 import com.android.launcher3.util.ViewCache;
-import com.android.launcher3.views.ActivityContext;
+import com.android.launcher3.views.AppLauncher;
 import com.android.launcher3.views.ScrimView;
 
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Launcher BaseActivity
  */
-public abstract class BaseActivity extends Activity implements ActivityContext {
+public abstract class BaseActivity extends Activity implements AppLauncher,
+        DeviceProfileListenable {
 
     private static final String TAG = "BaseActivity";
 
@@ -142,9 +139,15 @@ public abstract class BaseActivity extends Activity implements ActivityContext {
         return mDeviceProfile;
     }
 
+    @Override
+    public List<OnDeviceProfileChangeListener> getOnDeviceProfileChangeListeners() {
+        return mDPChangeListeners;
+    }
+
     /**
      * Returns {@link StatsLogManager} for user event logging.
      */
+    @Override
     public StatsLogManager getStatsLogManager() {
         if (mStatsLogManager == null) {
             mStatsLogManager = StatsLogManager.newInstance(this);
@@ -260,20 +263,6 @@ public abstract class BaseActivity extends Activity implements ActivityContext {
 
     protected void onActivityFlagsChanged(int changeBits) { }
 
-    public void addOnDeviceProfileChangeListener(OnDeviceProfileChangeListener listener) {
-        mDPChangeListeners.add(listener);
-    }
-
-    public void removeOnDeviceProfileChangeListener(OnDeviceProfileChangeListener listener) {
-        mDPChangeListeners.remove(listener);
-    }
-
-    protected void dispatchDeviceProfileChanged() {
-        for (int i = mDPChangeListeners.size() - 1; i >= 0; i--) {
-            mDPChangeListeners.get(i).onDeviceProfileChanged(mDeviceProfile);
-        }
-    }
-
     public void addMultiWindowModeChangedListener(MultiWindowModeChangedListener listener) {
         mMultiWindowModeChangedListeners.add(listener);
     }
@@ -317,22 +306,6 @@ public abstract class BaseActivity extends Activity implements ActivityContext {
         writer.println(prefix + "mSystemUiController: " + mSystemUiController);
         writer.println(prefix + "mActivityFlags: " + mActivityFlags);
         writer.println(prefix + "mForceInvisible: " + mForceInvisible);
-    }
-
-    /**
-     * A wrapper around the platform method with Launcher specific checks
-     */
-    public void startShortcut(String packageName, String id, Rect sourceBounds,
-            Bundle startActivityOptions, UserHandle user) {
-        if (GO_DISABLE_WIDGETS) {
-            return;
-        }
-        try {
-            getSystemService(LauncherApps.class).startShortcut(packageName, id, sourceBounds,
-                    startActivityOptions, user);
-        } catch (SecurityException | IllegalStateException e) {
-            Log.e(TAG, "Failed to start shortcut", e);
-        }
     }
 
     public static <T extends BaseActivity> T fromContext(Context context) {

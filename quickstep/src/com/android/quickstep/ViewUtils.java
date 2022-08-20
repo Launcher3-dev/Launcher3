@@ -15,14 +15,14 @@
  */
 package com.android.quickstep;
 
+import android.graphics.HardwareRenderer;
 import android.os.Handler;
 import android.view.View;
+import android.view.ViewRootImpl;
 
 import com.android.launcher3.Utilities;
-import com.android.systemui.shared.system.ViewRootImplCompat;
 
 import java.util.function.BooleanSupplier;
-import java.util.function.LongConsumer;
 
 /**
  * Utility class for helpful methods related to {@link View} objects.
@@ -45,9 +45,9 @@ public class ViewUtils {
         return new FrameHandler(view, onFinishRunnable, canceled).schedule();
     }
 
-    private static class FrameHandler implements LongConsumer {
+    private static class FrameHandler implements HardwareRenderer.FrameDrawingCallback {
 
-        final ViewRootImplCompat mViewRoot;
+        final ViewRootImpl mViewRoot;
         final Runnable mFinishCallback;
         final BooleanSupplier mCancelled;
         final Handler mHandler;
@@ -55,14 +55,14 @@ public class ViewUtils {
         int mDeferFrameCount = 1;
 
         FrameHandler(View view, Runnable finishCallback, BooleanSupplier cancelled) {
-            mViewRoot = new ViewRootImplCompat(view);
+            mViewRoot = view.getViewRootImpl();
             mFinishCallback = finishCallback;
             mCancelled = cancelled;
             mHandler = new Handler();
         }
 
         @Override
-        public void accept(long l) {
+        public void onFrameDraw(long frame) {
             Utilities.postAsyncCallback(mHandler, this::onFrame);
         }
 
@@ -83,7 +83,7 @@ public class ViewUtils {
         }
 
         private boolean schedule() {
-            if (mViewRoot.isValid()) {
+            if (mViewRoot != null && mViewRoot.getView() != null) {
                 mViewRoot.registerRtFrameCallback(this);
                 mViewRoot.getView().invalidate();
                 return true;

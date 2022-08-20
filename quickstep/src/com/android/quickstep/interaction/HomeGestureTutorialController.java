@@ -32,23 +32,37 @@ final class HomeGestureTutorialController extends SwipeUpGestureTutorialControll
     }
 
     @Override
-    public Integer getIntroductionTitle() {
+    public int getIntroductionTitle() {
         return R.string.home_gesture_intro_title;
     }
 
     @Override
-    public Integer getIntroductionSubtitle() {
+    public int getIntroductionSubtitle() {
         return R.string.home_gesture_intro_subtitle;
     }
 
     @Override
-    protected int getMockAppTaskThumbnailResId(boolean forDarkMode) {
-        return forDarkMode ? R.drawable.mock_webpage_dark_mode : R.drawable.mock_webpage_light_mode;
+    public int getSpokenIntroductionSubtitle() {
+        return R.string.home_gesture_spoken_intro_subtitle;
+    }
+
+    @Override
+    public int getSuccessFeedbackSubtitle() {
+        return mTutorialFragment.isAtFinalStep()
+                ? R.string.home_gesture_feedback_complete_without_follow_up
+                : R.string.home_gesture_feedback_complete_with_follow_up;
+    }
+
+    @Override
+    protected int getMockAppTaskLayoutResId() {
+        return mTutorialFragment.isLargeScreen()
+                ? R.layout.gesture_tutorial_tablet_mock_webpage
+                : R.layout.gesture_tutorial_mock_webpage;
     }
 
     @Override
     public void onBackGestureAttempted(BackGestureResult result) {
-        if (mGestureCompleted) {
+        if (isGestureCompleted()) {
             return;
         }
         switch (mTutorialType) {
@@ -73,19 +87,16 @@ final class HomeGestureTutorialController extends SwipeUpGestureTutorialControll
 
     @Override
     public void onNavBarGestureAttempted(NavBarGestureResult result, PointF finalVelocity) {
-        if (mGestureCompleted) {
+        if (isGestureCompleted()) {
             return;
         }
         switch (mTutorialType) {
             case HOME_NAVIGATION:
                 switch (result) {
                     case HOME_GESTURE_COMPLETED: {
-                        mTutorialFragment.releaseGestureVideoView();
+                        mTutorialFragment.releaseFeedbackAnimation();
                         animateFakeTaskViewHome(finalVelocity, null);
-                        int subtitleResId = mTutorialFragment.isAtFinalStep()
-                                ? R.string.home_gesture_feedback_complete_without_follow_up
-                                : R.string.home_gesture_feedback_complete_with_follow_up;
-                        showFeedback(subtitleResId, true);
+                        showSuccessFeedback();
                         break;
                     }
                     case HOME_NOT_STARTED_TOO_FAR_FROM_EDGE:
@@ -93,8 +104,10 @@ final class HomeGestureTutorialController extends SwipeUpGestureTutorialControll
                         showFeedback(R.string.home_gesture_feedback_swipe_too_far_from_edge);
                         break;
                     case OVERVIEW_GESTURE_COMPLETED:
-                        fadeOutFakeTaskView(true, true, () ->
-                                showFeedback(R.string.home_gesture_feedback_overview_detected));
+                        fadeOutFakeTaskView(true, true, () -> {
+                            showFeedback(R.string.home_gesture_feedback_overview_detected);
+                            showFakeTaskbar(/* animateFromHotseat= */ false);
+                        });
                         break;
                     case HOME_OR_OVERVIEW_NOT_STARTED_WRONG_SWIPE_DIRECTION:
                     case HOME_OR_OVERVIEW_CANCELLED:

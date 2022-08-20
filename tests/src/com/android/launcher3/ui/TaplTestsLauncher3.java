@@ -18,11 +18,16 @@ package com.android.launcher3.ui;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import android.content.Intent;
+import android.graphics.Point;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -34,22 +39,35 @@ import com.android.launcher3.tapl.AllApps;
 import com.android.launcher3.tapl.AppIcon;
 import com.android.launcher3.tapl.AppIconMenu;
 import com.android.launcher3.tapl.AppIconMenuItem;
+import com.android.launcher3.tapl.Folder;
+import com.android.launcher3.tapl.FolderIcon;
+import com.android.launcher3.tapl.HomeAllApps;
+import com.android.launcher3.tapl.HomeAppIcon;
+import com.android.launcher3.tapl.HomeAppIconMenu;
+import com.android.launcher3.tapl.HomeAppIconMenuItem;
 import com.android.launcher3.tapl.Widgets;
 import com.android.launcher3.tapl.Workspace;
+import com.android.launcher3.util.TestUtil;
 import com.android.launcher3.util.rule.ScreenRecordRule.ScreenRecord;
-import com.android.launcher3.views.OptionsPopupView;
 import com.android.launcher3.widget.picker.WidgetsFullSheet;
 import com.android.launcher3.widget.picker.WidgetsRecyclerView;
 
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.util.Map;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
     private static final String APP_NAME = "LauncherTestApp";
+    private static final String DUMMY_APP_NAME = "Aardwolf";
+    private static final String MAPS_APP_NAME = "Maps";
+    private static final String STORE_APP_NAME = "Play Store";
+    private static final String GMAIL_APP_NAME = "Gmail";
 
     @Before
     public void setUp() throws Exception {
@@ -80,8 +98,8 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         assertTrue(message, failed);
     }
 
-    private boolean isWorkspaceScrollable(Launcher launcher) {
-        return launcher.getWorkspace().getPageCount() > 1;
+    public static boolean isWorkspaceScrollable(Launcher launcher) {
+        return launcher.getWorkspace().getPageCount() > launcher.getWorkspace().getPanelCount();
     }
 
     private int getCurrentWorkspacePage(Launcher launcher) {
@@ -93,23 +111,14 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
     }
 
     @Test
-    @ScreenRecord //b/187080582
     public void testDevicePressMenu() throws Exception {
         mDevice.pressMenu();
         mDevice.waitForIdle();
         executeOnLauncher(
-                launcher -> assertTrue("Launcher internal state didn't switch to Showing Menu",
-                        OptionsPopupView.getOptionsPopup(launcher) != null));
+                launcher -> assertNotNull("Launcher internal state didn't switch to Showing Menu",
+                        launcher.getOptionsPopup()));
         // Check that pressHome works when the menu is shown.
-        mLauncher.pressHome();
-    }
-
-    @Ignore
-    public void testOpenHomeSettingsFromWorkspace() {
-        mDevice.pressMenu();
-        mDevice.waitForIdle();
-        mLauncher.getOptionsPopupMenu().getMenuItem("Home settings")
-                .launch(mDevice.getLauncherPackageName());
+        mLauncher.goHome();
     }
 
     @Test
@@ -121,7 +130,7 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         } finally {
             allApps.unfreeze();
         }
-        mLauncher.pressHome();
+        mLauncher.goHome();
     }
 
     public static void runAllAppsTest(AbstractLauncherUiTest test, AllApps allApps) {
@@ -183,6 +192,7 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
     }
 
     @Test
+    @ScreenRecord // b/202433017
     public void testWorkspace() throws Exception {
         final Workspace workspace = mLauncher.getWorkspace();
 
@@ -195,8 +205,9 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         workspace.ensureWorkspaceIsScrollable();
 
         executeOnLauncher(
-                launcher -> assertEquals("Ensuring workspace scrollable didn't switch to page #1",
-                        1, getCurrentWorkspacePage(launcher)));
+                launcher -> assertEquals(
+                        "Ensuring workspace scrollable didn't switch to next screen",
+                        workspace.pagesPerScreen(), getCurrentWorkspacePage(launcher)));
         executeOnLauncher(
                 launcher -> assertTrue("ensureScrollable didn't make workspace scrollable",
                         isWorkspaceScrollable(launcher)));
@@ -212,12 +223,12 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
 
         workspace.flingForward();
         executeOnLauncher(
-                launcher -> assertEquals("Flinging forward didn't switch workspace to page #1",
-                        1, getCurrentWorkspacePage(launcher)));
+                launcher -> assertEquals("Flinging forward didn't switch workspace to next screen",
+                        workspace.pagesPerScreen(), getCurrentWorkspacePage(launcher)));
         assertTrue("Launcher internal state is not Home", isInState(() -> LauncherState.NORMAL));
 
         // Test starting a workspace app.
-        final AppIcon app = workspace.getWorkspaceAppIcon("Chrome");
+        final HomeAppIcon app = workspace.getWorkspaceAppIcon("Chrome");
         assertNotNull("No Chrome app in workspace", app);
     }
 
@@ -230,7 +241,7 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
                     "Launcher activity is the top activity; expecting another activity to be the "
                             + "top "
                             + "one",
-                    test.isInBackground(launcher)));
+                    test.isInLaunchedApp(launcher)));
         } finally {
             allApps.unfreeze();
         }
@@ -239,7 +250,7 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
     @Test
     @PortraitLandscape
     public void testAppIconLaunchFromAllAppsFromHome() throws Exception {
-        final AllApps allApps = mLauncher.getWorkspace().switchToAllApps();
+        final HomeAllApps allApps = mLauncher.getWorkspace().switchToAllApps();
         assertTrue("Launcher internal state is not All Apps",
                 isInState(() -> LauncherState.ALL_APPS));
 
@@ -271,7 +282,7 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         executeOnLauncher(launcher -> assertTrue("Flinging backward didn't scroll widgets",
                 getWidgetsScroll(launcher) < flingForwardY));
 
-        mLauncher.pressHome();
+        mLauncher.goHome();
         waitForLauncherCondition("Widgets were not closed",
                 launcher -> getWidgetsView(launcher) == null);
     }
@@ -281,16 +292,14 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
     }
 
     private boolean isOptionsPopupVisible(Launcher launcher) {
-        final ArrowPopup popup = OptionsPopupView.getOptionsPopup(launcher);
+        final ArrowPopup<?> popup = launcher.getOptionsPopup();
         return popup != null && popup.isShown();
     }
 
     @Test
     @PortraitLandscape
     public void testLaunchMenuItem() throws Exception {
-        final AllApps allApps = mLauncher.
-                getWorkspace().
-                switchToAllApps();
+        final AllApps allApps = mLauncher.getWorkspace().switchToAllApps();
         allApps.freeze();
         try {
             final AppIconMenu menu = allApps.
@@ -315,8 +324,7 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         // 1. Open all apps and wait for load complete.
         // 2. Drag icon to homescreen.
         // 3. Verify that the icon works on homescreen.
-        final AllApps allApps = mLauncher.getWorkspace().
-                switchToAllApps();
+        final HomeAllApps allApps = mLauncher.getWorkspace().switchToAllApps();
         allApps.freeze();
         try {
             allApps.getAppIcon(APP_NAME).dragToWorkspace(false, false);
@@ -327,7 +335,7 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         executeOnLauncher(launcher -> assertTrue(
                 "Launcher activity is the top activity; expecting another activity to be the top "
                         + "one",
-                isInBackground(launcher)));
+                isInLaunchedApp(launcher)));
     }
 
     @Test
@@ -336,18 +344,18 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         // 1. Open all apps and wait for load complete.
         // 2. Find the app and long press it to show shortcuts.
         // 3. Press icon center until shortcuts appear
-        final AllApps allApps = mLauncher
+        final HomeAllApps allApps = mLauncher
                 .getWorkspace()
                 .switchToAllApps();
         allApps.freeze();
         try {
-            final AppIconMenu menu = allApps
+            final HomeAppIconMenu menu = allApps
                     .getAppIcon(APP_NAME)
                     .openDeepShortcutMenu();
-            final AppIconMenuItem menuItem0 = menu.getMenuItem(0);
-            final AppIconMenuItem menuItem2 = menu.getMenuItem(2);
+            final HomeAppIconMenuItem menuItem0 = menu.getMenuItem(0);
+            final HomeAppIconMenuItem menuItem2 = menu.getMenuItem(2);
 
-            final AppIconMenuItem menuItem;
+            final HomeAppIconMenuItem menuItem;
 
             final String expectedShortcutName = "Shortcut 3";
             if (menuItem0.getText().equals(expectedShortcutName)) {
@@ -364,6 +372,169 @@ public class TaplTestsLauncher3 extends AbstractLauncherUiTest {
         } finally {
             allApps.unfreeze();
         }
+    }
+
+    @Test
+    @PortraitLandscape
+    public void testDragToFolder() {
+        // TODO: add the use case to drag an icon to an existing folder. Currently it either fails
+        // on tablets or phones due to difference in resolution.
+        final HomeAppIcon playStoreIcon = createShortcutIfNotExist(STORE_APP_NAME, 0, 1);
+        final HomeAppIcon gmailIcon = createShortcutInCenterIfNotExist(GMAIL_APP_NAME);
+
+        FolderIcon folderIcon = gmailIcon.dragToIcon(playStoreIcon);
+        Folder folder = folderIcon.open();
+        folder.getAppIcon(STORE_APP_NAME);
+        folder.getAppIcon(GMAIL_APP_NAME);
+        Workspace workspace = folder.close();
+
+        assertNull(STORE_APP_NAME + " should be moved to a folder.",
+                workspace.tryGetWorkspaceAppIcon(STORE_APP_NAME));
+        assertNull(GMAIL_APP_NAME + " should be moved to a folder.",
+                workspace.tryGetWorkspaceAppIcon(GMAIL_APP_NAME));
+
+        final HomeAppIcon mapIcon = createShortcutInCenterIfNotExist(MAPS_APP_NAME);
+        folderIcon = mapIcon.dragToIcon(folderIcon);
+        folder = folderIcon.open();
+        folder.getAppIcon(MAPS_APP_NAME);
+        workspace = folder.close();
+
+        assertNull(MAPS_APP_NAME + " should be moved to a folder.",
+                workspace.tryGetWorkspaceAppIcon(MAPS_APP_NAME));
+    }
+
+    @Test
+    @PortraitLandscape
+    public void testPressBack() throws Exception {
+        mLauncher.getWorkspace().switchToAllApps();
+        mLauncher.pressBack();
+        mLauncher.getWorkspace();
+        waitForState("Launcher internal state didn't switch to Home", () -> LauncherState.NORMAL);
+
+        startAppFast(resolveSystemApp(Intent.CATEGORY_APP_CALCULATOR));
+        mLauncher.pressBack();
+        mLauncher.getWorkspace();
+        waitForState("Launcher internal state didn't switch to Home", () -> LauncherState.NORMAL);
+    }
+
+    @Test
+    @PortraitLandscape
+    public void testDeleteFromWorkspace() throws Exception {
+        // test delete both built-in apps and user-installed app from workspace
+        for (String appName : new String[]{"Gmail", "Play Store", APP_NAME}) {
+            final HomeAppIcon homeAppIcon = createShortcutInCenterIfNotExist(appName);
+            Workspace workspace = mLauncher.getWorkspace().deleteAppIcon(homeAppIcon);
+            assertNull(appName + " app was found after being deleted from workspace",
+                    workspace.tryGetWorkspaceAppIcon(appName));
+        }
+    }
+
+    private void verifyAppUninstalledFromAllApps(Workspace workspace, String appName) {
+        final HomeAllApps allApps = workspace.switchToAllApps();
+        allApps.freeze();
+        try {
+            assertNull(appName + " app was found on all apps after being uninstalled",
+                    allApps.tryGetAppIcon(appName));
+        } finally {
+            allApps.unfreeze();
+        }
+    }
+
+    @Test
+    @PortraitLandscape
+    public void testUninstallFromWorkspace() throws Exception {
+        TestUtil.installDummyApp();
+        try {
+            verifyAppUninstalledFromAllApps(
+                    createShortcutInCenterIfNotExist(DUMMY_APP_NAME).uninstall(), DUMMY_APP_NAME);
+        } finally {
+            TestUtil.uninstallDummyApp();
+        }
+    }
+
+    @Test
+    @PortraitLandscape
+    public void testUninstallFromAllApps() throws Exception {
+        TestUtil.installDummyApp();
+        try {
+            Workspace workspace = mLauncher.getWorkspace();
+            final HomeAllApps allApps = workspace.switchToAllApps();
+            allApps.freeze();
+            try {
+                workspace = allApps.getAppIcon(DUMMY_APP_NAME).uninstall();
+            } finally {
+                allApps.unfreeze();
+            }
+            verifyAppUninstalledFromAllApps(workspace, DUMMY_APP_NAME);
+        } finally {
+            TestUtil.uninstallDummyApp();
+        }
+    }
+
+    @Test
+    @PortraitLandscape
+    public void testDragAppIconToWorkspaceCell() throws Exception {
+        Point[] targets = getCornersAndCenterPositions();
+
+        for (Point target : targets) {
+            final HomeAllApps allApps = mLauncher.getWorkspace().switchToAllApps();
+            allApps.freeze();
+            try {
+                allApps.getAppIcon(APP_NAME).dragToWorkspace(target.x, target.y);
+            } finally {
+                allApps.unfreeze();
+            }
+            // Reset the workspace for the next shortcut creation.
+            initialize(this);
+        }
+
+        // test to move a shortcut to other cell.
+        final HomeAppIcon launcherTestAppIcon = createShortcutInCenterIfNotExist(APP_NAME);
+        for (Point target : targets) {
+            launcherTestAppIcon.dragToWorkspace(target.x, target.y);
+        }
+    }
+
+    @Test
+    public void getIconsPosition_afterIconRemoved_notContained() throws IOException {
+        Point[] gridPositions = getCornersAndCenterPositions();
+        createShortcutIfNotExist(STORE_APP_NAME, gridPositions[0]);
+        createShortcutIfNotExist(MAPS_APP_NAME, gridPositions[1]);
+        TestUtil.installDummyApp();
+        try {
+            createShortcutIfNotExist(DUMMY_APP_NAME, gridPositions[2]);
+            Map<String, Point> initialPositions =
+                    mLauncher.getWorkspace().getWorkspaceIconsPositions();
+            assertThat(initialPositions.keySet())
+                    .containsAtLeast(DUMMY_APP_NAME, MAPS_APP_NAME, STORE_APP_NAME);
+
+            mLauncher.getWorkspace().getWorkspaceAppIcon(DUMMY_APP_NAME).uninstall();
+
+            assertNull(
+                    DUMMY_APP_NAME + " app was found after being uninstalled",
+                    mLauncher.getWorkspace().tryGetWorkspaceAppIcon(DUMMY_APP_NAME));
+
+            Map<String, Point> finalPositions =
+                    mLauncher.getWorkspace().getWorkspaceIconsPositions();
+            assertThat(finalPositions).doesNotContainKey(DUMMY_APP_NAME);
+        } finally {
+            TestUtil.uninstallDummyApp();
+        }
+    }
+
+    /**
+     * @return List of workspace grid coordinates. Those are not pixels. See {@link
+     *     Workspace#getIconGridDimensions()}
+     */
+    private Point[] getCornersAndCenterPositions() {
+        final Point dimensions = mLauncher.getWorkspace().getIconGridDimensions();
+        return new Point[] {
+            new Point(0, 1),
+            new Point(0, dimensions.y - 2),
+            new Point(dimensions.x - 1, 1),
+            new Point(dimensions.x - 1, dimensions.y - 2),
+            new Point(dimensions.x / 2, dimensions.y / 2)
+        };
     }
 
     public static String getAppPackageName() {

@@ -46,7 +46,6 @@ import com.android.launcher3.DragSource;
 import com.android.launcher3.DropTarget;
 import com.android.launcher3.DropTarget.DragObject;
 import com.android.launcher3.Launcher;
-import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
 import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
 import com.android.launcher3.accessibility.ShortcutMenuAccessibilityDelegate;
@@ -61,21 +60,18 @@ import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.notification.NotificationContainer;
 import com.android.launcher3.notification.NotificationInfo;
 import com.android.launcher3.notification.NotificationKeyData;
-import com.android.launcher3.popup.PopupDataProvider.PopupDataChangeListener;
 import com.android.launcher3.shortcuts.DeepShortcutView;
 import com.android.launcher3.shortcuts.ShortcutDragPreviewProvider;
-import com.android.launcher3.statemanager.StatefulActivity;
 import com.android.launcher3.touch.ItemLongClickListener;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.ShortcutUtil;
+import com.android.launcher3.views.ActivityContext;
 import com.android.launcher3.views.BaseDragLayer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -83,7 +79,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> The activity on with the popup shows
  */
-public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
+public class PopupContainerWithArrow<T extends Context & ActivityContext>
         extends ArrowPopup<T> implements DragSource, DragController.DragListener {
 
     private final List<DeepShortcutView> mShortcuts = new ArrayList<>();
@@ -94,6 +90,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
     private BubbleTextView mOriginalIcon;
     private int mNumNotifications;
     private NotificationContainer mNotificationContainer;
+    private int mContainerWidth;
 
     private ViewGroup mWidgetContainer;
 
@@ -108,6 +105,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
         super(context, attrs, defStyleAttr);
         mStartDragThreshold = getResources().getDimensionPixelSize(
                 R.dimen.deep_shortcuts_start_drag_threshold);
+        mContainerWidth = getResources().getDimensionPixelSize(R.dimen.bg_popup_item_width);
     }
 
     public PopupContainerWithArrow(Context context, AttributeSet attrs) {
@@ -151,9 +149,12 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
 
     public OnClickListener getItemClickListener() {
         return (view) -> {
-            mLauncher.getItemOnClickListener().onClick(view);
-            close(true);
+            mActivityContext.getItemOnClickListener().onClick(view);
         };
+    }
+
+    public void setPopupItemDragHandler(PopupItemDragHandler popupItemDragHandler) {
+        mPopupItemDragHandler = popupItemDragHandler;
     }
 
     public PopupItemDragHandler getItemDragHandler() {
@@ -186,16 +187,19 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
 
     /**
      * Returns true if we can show the container.
+     *
+     * @deprecated Left here since some dependent projects are using this method
      */
+    @Deprecated
     public static boolean canShow(View icon, ItemInfo item) {
         return icon instanceof BubbleTextView && ShortcutUtil.supportsShortcuts(item);
     }
 
     /**
-     * Shows the notifications and deep shortcuts associated with {@param icon}.
+     * Shows the notifications and deep shortcuts associated with a Launcher {@param icon}.
      * @return the container if shown or null.
      */
-    public static PopupContainerWithArrow showForIcon(BubbleTextView icon) {
+    public static PopupContainerWithArrow<Launcher> showForIcon(BubbleTextView icon) {
         Launcher launcher = Launcher.getLauncher(icon.getContext());
         if (getOpen(launcher) != null) {
             // There is already an items container open, so don't open this one.
@@ -203,11 +207,11 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
             return null;
         }
         ItemInfo item = (ItemInfo) icon.getTag();
-        if (!canShow(icon, item)) {
+        if (!ShortcutUtil.supportsShortcuts(item)) {
             return null;
         }
 
-        final PopupContainerWithArrow container =
+        final PopupContainerWithArrow<Launcher> container =
                 (PopupContainerWithArrow) launcher.getLayoutInflater().inflate(
                         R.layout.popup_container, launcher.getDragLayer(), false);
         container.configureForLauncher(launcher);
@@ -217,7 +221,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
                 popupDataProvider.getShortcutCountForItem(item),
                 popupDataProvider.getNotificationKeysForItem(item),
                 launcher.getSupportedShortcuts()
-                        .map(s -> s.getShortcut(launcher, item))
+                        .map(s -> s.getShortcut(launcher, item, icon))
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList()));
         launcher.refreshAndBindWidgetsForPackageUser(PackageUserKey.fromItemInfo(item));
@@ -226,7 +230,8 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
     }
 
     private void configureForLauncher(Launcher launcher) {
-        addOnAttachStateChangeListener(new LiveUpdateHandler(launcher));
+        addOnAttachStateChangeListener(new LauncherPopupLiveUpdateHandler(
+                launcher, (PopupContainerWithArrow<Launcher>) this));
         mPopupItemDragHandler = new LauncherPopupItemDragHandler(launcher, this);
         mAccessibilityDelegate = new ShortcutMenuAccessibilityDelegate(launcher);
         launcher.getDragController().addDragListener(this);
@@ -246,14 +251,15 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
         mOriginalIcon = originalIcon;
 
         boolean hasDeepShortcuts = shortcutCount > 0;
-        int containerWidth = (int) getResources().getDimension(R.dimen.bg_popup_item_width);
+        mContainerWidth = getResources().getDimensionPixelSize(R.dimen.bg_popup_item_width);
 
         // if there are deep shortcuts, we might want to increase the width of shortcuts to fit
         // horizontally laid out system shortcuts.
         if (hasDeepShortcuts) {
-            containerWidth = (int) Math.max(containerWidth,
-                    systemShortcuts.size() * getResources().getDimension(
-                            R.dimen.system_shortcut_header_icon_touch_size));
+            mContainerWidth = Math.max(mContainerWidth,
+                    systemShortcuts.size() * getResources()
+                            .getDimensionPixelSize(R.dimen.system_shortcut_header_icon_touch_size)
+            );
         }
         // Add views
         if (mNumNotifications > 0) {
@@ -277,7 +283,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
 
             for (int i = shortcutCount; i > 0; i--) {
                 DeepShortcutView v = inflateAndAdd(R.layout.deep_shortcut, mDeepShortcutContainer);
-                v.getLayoutParams().width = containerWidth;
+                v.getLayoutParams().width = mContainerWidth;
                 mShortcuts.add(v);
             }
             updateHiddenShortcuts();
@@ -289,8 +295,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
                             mWidgetContainer = inflateAndAdd(R.layout.widget_shortcut_container,
                                     this);
                         }
-                        initializeSystemShortcut(R.layout.system_shortcut, mWidgetContainer,
-                                shortcut);
+                        initializeWidgetShortcut(mWidgetContainer, shortcut);
                     }
                 }
                 mSystemShortcutContainer = inflateAndAdd(R.layout.system_shortcut_icons, this);
@@ -326,8 +331,28 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
 
         // Load the shortcuts on a background thread and update the container as it animates.
         MODEL_EXECUTOR.getHandler().postAtFrontOfQueue(PopupPopulator.createUpdateRunnable(
-                mLauncher, originalItemInfo, new Handler(Looper.getMainLooper()),
+                mActivityContext, originalItemInfo, new Handler(Looper.getMainLooper()),
                 this, mShortcuts, notificationKeys));
+    }
+
+    protected NotificationContainer getNotificationContainer() {
+        return mNotificationContainer;
+    }
+
+    protected BubbleTextView getOriginalIcon() {
+        return mOriginalIcon;
+    }
+
+    protected ViewGroup getSystemShortcutContainer() {
+        return mSystemShortcutContainer;
+    }
+
+    protected ViewGroup getWidgetContainer() {
+        return mWidgetContainer;
+    }
+
+    protected void setWidgetContainer(ViewGroup widgetContainer) {
+        mWidgetContainer = widgetContainer;
     }
 
     private String getTitleForAccessibility() {
@@ -353,7 +378,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
         }
     }
 
-    private void updateHiddenShortcuts() {
+    protected void updateHiddenShortcuts() {
         int allowedCount = mNotificationContainer != null
                 ? MAX_SHORTCUTS_IF_NOTIFICATIONS : MAX_SHORTCUTS;
 
@@ -364,7 +389,12 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
         }
     }
 
-    private void initializeSystemShortcut(int resId, ViewGroup container, SystemShortcut info) {
+    protected void initializeWidgetShortcut(ViewGroup container, SystemShortcut info) {
+        View view = initializeSystemShortcut(R.layout.system_shortcut, container, info);
+        view.getLayoutParams().width = mContainerWidth;
+    }
+
+    protected View initializeSystemShortcut(int resId, ViewGroup container, SystemShortcut info) {
         View view = inflateAndAdd(
                 resId, container, getInsertIndexForSystemShortcut(container, info));
         if (view instanceof DeepShortcutView) {
@@ -378,6 +408,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
         }
         view.setTag(info);
         view.setOnClickListener(info);
+        return view;
     }
 
     /**
@@ -397,7 +428,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
      * Current behavior:
      * - Start the drag if the touch passes a certain distance from the original touch down.
      */
-    public DragOptions.PreDragCondition createPreDragCondition() {
+    public DragOptions.PreDragCondition createPreDragCondition(boolean updateIconUi) {
         return new DragOptions.PreDragCondition() {
 
             @Override
@@ -407,6 +438,9 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
 
             @Override
             public void onPreDragStart(DropTarget.DragObject dragObject) {
+                if (!updateIconUi) {
+                    return;
+                }
                 if (mIsAboveIcon) {
                     // Hide only the icon, keep the text visible.
                     mOriginalIcon.setIconVisible(false);
@@ -419,6 +453,9 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
 
             @Override
             public void onPreDragEnd(DropTarget.DragObject dragObject, boolean dragStarted) {
+                if (!updateIconUi) {
+                    return;
+                }
                 mOriginalIcon.setIconVisible(true);
                 if (dragStarted) {
                     // Make sure we keep the original icon hidden while it is being dragged.
@@ -437,9 +474,9 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
         };
     }
 
-    private void updateNotificationHeader() {
+    protected void updateNotificationHeader() {
         ItemInfoWithIcon itemInfo = (ItemInfoWithIcon) mOriginalIcon.getTag();
-        DotInfo dotInfo = mLauncher.getDotInfoForItem(itemInfo);
+        DotInfo dotInfo = mActivityContext.getDotInfoForItem(itemInfo);
         if (mNotificationContainer != null && dotInfo != null) {
             mNotificationContainer.updateHeader(dotInfo.getNotificationCount());
         }
@@ -480,124 +517,22 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
 
     @Override
     protected void closeComplete() {
-        PopupContainerWithArrow openPopup = getOpen(mLauncher);
+        super.closeComplete();
+        if (mActivityContext.getDragController() != null) {
+            mActivityContext.getDragController().removeDragListener(this);
+        }
+        PopupContainerWithArrow openPopup = getOpen(mActivityContext);
         if (openPopup == null || openPopup.mOriginalIcon != mOriginalIcon) {
             mOriginalIcon.setTextVisibility(mOriginalIcon.shouldTextBeVisible());
             mOriginalIcon.setForceHideDot(false);
         }
-        super.closeComplete();
     }
 
     /**
      * Returns a PopupContainerWithArrow which is already open or null
      */
-    public static PopupContainerWithArrow getOpen(BaseDraggingActivity launcher) {
-        return getOpenView(launcher, TYPE_ACTION_POPUP);
-    }
-
-    /**
-     * Utility class to handle updates while the popup is visible (like widgets and
-     * notification changes)
-     */
-    private class LiveUpdateHandler implements
-            PopupDataChangeListener, View.OnAttachStateChangeListener {
-
-        private final Launcher mLauncher;
-
-        LiveUpdateHandler(Launcher launcher) {
-            mLauncher = launcher;
-        }
-
-        @Override
-        public void onViewAttachedToWindow(View view) {
-            mLauncher.getPopupDataProvider().setChangeListener(this);
-        }
-
-        @Override
-        public void onViewDetachedFromWindow(View view) {
-            mLauncher.getPopupDataProvider().setChangeListener(null);
-        }
-
-        private View getWidgetsView(ViewGroup container) {
-            for (int i = container.getChildCount() - 1; i >= 0; --i) {
-                View systemShortcutView = container.getChildAt(i);
-                if (systemShortcutView.getTag() instanceof SystemShortcut.Widgets) {
-                    return systemShortcutView;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public void onWidgetsBound() {
-            ItemInfo itemInfo = (ItemInfo) mOriginalIcon.getTag();
-            SystemShortcut widgetInfo = SystemShortcut.WIDGETS.getShortcut(mLauncher, itemInfo);
-            View widgetsView = getWidgetsView(PopupContainerWithArrow.this);
-            if (widgetsView == null && mWidgetContainer != null) {
-                widgetsView = getWidgetsView(mWidgetContainer);
-            }
-
-            if (widgetInfo != null && widgetsView == null) {
-                // We didn't have any widgets cached but now there are some, so enable the shortcut.
-                if (mSystemShortcutContainer != PopupContainerWithArrow.this) {
-                    if (mWidgetContainer == null) {
-                        mWidgetContainer = inflateAndAdd(R.layout.widget_shortcut_container,
-                                PopupContainerWithArrow.this);
-                    }
-                    initializeSystemShortcut(R.layout.system_shortcut, mWidgetContainer,
-                            widgetInfo);
-                } else {
-                    // If using the expanded system shortcut (as opposed to just the icon), we need
-                    // to reopen the container to ensure measurements etc. all work out. While this
-                    // could be quite janky, in practice the user would typically see a small
-                    // flicker as the animation restarts partway through, and this is a very rare
-                    // edge case anyway.
-                    close(false);
-                    PopupContainerWithArrow.showForIcon(mOriginalIcon);
-                }
-            } else if (widgetInfo == null && widgetsView != null) {
-                // No widgets exist, but we previously added the shortcut so remove it.
-                if (mSystemShortcutContainer
-                        != PopupContainerWithArrow.this
-                        && mWidgetContainer != null) {
-                    mWidgetContainer.removeView(widgetsView);
-                } else {
-                    close(false);
-                    PopupContainerWithArrow.showForIcon(mOriginalIcon);
-                }
-            }
-        }
-
-        /**
-         * Updates the notification header if the original icon's dot updated.
-         */
-        @Override
-        public void onNotificationDotsUpdated(Predicate<PackageUserKey> updatedDots) {
-            ItemInfo itemInfo = (ItemInfo) mOriginalIcon.getTag();
-            PackageUserKey packageUser = PackageUserKey.fromItemInfo(itemInfo);
-            if (updatedDots.test(packageUser)) {
-                updateNotificationHeader();
-            }
-        }
-
-
-        @Override
-        public void trimNotifications(Map<PackageUserKey, DotInfo> updatedDots) {
-            if (mNotificationContainer == null) {
-                return;
-            }
-            ItemInfo originalInfo = (ItemInfo) mOriginalIcon.getTag();
-            DotInfo dotInfo = updatedDots.get(PackageUserKey.fromItemInfo(originalInfo));
-            if (dotInfo == null || dotInfo.getNotificationKeys().size() == 0) {
-                // No more notifications, remove the notification views and expand all shortcuts.
-                mNotificationContainer.setVisibility(GONE);
-                updateHiddenShortcuts();
-                assignMarginsAndBackgrounds(PopupContainerWithArrow.this);
-            } else {
-                mNotificationContainer.trimNotifications(
-                        NotificationKeyData.extractKeysOnly(dotInfo.getNotificationKeys()));
-            }
-        }
+    public static <T extends Context & ActivityContext> PopupContainerWithArrow getOpen(T context) {
+        return getOpenView(context, TYPE_ACTION_POPUP);
     }
 
     /**
@@ -606,7 +541,7 @@ public class PopupContainerWithArrow<T extends StatefulActivity<LauncherState>>
     public static void dismissInvalidPopup(BaseDraggingActivity activity) {
         PopupContainerWithArrow popup = getOpen(activity);
         if (popup != null && (!popup.mOriginalIcon.isAttachedToWindow()
-                || !canShow(popup.mOriginalIcon, (ItemInfo) popup.mOriginalIcon.getTag()))) {
+                || !ShortcutUtil.supportsShortcuts((ItemInfo) popup.mOriginalIcon.getTag()))) {
             popup.animateClose();
         }
     }

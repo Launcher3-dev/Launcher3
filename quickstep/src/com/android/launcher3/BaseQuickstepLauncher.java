@@ -21,21 +21,32 @@ import static com.android.launcher3.LauncherState.FLAG_HIDE_BACK_BUTTON;
 import static com.android.launcher3.LauncherState.NORMAL;
 import static com.android.launcher3.LauncherState.NO_OFFSET;
 import static com.android.launcher3.config.FeatureFlags.ENABLE_QUICKSTEP_LIVE_TILE;
+import static com.android.launcher3.config.FeatureFlags.ENABLE_SPLIT_FROM_WORKSPACE;
 import static com.android.launcher3.model.data.ItemInfo.NO_MATCHING_ID;
+import static com.android.launcher3.popup.QuickstepSystemShortcut.getSplitSelectShortcutByPosition;
+import static com.android.launcher3.taskbar.LauncherTaskbarUIController.ALL_APPS_PAGE_PROGRESS_INDEX;
+import static com.android.launcher3.taskbar.LauncherTaskbarUIController.MINUS_ONE_PAGE_PROGRESS_INDEX;
+import static com.android.launcher3.taskbar.LauncherTaskbarUIController.WIDGETS_PAGE_PROGRESS_INDEX;
+import static com.android.launcher3.util.DisplayController.CHANGE_ACTIVE_SCREEN;
+import static com.android.launcher3.util.DisplayController.CHANGE_NAVIGATION_MODE;
+import static com.android.launcher3.util.DisplayController.NavigationMode.TWO_BUTTONS;
+import static com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR;
 import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
-import static com.android.quickstep.SysUINavigationMode.Mode.TWO_BUTTONS;
 import static com.android.systemui.shared.system.ActivityManagerWrapper.CLOSE_SYSTEM_WINDOWS_REASON_HOME_KEY;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
-import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.ServiceConnection;
+import android.hardware.SensorManager;
+import android.hardware.devicestate.DeviceStateManager;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.IBinder;
+import android.view.Display;
 import android.view.View;
 import android.window.SplashScreen;
 
@@ -53,38 +64,45 @@ import com.android.launcher3.statehandlers.DepthController;
 import com.android.launcher3.statemanager.StateManager.StateHandler;
 import com.android.launcher3.taskbar.LauncherTaskbarUIController;
 import com.android.launcher3.taskbar.TaskbarManager;
-import com.android.launcher3.taskbar.TaskbarStateHandler;
 import com.android.launcher3.uioverrides.RecentsViewStateController;
 import com.android.launcher3.util.ActivityOptionsWrapper;
+import com.android.launcher3.util.DisplayController;
+import com.android.launcher3.util.DisplayController.NavigationMode;
+import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.ObjectWrapper;
+import com.android.launcher3.util.RunnableList;
+import com.android.launcher3.util.SplitConfigurationOptions.SplitPositionOption;
 import com.android.launcher3.util.UiThreadHelper;
 import com.android.quickstep.OverviewCommandHelper;
 import com.android.quickstep.RecentsModel;
-import com.android.quickstep.SysUINavigationMode;
-import com.android.quickstep.SysUINavigationMode.Mode;
-import com.android.quickstep.SysUINavigationMode.NavigationModeChangeListener;
 import com.android.quickstep.SystemUiProxy;
 import com.android.quickstep.TaskUtils;
-import com.android.quickstep.TouchInteractionService;
 import com.android.quickstep.TouchInteractionService.TISBinder;
+import com.android.quickstep.util.LauncherUnfoldAnimationController;
+import com.android.quickstep.util.ProxyScreenStatusProvider;
 import com.android.quickstep.util.RemoteAnimationProvider;
 import com.android.quickstep.util.RemoteFadeOutAnimationListener;
 import com.android.quickstep.util.SplitSelectStateController;
+import com.android.quickstep.util.TISBindHelper;
 import com.android.quickstep.views.OverviewActionsView;
 import com.android.quickstep.views.RecentsView;
-import com.android.quickstep.views.SplitPlaceholderView;
 import com.android.systemui.shared.system.ActivityManagerWrapper;
 import com.android.systemui.shared.system.ActivityOptionsCompat;
 import com.android.systemui.shared.system.RemoteAnimationTargetCompat;
+import com.android.systemui.unfold.UnfoldTransitionFactory;
+import com.android.systemui.unfold.UnfoldTransitionProgressProvider;
+import com.android.systemui.unfold.config.UnfoldTransitionConfig;
 
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 /**
  * Extension of Launcher activity to provide quickstep specific functionality
  */
-public abstract class BaseQuickstepLauncher extends Launcher
-        implements NavigationModeChangeListener {
+public abstract class BaseQuickstepLauncher extends Launcher {
 
     private DepthController mDepthController = new DepthController(this);
     private QuickstepTransitionManager mAppTransitionManager;
@@ -98,45 +116,58 @@ public abstract class BaseQuickstepLauncher extends Launcher
 
     private OverviewActionsView mActionsView;
 
+    private TISBindHelper mTISBindHelper;
     private @Nullable TaskbarManager mTaskbarManager;
     private @Nullable OverviewCommandHelper mOverviewCommandHelper;
     private @Nullable LauncherTaskbarUIController mTaskbarUIController;
-    private final ServiceConnection mTisBinderConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            mTaskbarManager = ((TISBinder) iBinder).getTaskbarManager();
-            mTaskbarManager.setLauncher(BaseQuickstepLauncher.this);
-
-            mOverviewCommandHelper = ((TISBinder) iBinder).getOverviewCommandHelper();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) { }
-    };
-    private final TaskbarStateHandler mTaskbarStateHandler = new TaskbarStateHandler(this);
 
     // Will be updated when dragging from taskbar.
     private @Nullable DragOptions mNextWorkspaceDragOptions = null;
-    private SplitPlaceholderView mSplitPlaceholderView;
+
+    private @Nullable UnfoldTransitionProgressProvider mUnfoldTransitionProgressProvider;
+    private @Nullable LauncherUnfoldAnimationController mLauncherUnfoldAnimationController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SysUINavigationMode.INSTANCE.get(this).addModeChangeListener(this);
         addMultiWindowModeChangedListener(mDepthController);
+        initUnfoldTransitionProgressProvider();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (mLauncherUnfoldAnimationController != null) {
+            mLauncherUnfoldAnimationController.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (mLauncherUnfoldAnimationController != null) {
+            mLauncherUnfoldAnimationController.onPause();
+        }
+
+        super.onPause();
     }
 
     @Override
     public void onDestroy() {
         mAppTransitionManager.onActivityDestroyed();
-
-        SysUINavigationMode.INSTANCE.get(this).removeModeChangeListener(this);
-
-
-        unbindService(mTisBinderConnection);
-        if (mTaskbarManager != null) {
-            mTaskbarManager.setLauncher(null);
+        if (mUnfoldTransitionProgressProvider != null) {
+            mUnfoldTransitionProgressProvider.destroy();
         }
+
+        mTISBindHelper.onDestroy();
+        if (mTaskbarManager != null) {
+            mTaskbarManager.clearActivity(this);
+        }
+
+        if (mLauncherUnfoldAnimationController != null) {
+            mLauncherUnfoldAnimationController.onDestroy();
+        }
+
         super.onDestroy();
     }
 
@@ -151,14 +182,6 @@ public abstract class BaseQuickstepLauncher extends Launcher
 
     public QuickstepTransitionManager getAppTransitionManager() {
         return mAppTransitionManager;
-    }
-
-    @Override
-    public void onNavigationModeChanged(Mode newMode) {
-        getDragLayer().recreateControllers();
-        if (mActionsView != null) {
-            mActionsView.updateVerticalMargin(newMode);
-        }
     }
 
     @Override
@@ -209,6 +232,28 @@ public abstract class BaseQuickstepLauncher extends Launcher
     public void onScrollChanged(float progress) {
         super.onScrollChanged(progress);
         mDepthController.onOverlayScrollChanged(progress);
+        onTaskbarInAppDisplayProgressUpdate(progress, MINUS_ONE_PAGE_PROGRESS_INDEX);
+    }
+
+    @Override
+    public void onAllAppsTransition(float progress) {
+        super.onAllAppsTransition(progress);
+        onTaskbarInAppDisplayProgressUpdate(progress, ALL_APPS_PAGE_PROGRESS_INDEX);
+    }
+
+    @Override
+    public void onWidgetsTransition(float progress) {
+        super.onWidgetsTransition(progress);
+        onTaskbarInAppDisplayProgressUpdate(progress, WIDGETS_PAGE_PROGRESS_INDEX);
+    }
+
+    private void onTaskbarInAppDisplayProgressUpdate(float progress, int flag) {
+        if (mTaskbarManager == null
+                || mTaskbarManager.getCurrentActivityContext() == null
+                || mTaskbarUIController == null) {
+            return;
+        }
+        mTaskbarUIController.onTaskbarInAppDisplayProgressUpdate(progress, flag);
     }
 
     @Override
@@ -270,34 +315,68 @@ public abstract class BaseQuickstepLauncher extends Launcher
     protected void setupViews() {
         super.setupViews();
 
-        SysUINavigationMode.INSTANCE.get(this).updateMode();
         mActionsView = findViewById(R.id.overview_actions_view);
-        mSplitPlaceholderView = findViewById(R.id.split_placeholder);
         RecentsView overviewPanel = (RecentsView) getOverviewPanel();
-        mSplitPlaceholderView.init(
-                new SplitSelectStateController(mHandler, SystemUiProxy.INSTANCE.get(this))
-        );
-        overviewPanel.init(mActionsView, mSplitPlaceholderView);
-        mActionsView.setDp(getDeviceProfile());
-        mActionsView.updateVerticalMargin(SysUINavigationMode.getMode(this));
+        SplitSelectStateController controller =
+                new SplitSelectStateController(this, mHandler, getStateManager(),
+                        getDepthController());
+        overviewPanel.init(mActionsView, controller);
+        mActionsView.updateDimension(getDeviceProfile(), overviewPanel.getLastComputedTaskSize());
+        mActionsView.updateVerticalMargin(DisplayController.getNavigationMode(this));
 
         mAppTransitionManager = new QuickstepTransitionManager(this);
         mAppTransitionManager.registerRemoteAnimations();
+        mAppTransitionManager.registerRemoteTransitions();
 
-        bindService(new Intent(this, TouchInteractionService.class), mTisBinderConnection, 0);
+        mTISBindHelper = new TISBindHelper(this, this::onTISConnected);
+    }
 
+    private void onTISConnected(TISBinder binder) {
+        mTaskbarManager = binder.getTaskbarManager();
+        mTaskbarManager.setActivity(this);
+        mOverviewCommandHelper = binder.getOverviewCommandHelper();
+    }
+
+    @Override
+    public void runOnBindToTouchInteractionService(Runnable r) {
+        mTISBindHelper.runOnBindToTouchInteractionService(r);
+    }
+
+    private void initUnfoldTransitionProgressProvider() {
+        final UnfoldTransitionConfig config = UnfoldTransitionFactory.createConfig(this);
+        if (config.isEnabled()) {
+            mUnfoldTransitionProgressProvider =
+                    UnfoldTransitionFactory.createUnfoldTransitionProgressProvider(
+                            this,
+                            config,
+                            ProxyScreenStatusProvider.INSTANCE,
+                            getSystemService(DeviceStateManager.class),
+                            getSystemService(ActivityManager.class),
+                            getSystemService(SensorManager.class),
+                            getMainThreadHandler(),
+                            getMainExecutor(),
+                            /* backgroundExecutor= */ THREAD_POOL_EXECUTOR,
+                            /* tracingTagPrefix= */ "launcher"
+                    );
+
+            mLauncherUnfoldAnimationController = new LauncherUnfoldAnimationController(
+                    this,
+                    getWindowManager(),
+                    mUnfoldTransitionProgressProvider
+            );
+        }
     }
 
     public void setTaskbarUIController(LauncherTaskbarUIController taskbarUIController) {
         mTaskbarUIController = taskbarUIController;
     }
 
-    public <T extends OverviewActionsView> T getActionsView() {
-        return (T) mActionsView;
+    public @Nullable LauncherTaskbarUIController getTaskbarUIController() {
+        return mTaskbarUIController;
     }
 
-    public SplitPlaceholderView getSplitPlaceholderView() {
-        return mSplitPlaceholderView;
+    public <T extends OverviewActionsView> T getActionsView() {
+        return (T) mActionsView;
     }
 
     @Override
@@ -312,25 +391,20 @@ public abstract class BaseQuickstepLauncher extends Launcher
         out.add(getDepthController());
         out.add(new RecentsViewStateController(this));
         out.add(new BackButtonAlphaHandler(this));
-        out.add(getTaskbarStateHandler());
     }
 
     public DepthController getDepthController() {
         return mDepthController;
     }
 
-    public @Nullable LauncherTaskbarUIController getTaskbarUIController() {
-        return mTaskbarUIController;
-    }
-
-    public TaskbarStateHandler getTaskbarStateHandler() {
-        return mTaskbarStateHandler;
+    @Nullable
+    public UnfoldTransitionProgressProvider getUnfoldTransitionProgressProvider() {
+        return mUnfoldTransitionProgressProvider;
     }
 
     @Override
     public boolean supportsAdaptiveIconAnimation(View clickedView) {
-        return mAppTransitionManager.hasControlRemoteAppTransitionPermission()
-                && FeatureFlags.ADAPTIVE_ICON_WINDOW_ANIM.get();
+        return mAppTransitionManager.hasControlRemoteAppTransitionPermission();
     }
 
     @Override
@@ -370,16 +444,8 @@ public abstract class BaseQuickstepLauncher extends Launcher
 
     @Override
     public float[] getNormalOverviewScaleAndOffset() {
-        return SysUINavigationMode.getMode(this).hasGestures
+        return DisplayController.getNavigationMode(this).hasGestures
                 ? new float[] {1, 1} : new float[] {1.1f, NO_OFFSET};
-    }
-
-    @Override
-    public float getNormalTaskbarScale() {
-        if (mTaskbarUIController != null) {
-            return mTaskbarUIController.getTaskbarScaleOnHome();
-        }
-        return super.getNormalTaskbarScale();
     }
 
     @Override
@@ -408,7 +474,7 @@ public abstract class BaseQuickstepLauncher extends Launcher
     }
 
     public boolean shouldBackButtonBeHidden(LauncherState toState) {
-        Mode mode = SysUINavigationMode.getMode(this);
+        NavigationMode mode = DisplayController.getNavigationMode(this);
         boolean shouldBackButtonBeHidden = mode.hasGestures
                 && toState.hasFlag(FLAG_HIDE_BACK_BUTTON)
                 && hasWindowFocus()
@@ -426,7 +492,7 @@ public abstract class BaseQuickstepLauncher extends Launcher
      */
     private void onLauncherStateOrFocusChanged() {
         boolean shouldBackButtonBeHidden = shouldBackButtonBeHidden(getStateManager().getState());
-        if (SysUINavigationMode.getMode(this) == TWO_BUTTONS) {
+        if (DisplayController.getNavigationMode(this) == TWO_BUTTONS) {
             UiThreadHelper.setBackButtonAlphaAsync(this, SET_BACK_BUTTON_ALPHA,
                     shouldBackButtonBeHidden ? 0f : 1f, true /* animate */);
         }
@@ -436,8 +502,8 @@ public abstract class BaseQuickstepLauncher extends Launcher
     }
 
     @Override
-    public void finishBindingItems(int pageBoundFirst) {
-        super.finishBindingItems(pageBoundFirst);
+    public void finishBindingItems(IntSet pagesBoundFirst) {
+        super.finishBindingItems(pagesBoundFirst);
         // Instantiate and initialize WellbeingModel now that its loading won't interfere with
         // populating workspace.
         // TODO: Find a better place for this
@@ -445,9 +511,35 @@ public abstract class BaseQuickstepLauncher extends Launcher
     }
 
     @Override
+    public void onInitialBindComplete(IntSet boundPages, RunnableList pendingTasks) {
+        pendingTasks.add(() -> {
+            // This is added in pending task as we need to wait for views to be positioned
+            // correctly before registering them for the animation.
+            if (mLauncherUnfoldAnimationController != null) {
+                // This is needed in case items are rebound while the unfold animation is in
+                // progress.
+                mLauncherUnfoldAnimationController.updateRegisteredViewsIfNeeded();
+            }
+        });
+        super.onInitialBindComplete(boundPages, pendingTasks);
+    }
+
+    @Override
     public Stream<SystemShortcut.Factory> getSupportedShortcuts() {
-        return Stream.concat(Stream.of(WellbeingModel.SHORTCUT_FACTORY),
-                super.getSupportedShortcuts());
+        Stream<SystemShortcut.Factory> base = Stream.of(WellbeingModel.SHORTCUT_FACTORY);
+        if (ENABLE_SPLIT_FROM_WORKSPACE.get() && mDeviceProfile.isTablet) {
+            RecentsView recentsView = getOverviewPanel();
+            // TODO: Pull it out of PagedOrentationHandler for split from workspace.
+            List<SplitPositionOption> positions =
+                    recentsView.getPagedOrientationHandler().getSplitPositionOptions(
+                            mDeviceProfile);
+            List<SystemShortcut.Factory<BaseQuickstepLauncher>> splitShortcuts = new ArrayList<>();
+            for (SplitPositionOption position : positions) {
+                splitShortcuts.add(getSplitSelectShortcutByPosition(position));
+            }
+            base = Stream.concat(base, splitShortcuts.stream());
+        }
+        return Stream.concat(base, super.getSupportedShortcuts());
     }
 
     @Override
@@ -460,17 +552,35 @@ public abstract class BaseQuickstepLauncher extends Launcher
             ActivityOptionsCompat.setLauncherSourceInfo(
                     activityOptions.options, mLastTouchUpTime);
         }
-        activityOptions.options.setSplashscreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_ICON);
+        activityOptions.options.setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_ICON);
+        activityOptions.options.setLaunchDisplayId(
+                (v != null && v.getDisplay() != null) ? v.getDisplay().getDisplayId()
+                        : Display.DEFAULT_DISPLAY);
         addLaunchCookie(item, activityOptions.options);
         return activityOptions;
     }
 
     /**
-     * Adds a new launch cookie for the activity launch of the given {@param info} if supported.
+     * Adds a new launch cookie for the activity launch if supported.
+     *
+     * @param info the item info for the launch
+     * @param opts the options to set the launchCookie on.
      */
     public void addLaunchCookie(ItemInfo info, ActivityOptions opts) {
+        IBinder launchCookie = getLaunchCookie(info);
+        if (launchCookie != null) {
+            opts.setLaunchCookie(launchCookie);
+        }
+    }
+
+    /**
+     * Return a new launch cookie for the activity launch if supported.
+     *
+     * @param info the item info for the launch
+     */
+    public IBinder getLaunchCookie(ItemInfo info) {
         if (info == null) {
-            return;
+            return null;
         }
         switch (info.container) {
             case LauncherSettings.Favorites.CONTAINER_DESKTOP:
@@ -484,8 +594,7 @@ public abstract class BaseQuickstepLauncher extends Launcher
                     break;
                 }
                 // Reset any existing launch cookies associated with the cookie
-                opts.setLaunchCookie(ObjectWrapper.wrap(NO_MATCHING_ID));
-                return;
+                return ObjectWrapper.wrap(NO_MATCHING_ID);
         }
         switch (info.itemType) {
             case LauncherSettings.Favorites.ITEM_TYPE_APPLICATION:
@@ -496,13 +605,37 @@ public abstract class BaseQuickstepLauncher extends Launcher
                 break;
             default:
                 // Reset any existing launch cookies associated with the cookie
-                opts.setLaunchCookie(ObjectWrapper.wrap(NO_MATCHING_ID));
-                return;
+                return ObjectWrapper.wrap(NO_MATCHING_ID);
         }
-        opts.setLaunchCookie(ObjectWrapper.wrap(new Integer(info.id)));
+        return ObjectWrapper.wrap(new Integer(info.id));
     }
 
     public void setHintUserWillBeActive() {
         addActivityFlags(ACTIVITY_STATE_USER_WILL_BE_ACTIVE);
+    }
+
+    @Override
+    public void onDisplayInfoChanged(Context context, DisplayController.Info info, int flags) {
+        super.onDisplayInfoChanged(context, info, flags);
+        // When changing screens, force moving to rest state similar to StatefulActivity.onStop, as
+        // StatefulActivity isn't called consistently.
+        if ((flags & CHANGE_ACTIVE_SCREEN) != 0) {
+            getStateManager().moveToRestState();
+        }
+
+        if ((flags & CHANGE_NAVIGATION_MODE) != 0) {
+            getDragLayer().recreateControllers();
+            if (mActionsView != null) {
+                mActionsView.updateVerticalMargin(info.navigationMode);
+            }
+        }
+    }
+
+    @Override
+    public void dump(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
+        super.dump(prefix, fd, writer, args);
+        if (mDepthController != null) {
+            mDepthController.dump(prefix, writer);
+        }
     }
 }

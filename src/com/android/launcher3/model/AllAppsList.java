@@ -36,9 +36,9 @@ import com.android.launcher3.compat.AlphabeticIndexCompat;
 import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.model.BgDataModel.Callbacks;
 import com.android.launcher3.model.data.AppInfo;
+import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.pm.PackageInstallInfo;
 import com.android.launcher3.util.FlagOp;
-import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.SafeCloseable;
 
@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 
 /**
@@ -130,30 +131,58 @@ public class AllAppsList {
      * If the app is already in the list, doesn't add it.
      */
     public void add(AppInfo info, LauncherActivityInfo activityInfo) {
+        add(info, activityInfo, true);
+    }
+
+    public void add(AppInfo info, LauncherActivityInfo activityInfo, boolean loadIcon) {
         if (!mAppFilter.shouldShowApp(info.componentName)) {
             return;
         }
         if (findAppInfo(info.componentName, info.user) != null) {
             return;
         }
-        mIconCache.getTitleAndIcon(info, activityInfo, false /* useLowResIcon */);
-        info.sectionName = mIndex.computeSectionName(info.title);
+        if (loadIcon) {
+            mIconCache.getTitleAndIcon(info, activityInfo, false /* useLowResIcon */);
+            info.sectionName = mIndex.computeSectionName(info.title);
+        } else {
+            info.title = "";
+        }
 
         data.add(info);
         mDataChanged = true;
     }
 
-    public void addPromiseApp(Context context, PackageInstallInfo installInfo) {
-        // only if not yet installed
-        if (!new PackageManagerHelper(context)
-                .isAppInstalled(installInfo.packageName, installInfo.user)) {
-            AppInfo info = new AppInfo(installInfo);
-            mIconCache.getTitleAndIcon(info, info.usingLowResIcon());
-            info.sectionName = mIndex.computeSectionName(info.title);
+    @Nullable
+    public AppInfo addPromiseApp(Context context, PackageInstallInfo installInfo) {
+        return addPromiseApp(context, installInfo, true);
+    }
 
-            data.add(info);
-            mDataChanged = true;
+    @Nullable
+    public AppInfo addPromiseApp(
+            Context context, PackageInstallInfo installInfo, boolean loadIcon) {
+        // only if not yet installed
+        if (new PackageManagerHelper(context)
+                .isAppInstalled(installInfo.packageName, installInfo.user)) {
+            return null;
         }
+        AppInfo promiseAppInfo = new AppInfo(installInfo);
+
+        if (loadIcon) {
+            mIconCache.getTitleAndIcon(promiseAppInfo, promiseAppInfo.usingLowResIcon());
+            promiseAppInfo.sectionName = mIndex.computeSectionName(promiseAppInfo.title);
+        } else {
+            promiseAppInfo.title = "";
+        }
+
+        data.add(promiseAppInfo);
+        mDataChanged = true;
+
+        return promiseAppInfo;
+    }
+
+    public void updateSectionName(AppInfo appInfo) {
+        appInfo.sectionName = mIndex.computeSectionName(appInfo.title);
+
     }
 
     /** Updates the given PackageInstallInfo's associated AppInfo's installation info. */
@@ -229,11 +258,11 @@ public class AllAppsList {
     /**
      * Updates the disabled flags of apps matching {@param matcher} based on {@param op}.
      */
-    public void updateDisabledFlags(ItemInfoMatcher matcher, FlagOp op) {
+    public void updateDisabledFlags(Predicate<ItemInfo> matcher, FlagOp op) {
         final List<AppInfo> data = this.data;
         for (int i = data.size() - 1; i >= 0; i--) {
             AppInfo info = data.get(i);
-            if (matcher.matches(info, info.componentName)) {
+            if (matcher.test(info)) {
                 info.runtimeStatusFlags = op.apply(info.runtimeStatusFlags);
                 mDataChanged = true;
             }

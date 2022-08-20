@@ -27,11 +27,9 @@ import com.android.launcher3.testing.TestProtocol;
 import java.util.regex.Pattern;
 
 /**
- * App icon, whether in all apps or in workspace/
+ * App icon, whether in all apps, workspace or the taskbar.
  */
-public final class AppIcon extends Launchable {
-
-    private static final Pattern LONG_CLICK_EVENT = Pattern.compile("onAllAppsItemLongClick");
+public abstract class AppIcon extends Launchable {
 
     AppIcon(LauncherInstrumentation launcher, UiObject2 icon) {
         super(launcher, icon);
@@ -41,13 +39,19 @@ public final class AppIcon extends Launchable {
         return By.clazz(TextView.class).text(appName).pkg(launcher.getLauncherPackageName());
     }
 
+    static BySelector getAnyAppIconSelector() {
+        return By.clazz(TextView.class);
+    }
+
+    protected abstract Pattern getLongClickEvent();
+
     /**
      * Long-clicks the icon to open its menu.
      */
     public AppIconMenu openMenu() {
         try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
-            return new AppIconMenu(mLauncher, mLauncher.clickAndGet(
-                    mObject, "popup_container", LONG_CLICK_EVENT));
+            return createMenu(mLauncher.clickAndGet(
+                    mObject, /* resName= */ "popup_container", getLongClickEvent()));
         }
     }
 
@@ -56,19 +60,21 @@ public final class AppIcon extends Launchable {
      */
     public AppIconMenu openDeepShortcutMenu() {
         try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
-            return new AppIconMenu(mLauncher, mLauncher.clickAndGet(
-                    mObject, "deep_shortcuts_container", LONG_CLICK_EVENT));
+            return createMenu(mLauncher.clickAndGet(
+                    mObject, /* resName= */ "deep_shortcuts_container", getLongClickEvent()));
         }
     }
 
+    protected abstract AppIconMenu createMenu(UiObject2 menu);
+
     @Override
     protected void addExpectedEventsForLongClick() {
-        mLauncher.expectEvent(TestProtocol.SEQUENCE_MAIN, LONG_CLICK_EVENT);
+        mLauncher.expectEvent(TestProtocol.SEQUENCE_MAIN, getLongClickEvent());
     }
 
     @Override
-    protected String getLongPressIndicator() {
-        return "popup_container";
+    protected void waitForLongPressConfirmation() {
+        mLauncher.waitForLauncherObject("popup_container");
     }
 
     @Override

@@ -18,11 +18,15 @@ package com.android.launcher3.model;
 import static android.app.prediction.AppTargetEvent.ACTION_DISMISS;
 import static android.app.prediction.AppTargetEvent.ACTION_LAUNCH;
 import static android.app.prediction.AppTargetEvent.ACTION_PIN;
+import static android.app.prediction.AppTargetEvent.ACTION_UNDISMISS;
 import static android.app.prediction.AppTargetEvent.ACTION_UNPIN;
 
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_PREDICTION;
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_WIDGETS_PREDICTION;
+import static com.android.launcher3.logger.LauncherAtomExtensions.ExtendedContainers.ContainerCase.DEVICE_SEARCH_RESULT_CONTAINER;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_APP_LAUNCH_TAP;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_DISMISS_PREDICTION_UNDO;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_FOLDER_CONVERTED_TO_ICON;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_HOTSEAT_PREDICTION_PINNED;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ITEM_DRAG_STARTED;
@@ -30,10 +34,13 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ITEM_DROPPED_ON_REMOVE;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ITEM_DROP_COMPLETED;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ITEM_DROP_FOLDER_CREATED;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ONRESUME;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_QUICKSWITCH_LEFT;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_QUICKSWITCH_RIGHT;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_TASK_LAUNCH_SWIPE_DOWN;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_TASK_LAUNCH_TAP;
+import static com.android.launcher3.model.PredictionHelper.isTrackedForHotseatPrediction;
+import static com.android.launcher3.model.PredictionHelper.isTrackedForWidgetPrediction;
 import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 
 import android.annotation.TargetApi;
@@ -55,13 +62,13 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import com.android.launcher3.Utilities;
 import com.android.launcher3.logger.LauncherAtom;
 import com.android.launcher3.logger.LauncherAtom.ContainerInfo;
 import com.android.launcher3.logger.LauncherAtom.FolderContainer;
 import com.android.launcher3.logger.LauncherAtom.HotseatContainer;
 import com.android.launcher3.logger.LauncherAtom.WorkspaceContainer;
 import com.android.launcher3.logging.StatsLogManager.EventEnum;
-import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.shortcuts.ShortcutRequest;
 import com.android.quickstep.logging.StatsLogCompatManager.StatsLogConsumer;
@@ -110,7 +117,8 @@ public class AppEventProducer implements StatsLogConsumer {
     @AnyThread
     private void sendEvent(AppTarget target, LauncherAtom.ItemInfo locationInfo, int eventId,
             int targetPredictor) {
-        if (target != null) {
+        // TODO: remove the running test check when b/231648228 is fixed.
+        if (target != null && !Utilities.IS_RUNNING_IN_TEST_HARNESS) {
             AppTargetEvent event = new AppTargetEvent.Builder(target, eventId)
                     .setLaunchLocation(getContainer(locationInfo))
                     .build();
@@ -134,11 +142,14 @@ public class AppEventProducer implements StatsLogConsumer {
             if (mLastDragItem == null) {
                 return;
             }
+            if (isTrackedForHotseatPrediction(mLastDragItem)) {
+                sendEvent(mLastDragItem, ACTION_UNPIN, CONTAINER_HOTSEAT_PREDICTION);
+            }
             if (isTrackedForHotseatPrediction(atomInfo)) {
                 sendEvent(atomInfo, ACTION_PIN, CONTAINER_HOTSEAT_PREDICTION);
             }
-            if (isTrackedForHotseatPrediction(mLastDragItem)) {
-                sendEvent(mLastDragItem, ACTION_UNPIN, CONTAINER_HOTSEAT_PREDICTION);
+            if (isTrackedForWidgetPrediction(atomInfo)) {
+                sendEvent(atomInfo, ACTION_PIN, CONTAINER_WIDGETS_PREDICTION);
             }
             mLastDragItem = null;
         } else if (event == LAUNCHER_ITEM_DROP_FOLDER_CREATED) {
@@ -157,10 +168,20 @@ public class AppEventProducer implements StatsLogConsumer {
             if (mLastDragItem != null && isTrackedForHotseatPrediction(mLastDragItem)) {
                 sendEvent(mLastDragItem, ACTION_UNPIN, CONTAINER_HOTSEAT_PREDICTION);
             }
+            if (mLastDragItem != null && isTrackedForWidgetPrediction(mLastDragItem)) {
+                sendEvent(mLastDragItem, ACTION_UNPIN, CONTAINER_WIDGETS_PREDICTION);
+            }
         } else if (event == LAUNCHER_HOTSEAT_PREDICTION_PINNED) {
             if (isTrackedForHotseatPrediction(atomInfo)) {
                 sendEvent(atomInfo, ACTION_PIN, CONTAINER_HOTSEAT_PREDICTION);
             }
+        } else if (event == LAUNCHER_ONRESUME) {
+            AppTarget target = new AppTarget.Builder(new AppTargetId("launcher:launcher"),
+                    mContext.getPackageName(), Process.myUserHandle())
+                    .build();
+            sendEvent(target, atomInfo, ACTION_LAUNCH, CONTAINER_PREDICTION);
+        } else if (event == LAUNCHER_DISMISS_PREDICTION_UNDO) {
+            sendEvent(atomInfo, ACTION_UNDISMISS, CONTAINER_HOTSEAT_PREDICTION);
         }
     }
 
@@ -257,9 +278,6 @@ public class AppEventProducer implements StatsLogConsumer {
             case ALL_APPS_CONTAINER: {
                 return "all-apps";
             }
-            case SEARCH_RESULT_CONTAINER: {
-                return "search-results";
-            }
             case PREDICTED_HOTSEAT_CONTAINER: {
                 return "predictions/hotseat";
             }
@@ -279,6 +297,15 @@ public class AppEventProducer implements StatsLogConsumer {
                 }
                 return "folder";
             }
+            case SEARCH_RESULT_CONTAINER:
+                return "search-results";
+            case EXTENDED_CONTAINERS: {
+                if (ci.getExtendedContainers().getContainerCase()
+                        == DEVICE_SEARCH_RESULT_CONTAINER) {
+                    return "search-results";
+                }
+            }
+            default: // fall out
         }
         return "";
     }
@@ -295,20 +322,5 @@ public class AppEventProducer implements StatsLogConsumer {
     private static ComponentName parseNullable(String componentNameString) {
         return TextUtils.isEmpty(componentNameString)
                 ? null : ComponentName.unflattenFromString(componentNameString);
-    }
-
-    /**
-     * Helper method to determine if {@link ItemInfo} should be tracked and reported to predictors
-     */
-    private static boolean isTrackedForHotseatPrediction(LauncherAtom.ItemInfo info) {
-        ContainerInfo ci = info.getContainerInfo();
-        switch (ci.getContainerCase()) {
-            case HOTSEAT:
-                return true;
-            case WORKSPACE:
-                return ci.getWorkspace().getPageIndex() == 0;
-            default:
-                return false;
-        }
     }
 }

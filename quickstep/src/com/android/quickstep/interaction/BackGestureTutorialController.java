@@ -18,9 +18,8 @@ package com.android.quickstep.interaction;
 import static com.android.quickstep.interaction.TutorialController.TutorialType.BACK_NAVIGATION;
 import static com.android.quickstep.interaction.TutorialController.TutorialType.BACK_NAVIGATION_COMPLETE;
 
+import android.annotation.LayoutRes;
 import android.graphics.PointF;
-
-import androidx.appcompat.content.res.AppCompatResources;
 
 import com.android.launcher3.R;
 import com.android.quickstep.interaction.EdgeBackGestureHandler.BackGestureResult;
@@ -34,23 +33,49 @@ final class BackGestureTutorialController extends TutorialController {
     }
 
     @Override
-    public Integer getIntroductionTitle() {
+    public int getIntroductionTitle() {
         return R.string.back_gesture_intro_title;
     }
 
     @Override
-    public Integer getIntroductionSubtitle() {
+    public int getIntroductionSubtitle() {
         return R.string.back_gesture_intro_subtitle;
     }
 
     @Override
-    protected int getMockAppTaskThumbnailResId(boolean forDarkMode) {
-        return R.drawable.mock_conversation;
+    public int getSpokenIntroductionSubtitle() {
+        return R.string.back_gesture_spoken_intro_subtitle;
+    }
+
+    @Override
+    public int getSuccessFeedbackSubtitle() {
+        return mTutorialFragment.isAtFinalStep()
+                ? R.string.back_gesture_feedback_complete_without_follow_up
+                : R.string.back_gesture_feedback_complete_with_overview_follow_up;
+    }
+
+    @Override
+    protected int getMockAppTaskLayoutResId() {
+        return getMockAppTaskCurrentPageLayoutResId();
+    }
+
+    @LayoutRes
+    int getMockAppTaskCurrentPageLayoutResId() {
+        return mTutorialFragment.isLargeScreen()
+                ? R.layout.gesture_tutorial_tablet_mock_conversation
+                : R.layout.gesture_tutorial_mock_conversation;
+    }
+
+    @LayoutRes
+    int getMockAppTaskPreviousPageLayoutResId() {
+        return mTutorialFragment.isLargeScreen()
+                ? R.layout.gesture_tutorial_tablet_mock_conversation_list
+                : R.layout.gesture_tutorial_mock_conversation_list;
     }
 
     @Override
     public void onBackGestureAttempted(BackGestureResult result) {
-        if (mGestureCompleted) {
+        if (isGestureCompleted()) {
             return;
         }
         switch (mTutorialType) {
@@ -70,14 +95,9 @@ final class BackGestureTutorialController extends TutorialController {
         switch (result) {
             case BACK_COMPLETED_FROM_LEFT:
             case BACK_COMPLETED_FROM_RIGHT:
-                mTutorialFragment.releaseGestureVideoView();
-                hideFeedback(true);
-                mFakeTaskView.setBackground(AppCompatResources.getDrawable(mContext,
-                        R.drawable.mock_conversations_list));
-                int subtitleResId = mTutorialFragment.isAtFinalStep()
-                        ? R.string.back_gesture_feedback_complete_without_follow_up
-                        : R.string.back_gesture_feedback_complete_with_overview_follow_up;
-                showFeedback(subtitleResId, true);
+                mTutorialFragment.releaseFeedbackAnimation();
+                updateFakeAppTaskViewLayout(getMockAppTaskPreviousPageLayoutResId());
+                showSuccessFeedback();
                 break;
             case BACK_CANCELLED_FROM_LEFT:
             case BACK_CANCELLED_FROM_RIGHT:
@@ -94,7 +114,7 @@ final class BackGestureTutorialController extends TutorialController {
 
     @Override
     public void onNavBarGestureAttempted(NavBarGestureResult result, PointF finalVelocity) {
-        if (mGestureCompleted) {
+        if (isGestureCompleted()) {
             return;
         }
         if (mTutorialType == BACK_NAVIGATION_COMPLETE) {
@@ -102,7 +122,22 @@ final class BackGestureTutorialController extends TutorialController {
                 mTutorialFragment.closeTutorial();
             }
         } else if (mTutorialType == BACK_NAVIGATION) {
-            showFeedback(R.string.back_gesture_feedback_swipe_in_nav_bar);
+            switch (result) {
+                case HOME_NOT_STARTED_TOO_FAR_FROM_EDGE:
+                case OVERVIEW_NOT_STARTED_TOO_FAR_FROM_EDGE:
+                case HOME_OR_OVERVIEW_CANCELLED:
+                    showFeedback(R.string.back_gesture_feedback_swipe_too_far_from_edge);
+                    break;
+                case HOME_GESTURE_COMPLETED:
+                case OVERVIEW_GESTURE_COMPLETED:
+                case HOME_OR_OVERVIEW_NOT_STARTED_WRONG_SWIPE_DIRECTION:
+                case ASSISTANT_COMPLETED:
+                case ASSISTANT_NOT_STARTED_BAD_ANGLE:
+                case ASSISTANT_NOT_STARTED_SWIPE_TOO_SHORT:
+                default:
+                    showFeedback(R.string.back_gesture_feedback_swipe_in_nav_bar);
+
+            }
         }
     }
 }

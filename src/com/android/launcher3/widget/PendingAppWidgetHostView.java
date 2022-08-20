@@ -17,7 +17,7 @@
 package com.android.launcher3.widget;
 
 import static com.android.launcher3.graphics.PreloadIconDrawable.newPendingIcon;
-import static com.android.launcher3.model.data.PackageItemInfo.CONVERSATIONS;
+import static com.android.launcher3.icons.FastBitmapDrawable.getDisabledColorFilter;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -89,8 +89,8 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
         setOnClickListener(ItemClickHandler.INSTANCE);
 
         if (info.pendingItemInfo == null) {
-            info.pendingItemInfo = new PackageItemInfo(info.providerName.getPackageName());
-            info.pendingItemInfo.user = info.user;
+            info.pendingItemInfo = new PackageItemInfo(info.providerName.getPackageName(),
+                    info.user);
             cache.updateIconInBackground(this, info.pendingItemInfo);
         } else {
             reapplyItemInfo(info.pendingItemInfo);
@@ -159,8 +159,7 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
                     disabledIcon.setIsDisabled(true);
                     mCenterDrawable = disabledIcon;
                 } else {
-                    widgetCategoryIcon.setColorFilter(
-                            FastBitmapDrawable.getDisabledFColorFilter(/* disabledAlpha= */ 1f));
+                    widgetCategoryIcon.setColorFilter(getDisabledColorFilter());
                     mCenterDrawable = widgetCategoryIcon;
                 }
                 mSettingIconDrawable = null;
@@ -338,10 +337,9 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
      */
     @Nullable
     private Drawable getWidgetCategoryIcon() {
-        switch (mInfo.pendingItemInfo.category) {
-            case CONVERSATIONS:
-                return getContext().getDrawable(R.drawable.ic_conversations_widget_category);
+        if (mInfo.pendingItemInfo.widgetCategory == WidgetSections.NO_CATEGORY) {
+            return null;
         }
-        return null;
+        return mInfo.pendingItemInfo.newIcon(getContext());
     }
 }

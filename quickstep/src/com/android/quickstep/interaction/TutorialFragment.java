@@ -15,20 +15,27 @@
  */
 package com.android.quickstep.interaction;
 
+import static android.view.View.NO_ID;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Insets;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.widget.ImageView;
 
@@ -37,30 +44,46 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
+import com.android.launcher3.DeviceProfile;
+import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.R;
-import com.android.launcher3.Utilities;
+import com.android.launcher3.logging.StatsLogManager;
 import com.android.quickstep.interaction.TutorialController.TutorialType;
+
+import java.util.Set;
 
 abstract class TutorialFragment extends Fragment implements OnTouchListener {
 
     private static final String LOG_TAG = "TutorialFragment";
     static final String KEY_TUTORIAL_TYPE = "tutorial_type";
+    static final String KEY_GESTURE_COMPLETE = "gesture_complete";
+
+    private static final String TUTORIAL_SKIPPED_PREFERENCE_KEY = "pref_gestureTutorialSkipped";
+    private static final String COMPLETED_TUTORIAL_STEPS_PREFERENCE_KEY =
+            "pref_completedTutorialSteps";
 
     TutorialType mTutorialType;
+    boolean mGestureComplete = false;
     @Nullable TutorialController mTutorialController = null;
     RootSandboxLayout mRootView;
+    View mFingerDotView;
+    View mFakePreviousTaskView;
     EdgeBackGestureHandler mEdgeBackGestureHandler;
     NavBarGestureHandler mNavBarGestureHandler;
-    private ImageView mFeedbackVideoView;
-    private ImageView mGestureVideoView;
+    private ImageView mEdgeGestureVideoView;
 
-    @Nullable private AnimatedVectorDrawable mTutorialAnimation = null;
-    @Nullable private AnimatedVectorDrawable mGestureAnimation = null;
+    @Nullable private Animator mGestureAnimation = null;
+    @Nullable private AnimatedVectorDrawable mEdgeAnimation = null;
     private boolean mIntroductionShown = false;
 
     private boolean mFragmentStopped = false;
 
-    public static TutorialFragment newInstance(TutorialType tutorialType) {
+    private DeviceProfile mDeviceProfile;
+    private boolean mIsLargeScreen;
+    private boolean mIsFoldable;
+
+    public static TutorialFragment newInstance(
+            TutorialType tutorialType, boolean gestureComplete) {
         TutorialFragment fragment = getFragmentForTutorialType(tutorialType);
         if (fragment == null) {
             fragment = new BackGestureTutorialFragment();
@@ -69,6 +92,7 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
 
         Bundle args = new Bundle();
         args.putSerializable(KEY_TUTORIAL_TYPE, tutorialType);
+        args.putBoolean(KEY_GESTURE_COMPLETE, gestureComplete);
         fragment.setArguments(args);
         return fragment;
     }
@@ -96,22 +120,24 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
         return null;
     }
 
-    @Nullable Integer getFeedbackVideoResId(boolean forDarkMode) {
-        return null;
-    }
-
-    @Nullable Integer getGestureVideoResId() {
+    @Nullable Integer getEdgeAnimationResId() {
         return null;
     }
 
     @Nullable
-    AnimatedVectorDrawable getTutorialAnimation() {
-        return mTutorialAnimation;
-    }
-
-    @Nullable
-    AnimatedVectorDrawable getGestureAnimation() {
+    Animator getGestureAnimation() {
         return mGestureAnimation;
+    }
+
+    @Nullable
+    AnimatedVectorDrawable getEdgeAnimation() {
+        return mEdgeAnimation;
+    }
+
+
+    @Nullable
+    protected Animator createGestureAnimation() {
+        return null;
     }
 
     abstract TutorialController createController(TutorialType type);
@@ -123,8 +149,26 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
         super.onCreate(savedInstanceState);
         Bundle args = savedInstanceState != null ? savedInstanceState : getArguments();
         mTutorialType = (TutorialType) args.getSerializable(KEY_TUTORIAL_TYPE);
+        mGestureComplete = args.getBoolean(KEY_GESTURE_COMPLETE, false);
         mEdgeBackGestureHandler = new EdgeBackGestureHandler(getContext());
         mNavBarGestureHandler = new NavBarGestureHandler(getContext());
+
+        mDeviceProfile = InvariantDeviceProfile.INSTANCE.get(getContext())
+                .getDeviceProfile(getContext());
+        mIsLargeScreen = mDeviceProfile.isTablet;
+        mIsFoldable = mDeviceProfile.isTwoPanels;
+    }
+
+    public boolean isLargeScreen() {
+        return mIsLargeScreen;
+    }
+
+    public boolean isFoldable() {
+        return mIsFoldable;
+    }
+
+    DeviceProfile getDeviceProfile() {
+        return mDeviceProfile;
     }
 
     @Override
@@ -147,121 +191,148 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
             return insets;
         });
         mRootView.setOnTouchListener(this);
-        mFeedbackVideoView = mRootView.findViewById(R.id.gesture_tutorial_feedback_video);
-        mGestureVideoView = mRootView.findViewById(R.id.gesture_tutorial_gesture_video);
+        mEdgeGestureVideoView = mRootView.findViewById(R.id.gesture_tutorial_edge_gesture_video);
+        mFingerDotView = mRootView.findViewById(R.id.gesture_tutorial_finger_dot);
+        mFakePreviousTaskView = mRootView.findViewById(
+                R.id.gesture_tutorial_fake_previous_task_view);
         return mRootView;
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        releaseFeedbackVideoView();
-        releaseGestureVideoView();
+        releaseFeedbackAnimation();
         mFragmentStopped = true;
     }
 
     void initializeFeedbackVideoView() {
-        if (!updateFeedbackVideo()) {
+        if (!updateFeedbackAnimation() || mTutorialController == null) {
             return;
         }
 
-        if (!mIntroductionShown && mTutorialController != null) {
-            Integer introTileStringResId = mTutorialController.getIntroductionTitle();
-            Integer introSubtitleResId = mTutorialController.getIntroductionSubtitle();
-            if (introTileStringResId != null && introSubtitleResId != null) {
-                mTutorialController.showFeedback(
-                        introTileStringResId, introSubtitleResId, false, true);
-                mIntroductionShown = true;
+        if (isGestureComplete()) {
+            mTutorialController.showSuccessFeedback();
+        } else if (!mIntroductionShown) {
+            int introTitleResId = mTutorialController.getIntroductionTitle();
+            int introSubtitleResId = mTutorialController.getIntroductionSubtitle();
+            if (introTitleResId == NO_ID) {
+                // Allow crash since this should never be reached with a tutorial controller used in
+                // production.
+                Log.e(LOG_TAG,
+                        "Cannot show introduction feedback for tutorial step: " + mTutorialType
+                                + ", no introduction feedback title",
+                        new IllegalStateException());
             }
+            if (introTitleResId == NO_ID) {
+                // Allow crash since this should never be reached with a tutorial controller used in
+                // production.
+                Log.e(LOG_TAG,
+                        "Cannot show introduction feedback for tutorial step: " + mTutorialType
+                                + ", no introduction feedback subtitle",
+                        new IllegalStateException());
+            }
+            mTutorialController.showFeedback(
+                    introTitleResId,
+                    introSubtitleResId,
+                    mTutorialController.getSpokenIntroductionSubtitle(),
+                    false,
+                    true);
+            mIntroductionShown = true;
         }
     }
 
-    boolean updateFeedbackVideo() {
-        if (getContext() == null) {
+    boolean updateFeedbackAnimation() {
+        if (!updateEdgeAnimation()) {
             return false;
         }
-        Integer feedbackVideoResId = getFeedbackVideoResId(Utilities.isDarkTheme(getContext()));
-
-        if (feedbackVideoResId == null || !updateGestureVideo()) {
-            return false;
-        }
-        mTutorialAnimation = (AnimatedVectorDrawable) getContext().getDrawable(feedbackVideoResId);
-
-        if (mTutorialAnimation != null) {
-            mTutorialAnimation.registerAnimationCallback(new Animatable2.AnimationCallback() {
-
-                @Override
-                public void onAnimationStart(Drawable drawable) {
-                    super.onAnimationStart(drawable);
-
-                    mFeedbackVideoView.setVisibility(View.VISIBLE);
-                }
-
-                @Override
-                public void onAnimationEnd(Drawable drawable) {
-                    super.onAnimationEnd(drawable);
-
-                    releaseFeedbackVideoView();
-                }
-            });
-        }
-        mFeedbackVideoView.setImageDrawable(mTutorialAnimation);
-
-        return true;
-    }
-
-    boolean updateGestureVideo() {
-        Integer gestureVideoResId = getGestureVideoResId();
-        if (gestureVideoResId == null || getContext() == null) {
-            return false;
-        }
-        mGestureAnimation = (AnimatedVectorDrawable) getContext().getDrawable(gestureVideoResId);
+        mGestureAnimation = createGestureAnimation();
 
         if (mGestureAnimation != null) {
-            mGestureAnimation.registerAnimationCallback(new Animatable2.AnimationCallback() {
+            mGestureAnimation.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    super.onAnimationStart(animation);
+                    mFingerDotView.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    super.onAnimationCancel(animation);
+                    mFingerDotView.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    mFingerDotView.setVisibility(View.GONE);
+                }
+            });
+        }
+
+        return mGestureAnimation != null;
+    }
+
+    boolean updateEdgeAnimation() {
+        Integer edgeAnimationResId = getEdgeAnimationResId();
+        if (edgeAnimationResId == null || getContext() == null) {
+            return false;
+        }
+        mEdgeAnimation = (AnimatedVectorDrawable) getContext().getDrawable(edgeAnimationResId);
+
+        if (mEdgeAnimation != null) {
+            mEdgeAnimation.registerAnimationCallback(new Animatable2.AnimationCallback() {
 
                 @Override
                 public void onAnimationEnd(Drawable drawable) {
                     super.onAnimationEnd(drawable);
 
-                    mGestureAnimation.start();
+                    mEdgeAnimation.start();
                 }
             });
         }
-        mGestureVideoView.setImageDrawable(mGestureAnimation);
+        mEdgeGestureVideoView.setImageDrawable(mEdgeAnimation);
 
-        return true;
+        return mEdgeAnimation != null;
     }
 
-    void releaseFeedbackVideoView() {
-        if (mTutorialAnimation != null && mTutorialAnimation.isRunning()) {
-            mTutorialAnimation.stop();
+    void releaseFeedbackAnimation() {
+        if (mTutorialController != null && !mTutorialController.isGestureCompleted()) {
+            mTutorialController.cancelQueuedGestureAnimation();
         }
-
-        mFeedbackVideoView.setVisibility(View.GONE);
-    }
-
-    void releaseGestureVideoView() {
         if (mGestureAnimation != null && mGestureAnimation.isRunning()) {
-            mGestureAnimation.stop();
+            mGestureAnimation.cancel();
+        }
+        if (mEdgeAnimation != null && mEdgeAnimation.isRunning()) {
+            mEdgeAnimation.stop();
         }
 
-        mGestureVideoView.setVisibility(View.GONE);
+        mEdgeGestureVideoView.setVisibility(View.GONE);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        releaseFeedbackAnimation();
         if (mFragmentStopped && mTutorialController != null) {
             mTutorialController.showFeedback();
             mFragmentStopped = false;
         } else {
-            changeController(mTutorialType);
+            mRootView.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            changeController(mTutorialType);
+                            mRootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        }
+                    });
         }
     }
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
+        if (mTutorialController != null && !isGestureComplete()) {
+            mTutorialController.hideFeedback();
+        }
         // Note: Using logical-or to ensure both functions get called.
         return mEdgeBackGestureHandler.onTouch(view, motionEvent)
                 | mNavBarGestureHandler.onTouch(view, motionEvent);
@@ -274,6 +345,10 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
     }
 
     void onAttachedToWindow() {
+        StatsLogManager statsLogManager = getStatsLogManager();
+        if (statsLogManager != null) {
+            logTutorialStepShown(statsLogManager);
+        }
         mEdgeBackGestureHandler.setViewGroupParent(getRootView());
     }
 
@@ -292,6 +367,7 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
         mEdgeBackGestureHandler.registerBackGestureAttemptCallback(mTutorialController);
         mNavBarGestureHandler.registerNavBarGestureAttemptCallback(mTutorialController);
         mTutorialType = tutorialType;
+
         initializeFeedbackVideoView();
     }
 
@@ -306,8 +382,22 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
     }
 
     void continueTutorial() {
-        GestureSandboxActivity gestureSandboxActivity = getGestureSandboxActivity();
+        SharedPreferences sharedPrefs = getSharedPreferences();
+        if (sharedPrefs != null) {
+            Set<String> updatedCompletedSteps = new ArraySet<>(sharedPrefs.getStringSet(
+                    COMPLETED_TUTORIAL_STEPS_PREFERENCE_KEY, new ArraySet<>()));
 
+            updatedCompletedSteps.add(mTutorialType.toString());
+
+            sharedPrefs.edit().putStringSet(
+                    COMPLETED_TUTORIAL_STEPS_PREFERENCE_KEY, updatedCompletedSteps).apply();
+        }
+        StatsLogManager statsLogManager = getStatsLogManager();
+        if (statsLogManager != null) {
+            logTutorialStepCompleted(statsLogManager);
+        }
+
+        GestureSandboxActivity gestureSandboxActivity = getGestureSandboxActivity();
         if (gestureSandboxActivity == null) {
             closeTutorial();
             return;
@@ -316,6 +406,21 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
     }
 
     void closeTutorial() {
+        closeTutorial(false);
+    }
+
+    void closeTutorial(boolean tutorialSkipped) {
+        if (tutorialSkipped) {
+            SharedPreferences sharedPrefs = getSharedPreferences();
+            if (sharedPrefs != null) {
+                sharedPrefs.edit().putBoolean(TUTORIAL_SKIPPED_PREFERENCE_KEY, true).apply();
+            }
+            StatsLogManager statsLogManager = getStatsLogManager();
+            if (statsLogManager != null) {
+                statsLogManager.logger().log(
+                        StatsLogManager.LauncherEvent.LAUNCHER_GESTURE_TUTORIAL_SKIPPED);
+            }
+        }
         FragmentActivity activity = getActivity();
         if (activity != null) {
             activity.setResult(Activity.RESULT_OK);
@@ -343,10 +448,33 @@ abstract class TutorialFragment extends Fragment implements OnTouchListener {
         return getCurrentStep() == getNumSteps();
     }
 
+    boolean isGestureComplete() {
+        return mGestureComplete
+                || (mTutorialController != null && mTutorialController.isGestureCompleted());
+    }
+
+    abstract void logTutorialStepShown(@NonNull StatsLogManager statsLogManager);
+
+    abstract void logTutorialStepCompleted(@NonNull StatsLogManager statsLogManager);
+
     @Nullable
     private GestureSandboxActivity getGestureSandboxActivity() {
         Context context = getContext();
 
         return context instanceof GestureSandboxActivity ? (GestureSandboxActivity) context : null;
+    }
+
+    @Nullable
+    private StatsLogManager getStatsLogManager() {
+        GestureSandboxActivity activity = getGestureSandboxActivity();
+
+        return activity != null ? activity.getStatsLogManager() : null;
+    }
+
+    @Nullable
+    private SharedPreferences getSharedPreferences() {
+        GestureSandboxActivity activity = getGestureSandboxActivity();
+
+        return activity != null ? activity.getSharedPrefs() : null;
     }
 }

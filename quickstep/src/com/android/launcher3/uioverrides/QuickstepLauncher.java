@@ -52,10 +52,10 @@ import com.android.launcher3.anim.AnimatorPlaybackController;
 import com.android.launcher3.appprediction.PredictionRowView;
 import com.android.launcher3.hybridhotseat.HotseatPredictionController;
 import com.android.launcher3.logging.InstanceId;
+import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.logging.StatsLogManager.StatsLogger;
 import com.android.launcher3.model.BgDataModel.FixedContainerItems;
 import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.popup.SystemShortcut;
 import com.android.launcher3.statemanager.StateManager.AtomicAnimationFactory;
 import com.android.launcher3.uioverrides.states.QuickstepAtomicAnimationFactory;
@@ -68,13 +68,13 @@ import com.android.launcher3.uioverrides.touchcontrollers.StatusBarTouchControll
 import com.android.launcher3.uioverrides.touchcontrollers.TaskViewTouchController;
 import com.android.launcher3.uioverrides.touchcontrollers.TransposedQuickSwitchTouchController;
 import com.android.launcher3.uioverrides.touchcontrollers.TwoButtonNavbarTouchController;
-import com.android.launcher3.util.OnboardingPrefs;
+import com.android.launcher3.util.DisplayController;
+import com.android.launcher3.util.DisplayController.NavigationMode;
+import com.android.launcher3.util.PendingRequestArgs;
 import com.android.launcher3.util.TouchController;
 import com.android.launcher3.util.UiThreadHelper;
 import com.android.launcher3.util.UiThreadHelper.AsyncCommand;
 import com.android.launcher3.widget.LauncherAppWidgetHost;
-import com.android.quickstep.SysUINavigationMode;
-import com.android.quickstep.SysUINavigationMode.Mode;
 import com.android.quickstep.SystemUiProxy;
 import com.android.quickstep.TaskUtils;
 import com.android.quickstep.util.QuickstepOnboardingPrefs;
@@ -84,8 +84,8 @@ import com.android.quickstep.views.TaskView;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class QuickstepLauncher extends BaseQuickstepLauncher {
@@ -107,7 +107,8 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
     }
 
     @Override
-    protected void logAppLaunch(ItemInfo info, InstanceId instanceId) {
+    public void logAppLaunch(StatsLogManager statsLogManager, ItemInfo info,
+            InstanceId instanceId) {
         // If the app launch is from any of the surfaces in AllApps then add the InstanceId from
         // LiveSearchManager to recreate the AllApps session on the server side.
         if (mAllAppsSessionLogId != null && ALL_APPS.equals(
@@ -115,8 +116,7 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
             instanceId = mAllAppsSessionLogId;
         }
 
-        StatsLogger logger = getStatsLogManager()
-                .logger().withItemInfo(info).withInstanceId(instanceId);
+        StatsLogger logger = statsLogManager.logger().withItemInfo(info).withInstanceId(instanceId);
 
         if (mAllAppsPredictions != null
                 && (info.itemType == ITEM_TYPE_APPLICATION
@@ -140,6 +140,15 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
     }
 
     @Override
+    protected void completeAddShortcut(Intent data, int container, int screenId, int cellX,
+            int cellY, PendingRequestArgs args) {
+        if (container == CONTAINER_HOTSEAT) {
+            mHotseatPredictionController.onDeferredDrop(cellX, cellY);
+        }
+        super.completeAddShortcut(data, container, screenId, cellX, cellY, args);
+    }
+
+    @Override
     protected LauncherAccessibilityDelegate createAccessibilityDelegate() {
         return new QuickstepAccessibilityDelegate(this);
     }
@@ -152,7 +161,7 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
     }
 
     @Override
-    protected OnboardingPrefs createOnboardingPrefs(SharedPreferences sharedPrefs) {
+    protected QuickstepOnboardingPrefs createOnboardingPrefs(SharedPreferences sharedPrefs) {
         return new QuickstepOnboardingPrefs(this, sharedPrefs);
     }
 
@@ -166,7 +175,11 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
     public boolean startActivitySafely(View v, Intent intent, ItemInfo item) {
         // Only pause is taskbar controller is not present
         mHotseatPredictionController.setPauseUIUpdate(getTaskbarUIController() == null);
-        return super.startActivitySafely(v, intent, item);
+        boolean started = super.startActivitySafely(v, intent, item);
+        if (getTaskbarUIController() == null && !started) {
+            mHotseatPredictionController.setPauseUIUpdate(false);
+        }
+        return started;
     }
 
     @Override
@@ -207,8 +220,7 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
                     (getActivityFlags() & ACTIVITY_STATE_USER_WILL_BE_ACTIVE) != 0;
             boolean visible = (state == NORMAL || state == OVERVIEW)
                     && (willUserBeActive || isUserActive())
-                    && !profile.isVerticalBarLayout()
-                    && profile.isPhone && !profile.isLandscape;
+                    && !profile.isVerticalBarLayout();
             UiThreadHelper.runAsyncCommand(this, SET_SHELF_HEIGHT, visible ? 1 : 0,
                     profile.hotseatBarSizePx);
         }
@@ -221,8 +233,10 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
     public void bindExtraContainerItems(FixedContainerItems item) {
         if (item.containerId == Favorites.CONTAINER_PREDICTION) {
             mAllAppsPredictions = item;
-            getAppsView().getFloatingHeaderView().findFixedRowByType(PredictionRowView.class)
-                    .setPredictedApps(item.items);
+            PredictionRowView<?> predictionRowView =
+                    getAppsView().getFloatingHeaderView().findFixedRowByType(
+                            PredictionRowView.class);
+            predictionRowView.setPredictedApps(item.items);
         } else if (item.containerId == Favorites.CONTAINER_HOTSEAT_PREDICTION) {
             mHotseatPredictionController.setPredictedItems(item);
         } else if (item.containerId == Favorites.CONTAINER_WIDGETS_PREDICTION) {
@@ -231,12 +245,9 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
     }
 
     @Override
-    public void bindWorkspaceItemsChanged(List<WorkspaceItemInfo> updated) {
-        super.bindWorkspaceItemsChanged(updated);
-        if (getTaskbarUIController() != null && updated.stream()
-                .filter(w -> w.container == CONTAINER_HOTSEAT).findFirst().isPresent()) {
-            getTaskbarUIController().onHotseatUpdated();
-        }
+    public void bindWorkspaceComponentsRemoved(Predicate<ItemInfo> matcher) {
+        super.bindWorkspaceComponentsRemoved(matcher);
+        mHotseatPredictionController.onModelItemsRemoved(matcher);
     }
 
     @Override
@@ -251,7 +262,7 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
 
         switch (state.ordinal) {
             case HINT_STATE_ORDINAL: {
-                Workspace workspace = getWorkspace();
+                Workspace<?> workspace = getWorkspace();
                 getStateManager().goToState(NORMAL);
                 if (workspace.getNextPage() != Workspace.DEFAULT_PAGE) {
                     workspace.post(workspace::moveToDefaultScreen);
@@ -291,7 +302,7 @@ public class QuickstepLauncher extends BaseQuickstepLauncher {
 
     @Override
     public TouchController[] createTouchControllers() {
-        Mode mode = SysUINavigationMode.getMode(this);
+        NavigationMode mode = DisplayController.getNavigationMode(this);
 
         ArrayList<TouchController> list = new ArrayList<>();
         list.add(getDragController());

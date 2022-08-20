@@ -95,6 +95,12 @@ public class LauncherSettings {
         public static final int ITEM_TYPE_DEEP_SHORTCUT = 6;
 
         /**
+         * The favroite is a search action
+         */
+        public static final int ITEM_TYPE_SEARCH_ACTION = 7;
+
+
+        /**
          * Type of the item is recents task.
          * TODO(hyunyoungs): move constants not related to Favorites DB to a better location.
          */
@@ -199,6 +205,7 @@ public class LauncherSettings {
         public static final int CONTAINER_WIDGETS_TRAY = -105;
         public static final int CONTAINER_BOTTOM_WIDGETS_TRAY = -112;
         public static final int CONTAINER_PIN_WIDGETS = -113;
+        public static final int CONTAINER_WALLPAPERS = -114;
         // Represents search results view.
         public static final int CONTAINER_SEARCH_RESULTS = -106;
         public static final int CONTAINER_SHORTCUTS = -107;
@@ -366,6 +373,12 @@ public class LauncherSettings {
         public static final String METHOD_NEW_SCREEN_ID = "generate_new_screen_id";
 
         public static final String METHOD_CREATE_EMPTY_DB = "create_empty_db";
+
+        public static final String METHOD_SET_USE_TEST_WORKSPACE_LAYOUT_FLAG =
+                "set_use_test_workspace_layout_flag";
+
+        public static final String METHOD_CLEAR_USE_TEST_WORKSPACE_LAYOUT_FLAG =
+                "clear_use_test_workspace_layout_flag";
 
         public static final String METHOD_LOAD_DEFAULT_FAVORITES = "load_default_favorites";
 

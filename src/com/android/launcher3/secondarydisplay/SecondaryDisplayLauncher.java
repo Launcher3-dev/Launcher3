@@ -30,27 +30,19 @@ import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.R;
-import com.android.launcher3.allapps.AllAppsContainerView;
+import com.android.launcher3.allapps.ActivityAllAppsContainerView;
 import com.android.launcher3.model.BgDataModel;
+import com.android.launcher3.model.StringCache;
 import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.ItemInfoWithIcon;
-import com.android.launcher3.model.data.LauncherAppWidgetInfo;
-import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.popup.PopupContainerWithArrow;
 import com.android.launcher3.popup.PopupDataProvider;
 import com.android.launcher3.util.ComponentKey;
-import com.android.launcher3.util.IntArray;
-import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.util.Themes;
-import com.android.launcher3.util.ViewOnDrawExecutor;
 import com.android.launcher3.views.BaseDragLayer;
-import com.android.launcher3.widget.model.WidgetsListBaseEntry;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Launcher activity for secondary displays
@@ -61,12 +53,14 @@ public class SecondaryDisplayLauncher extends BaseDraggingActivity
     private LauncherModel mModel;
 
     private BaseDragLayer mDragLayer;
-    private AllAppsContainerView mAppsView;
+    private ActivityAllAppsContainerView<SecondaryDisplayLauncher> mAppsView;
     private View mAppsButton;
 
     private PopupDataProvider mPopupDataProvider;
 
     private boolean mAppDrawerShown = false;
+
+    private StringCache mStringCache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,7 +146,8 @@ public class SecondaryDisplayLauncher extends BaseDraggingActivity
         return mAppDrawerShown;
     }
 
-    public AllAppsContainerView getAppsView() {
+    @Override
+    public ActivityAllAppsContainerView<SecondaryDisplayLauncher> getAppsView() {
         return mAppsView;
     }
 
@@ -175,65 +170,8 @@ public class SecondaryDisplayLauncher extends BaseDraggingActivity
     }
 
     @Override
-    public int getPageToBindSynchronously() {
-        return 0;
-    }
-
-    @Override
-    public void clearPendingBinds() { }
-
-    @Override
-    public void startBinding() { }
-
-    @Override
-    public void bindItems(List<ItemInfo> shortcuts, boolean forceAnimateIcons) { }
-
-    @Override
-    public void bindScreens(IntArray orderedScreenIds) { }
-
-    @Override
-    public void finishFirstPageBind(ViewOnDrawExecutor executor) {
-        if (executor != null) {
-            executor.onLoadAnimationCompleted();
-        }
-    }
-
-    @Override
-    public void finishBindingItems(int pageBoundFirst) { }
-
-    @Override
-    public void preAddApps() { }
-
-    @Override
-    public void bindAppsAdded(IntArray newScreens, ArrayList<ItemInfo> addNotAnimated,
-            ArrayList<ItemInfo> addAnimated) { }
-
-    @Override
     public void bindIncrementalDownloadProgressUpdated(AppInfo app) {
         mAppsView.getAppsStore().updateProgressBar(app);
-    }
-
-    @Override
-    public void bindWorkspaceItemsChanged(List<WorkspaceItemInfo> updated) { }
-
-    @Override
-    public void bindWidgetsRestored(ArrayList<LauncherAppWidgetInfo> widgets) { }
-
-    @Override
-    public void bindRestoreItemsChange(HashSet<ItemInfo> updates) { }
-
-    @Override
-    public void bindWorkspaceComponentsRemoved(ItemInfoMatcher matcher) { }
-
-    @Override
-    public void bindAllWidgets(List<WidgetsListBaseEntry> widgets) { }
-
-    @Override
-    public void onPageBoundSynchronously(int page) { }
-
-    @Override
-    public void executeOnNextDraw(ViewOnDrawExecutor executor) {
-        executor.attachTo(getDragLayer(), false, null);
     }
 
     /**
@@ -289,6 +227,16 @@ public class SecondaryDisplayLauncher extends BaseDraggingActivity
     public void bindAllApplications(AppInfo[] apps, int flags) {
         mAppsView.getAppsStore().setApps(apps, flags);
         PopupContainerWithArrow.dismissInvalidPopup(this);
+    }
+
+    @Override
+    public StringCache getStringCache() {
+        return mStringCache;
+    }
+
+    @Override
+    public void bindStringCache(StringCache cache) {
+        mStringCache = cache;
     }
 
     public PopupDataProvider getPopupDataProvider() {

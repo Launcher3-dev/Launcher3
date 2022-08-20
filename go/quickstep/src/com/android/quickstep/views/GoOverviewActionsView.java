@@ -35,6 +35,7 @@ import com.android.quickstep.util.RecentsOrientedState;
  */
 public class GoOverviewActionsView extends OverviewActionsView<OverlayUICallbacksGo> {
 
+    @Nullable
     private ArrowTipView mArrowTipView;
 
     public GoOverviewActionsView(Context context) {
@@ -84,31 +85,33 @@ public class GoOverviewActionsView extends OverviewActionsView<OverlayUICallback
     /**
      * Shows Tooltip for action icons
      */
-    private void showToolTip(int viewId, int textResourceId) {
+    private ArrowTipView showToolTip(int viewId, int textResourceId) {
         int[] location = new int[2];
         @Px int topMargin = getResources().getDimensionPixelSize(R.dimen.tooltip_top_margin);
         findViewById(viewId).getLocationOnScreen(location);
         mArrowTipView = new ArrowTipView(getContext(),  /* isPointingUp= */ false)
             .showAtLocation(getResources().getString(textResourceId),
                 /* arrowXCoord= */ location[0] + findViewById(viewId).getWidth() / 2,
-                /* yCoord= */ location[1] - topMargin);
+                /* yCoord= */ location[1] - topMargin,
+                /* shouldAutoClose= */ false);
 
         mArrowTipView.bringToFront();
+        return mArrowTipView;
     }
 
     /**
      * Shows Tooltip for listen action icon
      */
-    public void showListenToolTip() {
-        showToolTip(/* viewId= */ R.id.action_listen,
+    public ArrowTipView showListenToolTip() {
+        return showToolTip(/* viewId= */ R.id.action_listen,
                 /* textResourceId= */ R.string.tooltip_listen);
     }
 
     /**
      * Shows Tooltip for translate action icon
      */
-    public void showTranslateToolTip() {
-        showToolTip(/* viewId= */ R.id.action_translate,
+    public ArrowTipView showTranslateToolTip() {
+        return showToolTip(/* viewId= */ R.id.action_translate,
                 /* textResourceId= */ R.string.tooltip_translate);
     }
 
@@ -117,7 +120,7 @@ public class GoOverviewActionsView extends OverviewActionsView<OverlayUICallback
      */
     public void updateOrientationState(RecentsOrientedState orientedState) {
         // dismiss tooltip
-        boolean canLauncherRotate = orientedState.canRecentsActivityRotate();
+        boolean canLauncherRotate = orientedState.isRecentsActivityRotationAllowed();
         if (mArrowTipView != null && !canLauncherRotate) {
             mArrowTipView.close(/* animate= */ false);
         }
