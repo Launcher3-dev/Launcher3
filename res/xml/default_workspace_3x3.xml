@@ -65,7 +65,7 @@
         launcher:x="2"
         launcher:y="-1" >
         <favorite launcher:uri="#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_MARKET;end" />
-        <favorite launcher:uri="market://details?id=com.android.launcher" />
+        <favorite launcher:uri="market://details?id=com.android.launcher3" />
     </resolve>
 
 </favorites>
