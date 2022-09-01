@@ -66,7 +66,8 @@
     <color name="folder_preview_light">#F9F9F9</color>
     <color name="folder_preview_dark">#464746</color>
 
-    <color name="folder_dot_color">?attr/colorPrimary</color>
+    <color name="folder_dot_color">#ffffff</color>
+<!--    <color name="folder_dot_color">?attr/colorPrimary</color>-->
     <color name="folder_pagination_color_light">#ff006c5f</color>
     <color name="folder_pagination_color_dark">#ffbfebe3</color>
 
@@ -74,7 +75,8 @@
     <color name="text_color_secondary_dark">#FFFFFFFF</color>
     <color name="text_color_tertiary_dark">#CCFFFFFF</color>
 
-    <color name="wallpaper_popup_scrim">?android:attr/colorAccent</color>
+<!--    <color name="wallpaper_popup_scrim">?android:attr/colorAccent</color>-->
+    <color name="wallpaper_popup_scrim">#ff009688</color>
     <color name="wallpaper_scrim_color">#0D878787</color>
 
     <color name="workspace_accent_color_light">#ff8df5e3</color>

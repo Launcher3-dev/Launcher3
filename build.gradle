@@ -52,7 +52,7 @@ android {
     productFlavors {
         aosp {
             dimension "app"
-            applicationId 'com.android.launcher3'
+            applicationId 'com.android.ttlauncher3'
             testApplicationId 'com.android.launcher3.tests'
         }
 
@@ -150,13 +150,14 @@ allprojects {
 }
 
 dependencies {
+    implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation "androidx.dynamicanimation:dynamicanimation:${ANDROID_X_VERSION}"
     implementation "androidx.recyclerview:recyclerview:${ANDROID_X_VERSION}"
     implementation "androidx.preference:preference:${ANDROID_X_VERSION}"
     implementation project(':IconLoader')
     implementation 'androidx.slice:slice-core:1.0.0'
 
-    implementation 'com.google.protobuf:protobuf-javalite:3.21.5'
+    implementation 'com.google.protobuf:protobuf-javalite:3.8.0'
 //    withQuickstepImplementation project(':SharedLibWrapper')
 
     // Recents lib dependency
