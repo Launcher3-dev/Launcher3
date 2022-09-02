@@ -3,6 +3,9 @@
 ## 更新：20220821
 * Android-13 (Launcher-master-20220821(b62600b8c3de47a26386aa59f06959b2cf1af753)版本源码)
 
+## 说明
+目前只支持withoutQuickstep编译
+
 ## 主要分支
 
 * Launcher3-6.0
