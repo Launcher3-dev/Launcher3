@@ -16,11 +16,6 @@
 
 package com.android.launcher3.popup;
 
-import static java.lang.Math.atan;
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
-import static java.lang.Math.toDegrees;
-
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Matrix;
@@ -29,6 +24,13 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+
+import com.android.launcher3.Utilities;
+
+import static java.lang.Math.atan;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+import static java.lang.Math.toDegrees;
 
 /**
  * A drawable for a very specific purpose. Used for the caret arrow on a rounded rectangle popup
@@ -111,7 +113,9 @@ public class RoundedArrowDrawable extends Drawable {
 
     @Override
     public void getOutline(Outline outline) {
-        outline.setPath(mPath);
+        if (Utilities.ATLEAST_R) {
+            outline.setPath(mPath);
+        }
     }
 
     @Override
