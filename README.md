@@ -5,6 +5,7 @@
 
 ## 说明
 目前只支持withoutQuickstep编译
+如果因为Android studio或者Intellij Idea版本问题可以使用Intellij Idea 2022.1.2版本可以正常编译。
 
 ## 主要分支
 
