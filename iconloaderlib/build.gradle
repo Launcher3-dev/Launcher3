@@ -44,5 +44,5 @@ allprojects {
 }
 
 dependencies {
-    implementation "androidx.core:core:${ANDROID_X_VERSION}"
+    implementation "androidx.core:core:1.8.0"
 }

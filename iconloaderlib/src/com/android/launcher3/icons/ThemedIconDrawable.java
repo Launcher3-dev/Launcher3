@@ -283,11 +283,11 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         Resources res = context.getResources();
         int[] colors = new int[2];
         if ((res.getConfiguration().uiMode & UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES) {
-            colors[0] = res.getColor(android.R.color.system_neutral1_800, null);
-            colors[1] = res.getColor(android.R.color.system_accent1_100, null);
+            //colors[0] = res.getColor(android.R.color.system_neutral1_800, null);
+            //colors[1] = res.getColor(android.R.color.system_accent1_100, null);
         } else {
-            colors[0] = res.getColor(android.R.color.system_accent1_100, null);
-            colors[1] = res.getColor(android.R.color.system_neutral2_700, null);
+            //colors[0] = res.getColor(android.R.color.system_accent1_100, null);
+            //colors[1] = res.getColor(android.R.color.system_neutral2_700, null);
         }
         return colors;
     }

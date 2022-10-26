@@ -15,7 +15,7 @@ public final class PlatformUtil {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
          infoVerson = info.getLongVersionCode();
       } else {
-         infoVerson = info.versionCode;
+         infoVerson = info.getLongVersionCode();
       }
       return infoVerson;
    }

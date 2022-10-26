@@ -19,13 +19,23 @@ option java_package = "com.android.launcher3.logger";
 option java_outer_classname = "LauncherAtomExtensions";
 
 
-// This proto file contains placeholder messages that can be overridden by
-// other Launcher variants.
-// Variants could have its own launcher_atom_extension.proto file(should have
-// same messages declared here but with different implementation); when building
-// variant's apk launcher_atom.proto will reference variant's extension file,
-// essentially overriding this file.
+// Wrapper message for containers used at the quickstep level.
+// Message name should match with launcher_atom_extension.proto message at
+// the AOSP level.
+message ExtendedContainers {
 
+  oneof Container{
+    DeviceSearchResultContainer device_search_result_container = 1;
+    CorrectedDeviceSearchResultContainer corrected_device_search_result_container = 2;
+  }
+}
 
-// Wrapper message for additional containers used in variants.
-message ExtendedContainers {}
+// Represents on-device search result container.
+message DeviceSearchResultContainer{
+  optional int32 query_length = 1;
+}
+
+// Represents on-device search result container with results from spell-corrected query.
+message CorrectedDeviceSearchResultContainer{
+  optional int32 query_length = 1;
+}

@@ -17,19 +17,36 @@ package com.android.launcher3.icons.cache;
 
 import android.os.Handler;
 
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 /**
  * A runnable that can be posted to a {@link Handler} which can be canceled.
  */
-public abstract class HandlerRunnable implements Runnable {
+public class HandlerRunnable<T> implements Runnable {
 
-    private final Handler mHandler;
+    private final Handler mWorkerHandler;
+    private final Supplier<T> mTask;
+
+    private final Executor mCallbackExecutor;
+    private final Consumer<T> mCallback;
     private final Runnable mEndRunnable;
 
     private boolean mEnded = false;
     private boolean mCanceled = false;
 
-    public HandlerRunnable(Handler handler, Runnable endRunnable) {
-        mHandler = handler;
+    public HandlerRunnable(Handler workerHandler, Supplier<T> task, Executor callbackExecutor,
+                           Consumer<T> callback) {
+        this(workerHandler, task, callbackExecutor, callback, () -> { });
+    }
+
+    public HandlerRunnable(Handler workerHandler, Supplier<T> task, Executor callbackExecutor,
+                           Consumer<T> callback, Runnable endRunnable) {
+        mWorkerHandler = workerHandler;
+        mTask = task;
+        mCallbackExecutor = callbackExecutor;
+        mCallback = callback;
         mEndRunnable = endRunnable;
     }
 
@@ -37,31 +54,26 @@ public abstract class HandlerRunnable implements Runnable {
      * Cancels this runnable from being run, only if it has not already run.
      */
     public void cancel() {
-        mHandler.removeCallbacks(this);
-        // TODO: This can actually cause onEnd to be called twice if the handler is already running
-        //       this runnable
-        // NOTE: This is currently run on whichever thread the caller is run on.
+        mWorkerHandler.removeCallbacks(this);
         mCanceled = true;
-        onEnd();
+        mCallbackExecutor.execute(this::onEnd);
     }
 
-    /**
-     * @return whether this runnable was canceled.
-     */
-    protected boolean isCanceled() {
-        return mCanceled;
+    @Override
+    public void run() {
+        T value = mTask.get();
+        mCallbackExecutor.execute(() -> {
+            if (!mCanceled) {
+                mCallback.accept(value);
+            }
+            onEnd();
+        });
     }
 
-    /**
-     * To be called by the implemention of this runnable. The end callback is done on whichever
-     * thread the caller is calling from.
-     */
-    public void onEnd() {
+    private void onEnd() {
         if (!mEnded) {
             mEnded = true;
-            if (mEndRunnable != null) {
-                mEndRunnable.run();
-            }
+            mEndRunnable.run();
         }
     }
 }

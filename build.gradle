@@ -2,6 +2,7 @@ buildscript {
     repositories {
         mavenCentral()
         google()
+        mavenLocal()
         maven { url 'https://maven.aliyun.com/repository/jcenter' }
         maven { url 'https://maven.aliyun.com/repository/google' }
         maven { url 'https://maven.aliyun.com/repository/central' }
@@ -25,7 +26,7 @@ android {
 
     defaultConfig {
         minSdkVersion 26
-        targetSdkVersion 31
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
@@ -37,7 +38,10 @@ android {
             minifyEnabled false
         }
     }
-
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -140,42 +144,59 @@ allprojects {
     repositories {
         mavenCentral()
         google()
+        mavenLocal()
         maven { url 'https://maven.aliyun.com/repository/jcenter' }
         maven { url 'https://maven.aliyun.com/repository/google' }
         maven { url 'https://maven.aliyun.com/repository/central' }
         maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
     }
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs.add("-Xbootclasspath/p:${FRAMEWORK_PREBUILTS_DIR}/libs/framework.jar")
+        }
+    }
 }
 
 dependencies {
-    implementation "androidx.dynamicanimation:dynamicanimation:${ANDROID_X_VERSION}"
-    implementation "androidx.recyclerview:recyclerview:${ANDROID_X_VERSION}"
-    implementation "androidx.preference:preference:${ANDROID_X_VERSION}"
+    implementation "androidx.dynamicanimation:dynamicanimation:1.0.0"
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
+    implementation "androidx.preference:preference:1.1.1"
+
     implementation "androidx.slice:slice-builders:1.0.0"
     implementation project(':IconLoader')
+    //implementation PROTOBUF_DEPENDENCY
+    //implementation PROTOBUF_JAVANANO_DEPENDENCY
+    implementation "com.google.protobuf:protobuf-javalite:3.8.0"
+    //implementation "'com.google.protobuf:protobuf:3.8.1"
+    //implementation "'com.google.protobuf:protobuf-java:3.8.0"
+    implementation "com.google.android.material:material:1.5.0"
     // Recents lib dependency
     withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'sysui_shared.jar')
+    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'sysui_statsd.jar')
 
     // Required for AOSP to compile. This is already included in the sysui_shared.jar
     withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')
 
-    implementation 'com.google.protobuf:protobuf-javalite:3.8.0'
-    implementation 'com.google.android.material:material:1.5.0'
-
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation "org.mockito:mockito-core:4.0.0"
-    androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
-    androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
-    androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.3'
-    androidTestImplementation "androidx.annotation:annotation:${ANDROID_X_VERSION}"
+    // androidTestImplementation "org.mockito:mockito-core:4.0.0"
+    //androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
+    //androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
+    //androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    //androidTestImplementation 'com.android.support.test:rules:1.0.2'
+    //androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.3'
+    //androidTestImplementation "androidx.annotation:annotation:1.4.0"
+    compileOnly files('prebuilts\\framework_intermediates\\libs\\framework.jar')
+    //implementation ("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.0") {
+    //    exclude group: 'org.jetbrains'
+    //}
 }
 // https://github.com/google/protobuf-gradle-plugin
+//artifact = "com.google.protobuf:protoc:3.0.0"
+//artifact = "com.google.protobuf:protoc:3.8.0"
+//artifact = "com.google.protobuf:protoc:${protocVersion}"
 protobuf {
-    // Configure the protoc executable
     protoc {
-        artifact = "com.google.protobuf:protoc:3.8.0"
+        artifact = "com.google.protobuf:protoc:${protocVersion}"
     }
     generateProtoTasks {
         all().each { task ->

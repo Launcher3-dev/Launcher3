@@ -32,6 +32,8 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherFiles;
 import com.android.launcher3.R;
@@ -53,8 +55,6 @@ import com.android.launcher3.util.Preconditions;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import androidx.annotation.NonNull;
 
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
@@ -142,42 +142,25 @@ public class IconCache extends BaseIconCache {
      *
      * @return a request ID that can be used to cancel the request.
      */
-    public HandlerRunnable updateIconInBackground(final ItemInfoUpdateReceiver caller,
+    public HandlerRunnable<ItemInfoWithIcon> updateIconInBackground(final ItemInfoUpdateReceiver caller,
                                                   final ItemInfoWithIcon info) {
         Preconditions.assertUIThread();
         if (mPendingIconRequestCount <= 0) {
             MODEL_EXECUTOR.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND);
         }
         mPendingIconRequestCount++;
-        HandlerRunnable request = new HandlerRunnable(mWorkerHandler, this::onIconRequestEnd) {
-            @Override
-            public void run() {
-                if (info instanceof AppInfo || info instanceof WorkspaceItemInfo) {
-                    getTitleAndIcon(info, false);
-                } else if (info instanceof PackageItemInfo) {
-                    getTitleAndIconForApp((PackageItemInfo) info, false);
-                }
-                MAIN_EXECUTOR.execute(() -> {
-                    caller.reapplyItemInfo(info);
-                    onEnd();
-                });
-            }
-        };
-//
-//        HandlerRunnable request = new HandlerRunnable(mWorkerHandler, this::onIconRequestEnd) {
-//                ()->
-//
-//            {
-//                if (info instanceof AppInfo || info instanceof WorkspaceItemInfo) {
-//                    getTitleAndIcon(info, false);
-//                } else if (info instanceof PackageItemInfo) {
-//                    getTitleAndIconForApp((PackageItemInfo) info, false);
-//                }
-//                return info;
-//            },
-//            MAIN_EXECUTOR,
-//            caller::reapplyItemInfo,
-//                    this::onIconRequestEnd);
+        HandlerRunnable<ItemInfoWithIcon> request = new HandlerRunnable<>(mWorkerHandler,
+                () -> {
+                    if (info instanceof AppInfo || info instanceof WorkspaceItemInfo) {
+                        getTitleAndIcon(info, false);
+                    } else if (info instanceof PackageItemInfo) {
+                        getTitleAndIconForApp((PackageItemInfo) info, false);
+                    }
+                    return info;
+                },
+                MAIN_EXECUTOR,
+                caller::reapplyItemInfo,
+                this::onIconRequestEnd);
         Utilities.postAsyncCallback(mWorkerHandler, request);
         return request;
     }
