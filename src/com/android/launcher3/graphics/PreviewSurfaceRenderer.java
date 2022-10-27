@@ -49,6 +49,7 @@ import com.android.launcher3.model.GridSizeMigrationTask;
 import com.android.launcher3.model.GridSizeMigrationTaskV2;
 import com.android.launcher3.model.LoaderTask;
 import com.android.launcher3.model.ModelDelegate;
+import com.android.launcher3.model.ModelPreload;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.util.Themes;
@@ -173,13 +174,18 @@ public class PreviewSurfaceRenderer {
                 }
             }.run();
         } else {
-            LauncherAppState.getInstance(inflationContext).getModel().loadAsync(dataModel -> {
-                if (dataModel != null) {
-                    MAIN_EXECUTOR.execute(() -> renderView(inflationContext, dataModel, null));
-                } else {
-                    Log.e(TAG, "Model loading failed");
+            new ModelPreload() {
+
+                @Override
+                public void onComplete(boolean isSuccess) {
+                    if (isSuccess) {
+                        MAIN_EXECUTOR.execute(() ->
+                                renderView(inflationContext, getBgDataModel(), null));
+                    } else {
+                        Log.e(TAG, "Model loading failed");
+                    }
                 }
-            });
+            }.start(inflationContext);
         }
     }
 

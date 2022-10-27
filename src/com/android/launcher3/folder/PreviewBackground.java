@@ -16,13 +16,27 @@
 
 package com.android.launcher3.folder;
 
+import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.ICON_OVERLAP_FACTOR;
+import static com.android.launcher3.graphics.IconShape.getShape;
+import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.*;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RadialGradient;
+import android.graphics.Rect;
+import android.graphics.Region;
+import android.graphics.Shader;
 import android.util.Property;
 import android.view.View;
 
@@ -30,10 +44,6 @@ import com.android.launcher3.CellLayout;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.views.ActivityContext;
-
-import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.ICON_OVERLAP_FACTOR;
-import static com.android.launcher3.graphics.IconShape.getShape;
-import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
 
 /**
  * This object represents a FolderIcon preview background. It stores drawing / measurement
@@ -142,7 +152,7 @@ public class PreviewBackground extends CellLayout.DelegatedCellDrawing {
         mInvalidateDelegate = invalidateDelegate;
 
         TypedArray ta = context.getTheme().obtainStyledAttributes(R.styleable.FolderIconPreview);
-        mDotColor = ta.getColor(R.styleable.FolderIconPreview_folderDotColor, context.getColor(R.color.folder_dot_color));
+        mDotColor = ta.getColor(R.styleable.FolderIconPreview_folderDotColor, 0);
         mStrokeColor = ta.getColor(R.styleable.FolderIconPreview_folderIconBorderColor, 0);
         mBgColor = ta.getColor(R.styleable.FolderIconPreview_folderFillColor, 0);
         ta.recycle();

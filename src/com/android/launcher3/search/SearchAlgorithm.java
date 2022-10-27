@@ -28,13 +28,6 @@ public interface SearchAlgorithm<T> {
     void doSearch(String query, SearchCallback<T> callback);
 
     /**
-     * Performs search with {@code query} and the {@code suggestedQueries}/
-     */
-    default void doSearch(String query, String[] suggestedQueries, SearchCallback<T> callback) {
-        doSearch(query, callback);
-    }
-
-    /**
      * Cancels any active request.
      */
     void cancel(boolean interruptActiveRequests);

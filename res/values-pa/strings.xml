@@ -47,7 +47,7 @@
     <string name="widgets_and_shortcuts_count" msgid="7209136747878365116">"<xliff:g id="WIDGETS_COUNT">%1$s</xliff:g>, <xliff:g id="SHORTCUTS_COUNT">%2$s</xliff:g>"</string>
     <string name="widget_button_text" msgid="2880537293434387943">"ਵਿਜੇਟ"</string>
     <string name="widgets_full_sheet_search_bar_hint" msgid="8484659090860596457">"ਖੋਜੋ"</string>
-    <string name="widgets_full_sheet_cancel_button_description" msgid="5766167035728653605">"ਖੋਜ ਬਾਕਸ ਤੋਂ ਲਿਖਤ ਕਲੀਅਰ ਕਰੋ"</string>
+    <string name="widgets_full_sheet_cancel_button_description" msgid="5766167035728653605">"ਖੋਜ ਬਾਕਸ ਤੋਂ ਸਪੱਸ਼ਟ ਲਿਖਤ"</string>
     <string name="no_widgets_available" msgid="4337693382501046170">"ਵਿਜੇਟ ਜਾਂ ਸ਼ਾਰਟਕੱਟ ਉਪਲਬਧ ਨਹੀਂ ਹਨ"</string>
     <string name="no_search_results" msgid="3787956167293097509">"ਕੋਈ ਵੀ ਵਿਜੇਟ ਜਾਂ ਸ਼ਾਰਟਕੱਟ ਨਹੀਂ ਮਿਲਿਆ"</string>
     <string name="widgets_full_sheet_personal_tab" msgid="2743540105607120182">"ਨਿੱਜੀ"</string>
@@ -69,7 +69,6 @@
     <string name="out_of_space" msgid="6692471482459245734">"ਇਸ ਹੋਮ ਸਕ੍ਰੀਨ \'ਤੇ ਜਗ੍ਹਾ ਨਹੀਂ ਬਚੀ"</string>
     <string name="hotseat_out_of_space" msgid="7448809638125333693">"ਮਨਪਸੰਦ ਟ੍ਰੇ ਵਿੱਚ ਹੋਰ ਖਾਲੀ ਸਥਾਨ ਨਹੀਂ।"</string>
     <string name="all_apps_button_label" msgid="8130441508702294465">"ਐਪ ਸੂਚੀ"</string>
-    <string name="all_apps_search_results" msgid="5889367432531296759">"ਖੋਜ ਨਤੀਜੇ"</string>
     <string name="all_apps_button_personal_label" msgid="1315764287305224468">"ਨਿੱਜੀ ਐਪਾਂ ਦੀ ਸੂਚੀ"</string>
     <string name="all_apps_button_work_label" msgid="7270707118948892488">"ਕਾਰਜ-ਸਥਾਨ ਸੰਬੰਧੀ ਐਪਾਂ ਦੀ ਸੂਚੀ"</string>
     <string name="remove_drop_target_label" msgid="7812859488053230776">"ਹਟਾਓ"</string>
@@ -86,8 +85,7 @@
     <string name="permdesc_write_settings" msgid="5440712911516509985">"ਐਪ ਨੂੰ ਹੋਮ ਵਿੱਚ ਸੈਟਿੰਗਾਂ ਅਤੇ ਸ਼ਾਰਟਕੱਟ ਬਦਲਣ ਦੀ ਆਗਿਆ ਦਿੰਦਾ ਹੈ।"</string>
     <string name="msg_no_phone_permission" msgid="9208659281529857371">"<xliff:g id="APP_NAME">%1$s</xliff:g> ਨੂੰ ਫ਼ੋਨ ਕਾਲਾਂ ਕਰਨ ਦੀ ਆਗਿਆ ਨਹੀਂ ਹੈ"</string>
     <string name="gadget_error_text" msgid="740356548025791839">"ਵਿਜੇਟ ਨੂੰ ਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ"</string>
-    <string name="gadget_setup_text" msgid="8348374825537681407">"ਵਿਜੇਟ ਸੈਟਿੰਗਾਂ"</string>
-    <string name="gadget_complete_setup_text" msgid="309040266978007925">"ਸੈੱਟਅੱਪ ਪੂਰਾ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ"</string>
+    <string name="gadget_setup_text" msgid="1745356155479272374">"ਸੈੱਟਅੱਪ ਪੂਰਾ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ"</string>
     <string name="uninstall_system_app_text" msgid="4172046090762920660">"ਇਹ ਇੱਕ ਸਿਸਟਮ ਐਪ ਹੈ ਅਤੇ ਇਸਨੂੰ ਅਣਇੰਸਟੌਲ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।"</string>
     <string name="folder_hint_text" msgid="5174843001373488816">"ਨਾਮ ਦਾ ਸੰਪਾਦਨ ਕਰੋ"</string>
     <string name="disabled_app_label" msgid="6673129024321402780">"<xliff:g id="APP_NAME">%1$s</xliff:g> ਨੂੰ ਅਯੋਗ ਬਣਾਇਆ ਗਿਆ"</string>
@@ -124,7 +122,7 @@
     <string name="abandoned_clean_this" msgid="7610119707847920412">"ਹਟਾਓ"</string>
     <string name="abandoned_search" msgid="891119232568284442">"ਖੋਜੋ"</string>
     <string name="abandoned_promises_title" msgid="7096178467971716750">"ਇਹ ਐਪ ਇੰਸਟੌਲ ਨਹੀਂ ਕੀਤਾ ਹੋਇਆ ਹੈ।"</string>
-    <string name="abandoned_promise_explanation" msgid="3990027586878167529">"ਇਸ ਪ੍ਰਤੀਕ ਲਈ ਐਪ ਸਥਾਪਤ ਨਹੀਂ ਕੀਤੀ ਹੋਈ ਹੈ। ਤੁਸੀਂ ਇਸਨੂੰ ਹਟਾ ਸਕਦੇ ਹੋ ਜਾਂ ਐਪ ਨੂੰ ਹੱਥੀਂ ਖੋਜ ਕੇ ਉਸਨੂੰ ਸਥਾਪਤ ਕਰ ਸਕਦੇ ਹੋ।"</string>
+    <string name="abandoned_promise_explanation" msgid="3990027586878167529">"ਇਸ ਪ੍ਰਤੀਕ ਲਈ ਐਪ ਸਥਾਪਤ ਨਹੀਂ ਕੀਤਾ ਹੋਇਆ ਹੈ। ਤੁਸੀਂ ਇਸਨੂੰ ਹਟਾ ਸਕਦੇ ਹੋ ਜਾਂ ਐਪ ਖੋਜ ਸਕਦੇ ਹੋ ਅਤੇ ਇਸਨੂੰ ਮੈਨੂਅਲੀ ਸਥਾਪਤ ਕਰ ਸਕਦੇ ਹੋ।"</string>
     <string name="app_installing_title" msgid="5864044122733792085">"<xliff:g id="NAME">%1$s</xliff:g> ਨੂੰ ਸਥਾਪਤ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ, <xliff:g id="PROGRESS">%2$s</xliff:g> ਪੂਰਾ ਹੋਇਆ"</string>
     <string name="app_downloading_title" msgid="8336702962104482644">"<xliff:g id="NAME">%1$s</xliff:g> ਡਾਉਨਲੋਡ ਹੋਰ ਰਿਹਾ ਹੈ, <xliff:g id="PROGRESS">%2$s</xliff:g> ਸੰਪੂਰਣ"</string>
     <string name="app_waiting_download_title" msgid="7053938513995617849">"<xliff:g id="NAME">%1$s</xliff:g> ਸਥਾਪਤ ਕਰਨ ਦੀ ਉਡੀਕ ਕਰ ਰਿਹਾ ਹੈ"</string>

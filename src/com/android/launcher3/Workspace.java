@@ -687,9 +687,8 @@ public class Workspace extends PagedView<WorkspacePageIndicator>
         CellLayout finalScreen = mWorkspaceScreens.get(finalScreenId);
 
         // If the final screen is empty, convert it to the extra empty screen
-        if (finalScreen != null
-                && finalScreen.getShortcutsAndWidgets().getChildCount() == 0
-                && !finalScreen.isDropPending()) {
+        if (finalScreen.getShortcutsAndWidgets().getChildCount() == 0 &&
+                !finalScreen.isDropPending()) {
             mWorkspaceScreens.remove(finalScreenId);
             mScreenOrder.removeValue(finalScreenId);
 

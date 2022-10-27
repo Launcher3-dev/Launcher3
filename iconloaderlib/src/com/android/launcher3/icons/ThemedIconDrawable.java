@@ -15,6 +15,14 @@
  */
 package com.android.launcher3.icons;
 
+import static android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+import static android.content.res.Configuration.UI_MODE_NIGHT_YES;
+import static android.content.res.Resources.ID_NULL;
+
+import static com.android.launcher3.icons.GraphicsUtils.getExpectedBitmapSize;
+import static com.android.launcher3.icons.IconProvider.ICON_TYPE_CALENDAR;
+import static com.android.launcher3.icons.IconProvider.ICON_TYPE_CLOCK;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -30,6 +38,9 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
+import com.android.launcher3.icons.BitmapInfo.Extender;
 import com.android.launcher3.icons.cache.BaseIconCache;
 
 import java.io.ByteArrayInputStream;
@@ -37,15 +48,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
-import androidx.annotation.Nullable;
-
-import static android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-import static android.content.res.Configuration.UI_MODE_NIGHT_YES;
-import static android.content.res.Resources.ID_NULL;
-import static com.android.launcher3.icons.GraphicsUtils.getExpectedBitmapSize;
-import static com.android.launcher3.icons.IconProvider.ICON_TYPE_CALENDAR;
-import static com.android.launcher3.icons.IconProvider.ICON_TYPE_CLOCK;
 
 /**
  * Class to handle monochrome themed app icons
@@ -113,7 +115,7 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         final int colorFg, colorBg;
 
         public ThemedConstantState(ThemedBitmapInfo bitmapInfo,
-                                   int colorBg, int colorFg, boolean isDisabled) {
+                int colorBg, int colorFg, boolean isDisabled) {
             super(bitmapInfo.icon, bitmapInfo.color, isDisabled);
             this.bitmapInfo = bitmapInfo;
             this.colorBg = colorBg;
@@ -133,7 +135,7 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         final Bitmap mUserBadge;
 
         public ThemedBitmapInfo(Bitmap icon, int color, ThemeData themeData,
-                                float normalizationScale, Bitmap userBadge) {
+                float normalizationScale, Bitmap userBadge) {
             super(icon, color);
             mThemeData = themeData;
             mNormalizationScale = normalizationScale;
@@ -174,8 +176,8 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         }
 
         static ThemedBitmapInfo decode(byte[] data, int color,
-                                       BitmapFactory.Options decodeOptions, UserHandle user, BaseIconCache iconCache,
-                                       Context context) {
+                BitmapFactory.Options decodeOptions, UserHandle user, BaseIconCache iconCache,
+                Context context) {
             try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data))) {
                 dis.readByte(); // type
                 float normalizationScale = dis.readFloat();
@@ -215,7 +217,7 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         }
 
         Drawable loadMonochromeDrawable(int accentColor) {
-            Drawable d = mResources.getDrawable(mResID, null).mutate();
+            Drawable d = mResources.getDrawable(mResID).mutate();
             d.setTint(accentColor);
             d = new InsetDrawable(d, .2f);
             return d;
@@ -244,7 +246,7 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         }
     }
 
-    static class ThemedAdaptiveIcon extends AdaptiveIconDrawable implements BitmapInfo.Extender {
+    static class ThemedAdaptiveIcon extends AdaptiveIconDrawable implements Extender {
 
         protected final ThemeData mThemeData;
 
@@ -255,7 +257,7 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
 
         @Override
         public BitmapInfo getExtendedInfo(Bitmap bitmap, int color, BaseIconFactory iconFactory,
-                                          float normalizationScale, UserHandle user) {
+                float normalizationScale, UserHandle user) {
             Bitmap userBadge = Process.myUserHandle().equals(user)
                     ? null : iconFactory.getUserBadgeBitmap(user);
             return new ThemedBitmapInfo(bitmap, color, mThemeData, normalizationScale, userBadge);
@@ -283,11 +285,11 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         Resources res = context.getResources();
         int[] colors = new int[2];
         if ((res.getConfiguration().uiMode & UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES) {
-            //colors[0] = res.getColor(android.R.color.system_neutral1_800, null);
-            //colors[1] = res.getColor(android.R.color.system_accent1_100, null);
+            colors[0] = res.getColor(android.R.color.system_neutral1_800);
+            colors[1] = res.getColor(android.R.color.system_accent1_100);
         } else {
-            //colors[0] = res.getColor(android.R.color.system_accent1_100, null);
-            //colors[1] = res.getColor(android.R.color.system_neutral2_700, null);
+            colors[0] = res.getColor(android.R.color.system_accent1_100);
+            colors[1] = res.getColor(android.R.color.system_neutral2_700);
         }
         return colors;
     }

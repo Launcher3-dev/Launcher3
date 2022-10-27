@@ -39,4 +39,3 @@ message DeviceSearchResultContainer{
 message CorrectedDeviceSearchResultContainer{
   optional int32 query_length = 1;
 }
-

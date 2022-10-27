@@ -1,5 +1,10 @@
 package com.android.launcher3.icons;
 
+import static android.graphics.Paint.DITHER_FLAG;
+import static android.graphics.Paint.FILTER_BITMAP_FLAG;
+
+import static com.android.launcher3.icons.ShadowGenerator.BLUR_FACTOR;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,13 +25,9 @@ import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
 
-import com.android.launcher3.icons.BitmapInfo.Extender;
-
 import androidx.annotation.NonNull;
 
-import static android.graphics.Paint.DITHER_FLAG;
-import static android.graphics.Paint.FILTER_BITMAP_FLAG;
-import static com.android.launcher3.icons.ShadowGenerator.BLUR_FACTOR;
+import com.android.launcher3.icons.BitmapInfo.Extender;
 
 /**
  * This class will be moved to androidx library. There shouldn't be any dependency outside
@@ -65,7 +66,7 @@ public class BaseIconFactory implements AutoCloseable {
     private static int PLACEHOLDER_BACKGROUND_COLOR = Color.rgb(240, 240, 240);
 
     protected BaseIconFactory(Context context, int fillResIconDpi, int iconBitmapSize,
-                              boolean shapeDetection) {
+            boolean shapeDetection) {
         mContext = context.getApplicationContext();
         mShapeDetection = shapeDetection;
         mFillResIconDpi = fillResIconDpi;
@@ -170,22 +171,22 @@ public class BaseIconFactory implements AutoCloseable {
     }
 
     public BitmapInfo createBadgedIconBitmap(Drawable icon, UserHandle user,
-                                             boolean shrinkNonAdaptiveIcons) {
+            boolean shrinkNonAdaptiveIcons) {
         return createBadgedIconBitmap(icon, user, shrinkNonAdaptiveIcons, false, null);
     }
 
     public BitmapInfo createBadgedIconBitmap(Drawable icon, UserHandle user,
-                                             int iconAppTargetSdk) {
+            int iconAppTargetSdk) {
         return createBadgedIconBitmap(icon, user, iconAppTargetSdk, false);
     }
 
     public BitmapInfo createBadgedIconBitmap(Drawable icon, UserHandle user,
-                                             int iconAppTargetSdk, boolean isInstantApp) {
+            int iconAppTargetSdk, boolean isInstantApp) {
         return createBadgedIconBitmap(icon, user, iconAppTargetSdk, isInstantApp, null);
     }
 
     public BitmapInfo createBadgedIconBitmap(Drawable icon, UserHandle user,
-                                             int iconAppTargetSdk, boolean isInstantApp, float[] scale) {
+            int iconAppTargetSdk, boolean isInstantApp, float[] scale) {
         boolean shrinkNonAdaptiveIcons = ATLEAST_P ||
                 (ATLEAST_OREO && iconAppTargetSdk >= Build.VERSION_CODES.O);
         return createBadgedIconBitmap(icon, user, shrinkNonAdaptiveIcons, isInstantApp, scale);
@@ -209,7 +210,7 @@ public class BaseIconFactory implements AutoCloseable {
      * @return a bitmap suitable for disaplaying as an icon at various system UIs.
      */
     public BitmapInfo createBadgedIconBitmap(@NonNull Drawable icon, UserHandle user,
-                                             boolean shrinkNonAdaptiveIcons, boolean isInstantApp, float[] scale) {
+            boolean shrinkNonAdaptiveIcons, boolean isInstantApp, float[] scale) {
         if (scale == null) {
             scale = new float[1];
         }
@@ -286,7 +287,7 @@ public class BaseIconFactory implements AutoCloseable {
     }
 
     private Drawable normalizeAndWrapToAdaptiveIcon(@NonNull Drawable icon,
-                                                    boolean shrinkNonAdaptiveIcons, RectF outIconBounds, float[] outScale) {
+            boolean shrinkNonAdaptiveIcons, RectF outIconBounds, float[] outScale) {
         if (icon == null) {
             return null;
         }
@@ -416,7 +417,7 @@ public class BaseIconFactory implements AutoCloseable {
         return Resources.getSystem().getDrawableForDensity(
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                         ? android.R.drawable.sym_def_app_icon : android.R.mipmap.sym_def_app_icon,
-                iconDpi, null);
+                iconDpi);
     }
 
     /**

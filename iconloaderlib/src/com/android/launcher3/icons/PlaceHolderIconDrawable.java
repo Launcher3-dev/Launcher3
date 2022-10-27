@@ -26,9 +26,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 
-import androidx.annotation.RequiresApi;
 import androidx.core.graphics.ColorUtils;
 
 /**
@@ -39,7 +37,6 @@ public class PlaceHolderIconDrawable extends FastBitmapDrawable {
     // Path in [0, 100] bounds.
     private final Path mProgressPath;
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public PlaceHolderIconDrawable(BitmapInfo info, Context context) {
         super(info);
 

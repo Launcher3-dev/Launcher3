@@ -22,6 +22,7 @@ import android.view.MotionEvent;
 
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
+import com.android.launcher3.statemanager.StateManager.StateListener;
 
 /**
  * AllAppsContainerView with launcher specific callbacks
@@ -29,6 +30,8 @@ import com.android.launcher3.LauncherState;
 public class LauncherAllAppsContainerView extends AllAppsContainerView {
 
     private final Launcher mLauncher;
+
+    private StateListener<LauncherState> mWorkTabListener;
 
     public LauncherAllAppsContainerView(Context context) {
         this(context, null);
@@ -69,6 +72,14 @@ public class LauncherAllAppsContainerView extends AllAppsContainerView {
         int allAppsStartingPositionY = mLauncher.getDeviceProfile().availableHeightPx
                 - mLauncher.getDeviceProfile().allAppsOpenVerticalTranslate;
         mLauncher.getAllAppsController().setScrollRangeDelta(allAppsStartingPositionY);
+    }
+
+    @Override
+    public void setupHeader() {
+        super.setupHeader();
+        if (mWorkTabListener != null && !mUsingTabs) {
+            mLauncher.getStateManager().removeStateListener(mWorkTabListener);
+        }
     }
 
     @Override

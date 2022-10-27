@@ -173,9 +173,7 @@ public class FallbackSwipeHandler extends
     @Override
     protected void notifyGestureAnimationStartToRecents() {
         if (mRunningOverHome) {
-            if (SysUINavigationMode.getMode(mContext).hasGestures) {
-                mRecentsView.onGestureAnimationStartOnHome(mGestureState.getRunningTask());
-            }
+            mRecentsView.onGestureAnimationStartOnHome(mGestureState.getRunningTask());
         } else {
             super.notifyGestureAnimationStartToRecents();
         }

@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.icons;
 
+import static com.android.launcher3.icons.GraphicsUtils.getExpectedBitmapSize;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -25,17 +27,14 @@ import android.os.Build;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.launcher3.icons.ThemedIconDrawable.ThemedBitmapInfo;
 import com.android.launcher3.icons.cache.BaseIconCache;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-
-import static com.android.launcher3.icons.GraphicsUtils.getExpectedBitmapSize;
 
 public class BitmapInfo {
 
@@ -97,7 +96,6 @@ public class BitmapInfo {
     /**
      * Creates a drawable for the provided BitmapInfo
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public FastBitmapDrawable newIcon(Context context) {
         FastBitmapDrawable drawable = isLowRes()
                 ? new PlaceHolderIconDrawable(this, context)
@@ -111,7 +109,7 @@ public class BitmapInfo {
      */
     @NonNull
     public static BitmapInfo fromByteArray(byte[] data, int color, UserHandle user,
-                                           BaseIconCache iconCache, Context context) {
+            BaseIconCache iconCache, Context context) {
         if (data == null) {
             return null;
         }
@@ -150,7 +148,7 @@ public class BitmapInfo {
          * Called for creating a custom BitmapInfo
          */
         BitmapInfo getExtendedInfo(Bitmap bitmap, int color,
-                                   BaseIconFactory iconFactory, float normalizationScale, UserHandle user);
+                BaseIconFactory iconFactory, float normalizationScale, UserHandle user);
 
         /**
          * Called to draw the UI independent of any runtime configurations like time or theme

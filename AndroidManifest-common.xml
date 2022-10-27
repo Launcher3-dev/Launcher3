@@ -19,8 +19,8 @@
 -->
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.android.launcher3">
+    package="com.android.launcher3"
+    android:sharedUserId="android.uid.system">
 
     <!--
     The manifest defines the common entries that should be present in any derivative of Launcher3.
@@ -145,7 +145,7 @@
         <activity
             android:name="com.android.launcher3.settings.SettingsActivity"
             android:label="@string/settings_button_text"
-            android:theme="@style/HomeSettings.Theme"
+            android:theme="@style/HomeSettingsTheme"
             android:exported="true"
             android:autoRemoveFromRecents="true">
             <intent-filter>
@@ -177,11 +177,5 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <!-- [b/197780098] Disable eager initialization of Jetpack libraries. -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove" />
     </application>
 </manifest>

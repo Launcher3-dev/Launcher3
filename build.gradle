@@ -2,6 +2,7 @@ buildscript {
     repositories {
         mavenCentral()
         google()
+        jcenter()
         mavenLocal()
         maven { url 'https://maven.aliyun.com/repository/jcenter' }
         maven { url 'https://maven.aliyun.com/repository/google' }
@@ -14,27 +15,35 @@ buildscript {
     }
 }
 
-final String ANDROID_TOP = "${rootDir}"
-final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/framework_intermediates"
+final String ANDROID_TOP = "${rootDir}/"
+final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/framework_intermediates/"
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
-
 
 android {
     compileSdkVersion 31
 
     defaultConfig {
         minSdkVersion 26
-        targetSdkVersion 33
+        targetSdkVersion 31
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
+
+//    def SIGN_PATH = project.rootDir.absolutePath + '/signapk_mtk/mtk.keystore'
+//    signingConfigs {
+//        sginconfig  {
+//            storeFile file(SIGN_PATH)
+//        }
+//    }
+
     buildTypes {
         debug {
+//            signingConfig signingConfigs.sginconfig
             minifyEnabled false
         }
     }
@@ -54,7 +63,7 @@ android {
     productFlavors {
         aosp {
             dimension "app"
-            applicationId 'com.android.ttlauncher3'
+            applicationId 'com.android.launcher3'
             testApplicationId 'com.android.launcher3.tests'
         }
 
@@ -144,6 +153,7 @@ allprojects {
     repositories {
         mavenCentral()
         google()
+        jcenter()
         mavenLocal()
         maven { url 'https://maven.aliyun.com/repository/jcenter' }
         maven { url 'https://maven.aliyun.com/repository/google' }

@@ -26,7 +26,6 @@ import android.animation.ObjectAnimator;
 import android.os.IBinder;
 import android.os.SystemProperties;
 import android.util.FloatProperty;
-import android.view.AttachedSurfaceControl;
 import android.view.CrossWindowBlurListeners;
 import android.view.SurfaceControl;
 import android.view.View;
@@ -109,13 +108,6 @@ public class DepthController implements StateHandler<LauncherState>,
         }
     };
 
-    private final Runnable mOpaquenessListener = new Runnable() {
-        @Override
-        public void run() {
-            dispatchTransactionSurface(mDepth);
-        }
-    };
-
     private final Launcher mLauncher;
     /**
      * Blur radius when completely zoomed out, in pixels.
@@ -124,10 +116,6 @@ public class DepthController implements StateHandler<LauncherState>,
     private boolean mCrossWindowBlursEnabled;
     private WallpaperManagerCompat mWallpaperManager;
     private SurfaceControl mSurface;
-    /**
-     * How visible the -1 overlay is, from 0 to 1.
-     */
-    private float mOverlayScrollProgress;
     /**
      * Ratio from 0 to 1, where 0 is fully zoomed out, and 1 is zoomed in.
      * @see android.service.wallpaper.WallpaperService.Engine#onZoomChanged(float)
@@ -162,26 +150,21 @@ public class DepthController implements StateHandler<LauncherState>,
                     if (windowToken != null) {
                         mWallpaperManager.setWallpaperZoomOut(windowToken, mDepth);
                     }
-                    onAttached();
+                    CrossWindowBlurListeners.getInstance().addListener(mLauncher.getMainExecutor(),
+                            mCrossWindowBlurListener);
                 }
 
                 @Override
                 public void onViewDetachedFromWindow(View view) {
                     CrossWindowBlurListeners.getInstance().removeListener(mCrossWindowBlurListener);
-                    mLauncher.getScrimView().removeOpaquenessListener(mOpaquenessListener);
                 }
             };
             mLauncher.getRootView().addOnAttachStateChangeListener(mOnAttachListener);
             if (mLauncher.getRootView().isAttachedToWindow()) {
-                onAttached();
+                CrossWindowBlurListeners.getInstance().addListener(mLauncher.getMainExecutor(),
+                        mCrossWindowBlurListener);
             }
         }
-    }
-
-    private void onAttached() {
-        CrossWindowBlurListeners.getInstance().addListener(mLauncher.getMainExecutor(),
-                mCrossWindowBlurListener);
-        mLauncher.getScrimView().addOpaquenessListener(mOpaquenessListener);
     }
 
     /**
@@ -268,24 +251,12 @@ public class DepthController implements StateHandler<LauncherState>,
         }
     }
 
-    public void onOverlayScrollChanged(float progress) {
-        // Round out the progress to dedupe frequent, non-perceptable updates
-        int progressI = (int) (progress * 256);
-        float progressF = Utilities.boundToRange(progressI / 256f, 0f, 1f);
-        if (Float.compare(mOverlayScrollProgress, progressF) == 0) {
-            return;
-        }
-        mOverlayScrollProgress = progressF;
-        dispatchTransactionSurface(mDepth);
-    }
-
     private boolean dispatchTransactionSurface(float depth) {
         boolean supportsBlur = BlurUtils.supportsBlursOnWindows();
         if (supportsBlur && (mSurface == null || !mSurface.isValid())) {
             return false;
         }
         ensureDependencies();
-        depth = Math.max(depth, mOverlayScrollProgress);
         IBinder windowToken = mLauncher.getRootView().getWindowToken();
         if (windowToken != null) {
             mWallpaperManager.setWallpaperZoomOut(windowToken, depth);
@@ -299,15 +270,10 @@ public class DepthController implements StateHandler<LauncherState>,
 
             int blur = opaque || isOverview || !mCrossWindowBlursEnabled
                     || mBlurDisabledForAppLaunch ? 0 : (int) (depth * mMaxBlurRadius);
-            SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()
+            new SurfaceControl.Transaction()
                     .setBackgroundBlurRadius(mSurface, blur)
-                    .setOpaque(mSurface, opaque);
-
-            AttachedSurfaceControl rootSurfaceControl =
-                    mLauncher.getRootView().getRootSurfaceControl();
-            if (rootSurfaceControl != null) {
-                rootSurfaceControl.applyTransactionOnDraw(transaction);
-            }
+                    .setOpaque(mSurface, opaque)
+                    .apply();
         }
         return true;
     }

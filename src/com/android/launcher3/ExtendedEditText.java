@@ -99,18 +99,8 @@ public class ExtendedEditText extends EditText {
         }
     }
 
-    /**
-     * Sets whether EditText background should be visible
-     * @param maxAlpha defines the maximum alpha the background should animates to
-     */
-    public void setBackgroundVisibility(boolean visible, float maxAlpha) {}
-
-    /**
-     * Returns whether a visible background is set on EditText
-     */
-    public boolean getBackgroundVisibility() {
-        return getBackground() != null;
-    }
+    // inherited class can override to change the appearance of the edit text.
+    public void show() {}
 
     public void showKeyboard() {
         mShowImeAfterFirstLayout = !showSoftInput();

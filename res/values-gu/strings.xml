@@ -69,10 +69,9 @@
     <string name="out_of_space" msgid="6692471482459245734">"આ હોમ સ્ક્રીન પર વધુ જગ્યા નથી"</string>
     <string name="hotseat_out_of_space" msgid="7448809638125333693">"મનપસંદ ટ્રે પર વધુ જગ્યા નથી"</string>
     <string name="all_apps_button_label" msgid="8130441508702294465">"ઍપ્લિકેશનોની સૂચિ"</string>
-    <string name="all_apps_search_results" msgid="5889367432531296759">"શોધ પરિણામો"</string>
     <string name="all_apps_button_personal_label" msgid="1315764287305224468">"વ્યક્તિગત ઍપની સૂચિ"</string>
     <string name="all_apps_button_work_label" msgid="7270707118948892488">"કાર્યસ્થળની ઍપની સૂચિ"</string>
-    <string name="remove_drop_target_label" msgid="7812859488053230776">"કાઢી નાખો"</string>
+    <string name="remove_drop_target_label" msgid="7812859488053230776">"દૂર કરો"</string>
     <string name="uninstall_drop_target_label" msgid="4722034217958379417">"અનઇન્સ્ટોલ કરો"</string>
     <string name="app_info_drop_target_label" msgid="692894985365717661">"ઍપની માહિતી"</string>
     <string name="install_drop_target_label" msgid="2539096853673231757">"ઇન્સ્ટૉલ કરો"</string>
@@ -86,8 +85,7 @@
     <string name="permdesc_write_settings" msgid="5440712911516509985">"ઍપને હોમમાં સેટિંગ અને શૉર્ટકટ બદલવાની મંજૂરી આપે છે."</string>
     <string name="msg_no_phone_permission" msgid="9208659281529857371">"<xliff:g id="APP_NAME">%1$s</xliff:g> ને ફોન કૉલ્સ કરવાની મંજૂરી નથી"</string>
     <string name="gadget_error_text" msgid="740356548025791839">"વિજેટ લોડ કરી શકાતું નથી"</string>
-    <string name="gadget_setup_text" msgid="8348374825537681407">"વિજેટ સેટિંગ"</string>
-    <string name="gadget_complete_setup_text" msgid="309040266978007925">"સેટઅપ પૂર્ણ કરવા માટે ટૅપ કરો"</string>
+    <string name="gadget_setup_text" msgid="1745356155479272374">"સેટઅપ પૂર્ણ કરવા માટે ટૅપ કરો"</string>
     <string name="uninstall_system_app_text" msgid="4172046090762920660">"આ એક સિસ્ટમ ઍપ્લિકેશન છે અને અનઇન્સ્ટોલ કરી શકાતી નથી."</string>
     <string name="folder_hint_text" msgid="5174843001373488816">"નામમાં ફેરફાર કરો"</string>
     <string name="disabled_app_label" msgid="6673129024321402780">"<xliff:g id="APP_NAME">%1$s</xliff:g> અક્ષમ કરી"</string>
@@ -121,7 +119,7 @@
     <string name="auto_add_shortcuts_label" msgid="3698776050751790653">"ઍપના આઇકન હોમ સ્ક્રીન પર ઉમેરો"</string>
     <string name="auto_add_shortcuts_description" msgid="7117251166066978730">"નવી ઍપ માટે"</string>
     <string name="package_state_unknown" msgid="7592128424511031410">"અજાણ્યો"</string>
-    <string name="abandoned_clean_this" msgid="7610119707847920412">"કાઢી નાખો"</string>
+    <string name="abandoned_clean_this" msgid="7610119707847920412">"દૂર કરો"</string>
     <string name="abandoned_search" msgid="891119232568284442">"શોધો"</string>
     <string name="abandoned_promises_title" msgid="7096178467971716750">"આ ઍપ્લિકેશન ઇન્સ્ટોલ થયેલ નથી"</string>
     <string name="abandoned_promise_explanation" msgid="3990027586878167529">"આ આયકન માટેની ઍપ્લિકેશન ઇન્સ્ટોલ થયેલ નથી. તમે તેને દૂર કરી શકો છો અથવા ઍપ્લિકેશન માટે શોધ કરી અને તેને મેન્યુઅલી ઇન્સ્ટોલ કરી શકો છો."</string>

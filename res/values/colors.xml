@@ -72,15 +72,13 @@
     <color name="folder_background_light">#F9F9F9</color>
     <color name="folder_background_dark">#464746</color>
 
-<!--    <color name="folder_dot_color">?attr/colorPrimary</color>-->
-    <color name="folder_dot_color">#CDFAF1</color>
+    <color name="folder_dot_color">?attr/colorPrimary</color>
 
     <color name="text_color_primary_dark">#FFFFFFFF</color>
     <color name="text_color_secondary_dark">#FFFFFFFF</color>
     <color name="text_color_tertiary_dark">#CCFFFFFF</color>
 
-    <color name="wallpaper_popup_scrim">#1b1b1b</color>
-<!--    <color name="wallpaper_popup_scrim">?android:attr/colorAccent</color>-->
+    <color name="wallpaper_popup_scrim">?android:attr/colorAccent</color>
     <color name="wallpaper_scrim_color">#0D878787</color>
 
     <color name="workspace_accent_color_light">#ff8df5e3</color>

@@ -16,6 +16,9 @@
 
 package com.android.launcher3.icons;
 
+import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
+import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -56,9 +59,6 @@ import com.android.launcher3.util.Preconditions;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
-import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
-
 /**
  * Cache of application icons.  Icons can be made from any thread.
  */
@@ -85,7 +85,7 @@ public class IconCache extends BaseIconCache {
     }
 
     public IconCache(Context context, InvariantDeviceProfile idp, String dbFileName,
-                     IconProvider iconProvider) {
+            IconProvider iconProvider) {
         super(context, dbFileName, MODEL_EXECUTOR.getLooper(),
                 idp.fillResIconDpi, idp.iconBitmapSize, true /* inMemoryCache */);
         mComponentWithLabelCachingLogic = new ComponentCachingLogic(context, false);
@@ -142,13 +142,14 @@ public class IconCache extends BaseIconCache {
      *
      * @return a request ID that can be used to cancel the request.
      */
-    public HandlerRunnable<ItemInfoWithIcon> updateIconInBackground(final ItemInfoUpdateReceiver caller,
-                                                  final ItemInfoWithIcon info) {
+    public HandlerRunnable updateIconInBackground(final ItemInfoUpdateReceiver caller,
+            final ItemInfoWithIcon info) {
         Preconditions.assertUIThread();
         if (mPendingIconRequestCount <= 0) {
             MODEL_EXECUTOR.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND);
         }
         mPendingIconRequestCount++;
+
         HandlerRunnable<ItemInfoWithIcon> request = new HandlerRunnable<>(mWorkerHandler,
                 () -> {
                     if (info instanceof AppInfo || info instanceof WorkspaceItemInfo) {
@@ -188,7 +189,7 @@ public class IconCache extends BaseIconCache {
      * Fill in {@param info} with the icon and label for {@param activityInfo}
      */
     public synchronized void getTitleAndIcon(ItemInfoWithIcon info,
-                                             LauncherActivityInfo activityInfo, boolean useLowResIcon) {
+            LauncherActivityInfo activityInfo, boolean useLowResIcon) {
         // If we already have activity info, no need to use package icon
         getTitleAndIcon(info, () -> activityInfo, false, useLowResIcon);
     }
@@ -212,13 +213,12 @@ public class IconCache extends BaseIconCache {
      * available, and fallback check returns true, it keeps the old icon.
      */
     public <T extends ItemInfoWithIcon> void getShortcutIcon(T info, ShortcutInfo si,
-                                                             @NonNull Predicate<T> fallbackIconCheck) {
+            @NonNull Predicate<T> fallbackIconCheck) {
         getShortcutIcon(info, si, true /* use badged */, fallbackIconCheck);
     }
 
-    private synchronized <T extends ItemInfoWithIcon> void getShortcutIcon(T
-                                                                                   info, ShortcutInfo si,
-                                                                           boolean useBadged, @NonNull Predicate<T> fallbackIconCheck) {
+    private synchronized <T extends ItemInfoWithIcon> void getShortcutIcon(T info, ShortcutInfo si,
+            boolean useBadged, @NonNull Predicate<T> fallbackIconCheck) {
         BitmapInfo bitmapInfo;
         if (FeatureFlags.ENABLE_DEEP_SHORTCUT_ICON_CACHE.get()) {
             bitmapInfo = cacheLocked(ShortcutKey.fromInfo(si).componentName, si.getUserHandle(),
@@ -302,6 +302,7 @@ public class IconCache extends BaseIconCache {
                 useLowResIcon);
         applyCacheEntry(entry, infoInOut);
     }
+
 
     /**
      * Fill in {@param infoInOut} with the corresponding icon and label.

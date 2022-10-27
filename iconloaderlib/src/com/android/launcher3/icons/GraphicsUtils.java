@@ -25,14 +25,12 @@ import android.graphics.Region;
 import android.graphics.RegionIterator;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.ColorInt;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import androidx.annotation.ColorInt;
-import androidx.annotation.RequiresApi;
 
 public class GraphicsUtils {
 
@@ -100,7 +98,6 @@ public class GraphicsUtils {
     /**
      * Returns the default path to be used by an icon
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public static Path getShapePath(int size) {
         AdaptiveIconDrawable drawable = new AdaptiveIconDrawable(
                 new ColorDrawable(Color.BLACK), new ColorDrawable(Color.BLACK));

@@ -239,7 +239,11 @@ public final class TaskViewUtils {
 
             TaskViewSimulator finalTsv = tsv;
             TransformParams finalParams = params;
-            out.addOnFrameCallback(() -> finalTsv.apply(finalParams));
+            out.addOnFrameCallback(() -> {
+                if (finalParams.getTargetSet() != null) {
+                    finalTsv.apply(finalParams);
+                }
+            });
             if (navBarTarget != null) {
                 final Rect cropRect = new Rect();
                 out.addOnFrameListener(new MultiValueUpdateListener() {

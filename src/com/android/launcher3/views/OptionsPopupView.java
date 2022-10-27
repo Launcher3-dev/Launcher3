@@ -15,6 +15,13 @@
  */
 package com.android.launcher3.views;
 
+import static com.android.launcher3.Utilities.EXTRA_WALLPAPER_FLAVOR;
+import static com.android.launcher3.Utilities.EXTRA_WALLPAPER_LAUNCH_SOURCE;
+import static com.android.launcher3.Utilities.EXTRA_WALLPAPER_OFFSET;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.IGNORE;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WIDGETSTRAY_BUTTON_TAP_OR_LONGPRESS;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -28,6 +35,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+import androidx.core.content.ContextCompat;
 
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherSettings;
@@ -44,13 +55,6 @@ import com.android.launcher3.widget.picker.WidgetsFullSheet;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
-import androidx.core.content.ContextCompat;
-
-import static com.android.launcher3.Utilities.*;
-import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.*;
 
 /**
  * Popup shown on long pressing an empty space in launcher

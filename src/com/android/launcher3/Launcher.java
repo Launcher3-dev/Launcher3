@@ -16,7 +16,50 @@
 
 package com.android.launcher3;
 
-import android.animation.*;
+import static android.content.pm.ActivityInfo.CONFIG_ORIENTATION;
+import static android.content.pm.ActivityInfo.CONFIG_SCREEN_SIZE;
+import static android.content.pm.ActivityInfo.CONFIG_UI_MODE;
+import static android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
+
+import static com.android.launcher3.AbstractFloatingView.TYPE_ALL;
+import static com.android.launcher3.AbstractFloatingView.TYPE_ICON_SURFACE;
+import static com.android.launcher3.AbstractFloatingView.TYPE_REBIND_SAFE;
+import static com.android.launcher3.AbstractFloatingView.TYPE_SNACKBAR;
+import static com.android.launcher3.LauncherAnimUtils.SPRING_LOADED_EXIT_DELAY;
+import static com.android.launcher3.LauncherState.ALL_APPS;
+import static com.android.launcher3.LauncherState.FLAG_CLOSE_POPUPS;
+import static com.android.launcher3.LauncherState.FLAG_MULTI_PAGE;
+import static com.android.launcher3.LauncherState.FLAG_NON_INTERACTIVE;
+import static com.android.launcher3.LauncherState.NORMAL;
+import static com.android.launcher3.LauncherState.NO_OFFSET;
+import static com.android.launcher3.LauncherState.NO_SCALE;
+import static com.android.launcher3.LauncherState.SPRING_LOADED;
+import static com.android.launcher3.Utilities.postAsyncCallback;
+import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.getSupportedActions;
+import static com.android.launcher3.dragndrop.DragLayer.ALPHA_INDEX_LAUNCHER_LOAD;
+import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_BACKGROUND;
+import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_HOME;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALLAPPS_ENTRY;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALLAPPS_ENTRY_WITH_DEVICE_SEARCH;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALLAPPS_EXIT;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ONRESUME;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ONSTOP;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WIDGET_RECONFIGURED;
+import static com.android.launcher3.model.ItemInstallQueue.FLAG_ACTIVITY_PAUSED;
+import static com.android.launcher3.model.ItemInstallQueue.FLAG_DRAG_AND_DROP;
+import static com.android.launcher3.model.ItemInstallQueue.FLAG_LOADER_RUNNING;
+import static com.android.launcher3.popup.SystemShortcut.APP_INFO;
+import static com.android.launcher3.popup.SystemShortcut.INSTALL;
+import static com.android.launcher3.popup.SystemShortcut.WIDGETS;
+import static com.android.launcher3.states.RotationHelper.REQUEST_LOCK;
+import static com.android.launcher3.states.RotationHelper.REQUEST_NONE;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -24,25 +67,48 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
-import android.content.*;
+import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
+import android.content.ComponentCallbacks2;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.graphics.drawable.Icon;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.os.Parcelable;
 import android.os.Process;
-import android.os.*;
+import android.os.StrictMode;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.text.method.TextKeyListener;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.*;
+import android.view.KeyEvent;
+import android.view.KeyboardShortcutGroup;
+import android.view.KeyboardShortcutInfo;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import androidx.annotation.CallSuper;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.annotation.VisibleForTesting;
 
 import com.android.launcher3.DropTarget.DragObject;
 import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
@@ -55,7 +121,11 @@ import com.android.launcher3.anim.PropertyListBuilder;
 import com.android.launcher3.compat.AccessibilityManagerCompat;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dot.DotInfo;
-import com.android.launcher3.dragndrop.*;
+import com.android.launcher3.dragndrop.DragController;
+import com.android.launcher3.dragndrop.DragLayer;
+import com.android.launcher3.dragndrop.DragOptions;
+import com.android.launcher3.dragndrop.DragView;
+import com.android.launcher3.dragndrop.LauncherDragController;
 import com.android.launcher3.folder.FolderGridOrganizer;
 import com.android.launcher3.folder.FolderIcon;
 import com.android.launcher3.icons.BitmapRenderer;
@@ -72,7 +142,10 @@ import com.android.launcher3.model.ModelUtils;
 import com.android.launcher3.model.ModelWriter;
 import com.android.launcher3.model.WidgetsModel;
 import com.android.launcher3.model.data.AppInfo;
-import com.android.launcher3.model.data.*;
+import com.android.launcher3.model.data.FolderInfo;
+import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.LauncherAppWidgetInfo;
+import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.notification.NotificationListener;
 import com.android.launcher3.pm.PinRequestHelper;
 import com.android.launcher3.pm.UserCache;
@@ -89,13 +162,37 @@ import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.touch.AllAppsSwipeController;
 import com.android.launcher3.touch.ItemClickHandler;
 import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
-import com.android.launcher3.util.*;
+import com.android.launcher3.util.ActivityResultInfo;
+import com.android.launcher3.util.ActivityTracker;
+import com.android.launcher3.util.ComponentKey;
+import com.android.launcher3.util.IntArray;
+import com.android.launcher3.util.ItemInfoMatcher;
+import com.android.launcher3.util.MultiValueAlpha;
 import com.android.launcher3.util.MultiValueAlpha.AlphaProperty;
+import com.android.launcher3.util.OnboardingPrefs;
+import com.android.launcher3.util.PackageManagerHelper;
+import com.android.launcher3.util.PackageUserKey;
+import com.android.launcher3.util.PendingRequestArgs;
+import com.android.launcher3.util.SafeCloseable;
+import com.android.launcher3.util.SystemUiController;
+import com.android.launcher3.util.Themes;
+import com.android.launcher3.util.Thunk;
+import com.android.launcher3.util.TouchController;
+import com.android.launcher3.util.TraceHelper;
+import com.android.launcher3.util.UiThreadHelper;
+import com.android.launcher3.util.ViewOnDrawExecutor;
 import com.android.launcher3.views.ActivityContext;
 import com.android.launcher3.views.FloatingSurfaceView;
 import com.android.launcher3.views.OptionsPopupView;
 import com.android.launcher3.views.ScrimView;
-import com.android.launcher3.widget.*;
+import com.android.launcher3.widget.LauncherAppWidgetHost;
+import com.android.launcher3.widget.LauncherAppWidgetHostView;
+import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
+import com.android.launcher3.widget.PendingAddShortcutInfo;
+import com.android.launcher3.widget.PendingAddWidgetInfo;
+import com.android.launcher3.widget.PendingAppWidgetHostView;
+import com.android.launcher3.widget.WidgetAddFlowHandler;
+import com.android.launcher3.widget.WidgetManagerHelper;
 import com.android.launcher3.widget.custom.CustomWidgetManager;
 import com.android.launcher3.widget.model.WidgetsListBaseEntry;
 import com.android.launcher3.widget.picker.WidgetsFullSheet;
@@ -108,39 +205,20 @@ import com.android.systemui.plugins.shared.LauncherOverlayManager.LauncherOverla
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import androidx.annotation.CallSuper;
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.annotation.VisibleForTesting;
-
-import static android.content.pm.ActivityInfo.*;
-import static android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
-import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
-import static com.android.launcher3.AbstractFloatingView.*;
-import static com.android.launcher3.LauncherAnimUtils.SPRING_LOADED_EXIT_DELAY;
-import static com.android.launcher3.LauncherState.*;
-import static com.android.launcher3.Utilities.postAsyncCallback;
-import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.getSupportedActions;
-import static com.android.launcher3.dragndrop.DragLayer.ALPHA_INDEX_LAUNCHER_LOAD;
-import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_BACKGROUND;
-import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_HOME;
-import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.*;
-import static com.android.launcher3.model.ItemInstallQueue.*;
-import static com.android.launcher3.popup.SystemShortcut.*;
-import static com.android.launcher3.states.RotationHelper.REQUEST_LOCK;
-import static com.android.launcher3.states.RotationHelper.REQUEST_NONE;
 
 /**
  * Default launcher application.
  */
 public class Launcher extends StatefulActivity<LauncherState> implements LauncherExterns,
-        Callbacks, InvariantDeviceProfile.OnIDPChangeListener, PluginListener<OverlayPlugin>,
-        LauncherOverlayCallbacks {
+        Callbacks, InvariantDeviceProfile.OnIDPChangeListener, PluginListener<OverlayPlugin> {
     public static final String TAG = "Launcher";
 
     public static final ActivityTracker<Launcher> ACTIVITY_TRACKER = new ActivityTracker<>();
@@ -327,8 +405,7 @@ public class Launcher extends StatefulActivity<LauncherState> implements Launche
                         .setSmallIcon(android.R.drawable.ic_menu_close_clear_cancel)
                         .setContentTitle("Launcher crash detected!")
                         .setStyle(new Notification.BigTextStyle().bigText(stackTrace))
-                        .addAction(new Notification.Action.Builder(Icon.createWithResource("", android.R.drawable.ic_menu_share),
-                                "Share", sharePendingIntent).build())
+                        .addAction(android.R.drawable.ic_menu_share, "Share", sharePendingIntent)
                         .build();
                 notificationManager.notify(notificationTag, notificationId, notification);
 
@@ -542,7 +619,7 @@ public class Launcher extends StatefulActivity<LauncherState> implements Launche
     @Override
     public void setLauncherOverlay(LauncherOverlay overlay) {
         if (overlay != null) {
-            overlay.setOverlayCallbacks(this);
+            overlay.setOverlayCallbacks(new LauncherOverlayCallbacksImpl());
         }
         mWorkspace.setLauncherOverlay(overlay);
     }
@@ -1046,15 +1123,12 @@ public class Launcher extends StatefulActivity<LauncherState> implements Launche
         mAppWidgetHost.setActivityResumed(false);
     }
 
-    /**
-     * {@code LauncherOverlayCallbacks} scroll amount.
-     * Indicates transition progress to -1 screen.
-     * @param progress From 0 to 1.
-     */
-    @Override
-    public void onScrollChanged(float progress) {
-        if (mWorkspace != null) {
-            mWorkspace.onOverlayScrollChanged(progress);
+    class LauncherOverlayCallbacksImpl implements LauncherOverlayCallbacks {
+
+        public void onScrollChanged(float progress) {
+            if (mWorkspace != null) {
+                mWorkspace.onOverlayScrollChanged(progress);
+            }
         }
     }
 

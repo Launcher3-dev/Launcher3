@@ -133,7 +133,7 @@ public class FastBitmapDrawable extends Drawable {
         updateFilter();
     }
 
-    @SuppressWarnings("deprecation")
+    @Override
     public int getOpacity() {
         return PixelFormat.TRANSLUCENT;
     }

@@ -37,12 +37,12 @@ public class HandlerRunnable<T> implements Runnable {
     private boolean mCanceled = false;
 
     public HandlerRunnable(Handler workerHandler, Supplier<T> task, Executor callbackExecutor,
-                           Consumer<T> callback) {
+            Consumer<T> callback) {
         this(workerHandler, task, callbackExecutor, callback, () -> { });
     }
 
     public HandlerRunnable(Handler workerHandler, Supplier<T> task, Executor callbackExecutor,
-                           Consumer<T> callback, Runnable endRunnable) {
+            Consumer<T> callback, Runnable endRunnable) {
         mWorkerHandler = workerHandler;
         mTask = task;
         mCallbackExecutor = callbackExecutor;

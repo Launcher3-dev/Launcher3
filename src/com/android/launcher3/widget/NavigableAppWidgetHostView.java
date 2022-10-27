@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewDebug;
 import android.view.ViewGroup;
 
+import com.android.launcher3.BaseActivity;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Reorderable;
 import com.android.launcher3.dragndrop.DraggableView;
@@ -58,7 +59,7 @@ public abstract class NavigableAppWidgetHostView extends AppWidgetHostView
     @ViewDebug.ExportedProperty(category = "launcher")
     private boolean mChildrenFocused;
 
-    protected final ActivityContext mActivity;
+    protected final BaseActivity mActivity;
 
     public NavigableAppWidgetHostView(Context context) {
         super(context);

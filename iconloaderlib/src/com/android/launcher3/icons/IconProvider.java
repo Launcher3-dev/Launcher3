@@ -16,6 +16,11 @@
 
 package com.android.launcher3.icons;
 
+import static android.content.Intent.ACTION_DATE_CHANGED;
+import static android.content.Intent.ACTION_TIMEZONE_CHANGED;
+import static android.content.Intent.ACTION_TIME_CHANGED;
+import static android.content.res.Resources.ID_NULL;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -48,11 +53,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static android.content.Intent.ACTION_DATE_CHANGED;
-import static android.content.Intent.ACTION_TIMEZONE_CHANGED;
-import static android.content.Intent.ACTION_TIME_CHANGED;
-import static android.content.res.Resources.ID_NULL;
-
 /**
  * Class to handle icon loading from different packages
  */
@@ -79,8 +79,8 @@ public class IconProvider {
     private Map<String, ThemeData> mThemedIconMap;
 
     private final Context mContext;
-    private ComponentName mCalendar;
-    private ComponentName mClock;
+    private final ComponentName mCalendar;
+    private final ComponentName mClock;
 
     static final int ICON_TYPE_DEFAULT = 0;
     static final int ICON_TYPE_CALENDAR = 1;
@@ -92,8 +92,8 @@ public class IconProvider {
 
     public IconProvider(Context context, boolean supportsIconTheme) {
         mContext = context;
-//        mCalendar = parseComponentOrNull(context, R.string.calendar_component_name);
-//        mClock = parseComponentOrNull(context, R.string.clock_component_name);
+        mCalendar = parseComponentOrNull(context, R.string.calendar_component_name);
+        mClock = parseComponentOrNull(context, R.string.clock_component_name);
         if (!supportsIconTheme) {
             // Initialize an empty map if theming is not supported
             mThemedIconMap = DISABLED_MAP;
@@ -144,7 +144,7 @@ public class IconProvider {
     }
 
     private Drawable getIconWithOverrides(String packageName, UserHandle user, int iconDpi,
-                                          Supplier<Drawable> fallback) {
+            Supplier<Drawable> fallback) {
         Drawable icon = null;
 
         int iconType = ICON_TYPE_DEFAULT;
@@ -174,7 +174,7 @@ public class IconProvider {
             try {
                 final Resources resources = mContext.getPackageManager()
                         .getResourcesForApplication(ai.applicationInfo);
-                icon = resources.getDrawableForDensity(iconRes, density, null);
+                icon = resources.getDrawableForDensity(iconRes, density);
             } catch (NameNotFoundException | Resources.NotFoundException exc) { }
         }
         // Get the default density icon
@@ -227,7 +227,7 @@ public class IconProvider {
         try {
             final Bundle metadata = pm.getActivityInfo(
                     mCalendar,
-                    PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.GET_META_DATA)
+                    PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_META_DATA)
                     .metaData;
             final Resources resources = pm.getResourcesForApplication(mCalendar.getPackageName());
             final int id = getDynamicIconId(metadata, resources);
