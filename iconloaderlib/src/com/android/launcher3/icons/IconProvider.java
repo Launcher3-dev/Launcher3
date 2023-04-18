@@ -117,7 +117,7 @@ public class IconProvider {
                 () -> loadActivityInfoIcon(info, iconDpi));
     }
 
-    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    //@TargetApi(Build.VERSION_CODES.TIRAMISU)
     private Drawable getIconWithOverrides(String packageName, int iconDpi,
             Supplier<Drawable> fallback) {
         ThemeData td = getThemeDataForPackage(packageName);
@@ -144,7 +144,7 @@ public class IconProvider {
     protected ThemeData getThemeDataForPackage(String packageName) {
         return null;
     }
-
+    @SuppressWarnings("deprecation")
     private Drawable loadActivityInfoIcon(ActivityInfo ai, int density) {
         final int iconRes = ai.getIconResource();
         Drawable icon = null;
@@ -163,7 +163,8 @@ public class IconProvider {
         return icon;
     }
 
-    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    //@TargetApi(Build.VERSION_CODES.TIRAMISU)
+    @SuppressWarnings("deprecation")
     private Drawable loadCalendarDrawable(int iconDpi, @Nullable ThemeData td) {
         PackageManager pm = mContext.getPackageManager();
         try {
@@ -261,7 +262,7 @@ public class IconProvider {
             mResources = resources;
             mResID = resID;
         }
-
+        @SuppressWarnings("deprecation")
         Drawable loadPaddedDrawable() {
             if (!"drawable".equals(mResources.getResourceTypeName(mResID))) {
                 return null;

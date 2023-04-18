@@ -53,7 +53,7 @@ public class FastBitmapDrawable extends Drawable implements Drawable.Callback {
     public static final int CLICK_FEEDBACK_DURATION = 200;
 
     protected final Paint mPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
-    public final Bitmap mBitmap;
+    protected final Bitmap mBitmap;
     protected final int mIconColor;
 
     @Nullable private ColorFilter mColorFilter;
@@ -109,7 +109,7 @@ public class FastBitmapDrawable extends Drawable implements Drawable.Callback {
     }
 
     @Override
-    public void draw(Canvas canvas) {
+    public final void draw(Canvas canvas) {
         if (mScale != 1f) {
             int count = canvas.save();
             Rect bounds = getBounds();
@@ -153,6 +153,7 @@ public class FastBitmapDrawable extends Drawable implements Drawable.Callback {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public int getOpacity() {
         return PixelFormat.TRANSLUCENT;
     }

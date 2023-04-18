@@ -1,11 +1,10 @@
 # Launcher3
 
-## 更新：20220821
-* Android-13 (Launcher-master-20220821(b62600b8c3de47a26386aa59f06959b2cf1af753)版本源码)
+## 更新：20230418
+* Android-13-Qc
 
 ## 说明
 目前只支持withoutQuickstep编译
-如果因为Android studio或者Intellij Idea版本问题可以使用Intellij Idea 2022.1.2版本可以正常编译。
 
 ## 主要分支
 
@@ -16,6 +15,7 @@
 * Launcher3-10.0 (android-10.0.0_r46)
 * Launcher3-11
 * Launcher3-12
+* Launcher3-13-Qc (高通版本)
 * master (Launcher-master-20220821(b62600b8c3de47a26386aa59f06959b2cf1af753))--Android-13
 
 ## 源码参考

@@ -1,5 +1,13 @@
 package com.android.launcher3.icons;
 
+import static android.graphics.Paint.DITHER_FLAG;
+import static android.graphics.Paint.FILTER_BITMAP_FLAG;
+import static android.graphics.drawable.AdaptiveIconDrawable.getExtraInsetFraction;
+
+import static com.android.launcher3.icons.BitmapInfo.FLAG_INSTANT;
+import static com.android.launcher3.icons.BitmapInfo.FLAG_WORK;
+import static com.android.launcher3.icons.ShadowGenerator.BLUR_FACTOR;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
@@ -28,13 +36,6 @@ import androidx.annotation.Nullable;
 import com.android.launcher3.icons.BitmapInfo.Extender;
 import com.android.launcher3.util.FlagOp;
 
-import static android.graphics.Paint.DITHER_FLAG;
-import static android.graphics.Paint.FILTER_BITMAP_FLAG;
-import static android.graphics.drawable.AdaptiveIconDrawable.getExtraInsetFraction;
-import static com.android.launcher3.icons.BitmapInfo.FLAG_INSTANT;
-import static com.android.launcher3.icons.BitmapInfo.FLAG_WORK;
-import static com.android.launcher3.icons.ShadowGenerator.BLUR_FACTOR;
-
 /**
  * This class will be moved to androidx library. There shouldn't be any dependency outside
  * this package.
@@ -48,7 +49,7 @@ public class BaseIconFactory implements AutoCloseable {
     private final Rect mOldBounds = new Rect();
     private final SparseBooleanArray mIsUserBadged = new SparseBooleanArray();
     protected final Context mContext;
-    protected final Canvas mCanvas;
+    private final Canvas mCanvas;
     private final PackageManager mPm;
     private final ColorExtractor mColorExtractor;
     private boolean mDisableColorExtractor;
@@ -180,7 +181,7 @@ public class BaseIconFactory implements AutoCloseable {
      * @param icon                      source of the icon
      * @return a bitmap suitable for disaplaying as an icon at various system UIs.
      */
-    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    //@TargetApi(Build.VERSION_CODES.TIRAMISU)
     public BitmapInfo createBadgedIconBitmap(@NonNull Drawable icon,
             @Nullable IconOptions options) {
         boolean shrinkNonAdaptiveIcons = options == null || options.mShrinkNonAdaptiveIcons;
@@ -279,7 +280,7 @@ public class BaseIconFactory implements AutoCloseable {
         mDisableColorExtractor = true;
     }
 
-    protected Drawable normalizeAndWrapToAdaptiveIcon(@NonNull Drawable icon,
+    private Drawable normalizeAndWrapToAdaptiveIcon(@NonNull Drawable icon,
             boolean shrinkNonAdaptiveIcons, RectF outIconBounds, float[] outScale) {
         if (icon == null) {
             return null;
@@ -311,7 +312,7 @@ public class BaseIconFactory implements AutoCloseable {
         return icon;
     }
 
-    protected Bitmap createIconBitmap(Drawable icon, float scale) {
+    private Bitmap createIconBitmap(Drawable icon, float scale) {
         return createIconBitmap(icon, scale, mIconBitmapSize);
     }
 
@@ -323,7 +324,7 @@ public class BaseIconFactory implements AutoCloseable {
         return createIconBitmap(icon, scale, size, Bitmap.Config.ARGB_8888);
     }
 
-    protected Bitmap createIconBitmap(@NonNull Drawable icon, float scale, int size,
+    private Bitmap createIconBitmap(@NonNull Drawable icon, float scale, int size,
             Bitmap.Config config) {
         Bitmap bitmap = Bitmap.createBitmap(size, size, config);
         if (icon == null) {
@@ -391,12 +392,13 @@ public class BaseIconFactory implements AutoCloseable {
         return createBadgedIconBitmap(getFullResDefaultActivityIcon(mFillResIconDpi));
     }
 
+    @SuppressWarnings("deprecation")
     public static Drawable getFullResDefaultActivityIcon(int iconDpi) {
         return Resources.getSystem().getDrawableForDensity(
                 android.R.drawable.sym_def_app_icon, iconDpi);
     }
 
-    protected int extractColor(Bitmap bitmap) {
+    private int extractColor(Bitmap bitmap) {
         return mDisableColorExtractor ? 0 : mColorExtractor.findDominantColorByHue(bitmap);
     }
 
@@ -472,7 +474,7 @@ public class BaseIconFactory implements AutoCloseable {
         }
     }
 
-    protected static class ClippedMonoDrawable extends InsetDrawable {
+    private static class ClippedMonoDrawable extends InsetDrawable {
 
         private final AdaptiveIconDrawable mCrop;
 

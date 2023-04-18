@@ -18,6 +18,7 @@ package com.android.launcher3.icons;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;

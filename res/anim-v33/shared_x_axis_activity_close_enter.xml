@@ -17,8 +17,9 @@
 
 <set xmlns:android="http://schemas.android.com/apk/res/android"
     android:shareInterpolator="false"
-    android:showBackdrop="true">
-
+    >
+    <!--解决错误临时用-->
+    <!--android:showBackdrop="true"-->
     <alpha
         android:fromAlpha="0.0"
         android:toAlpha="1.0"

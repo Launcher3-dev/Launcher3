@@ -90,6 +90,7 @@ public class IconCacheUpdateHandler {
         packages.add(packageName);
     }
 
+    @SuppressWarnings("deprecation")
     private void createPackageInfoMap() {
         PackageManager pm = mIconCache.mPackageManager;
         for (PackageInfo info :
@@ -132,7 +133,7 @@ public class IconCacheUpdateHandler {
      * the DB and are updated.
      * @return The set of packages for which icons have updated.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","deprecation"})
     private <T> void updateIconsPerUser(UserHandle user, HashMap<ComponentName, T> componentMap,
             CachingLogic<T> cachingLogic, OnUpdateCallback onUpdateCallback) {
         Set<String> ignorePackages = mPackagesToIgnore.get(user);

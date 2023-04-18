@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.icons;
 
+import static com.android.launcher3.icons.IconProvider.ATLEAST_T;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -47,8 +49,6 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
-import static com.android.launcher3.icons.IconProvider.ATLEAST_T;
-
 /**
  * Wrapper over {@link AdaptiveIconDrawable} to intercept icon flattening logic for dynamic
  * clock icons
@@ -65,7 +65,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
     // will only happen in case of any change.
     public static final long TICK_MS = DISABLE_SECONDS ? TimeUnit.MINUTES.toMillis(1) : 200L;
 
-    private static final String LAUNCHER_PACKAGE = "com.android.launcher";
+    private static final String LAUNCHER_PACKAGE = "com.android.launcher3";
     private static final String ROUND_ICON_METADATA_KEY = LAUNCHER_PACKAGE
             + ".LEVEL_PER_TICK_ICON_ROUND";
     private static final String HOUR_INDEX_METADATA_KEY = LAUNCHER_PACKAGE + ".HOUR_LAYER_INDEX";
@@ -91,7 +91,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
     private ClockDrawableWrapper(AdaptiveIconDrawable base) {
         super(base.getBackground(), base.getForeground());
     }
-
+    @SuppressWarnings("deprecation")
     private void applyThemeData(ThemeData themeData) {
         if (!IconProvider.ATLEAST_T || mThemeInfo != null) {
             return;
@@ -138,6 +138,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
      * Loads and returns the wrapper from the provided package, or returns null
      * if it is unable to load.
      */
+    @SuppressWarnings("deprecation")
     public static ClockDrawableWrapper forPackage(Context context, String pkg, int iconDpi,
             @Nullable ThemeData themeData) {
         try {
@@ -157,7 +158,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
         return null;
     }
 
-    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    //@TargetApi(Build.VERSION_CODES.TIRAMISU)
     private static ClockDrawableWrapper forExtras(
             Bundle metadata, IntFunction<Drawable> drawableProvider) {
         if (metadata == null) {
@@ -318,7 +319,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
         }
 
         @Override
-        @TargetApi(Build.VERSION_CODES.TIRAMISU)
+        //@TargetApi(Build.VERSION_CODES.TIRAMISU)
         public FastBitmapDrawable newIcon(Context context,
                 @DrawableCreationFlags  int creationFlags) {
             AnimationInfo info;
@@ -389,6 +390,10 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
 
             mFullDrawable = (AdaptiveIconDrawable) mAnimInfo.baseDrawableState.newDrawable();
             mFG = (LayerDrawable) mFullDrawable.getForeground();
+
+            // Time needs to be applied here since drawInternal is NOT guaranteed to be called
+            // before this foreground drawable is shown on the screen.
+            mAnimInfo.applyTime(mTime, mFG);
             mCanvasScale = 1 - 2 * mBoundsOffset;
         }
 
@@ -419,18 +424,6 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
             canvas.restoreToCount(saveCount);
 
             reschedule();
-        }
-
-        @Override
-        public boolean setState(int[] stateSet) {
-            // If the user has just pressed the clock icon, and the clock app is launching,
-            // we don't want to change the time shown. Doing so can result in jank.
-            for (int state: stateSet) {
-                if (state == android.R.attr.state_pressed) {
-                    return false;
-                }
-            }
-            return super.setState(stateSet);
         }
 
         @Override

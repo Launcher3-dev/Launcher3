@@ -15,6 +15,7 @@
  */
 
 package com.android.launcher3.icons;
+
 import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
 
 import android.graphics.Bitmap;

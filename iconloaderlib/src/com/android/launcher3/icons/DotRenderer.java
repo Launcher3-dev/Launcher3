@@ -16,6 +16,9 @@
 
 package com.android.launcher3.icons;
 
+import static android.graphics.Paint.ANTI_ALIAS_FLAG;
+import static android.graphics.Paint.FILTER_BITMAP_FLAG;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -23,11 +26,9 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.util.Log;
 import android.view.ViewDebug;
-
-import static android.graphics.Paint.ANTI_ALIAS_FLAG;
-import static android.graphics.Paint.FILTER_BITMAP_FLAG;
 
 /**
  * Used to draw a notification dot on top of an icon.
@@ -50,14 +51,6 @@ public class DotRenderer {
     private final float[] mLeftDotPosition;
 
     private static final int MIN_DOT_SIZE = 1;
-
-    private static final float SIZE_NUM_PERCENTAGE = 0.328f;
-    private final int mTextHeight;
-    private final float mNumCircleRadius;
-    private final float mNumBitmapOffset;
-    private boolean mShowNumInDot = false;
-    private final Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-
     public DotRenderer(int iconSizePx, Path iconShapePath, int pathSize) {
         int size = Math.round(SIZE_PERCENTAGE * iconSizePx);
         if (size <= 0) {
@@ -73,22 +66,6 @@ public class DotRenderer {
         // Find the points on the path that are closest to the top left and right corners.
         mLeftDotPosition = getPathPoint(iconShapePath, pathSize, -1);
         mRightDotPosition = getPathPoint(iconShapePath, pathSize, 1);
-
-        {
-            int numSize = Math.round(SIZE_NUM_PERCENTAGE * iconSizePx);
-            if (numSize <= 0) {
-                numSize = MIN_DOT_SIZE;
-            }
-            mNumCircleRadius = numSize/2;//numBuilder.radius;
-            mNumBitmapOffset = -mNumCircleRadius;//mNumBackgroundWithShadow.getHeight() * 0.5f;
-
-            mTextPaint.setTextSize(mNumCircleRadius);
-            mTextPaint.setTextAlign(Paint.Align.CENTER);
-            mTextPaint.setColor(Color.WHITE);
-            Rect tempTextHeight = new Rect();
-            mTextPaint.getTextBounds("0", 0, 1, tempTextHeight);
-            mTextHeight = tempTextHeight.height();
-        }
     }
 
     private static float[] getPathPoint(Path path, float size, float direction) {
@@ -135,30 +112,22 @@ public class DotRenderer {
         float dotCenterX = iconBounds.left + iconBounds.width() * dotPosition[0];
         float dotCenterY = iconBounds.top + iconBounds.height() * dotPosition[1];
 
-        float bitmapOffset = mShowNumInDot ? mNumBitmapOffset : mBitmapOffset;
         // Ensure dot fits entirely in canvas clip bounds.
         Rect canvasBounds = canvas.getClipBounds();
         float offsetX = params.leftAlign
-                ? Math.max(0, canvasBounds.left - (dotCenterX + bitmapOffset))
-                : Math.min(0, canvasBounds.right - (dotCenterX - bitmapOffset));
-        float offsetY = Math.max(0, canvasBounds.top - (dotCenterY + bitmapOffset));
+                ? Math.max(0, canvasBounds.left - (dotCenterX + mBitmapOffset))
+                : Math.min(0, canvasBounds.right - (dotCenterX - mBitmapOffset));
+        float offsetY = Math.max(0, canvasBounds.top - (dotCenterY + mBitmapOffset));
 
         // We draw the dot relative to its center.
         canvas.translate(dotCenterX + offsetX, dotCenterY + offsetY);
         canvas.scale(params.scale, params.scale);
 
         mCirclePaint.setColor(Color.BLACK);
-        canvas.drawBitmap(mBackgroundWithShadow, bitmapOffset, bitmapOffset, mCirclePaint);
+        canvas.drawBitmap(mBackgroundWithShadow, mBitmapOffset, mBitmapOffset, mCirclePaint);
         mCirclePaint.setColor(params.dotColor);
-        canvas.drawCircle(0, 0, (mShowNumInDot ? mNumCircleRadius : mCircleRadius), mCirclePaint);
-        if(mShowNumInDot) {
-            canvas.drawText("" + params.num, 0, (float) mTextHeight / 2, mTextPaint);
-        }
+        canvas.drawCircle(0, 0, mCircleRadius, mCirclePaint);
         canvas.restore();
-    }
-
-    public void setShowNumInDot(boolean showNumInDot) {
-        mShowNumInDot = showNumInDot;
     }
 
     public static class DrawParams {
@@ -177,6 +146,5 @@ public class DotRenderer {
         /** Whether the dot should align to the top left of the icon rather than the top right. */
         @ViewDebug.ExportedProperty(category = "notification dot")
         public boolean leftAlign;
-        public int num;
     }
 }

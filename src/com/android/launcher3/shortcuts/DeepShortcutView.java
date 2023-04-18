@@ -27,7 +27,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -46,8 +45,6 @@ import com.android.launcher3.views.BubbleTextHolder;
  * the {@link DeepShortcutView} background color.
  */
 public class DeepShortcutView extends FrameLayout implements BubbleTextHolder {
-
-    public static final String TAG = "DeepShortcutView";
 
     private static final Point sTempPoint = new Point();
 
@@ -105,13 +102,7 @@ public class DeepShortcutView extends FrameLayout implements BubbleTextHolder {
         GradientDrawable backgroundMask = new GradientDrawable();
         backgroundMask.setColor(color);
         backgroundMask.setShape(GradientDrawable.RECTANGLE);
-        boolean isCornerRadii = false;
-        try {
-            isCornerRadii = background.getCornerRadii() != null;
-        } catch (Exception e) {
-            Log.e(TAG, "tryUpdateTextBackground: radii of GradientDrawable  is null");
-        }
-        if (isCornerRadii) {
+        if (background.getCornerRadii() != null) {
             backgroundMask.setCornerRadii(background.getCornerRadii());
         } else {
             backgroundMask.setCornerRadius(background.getCornerRadius());

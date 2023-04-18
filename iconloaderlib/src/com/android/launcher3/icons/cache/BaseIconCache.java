@@ -15,6 +15,15 @@
  */
 package com.android.launcher3.icons.cache;
 
+import static android.graphics.BitmapFactory.decodeByteArray;
+
+import static com.android.launcher3.icons.BaseIconFactory.getFullResDefaultActivityIcon;
+import static com.android.launcher3.icons.BitmapInfo.LOW_RES_ICON;
+import static com.android.launcher3.icons.GraphicsUtils.flattenBitmap;
+import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
+
+import static java.util.Objects.requireNonNull;
+
 import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
@@ -62,13 +71,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import static android.graphics.BitmapFactory.decodeByteArray;
-import static com.android.launcher3.icons.BaseIconFactory.getFullResDefaultActivityIcon;
-import static com.android.launcher3.icons.BitmapInfo.LOW_RES_ICON;
-import static com.android.launcher3.icons.GraphicsUtils.flattenBitmap;
-import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
-import static java.util.Objects.requireNonNull;
 
 public abstract class BaseIconCache {
 
@@ -164,7 +166,7 @@ public abstract class BaseIconCache {
         mIconDb = new IconDB(mContext, mDbFileName, iconPixelSize);
         mCache.clear();
     }
-
+    @SuppressWarnings("deprecation")
     private Drawable getFullResIcon(Resources resources, int iconId) {
         if (resources != null && iconId != 0) {
             try {
@@ -291,6 +293,7 @@ public abstract class BaseIconCache {
      * Updates {@param values} to contain versioning information and adds it to the DB.
      * @param values {@link ContentValues} containing icon & title
      */
+    @SuppressWarnings("deprecation")
     private void addIconToDB(ContentValues values, ComponentName key,
             PackageInfo info, long userSerial, long lastUpdateTime) {
         values.put(IconDB.COLUMN_COMPONENT, key.flattenToString());
@@ -476,6 +479,7 @@ public abstract class BaseIconCache {
      * Gets an entry for the package, which can be used as a fallback entry for various components.
      * This method is not thread safe, it must be called from a synchronized method.
      */
+    @SuppressWarnings("deprecation")
     protected CacheEntry getEntryForPackageLocked(String packageName, UserHandle user,
             boolean useLowResIcon) {
         assertWorkerThread();

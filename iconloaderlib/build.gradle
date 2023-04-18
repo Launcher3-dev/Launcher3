@@ -1,11 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion COMPILE_SDK
+    compileSdkVersion 31
+    buildToolsVersion BUILD_TOOLS_VERSION
 
     defaultConfig {
-        minSdkVersion 26
-        targetSdkVersion 33
+        minSdkVersion 25
+        targetSdkVersion 31
     }
 
     sourceSets {
@@ -17,6 +18,7 @@ android {
     }
 
     lintOptions {
+        checkReleaseBuilds false
         abortOnError false
     }
 
@@ -30,6 +32,10 @@ android {
     }
 }
 
+final String ANDROID_TOP = "${rootDir}/"
+final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/framework_intermediates/"
+
 dependencies {
-    implementation "androidx.core:core:${ANDROID_X_VERSION}"
+    implementation "androidx.core:core:1.8.0"
+    compileOnly files("${FRAMEWORK_PREBUILTS_DIR}/libs/framework.jar")
 }

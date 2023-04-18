@@ -416,4 +416,7 @@
         <!-- The icon drawable of a widget category. -->
         <attr name="sectionDrawable" format="reference" />
     </declare-styleable>
+    <!--解决错误临时用-->
+    <attr name="disabledIconAlpha" format="float" />
+    <attr name="loadingIconColor" format="color" />
 </resources>
