@@ -1,7 +1,8 @@
 # Launcher3
 
-## 更新：20220821
-* Android-13 (Launcher-master-20220821(b62600b8c3de47a26386aa59f06959b2cf1af753)版本源码)
+## 更新：20231209
+* Android-13 (Launcher3-13.0.0_r83(7e9e70085176ea46bf773019a5054942d2fc3811)版本源码)
+* https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/tags/android-13.0.0_r83
 
 ## 说明
 目前只支持withoutQuickstep编译
@@ -15,8 +16,9 @@
 * Launcher3-9.0
 * Launcher3-10.0 (android-10.0.0_r46)
 * Launcher3-11
-* Launcher3-12
-* master (Launcher-master-20220821(b62600b8c3de47a26386aa59f06959b2cf1af753))--Android-13
+* Launcher3-12（可以编译Quickstep版本）
+* Launcher3-13-Qc（高通版本，可以编译Quickstep版本）
+* master (Launcher3-13.0.0_r83(7e9e70085176ea46bf773019a5054942d2fc3811))--Android-13
 
 ## 源码参考
 https://cs.android.com/android/platform/superproject/+/master:packages/apps/Launcher3/

@@ -28,31 +28,36 @@ import com.android.launcher3.icons.BitmapInfo;
 
 public interface CachingLogic<T> {
 
-    ComponentName getComponent(T object);
+    @NonNull
+    ComponentName getComponent(@NonNull final T object);
 
-    UserHandle getUser(T object);
+    @NonNull
+    UserHandle getUser(@NonNull final T object);
 
-    CharSequence getLabel(T object);
+    @NonNull
+    CharSequence getLabel(@NonNull final T object);
 
-    default CharSequence getDescription(T object, CharSequence fallback) {
+    @NonNull
+    default CharSequence getDescription(@NonNull final T object,
+            @NonNull final CharSequence fallback) {
         return fallback;
     }
 
     @NonNull
-    BitmapInfo loadIcon(Context context, T object);
+    BitmapInfo loadIcon(@NonNull final Context context, @NonNull final T object);
 
     /**
      * Provides a option list of keywords to associate with this object
      */
     @Nullable
-    default String getKeywords(T object, LocaleList localeList) {
+    default String getKeywords(@NonNull final T object, @NonNull final LocaleList localeList) {
         return null;
     }
 
     /**
      * Returns the timestamp the entry was last updated in cache.
      */
-    default long getLastUpdatedTime(T object, PackageInfo info) {
+    default long getLastUpdatedTime(@Nullable final T object, @NonNull final PackageInfo info) {
         return info.lastUpdateTime;
     }
 

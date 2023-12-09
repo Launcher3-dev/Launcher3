@@ -22,12 +22,10 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.SystemProperties;
 
-import com.android.launcher3.BaseQuickstepLauncher;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
-import com.android.launcher3.taskbar.LauncherTaskbarUIController;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.Themes;
 import com.android.quickstep.util.LayoutUtils;
@@ -38,6 +36,10 @@ import com.android.quickstep.views.TaskView;
  * Definition for overview state
  */
 public class OverviewState extends LauncherState {
+
+    private static final int OVERVIEW_SLIDE_IN_DURATION = 380;
+    private static final int OVERVIEW_POP_IN_DURATION = 250;
+    private static final int OVERVIEW_EXIT_DURATION = 250;
 
     protected static final Rect sTempRect = new Rect();
 
@@ -59,16 +61,31 @@ public class OverviewState extends LauncherState {
 
     @Override
     public int getTransitionDuration(Context context, boolean isToState) {
-        // In gesture modes, overview comes in all the way from the side, so give it more time.
-        return DisplayController.getNavigationMode(context).hasGestures ? 380 : 250;
+        if (isToState) {
+            // In gesture modes, overview comes in all the way from the side, so give it more time.
+            return DisplayController.getNavigationMode(context).hasGestures
+                    ? OVERVIEW_SLIDE_IN_DURATION
+                    : OVERVIEW_POP_IN_DURATION;
+        } else {
+            // When exiting Overview, exit quickly.
+            return OVERVIEW_EXIT_DURATION;
+        }
     }
 
     @Override
     public ScaleAndTranslation getWorkspaceScaleAndTranslation(Launcher launcher) {
         RecentsView recentsView = launcher.getOverviewPanel();
-        float workspacePageHeight = launcher.getDeviceProfile().getCellLayoutHeight();
         recentsView.getTaskSize(sTempRect);
-        float scale = (float) sTempRect.height() / workspacePageHeight;
+        float scale;
+        DeviceProfile deviceProfile = launcher.getDeviceProfile();
+        if (deviceProfile.isTwoPanels) {
+            // In two panel layout, width does not include both panels or space between them, so
+            // use height instead. We do not use height for handheld, as cell layout can be
+            // shorter than a task and we want the workspace to scale down to task size.
+            scale = (float) sTempRect.height() / deviceProfile.getCellLayoutHeight();
+        } else {
+            scale = (float) sTempRect.width() / deviceProfile.getCellLayoutWidth();
+        }
         float parallaxFactor = 0.5f;
         return new ScaleAndTranslation(scale, 0, -getDefaultSwipeHeight(launcher) * parallaxFactor);
     }
@@ -94,14 +111,8 @@ public class OverviewState extends LauncherState {
     }
 
     @Override
-    public boolean isTaskbarStashed(Launcher launcher) {
-        if (launcher instanceof BaseQuickstepLauncher) {
-            LauncherTaskbarUIController uiController =
-                    ((BaseQuickstepLauncher) launcher).getTaskbarUIController();
-
-            return uiController != null && uiController.supportsVisualStashing();
-        }
-        return super.isTaskbarStashed(launcher);
+    public boolean isTaskbarAlignedWithHotseat(Launcher launcher) {
+        return false;
     }
 
     @Override
@@ -112,6 +123,18 @@ public class OverviewState extends LauncherState {
     @Override
     public boolean displayOverviewTasksAsGrid(DeviceProfile deviceProfile) {
         return deviceProfile.isTablet;
+    }
+
+    @Override
+    public boolean disallowTaskbarGlobalDrag() {
+        // Disable global drag in overview
+        return true;
+    }
+
+    @Override
+    public boolean allowTaskbarInitialSplitSelection() {
+        // Allow split select from taskbar items in overview
+        return true;
     }
 
     @Override

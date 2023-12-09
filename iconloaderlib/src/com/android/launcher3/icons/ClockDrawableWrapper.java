@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.icons;
 
+import static com.android.launcher3.icons.IconProvider.ATLEAST_T;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -47,8 +49,6 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
-import static com.android.launcher3.icons.IconProvider.ATLEAST_T;
-
 /**
  * Wrapper over {@link AdaptiveIconDrawable} to intercept icon flattening logic for dynamic
  * clock icons
@@ -65,7 +65,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
     // will only happen in case of any change.
     public static final long TICK_MS = DISABLE_SECONDS ? TimeUnit.MINUTES.toMillis(1) : 200L;
 
-    private static final String LAUNCHER_PACKAGE = "com.android.launcher";
+    private static final String LAUNCHER_PACKAGE = "com.android.launcher3";
     private static final String ROUND_ICON_METADATA_KEY = LAUNCHER_PACKAGE
             + ".LEVEL_PER_TICK_ICON_ROUND";
     private static final String HOUR_INDEX_METADATA_KEY = LAUNCHER_PACKAGE + ".HOUR_LAYER_INDEX";
@@ -214,7 +214,8 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
             BaseIconFactory iconFactory, float normalizationScale) {
         AdaptiveIconDrawable background = new AdaptiveIconDrawable(
                 getBackground().getConstantState().newDrawable(), null);
-        Bitmap flattenBG = iconFactory.createScaledBitmapWithShadow(background);
+        Bitmap flattenBG = iconFactory.createScaledBitmap(background,
+                BaseIconFactory.MODE_HARDWARE_WITH_SHADOW);
 
         // Only pass theme info if mono-icon is enabled
         AnimationInfo themeInfo = iconFactory.mMonoIconEnabled ? mThemeInfo : null;
@@ -387,9 +388,21 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
             mBgPaint.setColorFilter(cs.mBgFilter);
             mThemedFgColor = cs.mThemedFgColor;
 
-            mFullDrawable = (AdaptiveIconDrawable) mAnimInfo.baseDrawableState.newDrawable();
+            mFullDrawable =
+                    (AdaptiveIconDrawable) mAnimInfo.baseDrawableState.newDrawable().mutate();
             mFG = (LayerDrawable) mFullDrawable.getForeground();
+
+            // Time needs to be applied here since drawInternal is NOT guaranteed to be called
+            // before this foreground drawable is shown on the screen.
+            mAnimInfo.applyTime(mTime, mFG);
             mCanvasScale = 1 - 2 * mBoundsOffset;
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            super.setAlpha(alpha);
+            mBgPaint.setAlpha(alpha);
+            mFG.setAlpha(alpha);
         }
 
         @Override
@@ -422,18 +435,6 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
         }
 
         @Override
-        public boolean setState(int[] stateSet) {
-            // If the user has just pressed the clock icon, and the clock app is launching,
-            // we don't want to change the time shown. Doing so can result in jank.
-            for (int state: stateSet) {
-                if (state == android.R.attr.state_pressed) {
-                    return false;
-                }
-            }
-            return super.setState(stateSet);
-        }
-
-        @Override
         public boolean isThemed() {
             return mBgPaint.getColorFilter() != null;
         }
@@ -442,8 +443,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
         protected void updateFilter() {
             super.updateFilter();
             int alpha = mIsDisabled ? (int) (mDisabledAlpha * FULLY_OPAQUE) : FULLY_OPAQUE;
-            mBgPaint.setAlpha(alpha);
-            mFG.setAlpha(alpha);
+            setAlpha(alpha);
             mBgPaint.setColorFilter(mIsDisabled ? getDisabledColorFilter() : mBgFilter);
             mFG.setColorFilter(mIsDisabled ? getDisabledColorFilter() : null);
         }

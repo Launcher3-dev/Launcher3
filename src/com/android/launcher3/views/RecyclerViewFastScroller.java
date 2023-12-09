@@ -20,8 +20,6 @@ import static android.view.HapticFeedbackConstants.CLOCK_TICK;
 
 import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
 
-import static com.android.launcher3.util.UiThreadHelper.hideKeyboardAsync;
-
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Resources;
@@ -121,7 +119,6 @@ public class RecyclerViewFastScroller extends View {
     // prevent jumping, this offset is applied as the user scrolls.
     protected int mTouchOffsetY;
     protected int mThumbOffsetY;
-    protected int mRvOffsetY;
 
     // Fast scroller popup
     private TextView mPopupView;
@@ -174,7 +171,14 @@ public class RecyclerViewFastScroller extends View {
         ta.recycle();
     }
 
-    public void setRecyclerView(FastScrollRecyclerView rv, TextView popupView) {
+    /** Sets the popup view to show while the scroller is being dragged */
+    public void setPopupView(TextView popupView) {
+        mPopupView = popupView;
+        mPopupView.setBackground(
+                new FastScrollThumbDrawable(mThumbPaint, Utilities.isRtl(getResources())));
+    }
+
+    public void setRecyclerView(FastScrollRecyclerView rv) {
         if (mRv != null && mOnScrollListener != null) {
             mRv.removeOnScrollListener(mOnScrollListener);
         }
@@ -192,10 +196,6 @@ public class RecyclerViewFastScroller extends View {
                 mRv.onUpdateScrollbar(dy);
             }
         });
-
-        mPopupView = popupView;
-        mPopupView.setBackground(
-                new FastScrollThumbDrawable(mThumbPaint, Utilities.isRtl(getResources())));
     }
 
     public void reattachThumbToScroll() {
@@ -204,16 +204,11 @@ public class RecyclerViewFastScroller extends View {
 
     public void setThumbOffsetY(int y) {
         if (mThumbOffsetY == y) {
-            int rvCurrentOffsetY = mRv.getCurrentScrollY();
-            if (mRvOffsetY != rvCurrentOffsetY) {
-                mRvOffsetY = mRv.getCurrentScrollY();
-            }
             return;
         }
         updatePopupY(y);
         mThumbOffsetY = y;
         invalidate();
-        mRvOffsetY = mRv.getCurrentScrollY();
     }
 
     public int getThumbOffsetY() {
@@ -286,15 +281,7 @@ public class RecyclerViewFastScroller extends View {
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                mRv.onFastScrollCompleted();
-                mTouchOffsetY = 0;
-                mLastTouchY = 0;
-                mIgnoreDragGesture = false;
-                if (mIsDragging) {
-                    mIsDragging = false;
-                    animatePopupVisibility(false);
-                    showActiveScrollbar(false);
-                }
+                endFastScrolling();
                 break;
         }
         if (DEBUG) {
@@ -308,7 +295,7 @@ public class RecyclerViewFastScroller extends View {
     }
 
     private void calcTouchOffsetAndPrepToFastScroll(int downY, int lastY) {
-        hideKeyboardAsync(ActivityContext.lookupContext(getContext()), getWindowToken());
+        ActivityContext.lookupContext(getContext()).hideKeyboard();
         mIsDragging = true;
         if (mCanThumbDetach) {
             mIsThumbDetached = true;
@@ -333,8 +320,22 @@ public class RecyclerViewFastScroller extends View {
         setThumbOffsetY((int) mLastTouchY);
     }
 
+    /** End any active fast scrolling touch handling, if applicable. */
+    public void endFastScrolling() {
+        mRv.onFastScrollCompleted();
+        mTouchOffsetY = 0;
+        mLastTouchY = 0;
+        mIgnoreDragGesture = false;
+        if (mIsDragging) {
+            mIsDragging = false;
+            animatePopupVisibility(false);
+            showActiveScrollbar(false);
+        }
+    }
+
+    @Override
     public void onDraw(Canvas canvas) {
-        if (mThumbOffsetY < 0) {
+        if (mThumbOffsetY < 0 || mRv == null) {
             return;
         }
         int saveCount = canvas.save();

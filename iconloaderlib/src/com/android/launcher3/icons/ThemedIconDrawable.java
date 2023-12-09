@@ -24,6 +24,7 @@ import android.graphics.Bitmap;
 import android.graphics.BlendMode;
 import android.graphics.BlendModeColorFilter;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -92,8 +93,11 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
         return new ThemedConstantState(bitmapInfo, colorBg, colorFg);
     }
 
-    public void changeBackgroundColor(int colorBg){
+    public void changeBackgroundColor(int colorBg) {
+        if (mIsDisabled) return;
+
         mBgPaint.setColorFilter(new BlendModeColorFilter(colorBg, BlendMode.SRC_IN));
+        invalidateSelf();
     }
 
     static class ThemedConstantState extends FastBitmapConstantState {
@@ -125,13 +129,8 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
     public static int[] getColors(Context context) {
         Resources res = context.getResources();
         int[] colors = new int[2];
-        if ((res.getConfiguration().uiMode & UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES) {
-            colors[0] = res.getColor(android.R.color.system_neutral1_800);
-            colors[1] = res.getColor(android.R.color.system_accent1_100);
-        } else {
-            colors[0] = res.getColor(android.R.color.system_accent1_100);
-            colors[1] = res.getColor(android.R.color.system_neutral2_700);
-        }
+        colors[0] = res.getColor(R.color.themed_icon_background_color);
+        colors[1] = res.getColor(R.color.themed_icon_color);
         return colors;
     }
 

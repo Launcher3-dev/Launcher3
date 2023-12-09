@@ -19,13 +19,11 @@ import static android.content.Intent.ACTION_CONFIGURATION_CHANGED;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
-import static com.android.launcher3.ResourceUtils.INVALID_RESOURCE_HANDLE;
 import static com.android.launcher3.Utilities.dpiFromPx;
-import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_NAVIGATION_MODE_2_BUTTON;
-import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_NAVIGATION_MODE_3_BUTTON;
-import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_NAVIGATION_MODE_GESTURE_BUTTON;
+import static com.android.launcher3.config.FeatureFlags.ENABLE_TRANSIENT_TASKBAR;
+import static com.android.launcher3.config.FeatureFlags.FORCE_PERSISTENT_TASKBAR;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
-import static com.android.launcher3.util.PackageManagerHelper.getPackageFilter;
+import static com.android.launcher3.util.FlagDebugUtils.appendFlag;
 import static com.android.launcher3.util.window.WindowManagerProxy.MIN_TABLET_WIDTH;
 
 import android.annotation.SuppressLint;
@@ -41,23 +39,24 @@ import android.os.Build;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
-import android.util.Pair;
 import android.view.Display;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.UiThread;
+import androidx.annotation.VisibleForTesting;
 
-import com.android.launcher3.ResourceUtils;
 import com.android.launcher3.Utilities;
-import com.android.launcher3.logging.StatsLogManager.LauncherEvent;
 import com.android.launcher3.util.window.CachedDisplayInfo;
 import com.android.launcher3.util.window.WindowManagerProxy;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 
 /**
  * Utility class to cache properties of default display to avoid a system RPC on every call.
@@ -66,6 +65,11 @@ import java.util.Set;
 public class DisplayController implements ComponentCallbacks, SafeCloseable {
 
     private static final String TAG = "DisplayController";
+    private static final boolean DEBUG = false;
+    private static boolean sTransientTaskbarStatusForTests;
+
+    // TODO(b/254119092) remove all logs with this tag
+    public static final String TASKBAR_NOT_DESTROYED_TAG = "b/254119092";
 
     public static final MainThreadInitializedObject<DisplayController> INSTANCE =
             new MainThreadInitializedObject<>(DisplayController::new);
@@ -80,7 +84,6 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
             | CHANGE_DENSITY | CHANGE_SUPPORTED_BOUNDS | CHANGE_NAVIGATION_MODE;
 
     private static final String ACTION_OVERLAY_CHANGED = "android.intent.action.OVERLAY_CHANGED";
-    private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
     private static final String TARGET_OVERLAY_PACKAGE = "android";
 
     private final Context mContext;
@@ -112,12 +115,12 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
         }
 
         // Initialize navigation mode change listener
-        mContext.registerReceiver(mReceiver,
-                getPackageFilter(TARGET_OVERLAY_PACKAGE, ACTION_OVERLAY_CHANGED));
+        mReceiver.registerPkgActions(mContext, TARGET_OVERLAY_PACKAGE, ACTION_OVERLAY_CHANGED);
 
         WindowManagerProxy wmProxy = WindowManagerProxy.INSTANCE.get(context);
-        mInfo = new Info(getDisplayInfoContext(display), display,
-                wmProxy, wmProxy.estimateInternalDisplayBounds(context));
+        Context displayInfoContext = getDisplayInfoContext(display);
+        mInfo = new Info(displayInfoContext, wmProxy,
+                wmProxy.estimateInternalDisplayBounds(displayInfoContext));
     }
 
     /**
@@ -125,6 +128,37 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
      */
     public static NavigationMode getNavigationMode(Context context) {
         return INSTANCE.get(context).getInfo().navigationMode;
+    }
+
+    /**
+     * Returns whether taskbar is transient.
+     */
+    public static boolean isTransientTaskbar(Context context) {
+        return INSTANCE.get(context).isTransientTaskbar();
+    }
+
+    /**
+     * Returns whether taskbar is transient.
+     */
+    public boolean isTransientTaskbar() {
+        // TODO(b/258604917): When running in test harness, use !sTransientTaskbarStatusForTests
+        //  once tests are updated to expect new persistent behavior such as not allowing long press
+        //  to stash.
+        if (!Utilities.isRunningInTestHarness() && FORCE_PERSISTENT_TASKBAR.get()) {
+            return false;
+        }
+        return getInfo().navigationMode == NavigationMode.NO_BUTTON
+                && (Utilities.isRunningInTestHarness()
+                    ? sTransientTaskbarStatusForTests
+                    : ENABLE_TRANSIENT_TASKBAR.get());
+    }
+
+    /**
+     * Enables transient taskbar status for tests.
+     */
+    @VisibleForTesting
+    public static void enableTransientTaskbarForTests(boolean enable) {
+        sTransientTaskbarStatusForTests = enable;
     }
 
     @Override
@@ -177,6 +211,7 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
     @Override
     @TargetApi(Build.VERSION_CODES.S)
     public final void onConfigurationChanged(Configuration config) {
+        Log.d(TASKBAR_NOT_DESTROYED_TAG, "DisplayController#onConfigurationChanged: " + config);
         Display display = mWindowContext.getDisplay();
         if (config.densityDpi != mInfo.densityDpi
                 || config.fontScale != mInfo.fontScale
@@ -215,18 +250,18 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
         WindowManagerProxy wmProxy = WindowManagerProxy.INSTANCE.get(mContext);
         Info oldInfo = mInfo;
 
-        Context displayContext = getDisplayInfoContext(display);
-        Info newInfo = new Info(displayContext, display, wmProxy, oldInfo.mPerDisplayBounds);
+        Context displayInfoContext = getDisplayInfoContext(display);
+        Info newInfo = new Info(displayInfoContext, wmProxy, oldInfo.mPerDisplayBounds);
 
         if (newInfo.densityDpi != oldInfo.densityDpi || newInfo.fontScale != oldInfo.fontScale
                 || newInfo.navigationMode != oldInfo.navigationMode) {
             // Cache may not be valid anymore, recreate without cache
-            newInfo = new Info(displayContext, display, wmProxy,
-                    wmProxy.estimateInternalDisplayBounds(displayContext));
+            newInfo = new Info(displayInfoContext, wmProxy,
+                    wmProxy.estimateInternalDisplayBounds(displayInfoContext));
         }
 
         int change = 0;
-        if (!newInfo.displayId.equals(oldInfo.displayId)) {
+        if (!newInfo.normalizedDisplayInfo.equals(oldInfo.normalizedDisplayInfo)) {
             change |= CHANGE_ACTIVE_SCREEN;
         }
         if (newInfo.rotation != oldInfo.rotation) {
@@ -238,34 +273,18 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
         if (newInfo.navigationMode != oldInfo.navigationMode) {
             change |= CHANGE_NAVIGATION_MODE;
         }
-        if (!newInfo.supportedBounds.equals(oldInfo.supportedBounds)) {
+        if (!newInfo.supportedBounds.equals(oldInfo.supportedBounds)
+                || !newInfo.mPerDisplayBounds.equals(oldInfo.mPerDisplayBounds)) {
             change |= CHANGE_SUPPORTED_BOUNDS;
-
-            Point currentS = newInfo.currentSize;
-            Pair<CachedDisplayInfo, WindowBounds[]> cachedBounds =
-                    oldInfo.mPerDisplayBounds.get(newInfo.displayId);
-            Point expectedS = cachedBounds == null ? null : cachedBounds.first.size;
-            if (newInfo.supportedBounds.size() != oldInfo.supportedBounds.size()) {
-                Log.e("b/198965093",
-                        "Inconsistent number of displays"
-                                + "\ndisplay state: " + display.getState()
-                                + "\noldInfo.supportedBounds: " + oldInfo.supportedBounds
-                                + "\nnewInfo.supportedBounds: " + newInfo.supportedBounds);
-            }
-            if (expectedS != null
-                    && (Math.min(currentS.x, currentS.y) != Math.min(expectedS.x, expectedS.y)
-                    || Math.max(currentS.x, currentS.y) != Math.max(expectedS.x, expectedS.y))
-                    && display.getState() == Display.STATE_OFF) {
-                Log.e("b/198965093",
-                        "Display size changed while display is off, ignoring change");
-                return;
-            }
+        }
+        if (DEBUG) {
+            Log.d(TAG, "handleInfoChange - change: " + getChangeFlagsString(change));
         }
 
         if (change != 0) {
             mInfo = newInfo;
             final int flags = change;
-            MAIN_EXECUTOR.execute(() -> notifyChange(displayContext, flags));
+            MAIN_EXECUTOR.execute(() -> notifyChange(displayInfoContext, flags));
         }
     }
 
@@ -283,8 +302,8 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
     public static class Info {
 
         // Cached property
+        public final CachedDisplayInfo normalizedDisplayInfo;
         public final int rotation;
-        public final String displayId;
         public final Point currentSize;
         public final Rect cutout;
 
@@ -292,56 +311,71 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
         public final float fontScale;
         private final int densityDpi;
         public final NavigationMode navigationMode;
-
         private final PortraitSize mScreenSizeDp;
 
+        // WindowBounds
+        public final WindowBounds realBounds;
         public final Set<WindowBounds> supportedBounds = new ArraySet<>();
-
-        private final ArrayMap<String, Pair<CachedDisplayInfo, WindowBounds[]>> mPerDisplayBounds =
+        private final ArrayMap<CachedDisplayInfo, WindowBounds[]> mPerDisplayBounds =
                 new ArrayMap<>();
 
-        public Info(Context context, Display display) {
+        public Info(Context displayInfoContext) {
             /* don't need system overrides for external displays */
-            this(context, display, new WindowManagerProxy(), new ArrayMap<>());
+            this(displayInfoContext, new WindowManagerProxy(), new ArrayMap<>());
         }
 
         // Used for testing
-        public Info(Context context, Display display,
+        public Info(Context displayInfoContext,
                 WindowManagerProxy wmProxy,
-                ArrayMap<String, Pair<CachedDisplayInfo, WindowBounds[]>> perDisplayBoundsCache) {
-            CachedDisplayInfo displayInfo = wmProxy.getDisplayInfo(context, display);
+                Map<CachedDisplayInfo, WindowBounds[]> perDisplayBoundsCache) {
+            CachedDisplayInfo displayInfo = wmProxy.getDisplayInfo(displayInfoContext);
+            normalizedDisplayInfo = displayInfo.normalize();
             rotation = displayInfo.rotation;
             currentSize = displayInfo.size;
-            displayId = displayInfo.id;
             cutout = displayInfo.cutout;
 
-            Configuration config = context.getResources().getConfiguration();
+            Configuration config = displayInfoContext.getResources().getConfiguration();
             fontScale = config.fontScale;
             densityDpi = config.densityDpi;
             mScreenSizeDp = new PortraitSize(config.screenHeightDp, config.screenWidthDp);
-            navigationMode = parseNavigationMode(context);
+            navigationMode = wmProxy.getNavigationMode(displayInfoContext);
 
             mPerDisplayBounds.putAll(perDisplayBoundsCache);
-            Pair<CachedDisplayInfo, WindowBounds[]> cachedValue = mPerDisplayBounds.get(displayId);
+            WindowBounds[] cachedValue = mPerDisplayBounds.get(normalizedDisplayInfo);
 
-            WindowBounds realBounds = wmProxy.getRealBounds(context, display, displayInfo);
+            realBounds = wmProxy.getRealBounds(displayInfoContext, displayInfo);
             if (cachedValue == null) {
-                supportedBounds.add(realBounds);
-            } else {
+                // Unexpected normalizedDisplayInfo is found, recreate the cache
+                Log.e(TAG, "Unexpected normalizedDisplayInfo found, invalidating cache");
+                mPerDisplayBounds.clear();
+                mPerDisplayBounds.putAll(wmProxy.estimateInternalDisplayBounds(displayInfoContext));
+                cachedValue = mPerDisplayBounds.get(normalizedDisplayInfo);
+                if (cachedValue == null) {
+                    Log.e(TAG, "normalizedDisplayInfo not found in estimation: "
+                            + normalizedDisplayInfo);
+                    supportedBounds.add(realBounds);
+                }
+            }
+
+            if (cachedValue != null) {
                 // Verify that the real bounds are a match
-                WindowBounds expectedBounds = cachedValue.second[displayInfo.rotation];
+                WindowBounds expectedBounds = cachedValue[displayInfo.rotation];
                 if (!realBounds.equals(expectedBounds)) {
                     WindowBounds[] clone = new WindowBounds[4];
-                    System.arraycopy(cachedValue.second, 0, clone, 0, 4);
+                    System.arraycopy(cachedValue, 0, clone, 0, 4);
                     clone[displayInfo.rotation] = realBounds;
-                    cachedValue = Pair.create(displayInfo.normalize(), clone);
-                    mPerDisplayBounds.put(displayId, cachedValue);
+                    mPerDisplayBounds.put(normalizedDisplayInfo, clone);
                 }
             }
             mPerDisplayBounds.values().forEach(
-                    pair -> Collections.addAll(supportedBounds, pair.second));
-            Log.d("b/211775278", "displayId: " + displayId + ", currentSize: " + currentSize);
-            Log.d("b/211775278", "perDisplayBounds: " + mPerDisplayBounds);
+                    windowBounds -> Collections.addAll(supportedBounds, windowBounds));
+            if (DEBUG) {
+                Log.d(TAG, "displayInfo: " + displayInfo);
+                Log.d(TAG, "realBounds: " + realBounds);
+                Log.d(TAG, "normalizedDisplayInfo: " + normalizedDisplayInfo);
+                mPerDisplayBounds.forEach((key, value) -> Log.d(TAG,
+                        "perDisplayBounds - " + key + ": " + Arrays.deepToString(value)));
+            }
         }
 
         /**
@@ -358,9 +392,30 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
             return dpiFromPx(Math.min(bounds.bounds.width(), bounds.bounds.height()), densityDpi);
         }
 
+        /**
+         * Returns all displays for the device
+         */
+        public Set<CachedDisplayInfo> getAllDisplays() {
+            return Collections.unmodifiableSet(mPerDisplayBounds.keySet());
+        }
+
         public int getDensityDpi() {
             return densityDpi;
         }
+    }
+
+    /**
+     * Returns the given binary flags as a human-readable string.
+     * @see #CHANGE_ALL
+     */
+    public String getChangeFlagsString(int change) {
+        StringJoiner result = new StringJoiner("|");
+        appendFlag(result, change, CHANGE_ACTIVE_SCREEN, "CHANGE_ACTIVE_SCREEN");
+        appendFlag(result, change, CHANGE_ROTATION, "CHANGE_ROTATION");
+        appendFlag(result, change, CHANGE_DENSITY, "CHANGE_DENSITY");
+        appendFlag(result, change, CHANGE_SUPPORTED_BOUNDS, "CHANGE_SUPPORTED_BOUNDS");
+        appendFlag(result, change, CHANGE_NAVIGATION_MODE, "CHANGE_NAVIGATION_MODE");
+        return result.toString();
     }
 
     /**
@@ -369,13 +424,14 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
     public void dump(PrintWriter pw) {
         Info info = mInfo;
         pw.println("DisplayController.Info:");
-        pw.println("  id=" + info.displayId);
+        pw.println("  normalizedDisplayInfo=" + info.normalizedDisplayInfo);
         pw.println("  rotation=" + info.rotation);
         pw.println("  fontScale=" + info.fontScale);
         pw.println("  densityDpi=" + info.densityDpi);
         pw.println("  navigationMode=" + info.navigationMode.name());
         pw.println("  currentSize=" + info.currentSize);
-        pw.println("  supportedBounds=" + info.supportedBounds);
+        info.mPerDisplayBounds.forEach((key, value) -> pw.println(
+                "  perDisplayBounds - " + key + ": " + Arrays.deepToString(value)));
     }
 
     /**
@@ -403,35 +459,4 @@ public class DisplayController implements ComponentCallbacks, SafeCloseable {
         }
     }
 
-    public enum NavigationMode {
-        THREE_BUTTONS(false, 0, LAUNCHER_NAVIGATION_MODE_3_BUTTON),
-        TWO_BUTTONS(true, 1, LAUNCHER_NAVIGATION_MODE_2_BUTTON),
-        NO_BUTTON(true, 2, LAUNCHER_NAVIGATION_MODE_GESTURE_BUTTON);
-
-        public final boolean hasGestures;
-        public final int resValue;
-        public final LauncherEvent launcherEvent;
-
-        NavigationMode(boolean hasGestures, int resValue, LauncherEvent launcherEvent) {
-            this.hasGestures = hasGestures;
-            this.resValue = resValue;
-            this.launcherEvent = launcherEvent;
-        }
-    }
-
-    private static NavigationMode parseNavigationMode(Context context) {
-        int modeInt = ResourceUtils.getIntegerByName(NAV_BAR_INTERACTION_MODE_RES_NAME,
-                context.getResources(), INVALID_RESOURCE_HANDLE);
-
-        if (modeInt == INVALID_RESOURCE_HANDLE) {
-            Log.e(TAG, "Failed to get system resource ID. Incompatible framework version?");
-        } else {
-            for (NavigationMode m : NavigationMode.values()) {
-                if (m.resValue == modeInt) {
-                    return m;
-                }
-            }
-        }
-        return Utilities.ATLEAST_S ? NavigationMode.NO_BUTTON : NavigationMode.THREE_BUTTONS;
-    }
 }

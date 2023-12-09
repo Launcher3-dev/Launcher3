@@ -15,13 +15,52 @@
  */
 package com.android.launcher3.tapl;
 
+import static com.android.launcher3.testing.shared.TestProtocol.NORMAL_STATE_ORDINAL;
+
 import androidx.annotation.NonNull;
 import androidx.test.uiautomator.UiObject2;
 
+import com.android.launcher3.testing.shared.TestProtocol;
+
 public class HomeAllApps extends AllApps {
+    private static final String BOTTOM_SHEET_RES_ID = "bottom_sheet_background";
 
     HomeAllApps(LauncherInstrumentation launcher) {
         super(launcher);
+    }
+
+    /**
+     * Swipes down to Workspace.
+     *
+     * @return the Workspace object.
+     */
+    @NonNull
+    public Workspace switchToWorkspace() {
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck();
+             LauncherInstrumentation.Closable c =
+                     mLauncher.addContextLayer("want to switch from all apps to workspace")) {
+            UiObject2 allAppsContainer = verifyActiveContainer();
+
+            final int startX = allAppsContainer.getVisibleCenter().x;
+            final int startY = getTopVisibleIconBounds(allAppsContainer).centerY();
+            final int endY = mLauncher.getDevice().getDisplayHeight();
+            LauncherInstrumentation.log(
+                    "switchToWorkspace: startY = " + startY + ", endY = " + endY
+                            + ", slop = " + mLauncher.getTouchSlop());
+
+            mLauncher.swipeToState(
+                    startX,
+                    startY,
+                    startX,
+                    endY,
+                    5 /* steps */,
+                    NORMAL_STATE_ORDINAL, LauncherInstrumentation.GestureScope.INSIDE);
+
+            try (LauncherInstrumentation.Closable c1 = mLauncher.addContextLayer(
+                    "swiped to workspace")) {
+                return mLauncher.getWorkspace();
+            }
+        }
     }
 
     @Override
@@ -44,5 +83,39 @@ public class HomeAllApps extends AllApps {
     @Override
     protected boolean hasSearchBox() {
         return true;
+    }
+
+    @Override
+    protected int getAppsListRecyclerTopPadding() {
+        return mLauncher.getTestInfo(TestProtocol.REQUEST_ALL_APPS_TOP_PADDING)
+                .getInt(TestProtocol.TEST_INFO_RESPONSE_FIELD);
+    }
+
+    /**
+     * Taps outside bottom sheet to dismiss and return to workspace. Available on tablets only.
+     * @param tapRight Tap on the right of bottom sheet if true, or left otherwise.
+     */
+    public Workspace dismissByTappingOutsideForTablet(boolean tapRight) {
+        try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck();
+             LauncherInstrumentation.Closable c = mLauncher.addContextLayer(
+                     "want to tap outside AllApps bottom sheet on the "
+                             + (tapRight ? "right" : "left"))) {
+            final UiObject2 allAppsBottomSheet =
+                    mLauncher.waitForLauncherObject(BOTTOM_SHEET_RES_ID);
+            mLauncher.touchOutsideContainer(allAppsBottomSheet, tapRight);
+            try (LauncherInstrumentation.Closable tapped = mLauncher.addContextLayer(
+                    "tapped outside AllApps bottom sheet")) {
+                return mLauncher.getWorkspace();
+            }
+        }
+    }
+
+    /**
+     * Return the QSB UI object on the AllApps screen.
+     * @return the QSB UI object.
+     */
+    @NonNull
+    public Qsb getQsb() {
+        return new AllAppsQsb(mLauncher, verifyActiveContainer());
     }
 }

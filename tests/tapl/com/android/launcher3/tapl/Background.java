@@ -19,7 +19,7 @@ package com.android.launcher3.tapl;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
 
 import static com.android.launcher3.tapl.OverviewTask.TASK_START_EVENT;
-import static com.android.launcher3.testing.TestProtocol.OVERVIEW_STATE_ORDINAL;
+import static com.android.launcher3.testing.shared.TestProtocol.OVERVIEW_STATE_ORDINAL;
 
 import android.graphics.Point;
 import android.os.SystemClock;
@@ -28,7 +28,7 @@ import android.view.MotionEvent;
 import androidx.annotation.NonNull;
 import androidx.test.uiautomator.UiObject2;
 
-import com.android.launcher3.testing.TestProtocol;
+import com.android.launcher3.testing.shared.TestProtocol;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -58,7 +58,7 @@ public abstract class Background extends LauncherInstrumentation.VisibleContaine
                      "want to switch from background to overview")) {
             verifyActiveContainer();
             goToOverviewUnchecked();
-            return mLauncher.isFallbackOverview()
+            return mLauncher.is3PLauncher()
                     ? new BaseOverview(mLauncher) : new Overview(mLauncher);
         }
     }
@@ -206,21 +206,30 @@ public abstract class Background extends LauncherInstrumentation.VisibleContaine
                 MotionEvent.ACTION_UP, end, gestureScope);
     }
 
+    /**
+     * Quick switching to the app with swiping to right.
+     */
     @NonNull
     public LaunchedAppState quickSwitchToPreviousApp() {
-        boolean toRight = true;
-        quickSwitch(toRight);
+        quickSwitch(true /* toRight */);
         return new LaunchedAppState(mLauncher);
     }
 
+    /**
+     * Quick switching to the app with swiping to left.
+     */
     @NonNull
     public LaunchedAppState quickSwitchToPreviousAppSwipeLeft() {
-        boolean toRight = false;
-        quickSwitch(toRight);
+        quickSwitch(false /* toRight */);
         return new LaunchedAppState(mLauncher);
     }
 
-    @NonNull
+    /**
+     * Making swipe gesture to quick-switch app tasks.
+     *
+     * @param toRight {@code true} means swiping right, {@code false} means swiping left.
+     * @throws {@link AssertionError} when failing to verify the visible UI in the container.
+     */
     private void quickSwitch(boolean toRight) {
         try (LauncherInstrumentation.Closable e = mLauncher.eventsCheck();
              LauncherInstrumentation.Closable c = mLauncher.addContextLayer(

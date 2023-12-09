@@ -17,6 +17,9 @@ package com.android.quickstep;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.quickstep.TaskbarModeSwitchRule.Mode.PERSISTENT;
+import static com.android.quickstep.TaskbarModeSwitchRule.Mode.TRANSIENT;
+
 import static junit.framework.TestCase.assertEquals;
 
 import android.content.Intent;
@@ -27,6 +30,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.launcher3.tapl.Taskbar;
 import com.android.launcher3.ui.TaplTestsLauncher3;
 import com.android.launcher3.util.rule.ScreenRecordRule.ScreenRecord;
+import com.android.quickstep.TaskbarModeSwitchRule.TaskbarModeSwitch;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -53,32 +57,68 @@ public class TaplTestsTaskbar extends AbstractQuickStepTest {
         TaplTestsLauncher3.initialize(this);
 
         startAppFast(CALCULATOR_APP_PACKAGE);
+        mLauncher.enableBlockTimeout(true);
         mLauncher.showTaskbarIfHidden();
     }
 
     @After
     public void tearDown() {
         mLauncher.useDefaultWorkspaceLayoutOnReload();
+        mLauncher.enableBlockTimeout(false);
     }
 
     @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testHideShowTaskbar() {
         getTaskbar().hide();
         mLauncher.getLaunchedAppState().showTaskbar();
     }
 
     @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
+    public void testHideTaskbarPersistsOnRecreate() {
+        getTaskbar().hide();
+        mLauncher.recreateTaskbar();
+        mLauncher.getLaunchedAppState().assertTaskbarHidden();
+    }
+
+    @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchApp() throws Exception {
         getTaskbar().getAppIcon(TEST_APP_NAME).launch(TEST_APP_PACKAGE);
     }
 
     @Test
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchApp() throws Exception {
+        getTaskbar().getAppIcon(TEST_APP_NAME).launch(TEST_APP_PACKAGE);
+        mLauncher.getLaunchedAppState().assertTaskbarHidden();
+    }
+
+    @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testOpenMenu() throws Exception {
         getTaskbar().getAppIcon(TEST_APP_NAME).openMenu();
     }
 
     @Test
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientOpenMenu() throws Exception {
+        getTaskbar().getAppIcon(TEST_APP_NAME).openMenu();
+    }
+
+    @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchShortcut() throws Exception {
+        getTaskbar().getAppIcon(TEST_APP_NAME)
+                .openDeepShortcutMenu()
+                .getMenuItem("Shortcut 1")
+                .launch(TEST_APP_PACKAGE);
+    }
+
+    @Test
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchShortcut() throws Exception {
         getTaskbar().getAppIcon(TEST_APP_NAME)
                 .openDeepShortcutMenu()
                 .getMenuItem("Shortcut 1")
@@ -88,6 +128,7 @@ public class TaplTestsTaskbar extends AbstractQuickStepTest {
     @Test
     @ScreenRecord // b/231615831
     @PortraitLandscape
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchAppInSplitscreen() throws Exception {
         getTaskbar().getAppIcon(TEST_APP_NAME).dragToSplitscreen(
                 TEST_APP_PACKAGE, CALCULATOR_APP_PACKAGE);
@@ -96,6 +137,17 @@ public class TaplTestsTaskbar extends AbstractQuickStepTest {
     @Test
     @ScreenRecord // b/231615831
     @PortraitLandscape
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchAppInSplitscreen() throws Exception {
+        getTaskbar().getAppIcon(TEST_APP_NAME).dragToSplitscreen(
+                TEST_APP_PACKAGE, CALCULATOR_APP_PACKAGE);
+        mLauncher.getLaunchedAppState().assertTaskbarHidden();
+    }
+
+    @Test
+    @ScreenRecord // b/231615831
+    @PortraitLandscape
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchShortcutInSplitscreen() throws Exception {
         getTaskbar().getAppIcon(TEST_APP_NAME)
                 .openDeepShortcutMenu()
@@ -104,16 +156,42 @@ public class TaplTestsTaskbar extends AbstractQuickStepTest {
     }
 
     @Test
+    @ScreenRecord // b/231615831
+    @PortraitLandscape
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchShortcutInSplitscreen() throws Exception {
+        getTaskbar().getAppIcon(TEST_APP_NAME)
+                .openDeepShortcutMenu()
+                .getMenuItem("Shortcut 1")
+                .dragToSplitscreen(TEST_APP_PACKAGE, CALCULATOR_APP_PACKAGE);
+    }
+
+    @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchApp_FromTaskbarAllApps() throws Exception {
         getTaskbar().openAllApps().getAppIcon(TEST_APP_NAME).launch(TEST_APP_PACKAGE);
     }
 
     @Test
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchApp_FromTaskbarAllApps() throws Exception {
+        getTaskbar().openAllApps().getAppIcon(TEST_APP_NAME).launch(TEST_APP_PACKAGE);
+    }
+
+    @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testOpenMenu_FromTaskbarAllApps() throws Exception {
         getTaskbar().openAllApps().getAppIcon(TEST_APP_NAME).openMenu();
     }
 
     @Test
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientOpenMenu_FromTaskbarAllApps() throws Exception {
+        getTaskbar().openAllApps().getAppIcon(TEST_APP_NAME).openMenu();
+    }
+
+    @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchShortcut_FromTaskbarAllApps() throws Exception {
         getTaskbar().openAllApps()
                 .getAppIcon(TEST_APP_NAME)
@@ -123,8 +201,19 @@ public class TaplTestsTaskbar extends AbstractQuickStepTest {
     }
 
     @Test
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchShortcut_FromTaskbarAllApps() throws Exception {
+        getTaskbar().openAllApps()
+                .getAppIcon(TEST_APP_NAME)
+                .openDeepShortcutMenu()
+                .getMenuItem("Shortcut 1")
+                .launch(TEST_APP_PACKAGE);
+    }
+
+    @Test
     @ScreenRecord // b/231615831
     @PortraitLandscape
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchAppInSplitscreen_FromTaskbarAllApps() throws Exception {
         getTaskbar().openAllApps()
                 .getAppIcon(TEST_APP_NAME)
@@ -134,7 +223,30 @@ public class TaplTestsTaskbar extends AbstractQuickStepTest {
     @Test
     @ScreenRecord // b/231615831
     @PortraitLandscape
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchAppInSplitscreen_FromTaskbarAllApps() throws Exception {
+        getTaskbar().openAllApps()
+                .getAppIcon(TEST_APP_NAME)
+                .dragToSplitscreen(TEST_APP_PACKAGE, CALCULATOR_APP_PACKAGE);
+    }
+
+    @Test
+    @ScreenRecord // b/231615831
+    @PortraitLandscape
+    @TaskbarModeSwitch(mode = PERSISTENT)
     public void testLaunchShortcutInSplitscreen_FromTaskbarAllApps() throws Exception {
+        getTaskbar().openAllApps()
+                .getAppIcon(TEST_APP_NAME)
+                .openDeepShortcutMenu()
+                .getMenuItem("Shortcut 1")
+                .dragToSplitscreen(TEST_APP_PACKAGE, CALCULATOR_APP_PACKAGE);
+    }
+
+    @Test
+    @ScreenRecord // b/231615831
+    @PortraitLandscape
+    @TaskbarModeSwitch(mode = TRANSIENT)
+    public void testTransientLaunchShortcutInSplitscreen_FromTaskbarAllApps() throws Exception {
         getTaskbar().openAllApps()
                 .getAppIcon(TEST_APP_NAME)
                 .openDeepShortcutMenu()

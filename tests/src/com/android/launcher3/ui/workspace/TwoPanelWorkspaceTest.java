@@ -31,6 +31,7 @@ import com.android.launcher3.tapl.Workspace;
 import com.android.launcher3.ui.AbstractLauncherUiTest;
 import com.android.launcher3.ui.TaplTestsLauncher3;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,16 +52,24 @@ public class TwoPanelWorkspaceTest extends AbstractLauncherUiTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        mLauncher.useTest2WorkspaceLayoutOnReload();
         TaplTestsLauncher3.initialize(this);
 
         assumeTrue(mLauncher.isTwoPanels());
 
         // Pre verifying the screens
         executeOnLauncher(launcher -> {
+            launcher.enableHotseatEdu(false);
             assertPagesExist(launcher, 0, 1);
             assertItemsOnPage(launcher, 0, "Play Store", "Maps");
             assertPageEmpty(launcher, 1);
         });
+    }
+
+    @After
+    public void tearDown() {
+        executeOnLauncher(launcher -> launcher.enableHotseatEdu(true));
+        mLauncher.useDefaultWorkspaceLayoutOnReload();
     }
 
     @Test

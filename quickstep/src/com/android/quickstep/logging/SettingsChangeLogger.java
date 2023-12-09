@@ -16,8 +16,9 @@
 
 package com.android.quickstep.logging;
 
-import static com.android.launcher3.Utilities.getDevicePrefs;
-import static com.android.launcher3.Utilities.getPrefs;
+import static com.android.launcher3.LauncherPrefs.THEMED_ICONS;
+import static com.android.launcher3.LauncherPrefs.getDevicePrefs;
+import static com.android.launcher3.LauncherPrefs.getPrefs;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_HOME_SCREEN_SUGGESTIONS_DISABLED;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_HOME_SCREEN_SUGGESTIONS_ENABLED;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_NOTIFICATION_DOT_DISABLED;
@@ -39,16 +40,16 @@ import android.util.Log;
 import android.util.Xml;
 
 import com.android.launcher3.AutoInstallsLayout;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
-import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.logging.InstanceId;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.logging.StatsLogManager.StatsLogger;
 import com.android.launcher3.model.DeviceGridState;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.DisplayController.Info;
-import com.android.launcher3.util.DisplayController.NavigationMode;
 import com.android.launcher3.util.MainThreadInitializedObject;
+import com.android.launcher3.util.NavigationMode;
 import com.android.launcher3.util.SettingsCache;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -179,11 +180,9 @@ public class SettingsChangeLogger implements
                 logger::log);
 
         SharedPreferences prefs = getPrefs(mContext);
-        if (FeatureFlags.ENABLE_THEMED_ICONS.get()) {
-            logger.log(prefs.getBoolean(KEY_THEMED_ICONS, false)
-                    ? LAUNCHER_THEMED_ICON_ENABLED
-                    : LAUNCHER_THEMED_ICON_DISABLED);
-        }
+        logger.log(LauncherPrefs.get(mContext).get(THEMED_ICONS)
+                ? LAUNCHER_THEMED_ICON_ENABLED
+                : LAUNCHER_THEMED_ICON_DISABLED);
 
         mLoggablePrefs.forEach((key, lp) -> logger.log(() ->
                 prefs.getBoolean(key, lp.defaultValue) ? lp.eventIdOn : lp.eventIdOff));

@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.widget;
 
+import static com.android.launcher3.anim.Interpolators.EMPHASIZED;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -26,10 +28,12 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.WindowInsets;
+import android.view.animation.Interpolator;
 import android.widget.Toast;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
+import androidx.annotation.Px;
 import androidx.core.view.ViewCompat;
 
 import com.android.launcher3.DeviceProfile;
@@ -42,7 +46,7 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.dragndrop.DragOptions;
 import com.android.launcher3.popup.PopupDataProvider;
 import com.android.launcher3.testing.TestLogging;
-import com.android.launcher3.testing.TestProtocol;
+import com.android.launcher3.testing.shared.TestProtocol;
 import com.android.launcher3.touch.ItemLongClickListener;
 import com.android.launcher3.util.SystemUiController;
 import com.android.launcher3.util.Themes;
@@ -58,7 +62,7 @@ public abstract class BaseWidgetSheet extends AbstractSlideInView<Launcher>
         implements OnClickListener, OnLongClickListener, DragSource,
         PopupDataProvider.PopupDataChangeListener, Insettable {
     /** The default number of cells that can fit horizontally in a widget sheet. */
-    protected static final int DEFAULT_MAX_HORIZONTAL_SPANS = 4;
+    public static final int DEFAULT_MAX_HORIZONTAL_SPANS = 4;
 
     protected static final String KEY_WIDGETS_EDUCATION_TIP_SEEN =
             "launcher.widgets_education_tip_seen";
@@ -67,15 +71,18 @@ public abstract class BaseWidgetSheet extends AbstractSlideInView<Launcher>
     /* Touch handling related member variables. */
     private Toast mWidgetInstructionToast;
 
-    private int mContentHorizontalMarginInPx;
+    @Px protected int mContentHorizontalMargin;
+    @Px protected int mWidgetCellHorizontalPadding;
 
     protected int mNavBarScrimHeight;
     private final Paint mNavBarScrimPaint;
 
     public BaseWidgetSheet(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mContentHorizontalMarginInPx = getResources().getDimensionPixelSize(
+        mContentHorizontalMargin = getResources().getDimensionPixelSize(
                 R.dimen.widget_list_horizontal_margin);
+        mWidgetCellHorizontalPadding = getResources().getDimensionPixelSize(
+                R.dimen.widget_cell_horizontal_padding);
         mNavBarScrimPaint = new Paint();
         mNavBarScrimPaint.setColor(Themes.getAttrColor(context, R.attr.allAppsNavBarScrimColor));
     }
@@ -135,11 +142,11 @@ public abstract class BaseWidgetSheet extends AbstractSlideInView<Launcher>
     @Override
     public void setInsets(Rect insets) {
         mInsets.set(insets);
-        int contentHorizontalMarginInPx = getResources().getDimensionPixelSize(
+        @Px int contentHorizontalMargin = getResources().getDimensionPixelSize(
                 R.dimen.widget_list_horizontal_margin);
-        if (contentHorizontalMarginInPx != mContentHorizontalMarginInPx) {
-            onContentHorizontalMarginChanged(contentHorizontalMarginInPx);
-            mContentHorizontalMarginInPx = contentHorizontalMarginInPx;
+        if (contentHorizontalMargin != mContentHorizontalMargin) {
+            onContentHorizontalMarginChanged(contentHorizontalMargin);
+            mContentHorizontalMargin = contentHorizontalMargin;
         }
     }
 
@@ -195,19 +202,6 @@ public abstract class BaseWidgetSheet extends AbstractSlideInView<Launcher>
                 MeasureSpec.getSize(heightMeasureSpec));
     }
 
-    /** Returns the number of cells that can fit horizontally in a given {@code content}. */
-    protected int computeMaxHorizontalSpans(View content, int contentHorizontalPaddingPx) {
-        DeviceProfile deviceProfile = mActivityContext.getDeviceProfile();
-        int availableWidth = content.getMeasuredWidth()
-                - contentHorizontalPaddingPx
-                - (2 * mContentHorizontalMarginInPx);
-        Point cellSize = deviceProfile.getCellSize();
-        if (cellSize.x > 0) {
-            return availableWidth / cellSize.x;
-        }
-        return DEFAULT_MAX_HORIZONTAL_SPANS;
-    }
-
     private boolean beginDraggingWidget(WidgetCell v) {
         if (TestProtocol.sDebugTracing) {
             Log.d(TestProtocol.NO_DROP_TARGET, "2");
@@ -244,6 +238,12 @@ public abstract class BaseWidgetSheet extends AbstractSlideInView<Launcher>
         }
         close(true);
         return true;
+    }
+
+    @Override
+    protected Interpolator getIdleInterpolator() {
+        return mActivityContext.getDeviceProfile().isTablet
+                ? EMPHASIZED : super.getIdleInterpolator();
     }
 
     //
@@ -332,7 +332,7 @@ public abstract class BaseWidgetSheet extends AbstractSlideInView<Launcher>
     /** Returns {@code true} if tip has previously been shown on any of {@link BaseWidgetSheet}. */
     protected boolean hasSeenEducationTip() {
         return mActivityContext.getSharedPrefs().getBoolean(KEY_WIDGETS_EDUCATION_TIP_SEEN, false)
-                || Utilities.IS_RUNNING_IN_TEST_HARNESS;
+                || Utilities.isRunningInTestHarness();
     }
 
     @Override

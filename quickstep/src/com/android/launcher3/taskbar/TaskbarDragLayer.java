@@ -20,21 +20,20 @@ import static android.view.KeyEvent.KEYCODE_BACK;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.testing.TestLogging;
-import com.android.launcher3.testing.TestProtocol;
+import com.android.launcher3.testing.shared.TestProtocol;
 import com.android.launcher3.views.BaseDragLayer;
-import com.android.systemui.shared.system.ViewTreeObserverWrapper;
-import com.android.systemui.shared.system.ViewTreeObserverWrapper.InsetsInfo;
-import com.android.systemui.shared.system.ViewTreeObserverWrapper.OnComputeInsetsListener;
 
 /**
  * Top-level ViewGroup that hosts the TaskbarView as well as Views created by it such as Folder.
@@ -42,7 +41,8 @@ import com.android.systemui.shared.system.ViewTreeObserverWrapper.OnComputeInset
 public class TaskbarDragLayer extends BaseDragLayer<TaskbarActivityContext> {
 
     private final TaskbarBackgroundRenderer mBackgroundRenderer;
-    private final OnComputeInsetsListener mTaskbarInsetsComputer = this::onComputeTaskbarInsets;
+    private final ViewTreeObserver.OnComputeInternalInsetsListener mTaskbarInsetsComputer =
+            this::onComputeTaskbarInsets;
 
     // Initialized in init.
     private TaskbarDragLayerController.TaskbarDragLayerCallbacks mControllerCallbacks;
@@ -80,28 +80,33 @@ public class TaskbarDragLayer extends BaseDragLayer<TaskbarActivityContext> {
         mControllers = mControllerCallbacks.getTouchControllers();
     }
 
-    private void onComputeTaskbarInsets(InsetsInfo insetsInfo) {
+    private void onComputeTaskbarInsets(ViewTreeObserver.InternalInsetsInfo insetsInfo) {
         if (mControllerCallbacks != null) {
             mControllerCallbacks.updateInsetsTouchability(insetsInfo);
         }
     }
 
+    protected void onDestroy(boolean forceDestroy) {
+        if (forceDestroy) {
+            getViewTreeObserver().removeOnComputeInternalInsetsListener(mTaskbarInsetsComputer);
+        }
+    }
+
     protected void onDestroy() {
-        ViewTreeObserverWrapper.removeOnComputeInsetsListener(mTaskbarInsetsComputer);
+        onDestroy(!TaskbarManager.FLAG_HIDE_NAVBAR_WINDOW);
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ViewTreeObserverWrapper.addOnComputeInsetsListener(getViewTreeObserver(),
-                mTaskbarInsetsComputer);
+        getViewTreeObserver().addOnComputeInternalInsetsListener(mTaskbarInsetsComputer);
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
 
-        onDestroy();
+        onDestroy(true);
     }
 
     @Override
@@ -146,6 +151,36 @@ public class TaskbarDragLayer extends BaseDragLayer<TaskbarActivityContext> {
         invalidate();
     }
 
+    /**
+     * Sets the roundness of the round corner above Taskbar.
+     * @param cornerRoundness 0 has no round corner, 1 has complete round corner.
+     */
+    protected void setCornerRoundness(float cornerRoundness) {
+        mBackgroundRenderer.setCornerRoundness(cornerRoundness);
+        invalidate();
+    }
+
+    /*
+     * Sets the translation of the background during the swipe up gesture.
+     */
+    protected void setBackgroundTranslationYForSwipe(float translationY) {
+        mBackgroundRenderer.setTranslationYForSwipe(translationY);
+        invalidate();
+    }
+
+    /*
+     * Sets the translation of the background during the spring on stash animation.
+     */
+    protected void setBackgroundTranslationYForStash(float translationY) {
+        mBackgroundRenderer.setTranslationYForStash(translationY);
+        invalidate();
+    }
+
+    /** Returns the bounds in DragLayer coordinates of where the transient background was drawn. */
+    protected RectF getLastDrawnTransientRect() {
+        return mBackgroundRenderer.getLastDrawnTransientRect();
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         TestLogging.recordMotionEvent(TestProtocol.SEQUENCE_MAIN, "Touch event", ev);
@@ -157,7 +192,8 @@ public class TaskbarDragLayer extends BaseDragLayer<TaskbarActivityContext> {
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getAction() == ACTION_UP && event.getKeyCode() == KEYCODE_BACK) {
             AbstractFloatingView topView = AbstractFloatingView.getTopOpenView(mActivity);
-            if (topView != null && topView.onBackPressed()) {
+            if (topView != null && topView.canHandleBack()) {
+                topView.onBackInvoked();
                 // Handled by the floating view.
                 return true;
             }

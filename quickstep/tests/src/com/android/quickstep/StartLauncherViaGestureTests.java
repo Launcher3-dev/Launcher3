@@ -16,8 +16,6 @@
 
 package com.android.quickstep;
 
-import android.content.Intent;
-
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -26,6 +24,7 @@ import com.android.launcher3.util.RaceConditionReproducer;
 import com.android.quickstep.NavigationModeSwitchRule.NavigationModeSwitch;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,7 +42,7 @@ public class StartLauncherViaGestureTests extends AbstractQuickStepTest {
         // b/143488140
         mLauncher.goHome();
         // Start an activity where the gestures start.
-        startAppFast(resolveSystemApp(Intent.CATEGORY_APP_CALCULATOR));
+        startTestActivity(2);
     }
 
     private void runTest(String... eventSequence) {
@@ -58,6 +57,7 @@ public class StartLauncherViaGestureTests extends AbstractQuickStepTest {
         eventProcessor.finishIteration();
     }
 
+    @Ignore
     @Test
     @NavigationModeSwitch
     public void testStressPressHome() {
@@ -70,6 +70,7 @@ public class StartLauncherViaGestureTests extends AbstractQuickStepTest {
         }
     }
 
+    @Ignore
     @Test
     @NavigationModeSwitch
     public void testStressSwipeToOverview() {

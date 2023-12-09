@@ -16,7 +16,7 @@
 
 package com.android.launcher3.tapl;
 
-import static com.android.launcher3.testing.TestProtocol.SPRING_LOADED_STATE_ORDINAL;
+import static com.android.launcher3.testing.shared.TestProtocol.SPRING_LOADED_STATE_ORDINAL;
 
 import android.graphics.Point;
 import android.view.MotionEvent;
@@ -26,7 +26,7 @@ import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
-import com.android.launcher3.testing.TestProtocol;
+import com.android.launcher3.testing.shared.TestProtocol;
 
 /**
  * Ancestor for AppIcon and AppMenuItem.
@@ -72,6 +72,27 @@ public abstract class Launchable {
             try (LauncherInstrumentation.Closable c2 = mLauncher.addContextLayer("clicked")) {
                 expectActivityStartEvents();
                 return assertAppLaunched(selector);
+            }
+        }
+    }
+
+    /**
+     * Clicks a launcher object to initiate splitscreen, where the selected app will be one of two
+     * apps running on the screen. Should be called when Launcher is in a "split staging" state
+     * and is waiting for the user's selection of a second app. Expects a SPLIT_START_EVENT to be
+     * fired when the click is executed.
+     */
+    public LaunchedAppState launchIntoSplitScreen() {
+        try (LauncherInstrumentation.Closable c1 = mLauncher.addContextLayer(
+                "want to launch split tasks from " + launchableType())) {
+            LauncherInstrumentation.log("Launchable.launch before click "
+                    + mObject.getVisibleCenter() + " in " + mLauncher.getVisibleBounds(mObject));
+
+            mLauncher.clickLauncherObject(mObject);
+
+            try (LauncherInstrumentation.Closable c2 = mLauncher.addContextLayer("clicked")) {
+                mLauncher.expectEvent(TestProtocol.SEQUENCE_MAIN, OverviewTask.SPLIT_START_EVENT);
+                return new LaunchedAppState(mLauncher);
             }
         }
     }

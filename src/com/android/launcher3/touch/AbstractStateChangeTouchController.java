@@ -211,6 +211,10 @@ public abstract class AbstractStateChangeTouchController
                     mFlingBlockCheck.blockFling();
                 }
             }
+            if (mFromState == LauncherState.ALL_APPS) {
+                mAllAppsOvershootStarted = true;
+                mLauncher.getAppsView().onPull(-progress , -progress);
+            }
         } else if (progress >= 1) {
             if (reinitCurrentAnimation(true, isDragTowardPositive)) {
                 mDisplacementShift = displacement;
@@ -287,11 +291,18 @@ public abstract class AbstractStateChangeTouchController
                             ? mToState : mFromState;
             // snap to top or bottom using the release velocity
         } else {
-            float successTransitionProgress =
-                    mLauncher.getDeviceProfile().isTablet
-                            && (mToState == ALL_APPS || mFromState == ALL_APPS)
-                            ? TABLET_BOTTOM_SHEET_SUCCESS_TRANSITION_PROGRESS
-                            : SUCCESS_TRANSITION_PROGRESS;
+            float successTransitionProgress = SUCCESS_TRANSITION_PROGRESS;
+            if (mLauncher.getDeviceProfile().isTablet
+                    && (mToState == ALL_APPS || mFromState == ALL_APPS)) {
+                successTransitionProgress = TABLET_BOTTOM_SHEET_SUCCESS_TRANSITION_PROGRESS;
+            } else if (!mLauncher.getDeviceProfile().isTablet
+                    && mToState == ALL_APPS && mFromState == NORMAL) {
+                successTransitionProgress = AllAppsSwipeController.ALL_APPS_STATE_TRANSITION_MANUAL;
+            } else if (!mLauncher.getDeviceProfile().isTablet
+                    && mToState == NORMAL && mFromState == ALL_APPS) {
+                successTransitionProgress =
+                        1 - AllAppsSwipeController.ALL_APPS_STATE_TRANSITION_MANUAL;
+            }
             targetState =
                     (interpolatedProgress > successTransitionProgress) ? mToState : mFromState;
         }

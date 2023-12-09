@@ -53,7 +53,7 @@ import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.touch.PagedOrientationHandler;
-import com.android.launcher3.util.SplitConfigurationOptions.StagedSplitBounds;
+import com.android.launcher3.util.SplitConfigurationOptions.SplitBounds;
 import com.android.systemui.shared.recents.model.Task;
 
 import java.lang.annotation.Retention;
@@ -97,13 +97,8 @@ public final class DigitalWellBeingToast {
     private View mBanner;
     private ViewOutlineProvider mOldBannerOutlineProvider;
     private float mBannerOffsetPercentage;
-    /**
-     * Clips rect provided by {@link #mOldBannerOutlineProvider} when in the model state to
-     * hide this banner as the taskView scales up and down
-     */
-    private float mModalOffset = 0f;
     @Nullable
-    private StagedSplitBounds mStagedSplitBounds;
+    private SplitBounds mSplitBounds;
     private int mSplitBannerConfig = SPLIT_BANNER_FULLSCREEN;
     private float mSplitOffsetTranslationY;
     private float mSplitOffsetTranslationX;
@@ -164,9 +159,9 @@ public final class DigitalWellBeingToast {
         });
     }
 
-    public void setSplitConfiguration(StagedSplitBounds stagedSplitBounds) {
-        mStagedSplitBounds = stagedSplitBounds;
-        if (mStagedSplitBounds == null
+    public void setSplitConfiguration(SplitBounds splitBounds) {
+        mSplitBounds = splitBounds;
+        if (mSplitBounds == null
                 || !mActivity.getDeviceProfile().isTablet
                 || mTaskView.isFocusedTask()) {
             mSplitBannerConfig = SPLIT_BANNER_FULLSCREEN;
@@ -180,11 +175,11 @@ public final class DigitalWellBeingToast {
         }
 
         // For landscape grid, for 30% width we only show icon, otherwise show icon and time
-        if (mTask.key.id == mStagedSplitBounds.leftTopTaskId) {
-            mSplitBannerConfig = mStagedSplitBounds.leftTaskPercent < THRESHOLD_LEFT_ICON_ONLY ?
+        if (mTask.key.id == mSplitBounds.leftTopTaskId) {
+            mSplitBannerConfig = mSplitBounds.leftTaskPercent < THRESHOLD_LEFT_ICON_ONLY ?
                     SPLIT_GRID_BANNER_SMALL : SPLIT_GRID_BANNER_LARGE;
         } else {
-            mSplitBannerConfig = mStagedSplitBounds.leftTaskPercent > THRESHOLD_RIGHT_ICON_ONLY ?
+            mSplitBannerConfig = mSplitBounds.leftTaskPercent > THRESHOLD_RIGHT_ICON_ONLY ?
                     SPLIT_GRID_BANNER_SMALL : SPLIT_GRID_BANNER_LARGE;
         }
     }
@@ -321,7 +316,7 @@ public final class DigitalWellBeingToast {
         PagedOrientationHandler orientationHandler = mTaskView.getPagedOrientationHandler();
         Pair<Float, Float> translations = orientationHandler
                 .getDwbLayoutTranslations(mTaskView.getMeasuredWidth(),
-                        mTaskView.getMeasuredHeight(), mStagedSplitBounds, deviceProfile,
+                        mTaskView.getMeasuredHeight(), mSplitBounds, deviceProfile,
                         mTaskView.getThumbnails(), mTask.key.id, mBanner);
         mSplitOffsetTranslationX = translations.first;
         mSplitOffsetTranslationY = translations.second;
@@ -331,22 +326,24 @@ public final class DigitalWellBeingToast {
     }
 
     private void setBannerOutline() {
-        mOldBannerOutlineProvider = mBanner.getOutlineProvider();
+        // TODO(b\273367585) to investigate why mBanner.getOutlineProvider() can be null
+        mOldBannerOutlineProvider = mBanner.getOutlineProvider() != null
+                ? mBanner.getOutlineProvider()
+                : ViewOutlineProvider.BACKGROUND;
+
         mBanner.setOutlineProvider(new ViewOutlineProvider() {
             @Override
             public void getOutline(View view, Outline outline) {
                 mOldBannerOutlineProvider.getOutline(view, outline);
-                float verticalTranslation = -view.getTranslationY() + mModalOffset
-                        + mSplitOffsetTranslationY;
+                float verticalTranslation = -view.getTranslationY() + mSplitOffsetTranslationY;
                 outline.offset(0, Math.round(verticalTranslation));
             }
         });
         mBanner.setClipToOutline(true);
     }
 
-    void updateBannerOffset(float offsetPercentage, float verticalOffset) {
+    void updateBannerOffset(float offsetPercentage) {
         if (mBanner != null && mBannerOffsetPercentage != offsetPercentage) {
-            mModalOffset = verticalOffset;
             mBannerOffsetPercentage = offsetPercentage;
             updateTranslationY();
             mBanner.invalidateOutline();
@@ -359,10 +356,7 @@ public final class DigitalWellBeingToast {
         }
 
         mBanner.setTranslationY(
-                (mBannerOffsetPercentage * mBanner.getHeight()) +
-                        mModalOffset +
-                        mSplitOffsetTranslationY
-        );
+                (mBannerOffsetPercentage * mBanner.getHeight()) + mSplitOffsetTranslationY);
     }
 
     private void updateTranslationX() {
@@ -384,5 +378,13 @@ public final class DigitalWellBeingToast {
         layerPaint.setColorFilter(Utilities.makeColorTintingColorFilter(color, amount));
         mBanner.setLayerType(View.LAYER_TYPE_HARDWARE, layerPaint);
         mBanner.setLayerPaint(layerPaint);
+    }
+
+    void setBannerVisibility(int visibility) {
+        if (mBanner == null) {
+            return;
+        }
+
+        mBanner.setVisibility(visibility);
     }
 }

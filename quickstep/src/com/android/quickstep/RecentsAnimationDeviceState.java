@@ -23,9 +23,9 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static com.android.launcher3.util.DisplayController.CHANGE_ALL;
 import static com.android.launcher3.util.DisplayController.CHANGE_NAVIGATION_MODE;
 import static com.android.launcher3.util.DisplayController.CHANGE_ROTATION;
-import static com.android.launcher3.util.DisplayController.NavigationMode.NO_BUTTON;
-import static com.android.launcher3.util.DisplayController.NavigationMode.THREE_BUTTONS;
-import static com.android.launcher3.util.DisplayController.NavigationMode.TWO_BUTTONS;
+import static com.android.launcher3.util.NavigationMode.NO_BUTTON;
+import static com.android.launcher3.util.NavigationMode.THREE_BUTTONS;
+import static com.android.launcher3.util.NavigationMode.TWO_BUTTONS;
 import static com.android.launcher3.util.SettingsCache.ONE_HANDED_ENABLED;
 import static com.android.launcher3.util.SettingsCache.ONE_HANDED_SWIPE_BOTTOM_TO_NOTIFICATION_ENABLED;
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_A11Y_BUTTON_CLICKABLE;
@@ -43,13 +43,11 @@ import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_O
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_OVERVIEW_DISABLED;
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_QUICK_SETTINGS_EXPANDED;
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_SCREEN_PINNING;
+import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING;
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING_OCCLUDED;
 
 import android.app.ActivityTaskManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Region;
 import android.inputmethodservice.InputMethodService;
 import android.net.Uri;
@@ -61,13 +59,14 @@ import android.provider.Settings;
 import android.view.MotionEvent;
 
 import androidx.annotation.BinderThread;
+import androidx.annotation.NonNull;
 
-import com.android.launcher3.Utilities;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.DisplayController.DisplayInfoChangeListener;
 import com.android.launcher3.util.DisplayController.Info;
-import com.android.launcher3.util.DisplayController.NavigationMode;
+import com.android.launcher3.util.NavigationMode;
 import com.android.launcher3.util.SettingsCache;
+import com.android.launcher3.util.SimpleBroadcastReceiver;
 import com.android.quickstep.TopTaskTracker.CachedTaskInfo;
 import com.android.quickstep.util.NavBarPosition;
 import com.android.systemui.shared.system.ActivityManagerWrapper;
@@ -113,18 +112,15 @@ public class RecentsAnimationDeviceState implements DisplayInfoChangeListener {
 
     private boolean mIsUserUnlocked;
     private final ArrayList<Runnable> mUserUnlockedActions = new ArrayList<>();
-    private final BroadcastReceiver mUserUnlockedReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (ACTION_USER_UNLOCKED.equals(intent.getAction())) {
-                mIsUserUnlocked = true;
-                notifyUserUnlocked();
-            }
+    private final SimpleBroadcastReceiver mUserUnlockedReceiver = new SimpleBroadcastReceiver(i -> {
+        if (ACTION_USER_UNLOCKED.equals(i.getAction())) {
+            mIsUserUnlocked = true;
+            notifyUserUnlocked();
         }
-    };
+    });
 
     private int mGestureBlockingTaskId = -1;
-    private Region mExclusionRegion;
+    private @NonNull Region mExclusionRegion = new Region();
     private SystemGestureExclusionListenerCompat mExclusionListener;
 
     public RecentsAnimationDeviceState(Context context) {
@@ -152,16 +148,19 @@ public class RecentsAnimationDeviceState implements DisplayInfoChangeListener {
         mIsUserUnlocked = context.getSystemService(UserManager.class)
                 .isUserUnlocked(Process.myUserHandle());
         if (!mIsUserUnlocked) {
-            mContext.registerReceiver(mUserUnlockedReceiver,
-                    new IntentFilter(ACTION_USER_UNLOCKED));
+            mUserUnlockedReceiver.register(mContext, ACTION_USER_UNLOCKED);
         }
-        runOnDestroy(() -> Utilities.unregisterReceiverSafely(mContext, mUserUnlockedReceiver));
+        runOnDestroy(() -> mUserUnlockedReceiver.unregisterReceiverSafely(mContext));
 
         // Register for exclusion updates
         mExclusionListener = new SystemGestureExclusionListenerCompat(mDisplayId) {
             @Override
             @BinderThread
             public void onExclusionChanged(Region region) {
+                if (region == null) {
+                    // Don't think this is possible but just in case, don't let it be null.
+                    region = new Region();
+                }
                 // Assignments are atomic, it should be safe on binder thread
                 mExclusionRegion = region;
             }
@@ -342,7 +341,7 @@ public class RecentsAnimationDeviceState implements DisplayInfoChangeListener {
             action.run();
         }
         mUserUnlockedActions.clear();
-        Utilities.unregisterReceiverSafely(mContext, mUserUnlockedReceiver);
+        mUserUnlockedReceiver.unregisterReceiverSafely(mContext);
     }
 
     /**
@@ -383,6 +382,7 @@ public class RecentsAnimationDeviceState implements DisplayInfoChangeListener {
                 || mRotationTouchHelper.isTaskListFrozen();
         return canStartWithNavHidden
                 && (mSystemUiStateFlags & SYSUI_STATE_NOTIFICATION_PANEL_EXPANDED) == 0
+                && (mSystemUiStateFlags & SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING) == 0
                 && (mSystemUiStateFlags & SYSUI_STATE_QUICK_SETTINGS_EXPANDED) == 0
                 && (mSystemUiStateFlags & SYSUI_STATE_MAGNIFICATION_OVERLAP) == 0
                 && ((mSystemUiStateFlags & SYSUI_STATE_HOME_DISABLED) == 0
@@ -498,7 +498,7 @@ public class RecentsAnimationDeviceState implements DisplayInfoChangeListener {
     public boolean isInExclusionRegion(MotionEvent event) {
         // mExclusionRegion can change on binder thread, use a local instance here.
         Region exclusionRegion = mExclusionRegion;
-        return mMode == NO_BUTTON && exclusionRegion != null
+        return mMode == NO_BUTTON
                 && exclusionRegion.contains((int) event.getX(), (int) event.getY());
     }
 
@@ -575,19 +575,23 @@ public class RecentsAnimationDeviceState implements DisplayInfoChangeListener {
                 && ((mSystemUiStateFlags & SYSUI_STATE_IME_SHOWING) != 0);
     }
 
+    public String getSystemUiStateString() {
+        return  QuickStepContract.getSystemUiStateString(mSystemUiStateFlags);
+    }
+
     public void dump(PrintWriter pw) {
         pw.println("DeviceState:");
         pw.println("  canStartSystemGesture=" + canStartSystemGesture());
         pw.println("  systemUiFlags=" + mSystemUiStateFlags);
-        pw.println("  systemUiFlagsDesc="
-                + QuickStepContract.getSystemUiStateString(mSystemUiStateFlags));
+        pw.println("  systemUiFlagsDesc=" + getSystemUiStateString());
         pw.println("  assistantAvailable=" + mAssistantAvailable);
         pw.println("  assistantDisabled="
                 + QuickStepContract.isAssistantGestureDisabled(mSystemUiStateFlags));
         pw.println("  isUserUnlocked=" + mIsUserUnlocked);
         pw.println("  isOneHandedModeEnabled=" + mIsOneHandedModeEnabled);
         pw.println("  isSwipeToNotificationEnabled=" + mIsSwipeToNotificationEnabled);
-        pw.println("  deferredGestureRegion=" + mDeferredGestureRegion);
+        pw.println("  deferredGestureRegion=" + mDeferredGestureRegion.getBounds());
+        pw.println("  exclusionRegion=" + mExclusionRegion.getBounds());
         pw.println("  pipIsActive=" + mPipIsActive);
         mRotationTouchHelper.dump(pw);
     }

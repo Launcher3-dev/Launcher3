@@ -19,25 +19,27 @@ import android.content.Context;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 
-import com.android.launcher3.DeviceProfile.DeviceProfileListenable;
 import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
+import com.android.launcher3.LauncherPrefs;
+import com.android.launcher3.util.OnboardingPrefs;
 import com.android.launcher3.util.Themes;
-import com.android.launcher3.views.AppLauncher;
+import com.android.launcher3.views.ActivityContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
 // TODO(b/218912746): Share more behavior to avoid all apps context depending directly on taskbar.
 /** Base for common behavior between taskbar window contexts. */
-public abstract class BaseTaskbarContext extends ContextThemeWrapper implements AppLauncher,
-        DeviceProfileListenable {
+public abstract class BaseTaskbarContext extends ContextThemeWrapper implements ActivityContext {
 
     protected final LayoutInflater mLayoutInflater;
     private final List<OnDeviceProfileChangeListener> mDPChangeListeners = new ArrayList<>();
+    private final OnboardingPrefs<BaseTaskbarContext> mOnboardingPrefs;
 
     public BaseTaskbarContext(Context windowContext) {
         super(windowContext, Themes.getActivityThemeRes(windowContext));
         mLayoutInflater = LayoutInflater.from(this).cloneInContext(this);
+        mOnboardingPrefs = new OnboardingPrefs<>(this, LauncherPrefs.getPrefs(this));
     }
 
     @Override
@@ -50,6 +52,11 @@ public abstract class BaseTaskbarContext extends ContextThemeWrapper implements 
         return mDPChangeListeners;
     }
 
+    @Override
+    public OnboardingPrefs<BaseTaskbarContext> getOnboardingPrefs() {
+        return mOnboardingPrefs;
+    }
+
     /** Callback invoked when a drag is initiated within this context. */
     public abstract void onDragStart();
 
@@ -58,4 +65,10 @@ public abstract class BaseTaskbarContext extends ContextThemeWrapper implements 
 
     /** Callback invoked when a popup is shown or closed within this context. */
     public abstract void onPopupVisibilityChanged(boolean isVisible);
+
+    /**
+     * Callback invoked when user attempts to split the screen through a long-press menu in Taskbar
+     * or AllApps.
+     */
+    public abstract void onSplitScreenMenuButtonClicked();
 }

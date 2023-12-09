@@ -57,6 +57,8 @@ public abstract class ButtonDropTarget extends TextView
     public static final int TOOLTIP_LEFT = 1;
     public static final int TOOLTIP_RIGHT = 2;
 
+    private final Rect mTempRect = new Rect();
+
     protected final Launcher mLauncher;
 
     protected DropTargetBar mDropTargetBar;
@@ -91,7 +93,7 @@ public abstract class ButtonDropTarget extends TextView
 
         Resources resources = getResources();
         mDragDistanceThreshold = resources.getDimensionPixelSize(R.dimen.drag_distanceThreshold);
-        mDrawableSize = resources.getDimensionPixelSize(R.dimen.drop_target_text_size);
+        mDrawableSize = resources.getDimensionPixelSize(R.dimen.drop_target_button_drawable_size);
         mDrawablePadding = resources.getDimensionPixelSize(
                 R.dimen.drop_target_button_drawable_padding);
     }
@@ -374,11 +376,81 @@ public abstract class ButtonDropTarget extends TextView
         hideTooltip();
     }
 
+    /**
+     * Returns if the text will be truncated within the provided availableWidth.
+     */
     public boolean isTextTruncated(int availableWidth) {
-        availableWidth -= (getPaddingLeft() + getPaddingRight() + mDrawable.getIntrinsicWidth()
-                + getCompoundDrawablePadding());
-        CharSequence displayedText = TextUtils.ellipsize(mText, getPaint(), availableWidth,
+        availableWidth -= getPaddingLeft() + getPaddingRight();
+        if (mIconVisible) {
+            availableWidth -= mDrawable.getIntrinsicWidth() + getCompoundDrawablePadding();
+        }
+        if (availableWidth <= 0) {
+            return true;
+        }
+        CharSequence firstLine = TextUtils.ellipsize(mText, getPaint(), availableWidth,
                 TextUtils.TruncateAt.END);
-        return !mText.equals(displayedText);
+        if (!mTextMultiLine) {
+            return !TextUtils.equals(mText, firstLine);
+        }
+        if (TextUtils.equals(mText, firstLine)) {
+            // When multi-line is active, if it can display as one line, then text is not truncated.
+            return false;
+        }
+        CharSequence secondLine =
+                TextUtils.ellipsize(mText.subSequence(firstLine.length(), mText.length()),
+                        getPaint(), availableWidth, TextUtils.TruncateAt.END);
+        return !(TextUtils.equals(mText.subSequence(0, firstLine.length()), firstLine)
+                && TextUtils.equals(mText.subSequence(firstLine.length(), secondLine.length()),
+                secondLine));
+    }
+
+    /**
+     * Returns if the text will be clipped vertically within the provided availableHeight.
+     */
+    private boolean isTextClippedVertically(int availableHeight) {
+        availableHeight -= getPaddingTop() + getPaddingBottom();
+        if (availableHeight <= 0) {
+            return true;
+        }
+
+        getPaint().getTextBounds(mText.toString(), 0, mText.length(), mTempRect);
+        // Add bounds bottom to height, as text bounds height measures from the text baseline and
+        // above, which characters can descend below
+        return mTempRect.bottom + mTempRect.height() >= availableHeight;
+    }
+
+    /**
+     * Reduce the size of the text until it fits the measured width or reaches a minimum.
+     *
+     * The minimum size is defined by {@code R.dimen.button_drop_target_min_text_size} and
+     * it diminishes by intervals defined by
+     * {@code R.dimen.button_drop_target_resize_text_increment}
+     * This functionality is very similar to the option
+     * {@link TextView#setAutoSizeTextTypeWithDefaults(int)} but can't be used in this view because
+     * the layout width is {@code WRAP_CONTENT}.
+     *
+     * @return The biggest text size in SP that makes the text fit or if the text can't fit returns
+     *         the min available value
+     */
+    public float resizeTextToFit() {
+        float minSize = Utilities.pxToSp(getResources()
+                .getDimensionPixelSize(R.dimen.button_drop_target_min_text_size));
+        float step = Utilities.pxToSp(getResources()
+                .getDimensionPixelSize(R.dimen.button_drop_target_resize_text_increment));
+        float textSize = Utilities.pxToSp(getTextSize());
+
+        int availableWidth = getMeasuredWidth();
+        int availableHeight = getMeasuredHeight();
+
+        while (isTextTruncated(availableWidth) || isTextClippedVertically(availableHeight)) {
+            textSize -= step;
+            if (textSize < minSize) {
+                textSize = minSize;
+                setTextSize(textSize);
+                break;
+            }
+            setTextSize(textSize);
+        }
+        return textSize;
     }
 }

@@ -20,18 +20,16 @@ import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_ALLAP
 
 import android.content.Context;
 
-import com.android.launcher3.DeviceProfile.DeviceProfileListenable;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
 import com.android.launcher3.util.Themes;
+import com.android.launcher3.views.ActivityContext;
 
 /**
  * Definition for AllApps state
  */
 public class AllAppsState extends LauncherState {
-
-    private static final float WORKSPACE_SCALE_FACTOR = 0.97f;
 
     private static final int STATE_FLAGS =
             FLAG_WORKSPACE_INACCESSIBLE | FLAG_CLOSE_POPUPS | FLAG_HOTSEAT_INACCESSIBLE;
@@ -41,11 +39,11 @@ public class AllAppsState extends LauncherState {
     }
 
     @Override
-    public <DEVICE_PROFILE_CONTEXT extends Context & DeviceProfileListenable>
+    public <DEVICE_PROFILE_CONTEXT extends Context & ActivityContext>
     int getTransitionDuration(DEVICE_PROFILE_CONTEXT context, boolean isToState) {
-        return !context.getDeviceProfile().isTablet && isToState
-                ? 600
-                : isToState ? 500 : 300;
+        return isToState
+                ? context.getDeviceProfile().allAppsOpenDuration
+                : context.getDeviceProfile().allAppsCloseDuration;
     }
 
     @Override
@@ -60,7 +58,8 @@ public class AllAppsState extends LauncherState {
 
     @Override
     public ScaleAndTranslation getWorkspaceScaleAndTranslation(Launcher launcher) {
-        return new ScaleAndTranslation(WORKSPACE_SCALE_FACTOR, NO_OFFSET, NO_OFFSET);
+        return new ScaleAndTranslation(launcher.getDeviceProfile().workspaceContentScale, NO_OFFSET,
+                NO_OFFSET);
     }
 
     @Override
@@ -71,17 +70,22 @@ public class AllAppsState extends LauncherState {
             ScaleAndTranslation overviewScaleAndTranslation = LauncherState.OVERVIEW
                     .getWorkspaceScaleAndTranslation(launcher);
             return new ScaleAndTranslation(
-                    WORKSPACE_SCALE_FACTOR,
+                    launcher.getDeviceProfile().workspaceContentScale,
                     overviewScaleAndTranslation.translationX,
                     overviewScaleAndTranslation.translationY);
         }
     }
 
     @Override
-    protected float getDepthUnchecked(Context context) {
-        // The scrim fades in at approximately 50% of the swipe gesture.
-        // This means that the depth should be greater than 1, in order to fully zoom out.
-        return 2f;
+    protected <DEVICE_PROFILE_CONTEXT extends Context & ActivityContext>
+            float getDepthUnchecked(DEVICE_PROFILE_CONTEXT context) {
+        if (context.getDeviceProfile().isTablet) {
+            return context.getDeviceProfile().bottomSheetDepth;
+        } else {
+            // The scrim fades in at approximately 50% of the swipe gesture.
+            // This means that the depth should be greater than 1, in order to fully zoom out.
+            return 2f;
+        }
     }
 
     @Override

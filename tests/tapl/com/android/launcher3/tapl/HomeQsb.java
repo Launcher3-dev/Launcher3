@@ -15,31 +15,23 @@
  */
 package com.android.launcher3.tapl;
 
+import androidx.test.uiautomator.UiObject2;
+
 /**
- * Operations on home screen qsb.
+ * Operations on Home screen qsb.
  */
-public class HomeQsb {
+class HomeQsb extends Qsb {
 
-    private final LauncherInstrumentation mLauncher;
+    private final UiObject2 mHotSeat;
 
-    HomeQsb(LauncherInstrumentation launcher) {
-        mLauncher = launcher;
-        mLauncher.waitForLauncherObject("search_container_hotseat");
+    HomeQsb(LauncherInstrumentation launcher, UiObject2 hotseat) {
+        super(launcher);
+        mHotSeat = hotseat;
+        waitForQsbObject();
     }
 
-    /**
-     * Show search result page from tapping qsb.
-     */
-    public SearchResultFromQsb showSearchResult() {
-        try (LauncherInstrumentation.Closable c = mLauncher.addContextLayer(
-                "want to open search result page");
-             LauncherInstrumentation.Closable e = mLauncher.eventsCheck()) {
-            mLauncher.clickLauncherObject(
-                    mLauncher.waitForLauncherObject("search_container_hotseat"));
-            try (LauncherInstrumentation.Closable c2 = mLauncher.addContextLayer(
-                    "clicked qsb to open search result page")) {
-                return new SearchResultFromQsb(mLauncher);
-            }
-        }
+    @Override
+    protected UiObject2 waitForQsbObject() {
+        return mLauncher.waitForObjectInContainer(mHotSeat, "search_container_hotseat");
     }
 }

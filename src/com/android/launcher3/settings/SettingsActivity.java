@@ -18,6 +18,7 @@ package com.android.launcher3.settings;
 
 import static androidx.core.view.accessibility.AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS;
 
+import static com.android.launcher3.config.FeatureFlags.IS_STUDIO_BUILD;
 import static com.android.launcher3.states.RotationHelper.ALLOW_ROTATION_PREFERENCE_KEY;
 
 import android.content.Intent;
@@ -45,12 +46,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherFiles;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.model.WidgetsModel;
 import com.android.launcher3.states.RotationHelper;
+import com.android.launcher3.uioverrides.flags.DeveloperOptionsFragment;
 import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
+import com.android.launcher3.util.DisplayController;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +94,8 @@ public class SettingsActivity extends FragmentActivity
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         Intent intent = getIntent();
-        if (intent.hasExtra(EXTRA_FRAGMENT) || intent.hasExtra(EXTRA_FRAGMENT_ARGS)) {
+        if (intent.hasExtra(EXTRA_FRAGMENT) || intent.hasExtra(EXTRA_FRAGMENT_ARGS)
+                || intent.hasExtra(EXTRA_FRAGMENT_ARG_KEY)) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -112,7 +117,8 @@ public class SettingsActivity extends FragmentActivity
             // Display the fragment as the main content.
             fm.beginTransaction().replace(R.id.content_frame, f).commit();
         }
-        Utilities.getPrefs(getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
+        LauncherPrefs.getPrefs(getApplicationContext())
+                .registerOnSharedPreferenceChangeListener(this);
     }
 
     /**
@@ -207,7 +213,11 @@ public class SettingsActivity extends FragmentActivity
             PreferenceScreen screen = getPreferenceScreen();
             for (int i = screen.getPreferenceCount() - 1; i >= 0; i--) {
                 Preference preference = screen.getPreference(i);
-                if (!initPreference(preference)) {
+                if (initPreference(preference)) {
+                    if (IS_STUDIO_BUILD && preference == mDeveloperOptionPref) {
+                        preference.setOrder(0);
+                    }
+                } else {
                     screen.removePreference(preference);
                 }
             }
@@ -217,9 +227,10 @@ public class SettingsActivity extends FragmentActivity
                         getResources().getString(R.string.search_pref_screen_title))){
                     DeviceProfile mDeviceProfile = InvariantDeviceProfile.INSTANCE.get(
                             getContext()).getDeviceProfile(getContext());
-                    getPreferenceScreen().setTitle(mDeviceProfile.isTablet ?
-                            R.string.search_pref_screen_title_tablet
-                            : R.string.search_pref_screen_title);
+                    getPreferenceScreen().setTitle(mDeviceProfile.isMultiDisplay
+                            || mDeviceProfile.isPhone ?
+                            R.string.search_pref_screen_title :
+                            R.string.search_pref_screen_title_tablet);
                 }
                 getActivity().setTitle(getPreferenceScreen().getTitle());
             }
@@ -260,15 +271,14 @@ public class SettingsActivity extends FragmentActivity
                     return !WidgetsModel.GO_DISABLE_NOTIFICATION_DOTS;
 
                 case ALLOW_ROTATION_PREFERENCE_KEY:
-                    DeviceProfile deviceProfile = InvariantDeviceProfile.INSTANCE.get(
-                            getContext()).getDeviceProfile(getContext());
-                    if (deviceProfile.isTablet) {
+                    DisplayController.Info info =
+                            DisplayController.INSTANCE.get(getContext()).getInfo();
+                    if (info.isTablet(info.realBounds)) {
                         // Launcher supports rotation by default. No need to show this setting.
                         return false;
                     }
                     // Initialize the UI once
-                    preference.setDefaultValue(
-                            RotationHelper.getAllowRotationDefaultValue(deviceProfile));
+                    preference.setDefaultValue(RotationHelper.getAllowRotationDefaultValue(info));
                     return true;
 
                 case FLAGS_PREFERENCE_KEY:

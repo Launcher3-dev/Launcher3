@@ -1,11 +1,20 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+}
 
 android {
-    compileSdkVersion COMPILE_SDK
+    namespace = "com.android.launcher3.icons"
 
+    compileSdkVersion COMPILE_SDK
     defaultConfig {
         minSdkVersion 26
         targetSdkVersion 33
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
     }
 
     sourceSets {
@@ -15,21 +24,15 @@ android {
             res.srcDirs = ['res']
         }
     }
-
-    lintOptions {
+    lint {
         abortOnError false
     }
 
     tasks.withType(JavaCompile) {
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
 }
 
 dependencies {
-    implementation "androidx.core:core:${ANDROID_X_VERSION}"
+    implementation "androidx.core:core:1.9.0"
 }

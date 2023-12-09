@@ -45,4 +45,8 @@ android_library {
         "src/**/*.java",
         "src_full_lib/**/*.java",
     ],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.permission",
+    ],
 }
