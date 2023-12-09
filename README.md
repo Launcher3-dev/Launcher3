@@ -1,7 +1,7 @@
 # Launcher3
 
 ## 更新：20230418
-* Android-13-Qc
+* Android-13-Qc（Qualcomm）
 
 ## 说明
 目前只支持withoutQuickstep编译
