@@ -56,7 +56,10 @@ https://cs.android.com/android/platform/superproject/+/master:packages/apps/Laun
 
 
 
-## Visitor Count
+<!--统计访问人数-->
 
-[![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=yuchuangu85)](https://github.com/anuraghazra/github-readme-stats)
+## ⚡ Visitor count
+
+<!-- ![](https://visitor-badge.glitch.me/badge?page_id=yuchuangu85.readme) -->
+![](https://profile-counter.glitch.me/yuchuangu85/count.svg)
 
