@@ -61,9 +61,15 @@ https://cs.android.com/android/platform/superproject/+/master:packages/apps/Laun
 ## ⚡ Visitor count
 
 <!-- ![](https://visitor-badge.glitch.me/badge?page_id=yuchuangu85.readme) -->
-![](https://profile-counter.glitch.me/yuchuangu85/count.svg)
+<!--![](https://profile-counter.glitch.me/yuchuangu85/count.svg) -->
+
+![](https://profile-counter.glitch.me/Launcher3-dev-Launcher3/count.svg)
 
 
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Launcher3-dev/Launcher3&type=Date)
 
 <picture>
   <source
