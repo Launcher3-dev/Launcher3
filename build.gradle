@@ -194,7 +194,7 @@ dependencies {
     //implementation 'com.google.dagger:dagger:2.11-rc2'
     //annotationProcessor 'com.google.dagger:dagger-compiler:2.11-rc2'
     //implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    api 'com.airbnb.android:lottie:3.3.0'
+    api 'com.airbnb.android:lottie:5.2.0'
 }
 
 protobuf {
