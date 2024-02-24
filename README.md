@@ -60,6 +60,6 @@ https://cs.android.com/android/platform/superproject/+/master:packages/apps/Laun
 
 ## ⚡ Visitor count
 
-<!-- ![](https://visitor-badge.glitch.me/badge?page_id=yuchuangu85.readme) -->
-![](https://profile-counter.glitch.me/yuchuangu85/count.svg)
+![](https://visitor-badge.glitch.me/badge?page_id=yuchuangu85.readme)
+<!-- ![](https://profile-counter.glitch.me/yuchuangu85/count.svg -->
 
