@@ -108,7 +108,8 @@ public class FallbackSwipeHandler extends
         super(context, deviceState, taskAnimationManager, gestureState, touchTimeMs,
                 continuingLastGesture, inputConsumer);
 
-        mRunningOverHome = mGestureState.getRunningTask().isHomeTask();
+        mRunningOverHome = mGestureState.getRunningTask() != null
+                && mGestureState.getRunningTask().isHomeTask();
         if (mRunningOverHome) {
             runActionOnRemoteHandles(remoteTargetHandle ->
                     remoteTargetHandle.getTransformParams().setHomeBuilderProxy(
@@ -138,6 +139,7 @@ public class FallbackSwipeHandler extends
         mTmpMatrix.setScale(scale, scale,
                 app.localBounds.exactCenterX(), app.localBounds.exactCenterY());
         builder.setMatrix(mTmpMatrix).setAlpha(alpha);
+        builder.setShow();
     }
 
     @Override

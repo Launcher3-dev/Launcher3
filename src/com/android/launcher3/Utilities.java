@@ -124,6 +124,9 @@ public final class Utilities {
     @ChecksSdkIntAtLeast(api = VERSION_CODES.TIRAMISU, codename = "T")
     public static final boolean ATLEAST_T = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
 
+    @ChecksSdkIntAtLeast(api = VERSION_CODES.UPSIDE_DOWN_CAKE, codename = "U")
+    public static final boolean ATLEAST_U = Build.VERSION.SDK_INT >= VERSION_CODES.UPSIDE_DOWN_CAKE;
+
     /**
      * Set on a motion event dispatched from the nav bar. See {@link MotionEvent#setEdgeFlags(int)}.
      */
@@ -135,7 +138,7 @@ public final class Utilities {
      * @deprecated Use {@link BuildConfig#IS_DEBUG_DEVICE} directly
      */
     @Deprecated
-    public static final boolean IS_DEBUG_DEVICE = com.android.launcher3.icons.BuildConfig.DEBUG; // BuildConfig.IS_DEBUG_DEVICE;
+    public static final boolean IS_DEBUG_DEVICE = BuildConfig.IS_DEBUG_DEVICE;
 
     public static final int TRANSLATE_UP = 0;
     public static final int TRANSLATE_DOWN = 1;
