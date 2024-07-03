@@ -3,6 +3,5 @@
 .idea
 build
 Launcher3_mx.iml
-gradle
 gradlew
 gradlew.bat
