@@ -34,5 +34,5 @@ android {
 
 dependencies {
     implementation "androidx.core:core:1.13.1"
-    implementation "androidx.annotation:annotation:1.8.0"
+    implementation "androidx.annotation:annotation:1.8.1"
 }

@@ -653,7 +653,7 @@ public final class Utilities {
         } else {
             return Process.myUserHandle().equals(info.user)
                     ? new ColorDrawable(Color.TRANSPARENT)
-                    : context.getDrawable(R.drawable.ic_work_app_badge);
+                    : context.getDrawable(com.android.launcher3.icons.R.drawable.ic_work_app_badge);
         }
     }
 

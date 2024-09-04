@@ -350,7 +350,7 @@ public class WidgetCell extends LinearLayout {
             mWidgetBadge.setVisibility(View.GONE);
         } else {
             mWidgetBadge.setVisibility(View.VISIBLE);
-            mWidgetBadge.setImageResource(R.drawable.ic_work_app_badge);
+            mWidgetBadge.setImageResource(com.android.launcher3.icons.R.drawable.ic_work_app_badge);
         }
     }
 

@@ -144,6 +144,11 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
 }
 
 allprojects {
@@ -162,14 +167,14 @@ allprojects {
 
 dependencies {
     implementation "androidx.dynamicanimation:dynamicanimation:${ANDROID_X_VERSION}"
-    implementation "androidx.recyclerview:recyclerview:${ANDROID_X_VERSION}"
+    implementation "androidx.recyclerview:recyclerview:1.3.2"
     implementation "androidx.preference:preference:${ANDROID_X_VERSION}"
     implementation project(':IconLoader')
     implementation project(':systemUIPluginCore')
 //    implementation project(':UiTestsLibLauncher')
 //    withQuickstepImplementation project(':SharedLibWrapper')
-    implementation 'com.google.protobuf:protobuf-javalite:3.8.0'
-    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'com.google.protobuf:protobuf-javalite:4.26.1'
+    implementation 'androidx.core:core-ktx:1.13.1'
 
     // Recents lib dependency
     withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}", include: 'sysui_shared.jar')
@@ -177,22 +182,22 @@ dependencies {
     // Required for AOSP to compile. This is already included in the sysui_shared.jar
     withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}", include: 'plugin_core.jar')
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation "org.mockito:mockito-core:1.9.5"
     androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
     androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
-    androidTestImplementation 'com.android.support.test:runner:1.0.0'
-    androidTestImplementation 'com.android.support.test:rules:1.0.0'
-    androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test:rules:1.0.2'
+    androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.3'
     androidTestImplementation "androidx.annotation:annotation:${ANDROID_X_VERSION}"
 
     api 'com.airbnb.android:lottie:3.3.0'
 
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'com.google.android.material:material:1.10.0'
     implementation 'androidx.slice:slice-builders:1.0.0'
 }
 
-def protocVersion = '3.8.0'
+def protocVersion = '4.26.1'//'3.8.0'
 
 protobuf {
     // Configure the protoc executable
