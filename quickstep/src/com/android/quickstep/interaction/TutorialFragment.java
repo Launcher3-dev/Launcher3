@@ -25,6 +25,7 @@ import static com.android.quickstep.interaction.GestureSandboxActivity.KEY_USE_T
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Insets;
@@ -84,6 +85,9 @@ abstract class TutorialFragment extends GestureSandboxFragment implements OnTouc
     private DeviceProfile mDeviceProfile;
     private boolean mIsLargeScreen;
     private boolean mIsFoldable;
+    private boolean mOnAttachedToWindowPendingCreate;
+
+    @Nullable private Runnable mOnAttachedOnGlobalLayoutCallback = null;
 
     public static TutorialFragment newInstance(
             TutorialType tutorialType, boolean gestureComplete, boolean fromTutorialMenu) {
@@ -99,6 +103,24 @@ abstract class TutorialFragment extends GestureSandboxFragment implements OnTouc
         fragment.setArguments(args);
         return fragment;
     }
+
+    @Nullable
+    @Override
+    GestureSandboxFragment recreateFragment() {
+        TutorialType tutorialType = mTutorialController == null
+                ? (mTutorialType == null
+                        ? getDefaultTutorialType() : mTutorialType)
+                : mTutorialController.mTutorialType;
+        return newInstance(tutorialType, isGestureComplete(), mFromTutorialMenu);
+    }
+
+    @Override
+    boolean canRecreateFragment() {
+        return true;
+    }
+
+    @NonNull
+    abstract TutorialType getDefaultTutorialType();
 
     TutorialFragment(boolean fromTutorialMenu) {
         mFromTutorialMenu = fromTutorialMenu;
@@ -161,6 +183,11 @@ abstract class TutorialFragment extends GestureSandboxFragment implements OnTouc
                 .getDeviceProfile(getContext());
         mIsLargeScreen = mDeviceProfile.isTablet;
         mIsFoldable = mDeviceProfile.isTwoPanels;
+
+        if (mOnAttachedToWindowPendingCreate) {
+            mOnAttachedToWindowPendingCreate = false;
+            onAttachedToWindow();
+        }
     }
 
     public boolean isLargeScreen() {
@@ -330,10 +357,24 @@ abstract class TutorialFragment extends GestureSandboxFragment implements OnTouc
                     new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            changeController(mTutorialType);
+                            runOnAttached(() -> changeController(mTutorialType));
                             mRootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                         }
                     });
+        }
+    }
+
+    private void runOnAttached(Runnable callback) {
+        mOnAttachedOnGlobalLayoutCallback = callback;
+        if (getContext() != null) {
+            onAttached();
+        }
+    }
+
+    private void onAttached() {
+        if (mOnAttachedOnGlobalLayoutCallback != null) {
+            mOnAttachedOnGlobalLayoutCallback.run();
+            mOnAttachedOnGlobalLayoutCallback = null;
         }
     }
 
@@ -359,7 +400,17 @@ abstract class TutorialFragment extends GestureSandboxFragment implements OnTouc
     }
 
     @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        onAttached();
+    }
+
+    @Override
     void onAttachedToWindow() {
+        if (mEdgeBackGestureHandler == null) {
+            mOnAttachedToWindowPendingCreate = true;
+            return;
+        }
         StatsLogManager statsLogManager = getStatsLogManager();
         if (statsLogManager != null) {
             logTutorialStepShown(statsLogManager);
@@ -369,6 +420,7 @@ abstract class TutorialFragment extends GestureSandboxFragment implements OnTouc
 
     @Override
     void onDetachedFromWindow() {
+        mOnAttachedToWindowPendingCreate = false;
         mEdgeBackGestureHandler.setViewGroupParent(null);
     }
 
@@ -496,11 +548,6 @@ abstract class TutorialFragment extends GestureSandboxFragment implements OnTouc
         GestureSandboxActivity activity = getGestureSandboxActivity();
 
         return activity != null ? activity.getStatsLogManager() : null;
-    }
-
-    protected boolean isRotationPromptShowing() {
-        GestureSandboxActivity activity = getGestureSandboxActivity();
-        return activity != null && activity.isRotationPromptShowing();
     }
 
     @Nullable

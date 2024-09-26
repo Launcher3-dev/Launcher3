@@ -20,10 +20,12 @@ import static org.junit.Assert.assertTrue;
 
 import android.os.SystemProperties;
 
-import com.android.launcher3.Launcher;
-import com.android.launcher3.tapl.LauncherInstrumentation;
-import com.android.launcher3.tapl.LauncherInstrumentation.ContainerType;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.Until;
+
+import com.android.launcher3.tapl.LaunchedAppState;
 import com.android.launcher3.ui.AbstractLauncherUiTest;
+import com.android.launcher3.uioverrides.QuickstepLauncher;
 import com.android.quickstep.views.RecentsView;
 
 import org.junit.rules.RuleChain;
@@ -32,7 +34,7 @@ import org.junit.rules.TestRule;
 /**
  * Base class for all instrumentation tests that deal with Quickstep.
  */
-public abstract class AbstractQuickStepTest extends AbstractLauncherUiTest {
+public abstract class AbstractQuickStepTest extends AbstractLauncherUiTest<QuickstepLauncher> {
     public static final boolean ENABLE_SHELL_TRANSITIONS =
             SystemProperties.getBoolean("persist.wm.debug.shell_transit", true);
     @Override
@@ -44,46 +46,25 @@ public abstract class AbstractQuickStepTest extends AbstractLauncherUiTest {
     }
 
     @Override
-    protected void onLauncherActivityClose(Launcher launcher) {
+    protected void onLauncherActivityClose(QuickstepLauncher launcher) {
         RecentsView recentsView = launcher.getOverviewPanel();
         if (recentsView != null) {
             recentsView.finishRecentsAnimation(false /* toRecents */, null);
         }
     }
 
-    @Override
-    protected void checkLauncherState(Launcher launcher, ContainerType expectedContainerType,
-            boolean isResumed, boolean isStarted) {
-        if (ENABLE_SHELL_TRANSITIONS || !isInLiveTileMode(launcher, expectedContainerType)) {
-            super.checkLauncherState(launcher, expectedContainerType, isResumed, isStarted);
-        } else {
-            assertTrue("[Live Tile] hasBeenResumed() == isStarted(), hasBeenResumed(): "
-                            + isResumed, isResumed != isStarted);
-        }
+    protected void assertTestActivityIsRunning(int activityNumber, String message) {
+        assertTrue(message, mDevice.wait(
+                Until.hasObject(By.pkg(getAppPackageName()).text("TestActivity" + activityNumber)),
+                DEFAULT_UI_TIMEOUT));
     }
 
-    @Override
-    protected void checkLauncherStateInOverview(Launcher launcher,
-            ContainerType expectedContainerType, boolean isStarted, boolean isResumed) {
-        if (ENABLE_SHELL_TRANSITIONS || !isInLiveTileMode(launcher, expectedContainerType)) {
-            super.checkLauncherStateInOverview(launcher, expectedContainerType, isStarted,
-                    isResumed);
-        } else {
-            assertTrue(
-                    "[Live Tile] Launcher is not started or has been resumed in state: "
-                            + expectedContainerType,
-                    isStarted && !isResumed);
-        }
-    }
-
-    private boolean isInLiveTileMode(Launcher launcher,
-            LauncherInstrumentation.ContainerType expectedContainerType) {
-        if (expectedContainerType != LauncherInstrumentation.ContainerType.OVERVIEW) {
-            return false;
-        }
-
-        RecentsView recentsView = launcher.getOverviewPanel();
-        return recentsView.getSizeStrategy().isInLiveTileMode()
-                && recentsView.getRunningTaskViewId() != -1;
+    protected LaunchedAppState getAndAssertLaunchedApp() {
+        final LaunchedAppState launchedAppState = mLauncher.getLaunchedAppState();
+        executeOnLauncher(launcher -> assertTrue(
+                "Launcher activity is the top activity; expecting another activity to be the top "
+                        + "one",
+                isInLaunchedApp(launcher)));
+        return launchedAppState;
     }
 }

@@ -19,17 +19,16 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
 import static android.content.Intent.EXTRA_USER;
 
+import static com.android.app.animation.Interpolators.ACCELERATE;
 import static com.android.launcher3.GestureNavContract.EXTRA_GESTURE_CONTRACT;
 import static com.android.launcher3.GestureNavContract.EXTRA_ICON_POSITION;
 import static com.android.launcher3.GestureNavContract.EXTRA_ICON_SURFACE;
 import static com.android.launcher3.GestureNavContract.EXTRA_ON_FINISH_CALLBACK;
 import static com.android.launcher3.GestureNavContract.EXTRA_REMOTE_CALLBACK;
 import static com.android.launcher3.anim.AnimatorListeners.forEndCallback;
-import static com.android.launcher3.anim.Interpolators.ACCEL;
 import static com.android.quickstep.OverviewComponentObserver.startHomeIntentSafely;
 
 import android.animation.ObjectAnimator;
-import android.annotation.TargetApi;
 import android.app.ActivityManager.RunningTaskInfo;
 import android.app.ActivityOptions;
 import android.content.Context;
@@ -37,7 +36,6 @@ import android.content.Intent;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -70,18 +68,18 @@ import com.android.quickstep.util.RectFSpringAnim;
 import com.android.quickstep.util.SurfaceTransaction.SurfaceProperties;
 import com.android.quickstep.util.TransformParams;
 import com.android.quickstep.util.TransformParams.BuilderProxy;
+import com.android.quickstep.views.TaskView;
 import com.android.systemui.shared.recents.model.Task.TaskKey;
 import com.android.systemui.shared.system.InputConsumerController;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
  * Handles the navigation gestures when a 3rd party launcher is the default home activity.
  */
-@TargetApi(Build.VERSION_CODES.R)
 public class FallbackSwipeHandler extends
         AbsSwipeUpHandler<RecentsActivity, FallbackRecentsView, RecentsState> {
 
@@ -143,27 +141,32 @@ public class FallbackSwipeHandler extends
     }
 
     @Override
-    protected HomeAnimationFactory createHomeAnimationFactory(ArrayList<IBinder> launchCookies,
-            long duration, boolean isTargetTranslucent, boolean appCanEnterPip,
-            RemoteAnimationTarget runningTaskTarget) {
+    protected HomeAnimationFactory createHomeAnimationFactory(
+            List<IBinder> launchCookies,
+            long duration,
+            boolean isTargetTranslucent,
+            boolean appCanEnterPip,
+            RemoteAnimationTarget runningTaskTarget,
+            @Nullable TaskView targetTaskView) {
         mAppCanEnterPip = appCanEnterPip;
         if (appCanEnterPip) {
             return new FallbackPipToHomeAnimationFactory();
         }
         mActiveAnimationFactory = new FallbackHomeAnimationFactory(duration);
-        startHomeIntent(mActiveAnimationFactory, runningTaskTarget);
+        startHomeIntent(mActiveAnimationFactory, runningTaskTarget, "FallbackSwipeHandler-home");
         return mActiveAnimationFactory;
     }
 
     private void startHomeIntent(
             @Nullable FallbackHomeAnimationFactory gestureContractAnimationFactory,
-            @Nullable RemoteAnimationTarget runningTaskTarget) {
+            @Nullable RemoteAnimationTarget runningTaskTarget,
+            @NonNull String reason) {
         ActivityOptions options = ActivityOptions.makeCustomAnimation(mContext, 0, 0);
         Intent intent = new Intent(mGestureState.getHomeIntent());
         if (gestureContractAnimationFactory != null && runningTaskTarget != null) {
             gestureContractAnimationFactory.addGestureContract(intent, runningTaskTarget.taskInfo);
         }
-        startHomeIntentSafely(mContext, intent, options.toBundle());
+        startHomeIntentSafely(mContext, intent, options.toBundle(), reason);
     }
 
     @Override
@@ -185,8 +188,8 @@ public class FallbackSwipeHandler extends
             // the PiP task appearing.
             recentsCallback = () -> {
                 callback.run();
-                startHomeIntent(
-                        null /* gestureContractAnimationFactory */, null /* runningTaskTarget */);
+                startHomeIntent(null /* gestureContractAnimationFactory */,
+                        null /* runningTaskTarget */, "FallbackSwipeHandler-resumeLauncher");
             };
         } else {
             recentsCallback = callback;
@@ -225,7 +228,7 @@ public class FallbackSwipeHandler extends
         public AnimatorPlaybackController createActivityAnimationToHome() {
             // copied from {@link LauncherSwipeHandlerV2.LauncherHomeAnimationFactory}
             long accuracy = 2 * Math.max(mDp.widthPx, mDp.heightPx);
-            return mActivity.getStateManager().createAnimationToNewWorkspace(
+            return mContainer.getStateManager().createAnimationToNewWorkspace(
                     RecentsState.HOME, accuracy, StateAnimationConfig.SKIP_ALL_ANIMATIONS);
         }
     }
@@ -296,7 +299,7 @@ public class FallbackSwipeHandler extends
         @Override
         public AnimatorPlaybackController createActivityAnimationToHome() {
             PendingAnimation pa = new PendingAnimation(mDuration);
-            pa.setFloat(mRecentsAlpha, AnimatedFloat.VALUE, 0, ACCEL);
+            pa.setFloat(mRecentsAlpha, AnimatedFloat.VALUE, 0, ACCELERATE);
             return pa.createPlaybackController();
         }
 
@@ -324,7 +327,7 @@ public class FallbackSwipeHandler extends
         @Override
         public void playAtomicAnimation(float velocity) {
             ObjectAnimator alphaAnim = mHomeAlpha.animateToValue(mHomeAlpha.value, 1);
-            alphaAnim.setDuration(mDuration).setInterpolator(ACCEL);
+            alphaAnim.setDuration(mDuration).setInterpolator(ACCELERATE);
             alphaAnim.start();
 
             if (mRunningOverHome) {
@@ -373,8 +376,8 @@ public class FallbackSwipeHandler extends
                     if (mSpringAnim != null) {
                         mSpringAnim.onTargetPositionChanged();
                     }
-                    mOnFinishCallback = data.getParcelable(EXTRA_ON_FINISH_CALLBACK);
                 }
+                mOnFinishCallback = data.getParcelable(EXTRA_ON_FINISH_CALLBACK);
                 maybeSendEndMessage();
             } catch (Exception e) {
                 // Ignore
@@ -382,7 +385,7 @@ public class FallbackSwipeHandler extends
         }
 
         @Override
-        public void update(RectF currentRect, float progress, float radius) {
+        public void update(RectF currentRect, float progress, float radius, int overlayAlpha) {
             if (mSurfaceControl != null) {
                 currentRect.roundOut(mTempRect);
                 Transaction t = new Transaction();

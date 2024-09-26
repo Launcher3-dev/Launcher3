@@ -23,6 +23,10 @@ import com.android.launcher3.util.SplitConfigurationOptions.SplitBounds;
 import com.android.quickstep.views.TaskView;
 import com.android.systemui.shared.recents.model.Task;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * A {@link Task} container that can contain one or two tasks, depending on if the two tasks
  * are represented as an app-pair in the recents task list.
@@ -36,6 +40,10 @@ public class GroupTask {
     public final SplitBounds mSplitBounds;
     @TaskView.Type
     public final int taskViewType;
+
+    public GroupTask(@NonNull Task task) {
+        this(task, null, null);
+    }
 
     public GroupTask(@NonNull Task t1, @Nullable Task t2, @Nullable SplitBounds splitBounds) {
         this(t1, t2, splitBounds, t2 != null ? TaskView.Type.GROUPED : TaskView.Type.SINGLE);
@@ -58,6 +66,17 @@ public class GroupTask {
     }
 
     /**
+     * Returns a List of all the Tasks in this GroupTask
+     */
+    public List<Task> getTasks() {
+        if (task2 == null) {
+            return Collections.singletonList(task1);
+        } else {
+            return Arrays.asList(task1, task2);
+        }
+    }
+
+    /**
      * Create a copy of this instance
      */
     public GroupTask copy() {
@@ -66,4 +85,10 @@ public class GroupTask {
                 task2 != null ? new Task(task2) : null,
                 mSplitBounds);
     }
+
+    @Override
+    public String toString() {
+        return "type=" + taskViewType + " task1=" + task1 + " task2=" + task2;
+    }
+
 }

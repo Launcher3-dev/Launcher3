@@ -16,17 +16,36 @@
 
 package com.android.quickstep.views;
 
+import static com.android.launcher3.LauncherState.NORMAL;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SPLIT_SELECTION_EXIT_CANCEL_BUTTON;
+import static com.android.settingslib.widget.theme.R.dimen.settingslib_preferred_minimum_touch_target;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.content.Context;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.FloatProperty;
+import android.view.TouchDelegate;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatTextView;
+import androidx.dynamicanimation.animation.DynamicAnimation;
+import androidx.dynamicanimation.animation.SpringAnimation;
+import androidx.dynamicanimation.animation.SpringForce;
 
+import com.android.app.animation.Interpolators;
 import com.android.launcher3.R;
-import com.android.launcher3.statemanager.StatefulActivity;
+import com.android.launcher3.Utilities;
+import com.android.launcher3.anim.PendingAnimation;
+import com.android.launcher3.config.FeatureFlags;
+import com.android.launcher3.statemanager.BaseState;
+import com.android.launcher3.statemanager.StateManager;
+import com.android.launcher3.states.StateAnimationConfig;
+import com.android.quickstep.util.SplitSelectStateController;
 
 /**
  * A rounded rectangular component containing a single TextView.
@@ -35,12 +54,16 @@ import com.android.launcher3.statemanager.StatefulActivity;
  *
  * Appears and disappears concurrently with a FloatingTaskView.
  */
-public class SplitInstructionsView extends FrameLayout {
-    private final StatefulActivity mLauncher;
-    private AppCompatTextView mTextView;
+public class SplitInstructionsView extends LinearLayout {
+    private static final int BOUNCE_DURATION = 250;
+    private static final float BOUNCE_HEIGHT = 20;
+    private static final int DURATION_DEFAULT_SPLIT_DISMISS = 350;
+
+    private final RecentsViewContainer mContainer;
+    public boolean mIsCurrentlyAnimating = false;
 
     public static final FloatProperty<SplitInstructionsView> UNFOLD =
-            new FloatProperty<SplitInstructionsView>("SplitInstructionsUnfold") {
+            new FloatProperty<>("SplitInstructionsUnfold") {
                 @Override
                 public void setValue(SplitInstructionsView splitInstructionsView, float v) {
                     splitInstructionsView.setScaleY(v);
@@ -49,6 +72,19 @@ public class SplitInstructionsView extends FrameLayout {
                 @Override
                 public Float get(SplitInstructionsView splitInstructionsView) {
                     return splitInstructionsView.getScaleY();
+                }
+            };
+
+    public static final FloatProperty<SplitInstructionsView> TRANSLATE_Y =
+            new FloatProperty<>("SplitInstructionsTranslateY") {
+                @Override
+                public void setValue(SplitInstructionsView splitInstructionsView, float v) {
+                    splitInstructionsView.setTranslationY(v);
+                }
+
+                @Override
+                public Float get(SplitInstructionsView splitInstructionsView) {
+                    return splitInstructionsView.getTranslationY();
                 }
             };
 
@@ -62,20 +98,18 @@ public class SplitInstructionsView extends FrameLayout {
 
     public SplitInstructionsView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mLauncher = (StatefulActivity) context;
+        mContainer = RecentsViewContainer.containerFromContext(context);
     }
 
-    static SplitInstructionsView getSplitInstructionsView(StatefulActivity launcher) {
-        ViewGroup dragLayer = launcher.getDragLayer();
+    public static SplitInstructionsView getSplitInstructionsView(RecentsViewContainer container) {
+        ViewGroup dragLayer = container.getDragLayer();
         final SplitInstructionsView splitInstructionsView =
-                (SplitInstructionsView) launcher.getLayoutInflater().inflate(
+                (SplitInstructionsView) container.getLayoutInflater().inflate(
                         R.layout.split_instructions_view,
                         dragLayer,
                         false
                 );
-
-        splitInstructionsView.mTextView = splitInstructionsView.findViewById(
-                R.id.split_instructions_text);
+        splitInstructionsView.init();
 
         // Since textview overlays base view, and we sometimes manipulate the alpha of each
         // simultaneously, force overlapping rendering to false prevents redrawing of pixels,
@@ -92,17 +126,111 @@ public class SplitInstructionsView extends FrameLayout {
         ensureProperRotation();
     }
 
+    private void init() {
+        TextView cancelTextView = findViewById(R.id.split_instructions_text_cancel);
+        TextView instructionTextView = findViewById(R.id.split_instructions_text);
+
+        if (FeatureFlags.enableSplitContextually()) {
+            cancelTextView.setVisibility(VISIBLE);
+            cancelTextView.setOnClickListener((v) -> exitSplitSelection());
+            instructionTextView.setText(R.string.toast_contextual_split_select_app);
+
+            // After layout, expand touch target of cancel button to meet minimum a11y measurements.
+            post(() -> {
+                int minTouchSize = getResources()
+                        .getDimensionPixelSize(settingslib_preferred_minimum_touch_target);
+                Rect r = new Rect();
+                cancelTextView.getHitRect(r);
+
+                if (r.width() < minTouchSize) {
+                    // add 1 to ensure ceiling on int division
+                    int expandAmount = (minTouchSize + 1 - r.width()) / 2;
+                    r.left -= expandAmount;
+                    r.right += expandAmount;
+                }
+                if (r.height() < minTouchSize) {
+                    int expandAmount = (minTouchSize + 1 - r.height()) / 2;
+                    r.top -= expandAmount;
+                    r.bottom += expandAmount;
+                }
+
+                setTouchDelegate(new TouchDelegate(r, cancelTextView));
+            });
+        }
+
+        // Set accessibility title, will be announced by a11y tools.
+        instructionTextView.setAccessibilityPaneTitle(instructionTextView.getText());
+    }
+
+    private void exitSplitSelection() {
+        RecentsView recentsView = mContainer.getOverviewPanel();
+        SplitSelectStateController splitSelectController = recentsView.getSplitSelectController();
+
+        StateManager stateManager = recentsView.getStateManager();
+        BaseState startState = stateManager.getState();
+        long duration = startState.getTransitionDuration(mContainer.asContext(), false);
+        if (duration == 0) {
+            // Case where we're in contextual on workspace (NORMAL), which by default has 0
+            // transition duration
+            duration = DURATION_DEFAULT_SPLIT_DISMISS;
+        }
+        StateAnimationConfig config = new StateAnimationConfig();
+        config.duration = duration;
+        AnimatorSet stateAnim = stateManager.createAtomicAnimation(
+                startState, NORMAL, config);
+        AnimatorSet dismissAnim = splitSelectController.getSplitAnimationController()
+                .createPlaceholderDismissAnim(mContainer,
+                        LAUNCHER_SPLIT_SELECTION_EXIT_CANCEL_BUTTON, duration);
+        stateAnim.play(dismissAnim);
+        stateManager.setCurrentAnimation(stateAnim, NORMAL);
+        stateAnim.start();
+    }
+
     void ensureProperRotation() {
-        ((RecentsView) mLauncher.getOverviewPanel()).getPagedOrientationHandler()
+        ((RecentsView) mContainer.getOverviewPanel()).getPagedOrientationHandler()
                 .setSplitInstructionsParams(
                         this,
-                        mLauncher.getDeviceProfile(),
+                        mContainer.getDeviceProfile(),
                         getMeasuredHeight(),
                         getMeasuredWidth()
                 );
     }
 
-    public AppCompatTextView getTextView() {
-        return mTextView;
+    /**
+     * Draws attention to the split instructions view by bouncing it up and down.
+     */
+    public void goBoing() {
+        if (mIsCurrentlyAnimating) {
+            return;
+        }
+
+        float restingY = getTranslationY();
+        float bounceToY = restingY - Utilities.dpToPx(BOUNCE_HEIGHT);
+        PendingAnimation anim = new PendingAnimation(BOUNCE_DURATION);
+        // Animate the view lifting up to a higher position
+        anim.addFloat(this, TRANSLATE_Y, restingY, bounceToY, Interpolators.STANDARD);
+
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                mIsCurrentlyAnimating = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                // Create a low stiffness, medium bounce spring centering at the rest position
+                SpringForce spring = new SpringForce(restingY)
+                        .setDampingRatio(SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY)
+                        .setStiffness(SpringForce.STIFFNESS_LOW);
+                // Animate the view getting pulled back to rest position by the spring
+                SpringAnimation springAnim = new SpringAnimation(SplitInstructionsView.this,
+                        DynamicAnimation.TRANSLATION_Y).setSpring(spring).setStartValue(bounceToY);
+
+                springAnim.addEndListener((a, b, c, d) -> mIsCurrentlyAnimating = false);
+                springAnim.start();
+            }
+        });
+
+        anim.buildAnim().start();
     }
 }

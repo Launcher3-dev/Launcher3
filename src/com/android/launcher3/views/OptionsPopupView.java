@@ -17,8 +17,8 @@ package com.android.launcher3.views;
 
 import static androidx.core.content.ContextCompat.getColorStateList;
 
+import static com.android.launcher3.BuildConfig.WIDGETS_ENABLED;
 import static com.android.launcher3.LauncherState.EDIT_MODE;
-import static com.android.launcher3.config.FeatureFlags.ENABLE_MATERIAL_U_POPUP;
 import static com.android.launcher3.config.FeatureFlags.MULTI_SELECT_EDIT_MODE;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.IGNORE;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS;
@@ -26,7 +26,6 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -49,13 +48,11 @@ import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.logging.StatsLogManager.EventEnum;
-import com.android.launcher3.model.WidgetsModel;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.popup.ArrowPopup;
 import com.android.launcher3.shortcuts.DeepShortcutView;
 import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
-import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.widget.picker.WidgetsFullSheet;
 
 import java.util.ArrayList;
@@ -63,8 +60,10 @@ import java.util.List;
 
 /**
  * Popup shown on long pressing an empty space in launcher
+ *
+ * @param <T> The context showing this popup.
  */
-public class OptionsPopupView extends ArrowPopup<Launcher>
+public class OptionsPopupView<T extends Context & ActivityContext> extends ArrowPopup<T>
         implements OnClickListener, OnLongClickListener {
 
     // An intent extra to indicate the horizontal scroll of the wallpaper.
@@ -148,29 +147,42 @@ public class OptionsPopupView extends ArrowPopup<Launcher>
 
     @Override
     public void assignMarginsAndBackgrounds(ViewGroup viewGroup) {
-        if (ENABLE_MATERIAL_U_POPUP.get()) {
-            assignMarginsAndBackgrounds(viewGroup,
-                    getColorStateList(getContext(), mColorIds[0]).getDefaultColor());
-        } else {
-            assignMarginsAndBackgrounds(viewGroup, Color.TRANSPARENT);
+        assignMarginsAndBackgrounds(viewGroup,
+                getColorStateList(getContext(), mColorIds[0]).getDefaultColor());
+        // last shortcut doesn't need bottom margin
+        final int count = viewGroup.getChildCount() - 1;
+        for (int i = 0; i < count; i++) {
+            // These are shortcuts and not shortcut containers, but they still need bottom margin
+            MarginLayoutParams mlp = (MarginLayoutParams) viewGroup.getChildAt(i).getLayoutParams();
+            mlp.bottomMargin = mChildContainerMargin;
         }
     }
 
-    public static OptionsPopupView show(ActivityContext launcher, RectF targetRect,
-            List<OptionItem> items, boolean shouldAddArrow) {
-        return show(launcher, targetRect, items, shouldAddArrow, 0 /* width */);
+    public static <T extends Context & ActivityContext> OptionsPopupView<T> show(
+            ActivityContext activityContext,
+            RectF targetRect,
+            List<OptionItem> items,
+            boolean shouldAddArrow) {
+        return show(activityContext, targetRect, items, shouldAddArrow, 0 /* width */);
     }
 
-    public static OptionsPopupView show(ActivityContext launcher, RectF targetRect,
-            List<OptionItem> items, boolean shouldAddArrow, int width) {
-        OptionsPopupView popup = (OptionsPopupView) launcher.getLayoutInflater()
-                .inflate(R.layout.longpress_options_menu, launcher.getDragLayer(), false);
+    @Nullable
+    private static <T extends Context & ActivityContext> OptionsPopupView<T> show(
+            @Nullable ActivityContext activityContext,
+            RectF targetRect,
+            List<OptionItem> items,
+            boolean shouldAddArrow,
+            int width) {
+        if (activityContext == null) {
+            return null;
+        }
+        OptionsPopupView<T> popup = (OptionsPopupView<T>) activityContext.getLayoutInflater()
+                .inflate(R.layout.longpress_options_menu, activityContext.getDragLayer(), false);
         popup.mTargetRect = targetRect;
         popup.setShouldAddArrow(shouldAddArrow);
 
         for (OptionItem item : items) {
-            DeepShortcutView view =
-                    (DeepShortcutView) popup.inflateAndAdd(R.layout.system_shortcut, popup);
+            DeepShortcutView view = popup.inflateAndAdd(R.layout.system_shortcut, popup);
             if (width > 0) {
                 view.getLayoutParams().width = width;
             }
@@ -190,17 +202,12 @@ public class OptionsPopupView extends ArrowPopup<Launcher>
      */
     public static ArrayList<OptionItem> getOptions(Launcher launcher) {
         ArrayList<OptionItem> options = new ArrayList<>();
-        boolean styleWallpaperExists = styleWallpapersExists(launcher);
-        int resString = styleWallpaperExists
-                ? R.string.styles_wallpaper_button_text : R.string.wallpaper_button_text;
-        int resDrawable = styleWallpaperExists
-                ? R.drawable.ic_palette : R.drawable.ic_wallpaper;
         options.add(new OptionItem(launcher,
-                resString,
-                resDrawable,
+                R.string.styles_wallpaper_button_text,
+                R.drawable.ic_palette,
                 IGNORE,
                 OptionsPopupView::startWallpaperPicker));
-        if (!WidgetsModel.GO_DISABLE_WIDGETS) {
+        if (WIDGETS_ENABLED) {
             options.add(new OptionItem(launcher,
                     R.string.widget_button_text,
                     R.drawable.ic_widget,
@@ -274,12 +281,8 @@ public class OptionsPopupView extends ArrowPopup<Launcher>
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 .putExtra(EXTRA_WALLPAPER_OFFSET,
                         launcher.getWorkspace().getWallpaperOffsetForCenterPage())
-                .putExtra(EXTRA_WALLPAPER_LAUNCH_SOURCE, "app_launched_launcher");
-        if (!styleWallpapersExists(launcher)) {
-            intent.putExtra(EXTRA_WALLPAPER_FLAVOR, "wallpaper_only");
-        } else {
-            intent.putExtra(EXTRA_WALLPAPER_FLAVOR, "focus_wallpaper");
-        }
+                .putExtra(EXTRA_WALLPAPER_LAUNCH_SOURCE, "app_launched_launcher")
+                .putExtra(EXTRA_WALLPAPER_FLAVOR, "focus_wallpaper");
         String pickerPackage = launcher.getString(R.string.wallpaper_picker_package);
         if (!TextUtils.isEmpty(pickerPackage)) {
             intent.setPackage(pickerPackage);
@@ -290,7 +293,6 @@ public class OptionsPopupView extends ArrowPopup<Launcher>
     static WorkspaceItemInfo placeholderInfo(Intent intent) {
         WorkspaceItemInfo placeholderInfo = new WorkspaceItemInfo();
         placeholderInfo.intent = intent;
-        placeholderInfo.itemType = LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT;
         placeholderInfo.container = LauncherSettings.Favorites.CONTAINER_SETTINGS;
         return placeholderInfo;
     }
@@ -322,10 +324,5 @@ public class OptionsPopupView extends ArrowPopup<Launcher>
             this.eventId = eventId;
             this.clickListener = clickListener;
         }
-    }
-
-    private static boolean styleWallpapersExists(Context context) {
-        return context.getPackageManager().resolveActivity(
-                PackageManagerHelper.getStyleWallpapersIntent(context), 0) != null;
     }
 }

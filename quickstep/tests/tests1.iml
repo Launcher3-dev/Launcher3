@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="quickstep" />
+    <orderEntry type="module" module-name="Launcher3-refs_heads_android15-s1-release" />
+    <orderEntry type="module" module-name="multivalentTestsForDevice1" />
+    <orderEntry type="module" module-name="go" />
+    <orderEntry type="module" module-name="multivalentTests" />
+    <orderEntry type="module" module-name="tests" />
+    <orderEntry type="module" module-name="quickstep" />
+    <orderEntry type="module" module-name="multivalentTestsForDevice1" />
+    <orderEntry type="module" module-name="go" />
+    <orderEntry type="module" module-name="tests" />
+    <orderEntry type="module" module-name="multivalentTests" />
+    <orderEntry type="module" module-name="Launcher3-refs_heads_android15-s1-release" />
+    <orderEntry type="module" module-name="quickstep" />
+    <orderEntry type="module" module-name="go" />
+    <orderEntry type="module" module-name="multivalentTests" />
+    <orderEntry type="module" module-name="multivalentTestsForDevice1" />
+    <orderEntry type="module" module-name="Launcher3-refs_heads_android15-s1-release" />
+    <orderEntry type="module" module-name="tests" />
+  </component>
+</module>

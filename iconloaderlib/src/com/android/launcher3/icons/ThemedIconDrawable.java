@@ -15,16 +15,12 @@
  */
 package com.android.launcher3.icons;
 
-import static android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-import static android.content.res.Configuration.UI_MODE_NIGHT_YES;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BlendMode;
 import android.graphics.BlendModeColorFilter;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -91,13 +87,6 @@ public class ThemedIconDrawable extends FastBitmapDrawable {
     @Override
     public FastBitmapConstantState newConstantState() {
         return new ThemedConstantState(bitmapInfo, colorBg, colorFg);
-    }
-
-    public void changeBackgroundColor(int colorBg) {
-        if (mIsDisabled) return;
-
-        mBgPaint.setColorFilter(new BlendModeColorFilter(colorBg, BlendMode.SRC_IN));
-        invalidateSelf();
     }
 
     static class ThemedConstantState extends FastBitmapConstantState {

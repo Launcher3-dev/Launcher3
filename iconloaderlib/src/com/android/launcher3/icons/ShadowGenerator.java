@@ -109,7 +109,8 @@ public class ShadowGenerator {
                 scale = (HALF_DISTANCE - BLUR_FACTOR) / (HALF_DISTANCE - minSide);
             }
 
-            float bottomSpace = BLUR_FACTOR + KEY_SHADOW_DISTANCE;
+            // We are ignoring KEY_SHADOW_DISTANCE because regular icons ignore this at the moment b/298203449
+            float bottomSpace = BLUR_FACTOR;
             if (bounds.bottom < bottomSpace) {
                 scale = Math.min(scale,
                         (HALF_DISTANCE - bottomSpace) / (HALF_DISTANCE - bounds.bottom));

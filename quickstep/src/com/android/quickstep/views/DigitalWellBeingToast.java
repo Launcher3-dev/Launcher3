@@ -19,11 +19,11 @@ package com.android.quickstep.views;
 import static android.provider.Settings.ACTION_APP_USAGE_SETTINGS;
 
 import static com.android.launcher3.Utilities.prefixTextWithIcon;
-import static com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR;
+import static com.android.launcher3.util.Executors.ORDERED_BG_EXECUTOR;
 
-import android.annotation.TargetApi;
 import android.app.ActivityOptions;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.content.pm.LauncherApps.AppUsageLimit;
@@ -33,13 +33,13 @@ import android.icu.text.MeasureFormat;
 import android.icu.text.MeasureFormat.FormatWidth;
 import android.icu.util.Measure;
 import android.icu.util.MeasureUnit;
-import android.os.Build;
 import android.os.UserHandle;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -47,13 +47,12 @@ import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
-import com.android.launcher3.BaseActivity;
-import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
-import com.android.launcher3.touch.PagedOrientationHandler;
 import com.android.launcher3.util.SplitConfigurationOptions.SplitBounds;
+import com.android.quickstep.TaskUtils;
+import com.android.quickstep.orientation.RecentsPagedOrientationHandler;
 import com.android.systemui.shared.recents.model.Task;
 
 import java.lang.annotation.Retention;
@@ -61,7 +60,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.time.Duration;
 import java.util.Locale;
 
-@TargetApi(Build.VERSION_CODES.Q)
 public final class DigitalWellBeingToast {
 
     private static final float THRESHOLD_LEFT_ICON_ONLY = 0.4f;
@@ -73,27 +71,30 @@ public final class DigitalWellBeingToast {
     private static final int SPLIT_GRID_BANNER_LARGE = 1;
     /** Used for grid task view, only showing icon */
     private static final int SPLIT_GRID_BANNER_SMALL = 2;
+
     @IntDef(value = {
             SPLIT_BANNER_FULLSCREEN,
             SPLIT_GRID_BANNER_LARGE,
             SPLIT_GRID_BANNER_SMALL,
     })
     @Retention(RetentionPolicy.SOURCE)
-    @interface SPLIT_BANNER_CONFIG{}
+    @interface SplitBannerConfig {
+    }
 
     static final Intent OPEN_APP_USAGE_SETTINGS_TEMPLATE = new Intent(ACTION_APP_USAGE_SETTINGS);
     static final int MINUTE_MS = 60000;
 
-    private static final String TAG = DigitalWellBeingToast.class.getSimpleName();
+    private static final String TAG = "DigitalWellBeingToast";
 
-    private final BaseDraggingActivity mActivity;
+    private final RecentsViewContainer mContainer;
     private final TaskView mTaskView;
     private final LauncherApps mLauncherApps;
+
+    private final int mBannerHeight;
 
     private Task mTask;
     private boolean mHasLimit;
 
-    private long mAppUsageLimitTimeMs;
     private long mAppRemainingTimeMs;
     @Nullable
     private View mBanner;
@@ -101,31 +102,33 @@ public final class DigitalWellBeingToast {
     private float mBannerOffsetPercentage;
     @Nullable
     private SplitBounds mSplitBounds;
-    private int mSplitBannerConfig = SPLIT_BANNER_FULLSCREEN;
     private float mSplitOffsetTranslationY;
     private float mSplitOffsetTranslationX;
 
-    public DigitalWellBeingToast(BaseDraggingActivity activity, TaskView taskView) {
-        mActivity = activity;
+    private boolean mIsDestroyed = false;
+
+    public DigitalWellBeingToast(RecentsViewContainer container, TaskView taskView) {
+        mContainer = container;
         mTaskView = taskView;
-        mLauncherApps = activity.getSystemService(LauncherApps.class);
+        mLauncherApps = container.asContext().getSystemService(LauncherApps.class);
+        mBannerHeight = container.asContext().getResources().getDimensionPixelSize(
+                R.dimen.digital_wellbeing_toast_height);
     }
 
     private void setNoLimit() {
         mHasLimit = false;
         mTaskView.setContentDescription(mTask.titleDescription);
         replaceBanner(null);
-        mAppUsageLimitTimeMs = -1;
         mAppRemainingTimeMs = -1;
     }
 
     private void setLimit(long appUsageLimitTimeMs, long appRemainingTimeMs) {
-        mAppUsageLimitTimeMs = appUsageLimitTimeMs;
         mAppRemainingTimeMs = appRemainingTimeMs;
         mHasLimit = true;
-        TextView toast = mActivity.getViewCache().getView(R.layout.digital_wellbeing_toast,
-                mActivity, mTaskView);
-        toast.setText(prefixTextWithIcon(mActivity, R.drawable.ic_hourglass_top, getText()));
+        TextView toast = mContainer.getViewCache().getView(R.layout.digital_wellbeing_toast,
+                mContainer.asContext(), mTaskView);
+        toast.setText(prefixTextWithIcon(mContainer.asContext(), R.drawable.ic_hourglass_top,
+                getText()));
         toast.setOnClickListener(this::openAppUsageSettings);
         replaceBanner(toast);
 
@@ -142,19 +145,28 @@ public final class DigitalWellBeingToast {
     }
 
     public void initialize(Task task) {
-        mAppUsageLimitTimeMs = mAppRemainingTimeMs = -1;
+        if (mIsDestroyed) {
+            throw new IllegalStateException("Cannot re-initialize a destroyed toast");
+        }
         mTask = task;
-        THREAD_POOL_EXECUTOR.execute(() -> {
-            final AppUsageLimit usageLimit = mLauncherApps.getAppUsageLimit(
-                    mTask.getTopComponent().getPackageName(),
-                    UserHandle.of(mTask.key.userId));
-
+        ORDERED_BG_EXECUTOR.execute(() -> {
+            AppUsageLimit usageLimit = null;
+            try {
+                usageLimit = mLauncherApps.getAppUsageLimit(
+                        mTask.getTopComponent().getPackageName(),
+                        UserHandle.of(mTask.key.userId));
+            } catch (Exception e) {
+                Log.e(TAG, "Error initializing digital well being toast", e);
+            }
             final long appUsageLimitTimeMs =
                     usageLimit != null ? usageLimit.getTotalUsageLimit() : -1;
             final long appRemainingTimeMs =
                     usageLimit != null ? usageLimit.getUsageRemaining() : -1;
 
             mTaskView.post(() -> {
+                if (mIsDestroyed) {
+                    return;
+                }
                 if (appUsageLimitTimeMs < 0 || appRemainingTimeMs < 0) {
                     setNoLimit();
                 } else {
@@ -164,76 +176,78 @@ public final class DigitalWellBeingToast {
         });
     }
 
-    public void setSplitConfiguration(SplitBounds splitBounds) {
+    /**
+     * Mark the DWB toast as destroyed and remove banner from TaskView.
+     */
+    public void destroy() {
+        mIsDestroyed = true;
+        mTaskView.post(() -> replaceBanner(null));
+    }
+
+    public void setSplitBounds(@Nullable SplitBounds splitBounds) {
         mSplitBounds = splitBounds;
+    }
+
+    private @SplitBannerConfig int getSplitBannerConfig() {
         if (mSplitBounds == null
-                || !mActivity.getDeviceProfile().isTablet
+                || !mContainer.getDeviceProfile().isTablet
                 || mTaskView.isFocusedTask()) {
-            mSplitBannerConfig = SPLIT_BANNER_FULLSCREEN;
-            return;
+            return SPLIT_BANNER_FULLSCREEN;
         }
 
         // For portrait grid only height of task changes, not width. So we keep the text the same
-        if (!mActivity.getDeviceProfile().isLandscape) {
-            mSplitBannerConfig = SPLIT_GRID_BANNER_LARGE;
-            return;
+        if (!mContainer.getDeviceProfile().isLeftRightSplit) {
+            return SPLIT_GRID_BANNER_LARGE;
         }
 
         // For landscape grid, for 30% width we only show icon, otherwise show icon and time
         if (mTask.key.id == mSplitBounds.leftTopTaskId) {
-            mSplitBannerConfig = mSplitBounds.leftTaskPercent < THRESHOLD_LEFT_ICON_ONLY ?
-                    SPLIT_GRID_BANNER_SMALL : SPLIT_GRID_BANNER_LARGE;
+            return mSplitBounds.leftTaskPercent < THRESHOLD_LEFT_ICON_ONLY
+                    ? SPLIT_GRID_BANNER_SMALL : SPLIT_GRID_BANNER_LARGE;
         } else {
-            mSplitBannerConfig = mSplitBounds.leftTaskPercent > THRESHOLD_RIGHT_ICON_ONLY ?
-                    SPLIT_GRID_BANNER_SMALL : SPLIT_GRID_BANNER_LARGE;
+            return mSplitBounds.leftTaskPercent > THRESHOLD_RIGHT_ICON_ONLY
+                    ? SPLIT_GRID_BANNER_SMALL : SPLIT_GRID_BANNER_LARGE;
         }
     }
 
     private String getReadableDuration(
             Duration duration,
-            FormatWidth formatWidthHourAndMinute,
-            @StringRes int durationLessThanOneMinuteStringId,
-            boolean forceFormatWidth) {
+            @StringRes int durationLessThanOneMinuteStringId) {
         int hours = Math.toIntExact(duration.toHours());
         int minutes = Math.toIntExact(duration.minusHours(hours).toMinutes());
 
-        // Apply formatWidthHourAndMinute if both the hour part and the minute part are non-zero.
+        // Apply FormatWidth.WIDE if both the hour part and the minute part are non-zero.
         if (hours > 0 && minutes > 0) {
-            return MeasureFormat.getInstance(Locale.getDefault(), formatWidthHourAndMinute)
+            return MeasureFormat.getInstance(Locale.getDefault(), FormatWidth.NARROW)
                     .formatMeasures(
                             new Measure(hours, MeasureUnit.HOUR),
                             new Measure(minutes, MeasureUnit.MINUTE));
         }
 
-        // Apply formatWidthHourOrMinute if only the hour part is non-zero (unless forced).
+        // Apply FormatWidth.WIDE if only the hour part is non-zero (unless forced).
         if (hours > 0) {
-            return MeasureFormat.getInstance(
-                    Locale.getDefault(),
-                    forceFormatWidth ? formatWidthHourAndMinute : FormatWidth.WIDE)
-                    .formatMeasures(new Measure(hours, MeasureUnit.HOUR));
+            return MeasureFormat.getInstance(Locale.getDefault(), FormatWidth.WIDE).formatMeasures(
+                    new Measure(hours, MeasureUnit.HOUR));
         }
 
-        // Apply formatWidthHourOrMinute if only the minute part is non-zero (unless forced).
+        // Apply FormatWidth.WIDE if only the minute part is non-zero (unless forced).
         if (minutes > 0) {
-            return MeasureFormat.getInstance(
-                    Locale.getDefault()
-                    , forceFormatWidth ? formatWidthHourAndMinute : FormatWidth.WIDE)
-                    .formatMeasures(new Measure(minutes, MeasureUnit.MINUTE));
+            return MeasureFormat.getInstance(Locale.getDefault(), FormatWidth.WIDE).formatMeasures(
+                    new Measure(minutes, MeasureUnit.MINUTE));
         }
 
         // Use a specific string for usage less than one minute but non-zero.
         if (duration.compareTo(Duration.ZERO) > 0) {
-            return mActivity.getString(durationLessThanOneMinuteStringId);
+            return mContainer.asContext().getString(durationLessThanOneMinuteStringId);
         }
 
         // Otherwise, return 0-minute string.
-        return MeasureFormat.getInstance(
-                Locale.getDefault(), forceFormatWidth ? formatWidthHourAndMinute : FormatWidth.WIDE)
-                .formatMeasures(new Measure(0, MeasureUnit.MINUTE));
+        return MeasureFormat.getInstance(Locale.getDefault(), FormatWidth.WIDE).formatMeasures(
+                new Measure(0, MeasureUnit.MINUTE));
     }
 
     /**
-     * Returns text to show for the banner depending on {@link #mSplitBannerConfig}
+     * Returns text to show for the banner depending on {@link #getSplitBannerConfig()}
      * If {@param forContentDesc} is {@code true}, this will always return the full
      * string corresponding to {@link #SPLIT_BANNER_FULLSCREEN}
      */
@@ -243,16 +257,16 @@ public final class DigitalWellBeingToast {
                         (remainingTime + MINUTE_MS - 1) / MINUTE_MS * MINUTE_MS :
                         remainingTime);
         String readableDuration = getReadableDuration(duration,
-                FormatWidth.NARROW,
-                R.string.shorter_duration_less_than_one_minute,
-                false /* forceFormatWidth */);
-        if (forContentDesc || mSplitBannerConfig == SPLIT_BANNER_FULLSCREEN) {
-            return mActivity.getString(
+                R.string.shorter_duration_less_than_one_minute
+                /* forceFormatWidth */);
+        @SplitBannerConfig int splitBannerConfig = getSplitBannerConfig();
+        if (forContentDesc || splitBannerConfig == SPLIT_BANNER_FULLSCREEN) {
+            return mContainer.asContext().getString(
                     R.string.time_left_for_app,
                     readableDuration);
         }
 
-        if (mSplitBannerConfig == SPLIT_GRID_BANNER_SMALL) {
+        if (splitBannerConfig == SPLIT_GRID_BANNER_SMALL) {
             // show no text
             return "";
         } else { // SPLIT_GRID_BANNER_LARGE
@@ -267,11 +281,12 @@ public final class DigitalWellBeingToast {
                         mTask.getTopComponent().getPackageName()).addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         try {
-            final BaseActivity activity = BaseActivity.fromContext(view.getContext());
+            final RecentsViewContainer container =
+                    RecentsViewContainer.containerFromContext(view.getContext());
             final ActivityOptions options = ActivityOptions.makeScaleUpAnimation(
                     view, 0, 0,
                     view.getWidth(), view.getHeight());
-            activity.startActivity(intent, options.toBundle());
+            container.asContext().startActivity(intent, options.toBundle());
 
             // TODO: add WW logging on the app usage settings click.
         } catch (ActivityNotFoundException e) {
@@ -283,7 +298,7 @@ public final class DigitalWellBeingToast {
     private String getContentDescriptionForTask(
             Task task, long appUsageLimitTimeMs, long appRemainingTimeMs) {
         return appUsageLimitTimeMs >= 0 && appRemainingTimeMs >= 0 ?
-                mActivity.getString(
+                mContainer.asContext().getString(
                         R.string.task_contents_description_with_remaining_time,
                         task.titleDescription,
                         getText(appRemainingTimeMs, true /* forContentDesc */)) :
@@ -300,13 +315,13 @@ public final class DigitalWellBeingToast {
             mBanner.setOutlineProvider(mOldBannerOutlineProvider);
             mTaskView.removeView(mBanner);
             mBanner.setOnClickListener(null);
-            mActivity.getViewCache().recycleView(R.layout.digital_wellbeing_toast, mBanner);
+            mContainer.getViewCache().recycleView(R.layout.digital_wellbeing_toast, mBanner);
         }
     }
 
     private void setBanner(@Nullable View view) {
         mBanner = view;
-        if (view != null && mTaskView.getRecentsView() != null) {
+        if (mBanner != null && mTaskView.getRecentsView() != null) {
             setupAndAddBanner();
             setBannerOutline();
         }
@@ -315,14 +330,14 @@ public final class DigitalWellBeingToast {
     private void setupAndAddBanner() {
         FrameLayout.LayoutParams layoutParams =
                 (FrameLayout.LayoutParams) mBanner.getLayoutParams();
-        DeviceProfile deviceProfile = mActivity.getDeviceProfile();
+        DeviceProfile deviceProfile = mContainer.getDeviceProfile();
         layoutParams.bottomMargin = ((ViewGroup.MarginLayoutParams)
-                mTaskView.getThumbnail().getLayoutParams()).bottomMargin;
-        PagedOrientationHandler orientationHandler = mTaskView.getPagedOrientationHandler();
+                mTaskView.getFirstThumbnailViewDeprecated().getLayoutParams()).bottomMargin;
+        RecentsPagedOrientationHandler orientationHandler = mTaskView.getPagedOrientationHandler();
         Pair<Float, Float> translations = orientationHandler
                 .getDwbLayoutTranslations(mTaskView.getMeasuredWidth(),
                         mTaskView.getMeasuredHeight(), mSplitBounds, deviceProfile,
-                        mTaskView.getThumbnails(), mTask.key.id, mBanner);
+                        mTaskView.getThumbnailViews(), mTask.key.id, mBanner);
         mSplitOffsetTranslationX = translations.first;
         mSplitOffsetTranslationY = translations.second;
         updateTranslationY();
@@ -348,10 +363,12 @@ public final class DigitalWellBeingToast {
     }
 
     void updateBannerOffset(float offsetPercentage) {
-        if (mBanner != null && mBannerOffsetPercentage != offsetPercentage) {
+        if (mBannerOffsetPercentage != offsetPercentage) {
             mBannerOffsetPercentage = offsetPercentage;
-            updateTranslationY();
-            mBanner.invalidateOutline();
+            if (mBanner != null) {
+                updateTranslationY();
+                mBanner.invalidateOutline();
+            }
         }
     }
 
@@ -361,7 +378,7 @@ public final class DigitalWellBeingToast {
         }
 
         mBanner.setTranslationY(
-                (mBannerOffsetPercentage * mBanner.getHeight()) + mSplitOffsetTranslationY);
+                (mBannerOffsetPercentage * mBannerHeight) + mSplitOffsetTranslationY);
     }
 
     private void updateTranslationX() {
@@ -391,5 +408,37 @@ public final class DigitalWellBeingToast {
         }
 
         mBanner.setVisibility(visibility);
+    }
+
+    private int getAccessibilityActionId() {
+        return (mSplitBounds != null
+                && mSplitBounds.rightBottomTaskId == mTask.key.id)
+                ? R.id.action_digital_wellbeing_bottom_right
+                : R.id.action_digital_wellbeing_top_left;
+    }
+
+    @Nullable
+    public AccessibilityNodeInfo.AccessibilityAction getDWBAccessibilityAction() {
+        if (!hasLimit()) {
+            return null;
+        }
+
+        Context context = mContainer.asContext();
+        String label =
+                (mTaskView.containsMultipleTasks())
+                        ? context.getString(
+                        R.string.split_app_usage_settings,
+                        TaskUtils.getTitle(context, mTask)
+                ) : context.getString(R.string.accessibility_app_usage_settings);
+        return new AccessibilityNodeInfo.AccessibilityAction(getAccessibilityActionId(), label);
+    }
+
+    public boolean handleAccessibilityAction(int action) {
+        if (getAccessibilityActionId() == action) {
+            openAppUsageSettings(mTaskView);
+            return true;
+        } else {
+            return false;
+        }
     }
 }

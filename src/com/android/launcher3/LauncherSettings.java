@@ -16,13 +16,15 @@
 
 package com.android.launcher3;
 
-import android.content.ContentResolver;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
-import android.os.Bundle;
 import android.provider.BaseColumns;
 
+import androidx.annotation.NonNull;
+
 import com.android.launcher3.model.data.ItemInfo;
+
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Settings related utilities.
@@ -89,7 +91,9 @@ public class LauncherSettings {
 
         /**
          * The gesture is an application created shortcut
+         * @deprecated This is no longer supported. Use {@link #ITEM_TYPE_DEEP_SHORTCUT} instead
          */
+        @Deprecated
         public static final int ITEM_TYPE_SHORTCUT = 1;
 
         /**
@@ -135,6 +139,11 @@ public class LauncherSettings {
         public static final int ITEM_TYPE_SEARCH_ACTION = 9;
 
         /**
+         * Private space install app button.
+         */
+        public static final int ITEM_TYPE_PRIVATE_SPACE_INSTALL_APP_BUTTON = 11;
+
+        /**
          * The custom icon bitmap.
          * <P>Type: BLOB</P>
          */
@@ -151,24 +160,6 @@ public class LauncherSettings {
          * Temporary table used specifically for multi-db grid migrations
          */
         public static final String TMP_TABLE = "favorites_tmp";
-
-        /**
-         * The content:// style URL for "favorites" table
-         */
-        public static final Uri CONTENT_URI = Uri.parse("content://"
-                + LauncherProvider.AUTHORITY + "/" + TABLE_NAME);
-
-        /**
-         * The content:// style URL for a given row, identified by its id.
-         *
-         * @param id The row id.
-         *
-         * @return The unique content URL for the specified row.
-         */
-        public static Uri getContentUri(int id) {
-            return Uri.parse("content://" + LauncherProvider.AUTHORITY
-                    + "/" + TABLE_NAME + "/" + id);
-        }
 
         /**
          * The container holding the favorite
@@ -192,6 +183,7 @@ public class LauncherSettings {
         public static final int CONTAINER_SHORTCUTS = -107;
         public static final int CONTAINER_SETTINGS = -108;
         public static final int CONTAINER_TASKSWITCHER = -109;
+        public static final int CONTAINER_PRIVATESPACE = -110;
 
         // Represents any of the extended containers implemented in non-AOSP variants.
         public static final int EXTENDED_CONTAINERS = -200;
@@ -213,7 +205,6 @@ public class LauncherSettings {
         public static final String itemTypeToString(int type) {
             switch(type) {
                 case ITEM_TYPE_APPLICATION: return "APP";
-                case ITEM_TYPE_SHORTCUT: return "SHORTCUT";
                 case ITEM_TYPE_FOLDER: return "FOLDER";
                 case ITEM_TYPE_APPWIDGET: return "WIDGET";
                 case ITEM_TYPE_CUSTOM_APPWIDGET: return "CUSTOMWIDGET";
@@ -221,6 +212,8 @@ public class LauncherSettings {
                 case ITEM_TYPE_TASK: return "TASK";
                 case ITEM_TYPE_QSB: return "QSB";
                 case ITEM_TYPE_APP_PAIR: return "APP_PAIR";
+                case ITEM_TYPE_PRIVATE_SPACE_INSTALL_APP_BUTTON:
+                    return "PRIVATE_SPACE_INSTALL_APP_BUTTON";
                 default: return String.valueOf(type);
             }
         }
@@ -309,28 +302,51 @@ public class LauncherSettings {
 
         public static void addTableToDb(SQLiteDatabase db, long myProfileId, boolean optional,
                 String tableName) {
-            String ifNotExists = optional ? " IF NOT EXISTS " : "";
-            db.execSQL("CREATE TABLE " + ifNotExists + tableName + " (" +
-                    "_id INTEGER PRIMARY KEY," +
-                    "title TEXT," +
-                    "intent TEXT," +
-                    "container INTEGER," +
-                    "screen INTEGER," +
-                    "cellX INTEGER," +
-                    "cellY INTEGER," +
-                    "spanX INTEGER," +
-                    "spanY INTEGER," +
-                    "itemType INTEGER," +
-                    "appWidgetId INTEGER NOT NULL DEFAULT -1," +
-                    "icon BLOB," +
-                    "appWidgetProvider TEXT," +
-                    "modified INTEGER NOT NULL DEFAULT 0," +
-                    "restored INTEGER NOT NULL DEFAULT 0," +
-                    "profileId INTEGER DEFAULT " + myProfileId + "," +
-                    "rank INTEGER NOT NULL DEFAULT 0," +
-                    "options INTEGER NOT NULL DEFAULT 0," +
-                    APPWIDGET_SOURCE + " INTEGER NOT NULL DEFAULT " + CONTAINER_UNKNOWN +
-                    ");");
+            db.execSQL("CREATE TABLE " + (optional ? " IF NOT EXISTS " : "") + tableName + " ("
+                    + getJoinedColumnsToTypes(myProfileId) + ");");
+        }
+
+        // LinkedHashMap maintains Order of Insertion
+        @NonNull
+        private static LinkedHashMap<String, String> getColumnsToTypes(long profileId) {
+            final LinkedHashMap<String, String> columnsToTypes = new LinkedHashMap<>();
+            columnsToTypes.put(_ID, "INTEGER PRIMARY KEY");
+            columnsToTypes.put(TITLE, "TEXT");
+            columnsToTypes.put(INTENT, "TEXT");
+            columnsToTypes.put(CONTAINER, "INTEGER");
+            columnsToTypes.put(SCREEN, "INTEGER");
+            columnsToTypes.put(CELLX, "INTEGER");
+            columnsToTypes.put(CELLY, "INTEGER");
+            columnsToTypes.put(SPANX, "INTEGER");
+            columnsToTypes.put(SPANY, "INTEGER");
+            columnsToTypes.put(ITEM_TYPE, "INTEGER");
+            columnsToTypes.put(APPWIDGET_ID, "INTEGER NOT NULL DEFAULT -1");
+            columnsToTypes.put(ICON, "BLOB");
+            columnsToTypes.put(APPWIDGET_PROVIDER, "TEXT");
+            columnsToTypes.put(MODIFIED, "INTEGER NOT NULL DEFAULT 0");
+            columnsToTypes.put(RESTORED, "INTEGER NOT NULL DEFAULT 0");
+            columnsToTypes.put(PROFILE_ID, "INTEGER DEFAULT " + profileId);
+            columnsToTypes.put(RANK, "INTEGER NOT NULL DEFAULT 0");
+            columnsToTypes.put(OPTIONS, "INTEGER NOT NULL DEFAULT 0");
+            columnsToTypes.put(APPWIDGET_SOURCE, "INTEGER NOT NULL DEFAULT -1");
+            return columnsToTypes;
+        }
+
+        private static String getJoinedColumnsToTypes(long profileId) {
+            return getColumnsToTypes(profileId)
+                    .entrySet()
+                    .stream()
+                    .map(it -> it.getKey() + " " + it.getValue())
+                    .collect(Collectors.joining(", "));
+        }
+
+        /**
+         * Returns an ordered list of columns in the Favorites table as one string, ready to use in
+         * an SQL statement.
+         */
+        @NonNull
+        public static String getColumns(long profileId) {
+            return String.join(", ", getColumnsToTypes(profileId).keySet());
         }
     }
 
@@ -338,42 +354,8 @@ public class LauncherSettings {
      * Launcher settings
      */
     public static final class Settings {
-
-        public static final Uri CONTENT_URI = Uri.parse("content://" +
-                LauncherProvider.AUTHORITY + "/settings");
-
-        public static final String METHOD_CLEAR_EMPTY_DB_FLAG = "clear_empty_db_flag";
-
-        public static final String METHOD_DELETE_EMPTY_FOLDERS = "delete_empty_folders";
-
-        public static final String METHOD_NEW_ITEM_ID = "generate_new_item_id";
-        public static final String METHOD_NEW_SCREEN_ID = "generate_new_screen_id";
-
-        public static final String METHOD_CREATE_EMPTY_DB = "create_empty_db";
-
-        public static final String METHOD_LOAD_DEFAULT_FAVORITES = "load_default_favorites";
-
-        public static final String METHOD_REMOVE_GHOST_WIDGETS = "remove_ghost_widgets";
-
-        public static final String METHOD_NEW_TRANSACTION = "new_db_transaction";
-
-        public static final String METHOD_REFRESH_HOTSEAT_RESTORE_TABLE = "restore_hotseat_table";
-
-        public static final String EXTRA_VALUE = "value";
-
-        public static final String EXTRA_DB_NAME = "db_name";
-
         public static final String LAYOUT_DIGEST_KEY = "launcher3.layout.provider.blob";
         public static final String LAYOUT_DIGEST_LABEL = "launcher-layout";
         public static final String LAYOUT_DIGEST_TAG = "ignore";
-
-        public static Bundle call(ContentResolver cr, String method) {
-            return call(cr, method, null /* arg */);
-        }
-
-        public static Bundle call(ContentResolver cr, String method, String arg) {
-            return cr.call(CONTENT_URI, method, arg, null);
-        }
-
     }
 }

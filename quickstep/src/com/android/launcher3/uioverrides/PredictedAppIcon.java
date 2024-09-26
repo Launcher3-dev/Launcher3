@@ -15,7 +15,7 @@
  */
 package com.android.launcher3.uioverrides;
 
-import static com.android.launcher3.anim.Interpolators.ACCEL_DEACCEL;
+import static com.android.app.animation.Interpolators.ACCELERATE_DECELERATE;
 import static com.android.launcher3.icons.BitmapInfo.FLAG_THEMED;
 import static com.android.launcher3.icons.FastBitmapDrawable.getDisabledColorFilter;
 
@@ -44,13 +44,13 @@ import android.view.ViewGroup;
 
 import androidx.core.graphics.ColorUtils;
 
-import com.android.launcher3.CellLayout;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.AnimatorListeners;
 import com.android.launcher3.celllayout.CellLayoutLayoutParams;
+import com.android.launcher3.celllayout.DelegatedCellDrawing;
 import com.android.launcher3.icons.BitmapInfo;
 import com.android.launcher3.icons.GraphicsUtils;
 import com.android.launcher3.icons.IconNormalizer;
@@ -189,7 +189,7 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
         } else {
             float[] hctPlateColor = new float[3];
             ColorUtils.colorToM3HCT(mDotParams.appColor, hctPlateColor);
-            newPlateColor = ColorUtils.M3HCTtoColor(hctPlateColor[0], 36, 85);
+            newPlateColor = ColorUtils.M3HCTToColor(hctPlateColor[0], 36, 85);
         }
 
         if (!animate) {
@@ -260,8 +260,8 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
                 Keyframe.ofFloat(0.82f, finalTrans - getOutlineOffsetY() / 2f), // Overshoot
                 Keyframe.ofFloat(1f, finalTrans) // Ease back into the final position
         };
-        keyframes[1].setInterpolator(ACCEL_DEACCEL);
-        keyframes[2].setInterpolator(ACCEL_DEACCEL);
+        keyframes[1].setInterpolator(ACCELERATE_DECELERATE);
+        keyframes[2].setInterpolator(ACCELERATE_DECELERATE);
 
         mSlotMachineAnim = ObjectAnimator.ofPropertyValuesHolder(this,
                 PropertyValuesHolder.ofKeyframe(SLOT_MACHINE_TRANSLATION_Y, keyframes));
@@ -337,7 +337,6 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
         if (getTag() instanceof WorkspaceItemInfo) {
             WorkspaceItemInfo info = (WorkspaceItemInfo) getTag();
             isBadged = !Process.myUserHandle().equals(info.user)
-                    || info.itemType == LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT
                     || info.itemType == LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
         }
 
@@ -419,7 +418,7 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
     /**
      * Draws Predicted Icon outline on cell layout
      */
-    public static class PredictedIconOutlineDrawing extends CellLayout.DelegatedCellDrawing {
+    public static class PredictedIconOutlineDrawing extends DelegatedCellDrawing {
 
         private final PredictedAppIcon mIcon;
         private final Paint mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);

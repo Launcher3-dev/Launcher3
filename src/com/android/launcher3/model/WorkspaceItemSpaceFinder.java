@@ -15,6 +15,7 @@
  */
 package com.android.launcher3.model;
 
+import static com.android.launcher3.Utilities.SHOULD_SHOW_FIRST_PAGE_WIDGET;
 import static com.android.launcher3.WorkspaceLayoutManager.FIRST_SCREEN_ID;
 
 import android.util.LongSparseArray;
@@ -66,7 +67,8 @@ public class WorkspaceItemSpaceFinder {
         int screenCount = workspaceScreens.size();
         // First check the preferred screen.
         IntSet screensToExclude = new IntSet();
-        if (FeatureFlags.QSB_ON_FIRST_SCREEN) {
+        if (FeatureFlags.QSB_ON_FIRST_SCREEN
+                && !SHOULD_SHOW_FIRST_PAGE_WIDGET) {
             screensToExclude.add(FIRST_SCREEN_ID);
         }
 
@@ -82,9 +84,7 @@ public class WorkspaceItemSpaceFinder {
 
         if (!found) {
             // Still no position found. Add a new screen to the end.
-            screenId = LauncherSettings.Settings.call(app.getContext().getContentResolver(),
-                    LauncherSettings.Settings.METHOD_NEW_SCREEN_ID)
-                    .getInt(LauncherSettings.Settings.EXTRA_VALUE);
+            screenId = app.getModel().getModelDbController().getNewScreenId();
 
             // Save the screen id for binding in the workspace
             workspaceScreens.add(screenId);

@@ -4,8 +4,8 @@ import android.view.MotionEvent;
 
 import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
-import com.android.launcher3.tracing.InputConsumerProto;
 import com.android.quickstep.InputConsumer;
+import com.android.quickstep.util.ActiveGestureLog;
 import com.android.systemui.shared.system.InputMonitorCompat;
 
 public abstract class DelegateInputConsumer implements InputConsumer {
@@ -43,7 +43,23 @@ public abstract class DelegateInputConsumer implements InputConsumer {
         mDelegate.onConsumerAboutToBeSwitched();
     }
 
+    /**
+     * Returns the name of this DelegateInputConsumer.
+     */
+    protected abstract String getDelegatorName();
+
+    @Override
+    public <T extends InputConsumer> T getInputConsumerOfClass(Class<T> c) {
+        if (getClass().equals(c)) {
+            return c.cast(this);
+        }
+        return mDelegate.getInputConsumerOfClass(c);
+    }
+
     protected void setActive(MotionEvent ev) {
+        ActiveGestureLog.INSTANCE.addLog(new ActiveGestureLog.CompoundString(getDelegatorName())
+                .append(" became active"));
+
         mState = STATE_ACTIVE;
         TestLogging.recordEvent(TestProtocol.SEQUENCE_PILFER, "pilferPointers");
         mInputMonitor.pilferPointers();
@@ -53,10 +69,5 @@ public abstract class DelegateInputConsumer implements InputConsumer {
         event.setAction(MotionEvent.ACTION_CANCEL);
         mDelegate.onMotionEvent(event);
         event.recycle();
-    }
-
-    @Override
-    public void writeToProtoInternal(InputConsumerProto.Builder inputConsumerProto) {
-        mDelegate.writeToProtoInternal(inputConsumerProto);
     }
 }

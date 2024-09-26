@@ -15,6 +15,8 @@
  */
 package com.android.launcher3.tapl;
 
+import static com.android.launcher3.testing.shared.TestProtocol.ALL_APPS_STATE_ORDINAL;
+
 import androidx.test.uiautomator.UiObject2;
 
 /**
@@ -22,16 +24,16 @@ import androidx.test.uiautomator.UiObject2;
  */
 class HomeQsb extends Qsb {
 
-    private final UiObject2 mHotSeat;
-
     HomeQsb(LauncherInstrumentation launcher, UiObject2 hotseat) {
-        super(launcher);
-        mHotSeat = hotseat;
-        waitForQsbObject();
+        super(launcher, hotseat, "search_container_hotseat");
     }
 
     @Override
-    protected UiObject2 waitForQsbObject() {
-        return mLauncher.waitForObjectInContainer(mHotSeat, "search_container_hotseat");
+    protected void clickQsb() {
+        // Clicking Qsb will switch to All Apps state.
+        mLauncher.runToState(
+                () -> super.clickQsb(),
+                ALL_APPS_STATE_ORDINAL,
+                "Clicking Qsb");
     }
 }

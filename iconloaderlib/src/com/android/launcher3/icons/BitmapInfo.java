@@ -16,10 +16,10 @@
 package com.android.launcher3.icons;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -29,21 +29,25 @@ import com.android.launcher3.util.FlagOp;
 
 public class BitmapInfo {
 
-    static final int FLAG_WORK = 1 << 0;
-    static final int FLAG_INSTANT = 1 << 1;
-    static final int FLAG_CLONE = 1 << 2;
+    public static final int FLAG_WORK = 1 << 0;
+    public static final int FLAG_INSTANT = 1 << 1;
+    public static final int FLAG_CLONE = 1 << 2;
+    public static final int FLAG_PRIVATE = 1 << 3;
     @IntDef(flag = true, value = {
             FLAG_WORK,
             FLAG_INSTANT,
-            FLAG_CLONE
+            FLAG_CLONE,
+            FLAG_PRIVATE
     })
     @interface BitmapInfoFlags {}
 
     public static final int FLAG_THEMED = 1 << 0;
     public static final int FLAG_NO_BADGE = 1 << 1;
+    public static final int FLAG_SKIP_USER_BADGE = 1 << 2;
     @IntDef(flag = true, value = {
             FLAG_THEMED,
             FLAG_NO_BADGE,
+            FLAG_SKIP_USER_BADGE,
     })
     public @interface DrawableCreationFlags {}
 
@@ -151,23 +155,48 @@ public class BitmapInfo {
     protected void applyFlags(Context context, FastBitmapDrawable drawable,
             @DrawableCreationFlags int creationFlags) {
         drawable.mDisabledAlpha = GraphicsUtils.getFloat(context, R.attr.disabledIconAlpha, 1f);
+        drawable.mCreationFlags = creationFlags;
         if ((creationFlags & FLAG_NO_BADGE) == 0) {
-            if (badgeInfo != null) {
-                drawable.setBadge(badgeInfo.newIcon(context, creationFlags));
-            } else if ((flags & FLAG_INSTANT) != 0) {
-                drawable.setBadge(context.getDrawable(drawable.isThemed()
-                        ? R.drawable.ic_instant_app_badge_themed
-                        : R.drawable.ic_instant_app_badge));
-            } else if ((flags & FLAG_WORK) != 0) {
-                drawable.setBadge(context.getDrawable(drawable.isThemed()
-                        ? R.drawable.ic_work_app_badge_themed
-                        : R.drawable.ic_work_app_badge));
-            } else if ((flags & FLAG_CLONE) != 0) {
-                drawable.setBadge(context.getDrawable(drawable.isThemed()
-                        ? R.drawable.ic_clone_app_badge_themed
-                        : R.drawable.ic_clone_app_badge));
+            Drawable badge = getBadgeDrawable(context, (creationFlags & FLAG_THEMED) != 0,
+                    (creationFlags & FLAG_SKIP_USER_BADGE) != 0);
+            if (badge != null) {
+                drawable.setBadge(badge);
             }
         }
+    }
+
+    public Drawable getBadgeDrawable(Context context, boolean isThemed) {
+        return getBadgeDrawable(context, isThemed, false);
+    }
+
+    /**
+     * Returns a drawable representing the badge for this info
+     */
+    @Nullable
+    private Drawable getBadgeDrawable(Context context, boolean isThemed, boolean skipUserBadge) {
+        if (badgeInfo != null) {
+            int creationFlag = isThemed ? FLAG_THEMED : 0;
+            if (skipUserBadge) {
+                creationFlag |= FLAG_SKIP_USER_BADGE;
+            }
+            return badgeInfo.newIcon(context, creationFlag);
+        }
+        if (skipUserBadge) {
+            return null;
+        } else if ((flags & FLAG_INSTANT) != 0) {
+            return new UserBadgeDrawable(context, R.drawable.ic_instant_app_badge,
+                    R.color.badge_tint_instant, isThemed);
+        } else if ((flags & FLAG_WORK) != 0) {
+            return new UserBadgeDrawable(context, R.drawable.ic_work_app_badge,
+                    R.color.badge_tint_work, isThemed);
+        } else if ((flags & FLAG_CLONE) != 0) {
+            return new UserBadgeDrawable(context, R.drawable.ic_clone_app_badge,
+                    R.color.badge_tint_clone, isThemed);
+        } else if ((flags & FLAG_PRIVATE) != 0) {
+            return new UserBadgeDrawable(context, R.drawable.ic_private_profile_app_badge,
+                    R.color.badge_tint_private, isThemed);
+        }
+        return null;
     }
 
     public static BitmapInfo fromBitmap(@NonNull Bitmap bitmap) {

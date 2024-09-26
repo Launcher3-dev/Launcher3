@@ -16,10 +16,6 @@
 
 package com.android.launcher3.widget;
 
-import static com.android.launcher3.Utilities.ATLEAST_R;
-import static com.android.launcher3.anim.Interpolators.FAST_OUT_SLOW_IN;
-
-import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Insets;
@@ -130,14 +126,11 @@ public class AddItemWidgetsBottomSheet extends AbstractSlideInView<AddItemActivi
     }
 
     private void animateOpen() {
-        if (mIsOpen || mOpenCloseAnimator.isRunning()) {
+        if (mIsOpen || mOpenCloseAnimation.getAnimationPlayer().isRunning()) {
             return;
         }
         mIsOpen = true;
-        mOpenCloseAnimator.setValues(
-                PropertyValuesHolder.ofFloat(TRANSLATION_SHIFT, TRANSLATION_SHIFT_OPENED));
-        mOpenCloseAnimator.setInterpolator(FAST_OUT_SLOW_IN);
-        mOpenCloseAnimator.start();
+        setUpDefaultOpenAnimation().start();
     }
 
     @Override
@@ -152,23 +145,19 @@ public class AddItemWidgetsBottomSheet extends AbstractSlideInView<AddItemActivi
 
     @Override
     protected int getScrimColor(Context context) {
-        return context.getResources().getColor(R.color.widgets_picker_scrim);
+        // Don't add a scrim when using the standalone picker activity. The background dimming is
+        // handled by applying dimBackground in the activity theme, so the scrim doesn't slide in
+        // with the window.
+        return -1;
     }
 
     @SuppressLint("NewApi") // Already added API check.
     @Override
     public WindowInsets onApplyWindowInsets(View view, WindowInsets windowInsets) {
-        if (ATLEAST_R) {
-            Insets insets = windowInsets.getInsets(WindowInsets.Type.systemBars());
-            mInsets.set(insets.left, insets.top, insets.right, insets.bottom);
-        } else {
-            mInsets.set(windowInsets.getSystemWindowInsetLeft(),
-                    windowInsets.getSystemWindowInsetTop(),
-                    windowInsets.getSystemWindowInsetRight(),
-                    windowInsets.getSystemWindowInsetBottom());
-        }
-        mContent.setPadding(mContent.getPaddingStart(),
-                mContent.getPaddingTop(), mContent.getPaddingEnd(), mInsets.bottom);
+        Insets insets = windowInsets.getInsets(WindowInsets.Type.systemBars());
+        mInsets.set(insets.left, insets.top, insets.right, insets.bottom);
+        mContent.setPadding(mContent.getPaddingStart(), mContent.getPaddingTop(),
+                mContent.getPaddingEnd(), mInsets.bottom);
 
         int contentHorizontalMarginInPx = getResources().getDimensionPixelSize(
                 R.dimen.widget_list_horizontal_margin);

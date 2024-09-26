@@ -16,6 +16,9 @@
 
 package com.android.launcher3.tapl;
 
+import static com.android.launcher3.testing.shared.TestProtocol.TEST_DRAG_APP_ICON_TO_MULTIPLE_WORKSPACES_FAILURE;
+
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -36,9 +39,28 @@ public abstract class AppIcon extends Launchable {
         super(launcher, icon);
     }
 
+    /**
+     * Find an app icon with the given name.
+     *
+     * @param appName app icon to look for
+     */
+    static BySelector getAppIconSelector(String appName) {
+        // focusable=true to avoid matching folder labels
+        return By.clazz(TextView.class).text(makeMultilinePattern(appName)).focusable(true);
+    }
+
+    /**
+     * Find an app icon with the given name.
+     *
+     * @param appName  app icon to look for
+     * @param launcher (optional) - only match ui elements from Launcher's package
+     */
     static BySelector getAppIconSelector(String appName, LauncherInstrumentation launcher) {
-        return By.clazz(TextView.class).textContains(appName)
-                .pkg(launcher.getLauncherPackageName());
+        return getAppIconSelector(appName).pkg(launcher.getLauncherPackageName());
+    }
+
+    static BySelector getMenuItemSelector(String text, LauncherInstrumentation launcher) {
+        return By.clazz(TextView.class).text(text).pkg(launcher.getLauncherPackageName());
     }
 
     static BySelector getAnyAppIconSelector() {
@@ -76,6 +98,8 @@ public abstract class AppIcon extends Launchable {
 
     @Override
     protected void waitForLongPressConfirmation() {
+        Log.d(TEST_DRAG_APP_ICON_TO_MULTIPLE_WORKSPACES_FAILURE,
+                "AppIcon.waitForLongPressConfirmation, resName: popupContainer");
         mLauncher.waitForLauncherObject("popup_container");
     }
 
@@ -93,5 +117,28 @@ public abstract class AppIcon extends Launchable {
     @NonNull
     public String getIconName() {
         return getObject().getText();
+    }
+
+    /**
+     * Return the app name of a icon by the content description. This should be used when trying to
+     * get the name of an app where the text of it is multiline.
+     */
+    @NonNull
+    String getAppName() {
+        return getObject().getContentDescription();
+    }
+
+    /**
+     * Create a regular expression pattern that matches strings containing all of the non-whitespace
+     * characters of the app name, with any amount of whitespace added between characters (e.g.
+     * newline for multiline app labels).
+     */
+    static Pattern makeMultilinePattern(String appName) {
+        // Remove any existing whitespace.
+        appName = appName.replaceAll("\\s", "");
+        // Allow whitespace between characters, e.g. newline for 2 line app label.
+        StringBuilder regexBuldier = new StringBuilder("\\s*");
+        appName.chars().forEach(letter -> regexBuldier.append((char) letter).append("\\s*"));
+        return Pattern.compile(regexBuldier.toString());
     }
 }

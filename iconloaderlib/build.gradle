@@ -3,19 +3,14 @@ plugins {
 }
 
 android {
-    compileSdkVersion COMPILE_SDK
-
     namespace = "com.android.launcher3.icons"
+    compileSdkVersion COMPILE_SDK
 
     defaultConfig {
         minSdkVersion 26
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables.useSupportLibrary = true
+        targetSdkVersion 35
     }
+
     sourceSets {
         main {
             java.srcDirs = ['src', 'src_full_lib']
@@ -26,6 +21,10 @@ android {
     lint {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 
     tasks.withType(JavaCompile) {
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
@@ -34,5 +33,4 @@ android {
 
 dependencies {
     implementation "androidx.core:core:1.13.1"
-    implementation "androidx.annotation:annotation:1.8.1"
 }

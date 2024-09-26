@@ -27,6 +27,10 @@ public class BubbleControllers {
     public final BubbleBarViewController bubbleBarViewController;
     public final BubbleStashController bubbleStashController;
     public final BubbleStashedHandleViewController bubbleStashedHandleViewController;
+    public final BubbleDragController bubbleDragController;
+    public final BubbleDismissController bubbleDismissController;
+    public final BubbleBarPinController bubbleBarPinController;
+    public final BubblePinController bubblePinController;
 
     private final RunnableList mPostInitRunnables = new RunnableList();
 
@@ -39,11 +43,19 @@ public class BubbleControllers {
             BubbleBarController bubbleBarController,
             BubbleBarViewController bubbleBarViewController,
             BubbleStashController bubbleStashController,
-            BubbleStashedHandleViewController bubbleStashedHandleViewController) {
+            BubbleStashedHandleViewController bubbleStashedHandleViewController,
+            BubbleDragController bubbleDragController,
+            BubbleDismissController bubbleDismissController,
+            BubbleBarPinController bubbleBarPinController,
+            BubblePinController bubblePinController) {
         this.bubbleBarController = bubbleBarController;
         this.bubbleBarViewController = bubbleBarViewController;
         this.bubbleStashController = bubbleStashController;
         this.bubbleStashedHandleViewController = bubbleStashedHandleViewController;
+        this.bubbleDragController = bubbleDragController;
+        this.bubbleDismissController = bubbleDismissController;
+        this.bubbleBarPinController = bubbleBarPinController;
+        this.bubblePinController = bubblePinController;
     }
 
     /**
@@ -52,10 +64,15 @@ public class BubbleControllers {
      * in constructors for now, as some controllers may still be waiting for init().
      */
     public void init(TaskbarControllers taskbarControllers) {
-        bubbleBarController.init(taskbarControllers, this);
+        bubbleBarController.init(this,
+                taskbarControllers.navbarButtonsViewController::isImeVisible);
         bubbleBarViewController.init(taskbarControllers, this);
         bubbleStashedHandleViewController.init(taskbarControllers, this);
         bubbleStashController.init(taskbarControllers, this);
+        bubbleDragController.init(/* bubbleControllers = */ this);
+        bubbleDismissController.init(/* bubbleControllers = */ this);
+        bubbleBarPinController.init(this);
+        bubblePinController.init(this);
 
         mPostInitRunnables.executeAllAndDestroy();
     }

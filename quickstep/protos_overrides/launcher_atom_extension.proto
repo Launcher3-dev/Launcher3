@@ -41,6 +41,7 @@ message DeviceSearchResultContainer{
   // For application, it will be the column number in the apps row.
   optional int32 grid_x = 3;
 
+  // LINT.IfChange
   // Next ID = 4
   message SearchAttributes{
 
@@ -61,6 +62,13 @@ message DeviceSearchResultContainer{
 
       // User entered by tapping on QSB bar on homescreen.
       QSB = 2;
+
+      // User entered by swiping up from overview (using Rocket Gesture).
+      OVERVIEW = 3;
+
+      // User entered by tapping the search box in the Taskbar AllApps drawer.
+      TASKBAR = 4;
     }
   }
+  // LINT.ThenChange(//quickstep/src/com/android/quickstep/logging/StatsLogCompatManager.java)
 }

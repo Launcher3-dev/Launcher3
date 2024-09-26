@@ -33,16 +33,22 @@ import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_S
 
 import android.annotation.BinderThread;
 import android.annotation.Nullable;
+import android.app.Notification;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Path;
+import android.graphics.Point;
+import android.graphics.drawable.AdaptiveIconDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.os.SystemProperties;
 import android.os.UserHandle;
@@ -51,15 +57,19 @@ import android.util.Log;
 import android.util.PathParser;
 import android.view.LayoutInflater;
 
+import androidx.appcompat.content.res.AppCompatResources;
+
 import com.android.internal.graphics.ColorUtils;
 import com.android.launcher3.R;
 import com.android.launcher3.icons.BitmapInfo;
 import com.android.launcher3.icons.BubbleIconFactory;
 import com.android.launcher3.shortcuts.ShortcutRequest;
-import com.android.launcher3.taskbar.TaskbarControllers;
 import com.android.launcher3.util.Executors.SimpleThreadFactory;
 import com.android.quickstep.SystemUiProxy;
+import com.android.systemui.shared.system.QuickStepContract.SystemUiStateFlags;
+import com.android.wm.shell.Flags;
 import com.android.wm.shell.bubbles.IBubblesListener;
+import com.android.wm.shell.common.bubbles.BubbleBarLocation;
 import com.android.wm.shell.common.bubbles.BubbleBarUpdate;
 import com.android.wm.shell.common.bubbles.BubbleInfo;
 import com.android.wm.shell.common.bubbles.RemovedBubble;
@@ -76,18 +86,34 @@ import java.util.concurrent.Executors;
  * information to render each of the bubbles & dispatches changes to
  * {@link BubbleBarViewController} which will then update {@link BubbleBarView} as needed.
  *
- * For details around the behavior of the bubble bar, see {@link BubbleBarView}.
+ * <p>For details around the behavior of the bubble bar, see {@link BubbleBarView}.
  */
 public class BubbleBarController extends IBubblesListener.Stub {
 
-    private static final String TAG = BubbleBarController.class.getSimpleName();
+    private static final String TAG = "BubbleBarController";
     private static final boolean DEBUG = false;
 
-    // Whether bubbles are showing in the bubble bar from launcher
-    public static final boolean BUBBLE_BAR_ENABLED =
-            SystemProperties.getBoolean("persist.wm.debug.bubble_bar", false);
+    /**
+     * Determines whether bubbles can be shown in the bubble bar. This value updates when the
+     * taskbar is recreated.
+     *
+     * @see #onTaskbarRecreated()
+     */
+    private static boolean sBubbleBarEnabled = Flags.enableBubbleBar()
+            || SystemProperties.getBoolean("persist.wm.debug.bubble_bar", false);
 
-    private static final int MASK_HIDE_BUBBLE_BAR = SYSUI_STATE_BOUNCER_SHOWING
+    /** Whether showing bubbles in the launcher bubble bar is enabled. */
+    public static boolean isBubbleBarEnabled() {
+        return sBubbleBarEnabled;
+    }
+
+    /** Re-reads the value of the flag from SystemProperties when taskbar is recreated. */
+    public static void onTaskbarRecreated() {
+        sBubbleBarEnabled = Flags.enableBubbleBar()
+                || SystemProperties.getBoolean("persist.wm.debug.bubble_bar", false);
+    }
+
+    private static final long MASK_HIDE_BUBBLE_BAR = SYSUI_STATE_BOUNCER_SHOWING
             | SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING
             | SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING_OCCLUDED
             | SYSUI_STATE_IME_SHOWING
@@ -95,11 +121,11 @@ public class BubbleBarController extends IBubblesListener.Stub {
             | SYSUI_STATE_QUICK_SETTINGS_EXPANDED
             | SYSUI_STATE_IME_SWITCHER_SHOWING;
 
-    private static final int MASK_HIDE_HANDLE_VIEW = SYSUI_STATE_BOUNCER_SHOWING
+    private static final long MASK_HIDE_HANDLE_VIEW = SYSUI_STATE_BOUNCER_SHOWING
             | SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING
             | SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING_OCCLUDED;
 
-    private static final int MASK_SYSUI_LOCKED = SYSUI_STATE_BOUNCER_SHOWING
+    private static final long MASK_SYSUI_LOCKED = SYSUI_STATE_BOUNCER_SHOWING
             | SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING
             | SYSUI_STATE_STATUS_BAR_KEYGUARD_SHOWING_OCCLUDED;
 
@@ -109,28 +135,38 @@ public class BubbleBarController extends IBubblesListener.Stub {
 
     private static final Executor BUBBLE_STATE_EXECUTOR = Executors.newSingleThreadExecutor(
             new SimpleThreadFactory("BubbleStateUpdates-", THREAD_PRIORITY_BACKGROUND));
-    private final Executor mMainExecutor;
     private final LauncherApps mLauncherApps;
     private final BubbleIconFactory mIconFactory;
+    private final SystemUiProxy mSystemUiProxy;
 
-    private BubbleBarBubble mSelectedBubble;
+    private BubbleBarItem mSelectedBubble;
+    private BubbleBarOverflow mOverflowBubble;
 
+    private ImeVisibilityChecker mImeVisibilityChecker;
     private BubbleBarViewController mBubbleBarViewController;
     private BubbleStashController mBubbleStashController;
     private BubbleStashedHandleViewController mBubbleStashedHandleViewController;
+    private BubblePinController mBubblePinController;
+
+    // Cache last sent top coordinate to avoid sending duplicate updates to shell
+    private int mLastSentBubbleBarTop;
 
     /**
      * Similar to {@link BubbleBarUpdate} but rather than {@link BubbleInfo}s it uses
      * {@link BubbleBarBubble}s so that it can be used to update the views.
      */
     private static class BubbleBarViewUpdate {
+        final boolean initialState;
         boolean expandedChanged;
         boolean expanded;
+        boolean shouldShowEducation;
         String selectedBubbleKey;
         String suppressedBubbleKey;
         String unsuppressedBubbleKey;
+        BubbleBarLocation bubbleBarLocation;
         List<RemovedBubble> removedBubbles;
         List<String> bubbleKeysInOrder;
+        Point expandedViewDropTargetSize;
 
         // These need to be loaded in the background
         BubbleBarBubble addedBubble;
@@ -138,13 +174,17 @@ public class BubbleBarController extends IBubblesListener.Stub {
         List<BubbleBarBubble> currentBubbles;
 
         BubbleBarViewUpdate(BubbleBarUpdate update) {
+            initialState = update.initialState;
             expandedChanged = update.expandedChanged;
             expanded = update.expanded;
+            shouldShowEducation = update.shouldShowEducation;
             selectedBubbleKey = update.selectedBubbleKey;
             suppressedBubbleKey = update.suppressedBubbleKey;
             unsuppressedBubbleKey = update.unsupressedBubbleKey;
+            bubbleBarLocation = update.bubbleBarLocation;
             removedBubbles = update.removedBubbles;
             bubbleKeysInOrder = update.bubbleKeysInOrder;
+            expandedViewDropTargetSize = update.expandedViewDropTargetSize;
         }
     }
 
@@ -152,10 +192,11 @@ public class BubbleBarController extends IBubblesListener.Stub {
         mContext = context;
         mBarView = bubbleView; // Need the view for inflating bubble views.
 
-        if (BUBBLE_BAR_ENABLED) {
-            SystemUiProxy.INSTANCE.get(context).setBubblesListener(this);
+        mSystemUiProxy = SystemUiProxy.INSTANCE.get(context);
+
+        if (sBubbleBarEnabled) {
+            mSystemUiProxy.setBubblesListener(this);
         }
-        mMainExecutor = MAIN_EXECUTOR;
         mLauncherApps = context.getSystemService(LauncherApps.class);
         mIconFactory = new BubbleIconFactory(context,
                 context.getResources().getDimensionPixelSize(R.dimen.bubblebar_icon_size),
@@ -166,24 +207,54 @@ public class BubbleBarController extends IBubblesListener.Stub {
     }
 
     public void onDestroy() {
-        SystemUiProxy.INSTANCE.get(mContext).setBubblesListener(null);
+        mSystemUiProxy.setBubblesListener(null);
     }
 
-    public void init(TaskbarControllers controllers, BubbleControllers bubbleControllers) {
+    /** Initializes controllers. */
+    public void init(BubbleControllers bubbleControllers,
+            ImeVisibilityChecker imeVisibilityChecker) {
+        mImeVisibilityChecker = imeVisibilityChecker;
         mBubbleBarViewController = bubbleControllers.bubbleBarViewController;
         mBubbleStashController = bubbleControllers.bubbleStashController;
         mBubbleStashedHandleViewController = bubbleControllers.bubbleStashedHandleViewController;
+        mBubblePinController = bubbleControllers.bubblePinController;
 
         bubbleControllers.runAfterInit(() -> {
-            mBubbleBarViewController.setHiddenForBubbles(!BUBBLE_BAR_ENABLED);
-            mBubbleStashedHandleViewController.setHiddenForBubbles(!BUBBLE_BAR_ENABLED);
+            mBubbleBarViewController.setHiddenForBubbles(
+                    !sBubbleBarEnabled || mBubbles.isEmpty());
+            mBubbleStashedHandleViewController.setHiddenForBubbles(
+                    !sBubbleBarEnabled || mBubbles.isEmpty());
+            mBubbleBarViewController.setUpdateSelectedBubbleAfterCollapse(
+                    key -> setSelectedBubbleInternal(mBubbles.get(key)));
+            mBubbleBarViewController.setBoundsChangeListener(this::onBubbleBarBoundsChanged);
         });
+    }
+
+    /**
+     * Creates and adds the overflow bubble to the bubble bar if it hasn't been created yet.
+     *
+     * <p>This should be called on the {@link #BUBBLE_STATE_EXECUTOR} executor to avoid inflating
+     * the overflow multiple times.
+     */
+    private void createAndAddOverflowIfNeeded() {
+        if (mOverflowBubble == null) {
+            BubbleBarOverflow overflow = createOverflow(mContext);
+            MAIN_EXECUTOR.execute(() -> {
+                // we're on the main executor now, so check that the overflow hasn't been created
+                // again to avoid races.
+                if (mOverflowBubble == null) {
+                    mBubbleBarViewController.addBubble(
+                            overflow, /* isExpanding= */ false, /* suppressAnimation= */ true);
+                    mOverflowBubble = overflow;
+                }
+            });
+        }
     }
 
     /**
      * Updates the bubble bar, handle bar, and stash controllers based on sysui state flags.
      */
-    public void updateStateForSysuiFlags(int flags) {
+    public void updateStateForSysuiFlags(@SystemUiStateFlags long flags) {
         boolean hideBubbleBar = (flags & MASK_HIDE_BUBBLE_BAR) != 0;
         mBubbleBarViewController.setHiddenForSysui(hideBubbleBar);
 
@@ -209,34 +280,47 @@ public class BubbleBarController extends IBubblesListener.Stub {
                 || !update.currentBubbleList.isEmpty()) {
             // We have bubbles to load
             BUBBLE_STATE_EXECUTOR.execute(() -> {
+                createAndAddOverflowIfNeeded();
                 if (update.addedBubble != null) {
-                    viewUpdate.addedBubble = populateBubble(update.addedBubble, mContext, mBarView);
+                    viewUpdate.addedBubble = populateBubble(mContext, update.addedBubble, mBarView,
+                            null /* existingBubble */);
                 }
                 if (update.updatedBubble != null) {
+                    BubbleBarBubble existingBubble = mBubbles.get(update.updatedBubble.getKey());
                     viewUpdate.updatedBubble =
-                            populateBubble(update.updatedBubble, mContext, mBarView);
+                            populateBubble(mContext, update.updatedBubble, mBarView,
+                                    existingBubble);
                 }
                 if (update.currentBubbleList != null && !update.currentBubbleList.isEmpty()) {
                     List<BubbleBarBubble> currentBubbles = new ArrayList<>();
                     for (int i = 0; i < update.currentBubbleList.size(); i++) {
                         BubbleBarBubble b =
-                                populateBubble(update.currentBubbleList.get(i), mContext, mBarView);
+                                populateBubble(mContext, update.currentBubbleList.get(i), mBarView,
+                                        null /* existingBubble */);
                         currentBubbles.add(b);
                     }
                     viewUpdate.currentBubbles = currentBubbles;
                 }
-                mMainExecutor.execute(() -> applyViewChanges(viewUpdate));
+                MAIN_EXECUTOR.execute(() -> applyViewChanges(viewUpdate));
             });
         } else {
             // No bubbles to load, immediately apply the changes.
             BUBBLE_STATE_EXECUTOR.execute(
-                    () -> mMainExecutor.execute(() -> applyViewChanges(viewUpdate)));
+                    () -> MAIN_EXECUTOR.execute(() -> applyViewChanges(viewUpdate)));
         }
     }
 
     private void applyViewChanges(BubbleBarViewUpdate update) {
         final boolean isCollapsed = (update.expandedChanged && !update.expanded)
                 || (!update.expandedChanged && !mBubbleBarViewController.isExpanded());
+        final boolean isExpanding = update.expandedChanged && update.expanded;
+        // don't animate bubbles if this is the initial state because we may be unfolding or
+        // enabling gesture nav. also suppress animation if the bubble bar is hidden for sysui e.g.
+        // the shade is open, or we're locked.
+        final boolean suppressAnimation =
+                update.initialState || mBubbleBarViewController.isHiddenForSysui()
+                        || mImeVisibilityChecker.isImeVisible();
+
         BubbleBarBubble bubbleToSelect = null;
         if (!update.removedBubbles.isEmpty()) {
             for (int i = 0; i < update.removedBubbles.size(); i++) {
@@ -252,7 +336,7 @@ public class BubbleBarController extends IBubblesListener.Stub {
         }
         if (update.addedBubble != null) {
             mBubbles.put(update.addedBubble.getKey(), update.addedBubble);
-            mBubbleBarViewController.addBubble(update.addedBubble);
+            mBubbleBarViewController.addBubble(update.addedBubble, isExpanding, suppressAnimation);
             if (isCollapsed) {
                 // If we're collapsed, the most recently added bubble will be selected.
                 bubbleToSelect = update.addedBubble;
@@ -265,7 +349,7 @@ public class BubbleBarController extends IBubblesListener.Stub {
                 BubbleBarBubble bubble = update.currentBubbles.get(i);
                 if (bubble != null) {
                     mBubbles.put(bubble.getKey(), bubble);
-                    mBubbleBarViewController.addBubble(bubble);
+                    mBubbleBarViewController.addBubble(bubble, isExpanding, suppressAnimation);
                     if (isCollapsed) {
                         // If we're collapsed, the most recently added bubble will be selected.
                         bubbleToSelect = bubble;
@@ -281,10 +365,18 @@ public class BubbleBarController extends IBubblesListener.Stub {
         mBubbleBarViewController.setHiddenForBubbles(mBubbles.isEmpty());
         mBubbleStashedHandleViewController.setHiddenForBubbles(mBubbles.isEmpty());
 
+        if (mBubbles.isEmpty()) {
+            // all bubbles were removed. clear the selected bubble
+            mSelectedBubble = null;
+        }
+
         if (update.updatedBubble != null) {
-            // TODO: (b/269670235) handle updates:
-            //  (1) if content / icons change -- requires reload & add back in place
-            //  (2) if showing update dot changes -- tell the view to hide / show the dot
+            // Updates mean the dot state may have changed; any other changes were updated in
+            // the populateBubble step.
+            BubbleBarBubble bb = mBubbles.get(update.updatedBubble.getKey());
+            // If we're not stashed, we're visible so animate
+            bb.getView().updateDotVisibility(!mBubbleStashController.isStashed() /* animate */);
+            mBubbleBarViewController.animateBubbleNotification(bb, /* isExpanding= */ false);
         }
         if (update.bubbleKeysInOrder != null && !update.bubbleKeysInOrder.isEmpty()) {
             // Create the new list
@@ -301,8 +393,8 @@ public class BubbleBarController extends IBubblesListener.Stub {
             // TODO: (b/273316505) handle suppression
         }
         if (update.selectedBubbleKey != null) {
-            if (mSelectedBubble != null
-                    && !update.selectedBubbleKey.equals(mSelectedBubble.getKey())) {
+            if (mSelectedBubble == null
+                    || !update.selectedBubbleKey.equals(mSelectedBubble.getKey())) {
                 BubbleBarBubble newlySelected = mBubbles.get(update.selectedBubbleKey);
                 if (newlySelected != null) {
                     bubbleToSelect = newlySelected;
@@ -313,7 +405,10 @@ public class BubbleBarController extends IBubblesListener.Stub {
             }
         }
         if (bubbleToSelect != null) {
-            setSelectedBubble(bubbleToSelect);
+            setSelectedBubbleInternal(bubbleToSelect);
+        }
+        if (update.shouldShowEducation) {
+            mBubbleBarViewController.prepareToShowEducation();
         }
         if (update.expandedChanged) {
             if (update.expanded != mBubbleBarViewController.isExpanded()) {
@@ -322,14 +417,48 @@ public class BubbleBarController extends IBubblesListener.Stub {
                 Log.w(TAG, "expansion was changed but is the same");
             }
         }
+        if (update.bubbleBarLocation != null) {
+            if (update.bubbleBarLocation != mBubbleBarViewController.getBubbleBarLocation()) {
+                updateBubbleBarLocationInternal(update.bubbleBarLocation);
+            }
+        }
+        if (update.expandedViewDropTargetSize != null) {
+            mBubblePinController.setDropTargetSize(update.expandedViewDropTargetSize);
+        }
+    }
+
+    /** Tells WMShell to show the currently selected bubble. */
+    public void showSelectedBubble() {
+        if (getSelectedBubbleKey() != null) {
+            if (mSelectedBubble instanceof BubbleBarBubble) {
+                // Because we've visited this bubble, we should suppress the notification.
+                // This is updated on WMShell side when we show the bubble, but that update isn't
+                // passed to launcher, instead we apply it directly here.
+                BubbleInfo info = ((BubbleBarBubble) mSelectedBubble).getInfo();
+                info.setFlags(
+                        info.getFlags() | Notification.BubbleMetadata.FLAG_SUPPRESS_NOTIFICATION);
+                mSelectedBubble.getView().updateDotVisibility(true /* animate */);
+            }
+            mLastSentBubbleBarTop = mBarView.getRestingTopPositionOnScreen();
+            mSystemUiProxy.showBubble(getSelectedBubbleKey(), mLastSentBubbleBarTop);
+        } else {
+            Log.w(TAG, "Trying to show the selected bubble but it's null");
+        }
+    }
+
+    /** Updates the currently selected bubble for launcher views and tells WMShell to show it. */
+    public void showAndSelectBubble(BubbleBarItem b) {
+        if (DEBUG) Log.w(TAG, "showingSelectedBubble: " + b.getKey());
+        setSelectedBubbleInternal(b);
+        showSelectedBubble();
     }
 
     /**
      * Sets the bubble that should be selected. This notifies the views, it does not notify
-     * WMShell that the selection has changed, that should go through
-     * {@link SystemUiProxy#showBubble}.
+     * WMShell that the selection has changed, that should go through either
+     * {@link #showSelectedBubble()} or {@link #showAndSelectBubble(BubbleBarItem)}.
      */
-    public void setSelectedBubble(BubbleBarBubble b) {
+    private void setSelectedBubbleInternal(BubbleBarItem b) {
         if (!Objects.equals(b, mSelectedBubble)) {
             if (DEBUG) Log.w(TAG, "selectingBubble: " + b.getKey());
             mSelectedBubble = b;
@@ -348,12 +477,34 @@ public class BubbleBarController extends IBubblesListener.Stub {
         return null;
     }
 
+    /**
+     * Set a new bubble bar location.
+     * <p>
+     * Updates the value locally in Launcher and in WMShell.
+     */
+    public void updateBubbleBarLocation(BubbleBarLocation location) {
+        updateBubbleBarLocationInternal(location);
+        mSystemUiProxy.setBubbleBarLocation(location);
+    }
+
+    private void updateBubbleBarLocationInternal(BubbleBarLocation location) {
+        mBubbleBarViewController.setBubbleBarLocation(location);
+        mBubbleStashController.setBubbleBarLocation(location);
+    }
+
+    @Override
+    public void animateBubbleBarLocation(BubbleBarLocation bubbleBarLocation) {
+        MAIN_EXECUTOR.execute(
+                () -> mBubbleBarViewController.animateBubbleBarLocation(bubbleBarLocation));
+    }
+
     //
     // Loading data for the bubbles
     //
 
     @Nullable
-    private BubbleBarBubble populateBubble(BubbleInfo b, Context context, BubbleBarView bbv) {
+    private BubbleBarBubble populateBubble(Context context, BubbleInfo b, BubbleBarView bbv,
+            @Nullable BubbleBarBubble existingBubble) {
         String appName;
         Bitmap badgeBitmap;
         Bitmap bubbleBitmap;
@@ -422,16 +573,73 @@ public class BubbleBarController extends IBubblesListener.Stub {
         iconPath.transform(matrix);
         dotPath = iconPath;
         dotColor = ColorUtils.blendARGB(badgeBitmapInfo.color,
-                Color.WHITE, WHITE_SCRIM_ALPHA);
+                Color.WHITE, WHITE_SCRIM_ALPHA / 255f);
 
+        if (existingBubble == null) {
+            LayoutInflater inflater = LayoutInflater.from(context);
+            BubbleView bubbleView = (BubbleView) inflater.inflate(
+                    R.layout.bubblebar_item_view, bbv, false /* attachToRoot */);
 
+            BubbleBarBubble bubble = new BubbleBarBubble(b, bubbleView,
+                    badgeBitmap, bubbleBitmap, dotColor, dotPath, appName);
+            bubbleView.setBubble(bubble);
+            return bubble;
+        } else {
+            // If we already have a bubble (so it already has an inflated view), update it.
+            existingBubble.setInfo(b);
+            existingBubble.setBadge(badgeBitmap);
+            existingBubble.setIcon(bubbleBitmap);
+            existingBubble.setDotColor(dotColor);
+            existingBubble.setDotPath(dotPath);
+            existingBubble.setAppName(appName);
+            return existingBubble;
+        }
+    }
+
+    private BubbleBarOverflow createOverflow(Context context) {
+        Bitmap bitmap = createOverflowBitmap(context);
         LayoutInflater inflater = LayoutInflater.from(context);
         BubbleView bubbleView = (BubbleView) inflater.inflate(
-                R.layout.bubblebar_item_view, bbv, false /* attachToRoot */);
+                R.layout.bubblebar_item_view, mBarView, false /* attachToRoot */);
+        BubbleBarOverflow overflow = new BubbleBarOverflow(bubbleView);
+        bubbleView.setOverflow(overflow, bitmap);
+        return overflow;
+    }
 
-        BubbleBarBubble bubble = new BubbleBarBubble(b, bubbleView,
-                badgeBitmap, bubbleBitmap, dotColor, dotPath, appName);
-        bubbleView.setBubble(bubble);
-        return bubble;
+    private Bitmap createOverflowBitmap(Context context) {
+        Drawable iconDrawable = AppCompatResources.getDrawable(mContext,
+                R.drawable.bubble_ic_overflow_button);
+
+        final TypedArray ta = mContext.obtainStyledAttributes(
+                new int[]{
+                        com.android.internal.R.attr.materialColorOnPrimaryFixed,
+                        com.android.internal.R.attr.materialColorPrimaryFixed
+                });
+        int overflowIconColor = ta.getColor(0, Color.WHITE);
+        int overflowBackgroundColor = ta.getColor(1, Color.BLACK);
+        ta.recycle();
+
+        iconDrawable.setTint(overflowIconColor);
+
+        int inset = context.getResources().getDimensionPixelSize(R.dimen.bubblebar_overflow_inset);
+        Drawable foreground = new InsetDrawable(iconDrawable, inset);
+        Drawable drawable = new AdaptiveIconDrawable(new ColorDrawable(overflowBackgroundColor),
+                foreground);
+
+        return mIconFactory.createBadgedIconBitmap(drawable).icon;
+    }
+
+    private void onBubbleBarBoundsChanged() {
+        int newTop = mBarView.getRestingTopPositionOnScreen();
+        if (newTop != mLastSentBubbleBarTop) {
+            mLastSentBubbleBarTop = newTop;
+            mSystemUiProxy.updateBubbleBarTopOnScreen(newTop);
+        }
+    }
+
+    /** Interface for checking whether the IME is visible. */
+    public interface ImeVisibilityChecker {
+        /** Whether the IME is visible. */
+        boolean isImeVisible();
     }
 }

@@ -23,9 +23,9 @@ import android.annotation.LayoutRes;
 import android.graphics.PointF;
 import android.view.View;
 
+import com.android.app.animation.Interpolators;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
-import com.android.launcher3.anim.Interpolators;
 import com.android.quickstep.interaction.EdgeBackGestureHandler.BackGestureResult;
 import com.android.quickstep.interaction.NavBarGestureHandler.NavBarGestureResult;
 import com.android.quickstep.util.LottieAnimationColorUtils;
@@ -41,13 +41,13 @@ final class BackGestureTutorialController extends TutorialController {
         super(fragment, tutorialType);
         // Set the Lottie animation colors specifically for the Back gesture
         if (ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()) {
-            LottieAnimationColorUtils.updateColors(
+            LottieAnimationColorUtils.updateToArgbColors(
                     mAnimatedGestureDemonstration,
                     Map.of(".onSurfaceBack", fragment.mRootView.mColorOnSurfaceBack,
                             ".surfaceBack", fragment.mRootView.mColorSurfaceBack,
                             ".secondaryBack", fragment.mRootView.mColorSecondaryBack));
 
-            LottieAnimationColorUtils.updateColors(
+            LottieAnimationColorUtils.updateToArgbColors(
                     mCheckmarkAnimation,
                     Map.of(".checkmark",
                             Utilities.isDarkTheme(mContext)
@@ -85,7 +85,9 @@ final class BackGestureTutorialController extends TutorialController {
     public int getSuccessFeedbackSubtitle() {
         return mTutorialFragment.isAtFinalStep()
                 ? R.string.back_gesture_feedback_complete_without_follow_up
-                : R.string.back_gesture_feedback_complete_with_overview_follow_up;
+                : ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()
+                        ? R.string.back_gesture_feedback_complete_with_follow_up
+                        : R.string.back_gesture_feedback_complete_with_overview_follow_up;
     }
 
     @Override
@@ -154,7 +156,7 @@ final class BackGestureTutorialController extends TutorialController {
 
     @Override
     public void onBackGestureAttempted(BackGestureResult result) {
-        if (skipGestureAttempt()) {
+        if (isGestureCompleted()) {
             return;
         }
         switch (mTutorialType) {
@@ -172,7 +174,7 @@ final class BackGestureTutorialController extends TutorialController {
 
     @Override
     public void onBackGestureProgress(float diffx, float diffy, boolean isLeftGesture) {
-        if (skipGestureAttempt()) {
+        if (isGestureCompleted()) {
             return;
         }
 
@@ -183,7 +185,7 @@ final class BackGestureTutorialController extends TutorialController {
                 /* upperBound = */ 1f,
                 /* toMin = */ 1f,
                 /* toMax = */ EXITING_APP_MIN_SIZE_PERCENTAGE,
-                Interpolators.DEACCEL);
+                Interpolators.DECELERATE);
 
         // shrink the exiting app as we progress through the back gesture
         mExitingAppView.setPivotX(isLeftGesture ? mScreenWidth : 0);
@@ -197,7 +199,7 @@ final class BackGestureTutorialController extends TutorialController {
                 /* upperBound = */ 1f,
                 /* toMin = */ 0,
                 /* toMax = */ mExitingAppMargin,
-                Interpolators.DEACCEL)
+                Interpolators.DECELERATE)
                 * (isLeftGesture ? -1 : 1));
 
         // round the corners of the exiting app as we progress through the back gesture
@@ -241,7 +243,7 @@ final class BackGestureTutorialController extends TutorialController {
 
     @Override
     public void onNavBarGestureAttempted(NavBarGestureResult result, PointF finalVelocity) {
-        if (skipGestureAttempt()) {
+        if (isGestureCompleted()) {
             return;
         }
         if (mTutorialType == BACK_NAVIGATION_COMPLETE) {

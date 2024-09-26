@@ -70,7 +70,6 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
             TYPE_ICON_SURFACE,
             TYPE_OPTIONS_POPUP_DIALOG,
             TYPE_PIN_WIDGET_FROM_EXTERNAL_POPUP,
-            TYPE_WIDGETS_EDUCATION_DIALOG,
             TYPE_TASKBAR_EDUCATION_DIALOG,
             TYPE_TASKBAR_ALL_APPS,
             TYPE_ADD_TO_HOME_CONFIRMATION,
@@ -98,31 +97,33 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
     public static final int TYPE_OPTIONS_POPUP_DIALOG = 1 << 14;
 
     public static final int TYPE_PIN_WIDGET_FROM_EXTERNAL_POPUP = 1 << 15;
-    public static final int TYPE_WIDGETS_EDUCATION_DIALOG = 1 << 16;
     public static final int TYPE_TASKBAR_EDUCATION_DIALOG = 1 << 17;
     public static final int TYPE_TASKBAR_ALL_APPS = 1 << 18;
     public static final int TYPE_ADD_TO_HOME_CONFIRMATION = 1 << 19;
     public static final int TYPE_TASKBAR_OVERLAY_PROXY = 1 << 20;
     public static final int TYPE_TASKBAR_PINNING_POPUP = 1 << 21;
+    public static final int TYPE_PIN_IME_POPUP = 1 << 22;
 
     public static final int TYPE_ALL = TYPE_FOLDER | TYPE_ACTION_POPUP
             | TYPE_WIDGETS_BOTTOM_SHEET | TYPE_WIDGET_RESIZE_FRAME | TYPE_WIDGETS_FULL_SHEET
             | TYPE_ON_BOARD_POPUP | TYPE_DISCOVERY_BOUNCE | TYPE_TASK_MENU
             | TYPE_OPTIONS_POPUP | TYPE_SNACKBAR | TYPE_LISTENER | TYPE_ALL_APPS_EDU
             | TYPE_ICON_SURFACE | TYPE_DRAG_DROP_POPUP | TYPE_PIN_WIDGET_FROM_EXTERNAL_POPUP
-            | TYPE_WIDGETS_EDUCATION_DIALOG | TYPE_TASKBAR_EDUCATION_DIALOG | TYPE_TASKBAR_ALL_APPS
-            | TYPE_OPTIONS_POPUP_DIALOG | TYPE_ADD_TO_HOME_CONFIRMATION
-            | TYPE_TASKBAR_OVERLAY_PROXY | TYPE_TASKBAR_PINNING_POPUP;
+            | TYPE_TASKBAR_EDUCATION_DIALOG | TYPE_TASKBAR_ALL_APPS | TYPE_OPTIONS_POPUP_DIALOG
+            | TYPE_ADD_TO_HOME_CONFIRMATION | TYPE_TASKBAR_OVERLAY_PROXY
+            | TYPE_TASKBAR_PINNING_POPUP | TYPE_PIN_IME_POPUP;
 
     // Type of popups which should be kept open during launcher rebind
     public static final int TYPE_REBIND_SAFE = TYPE_WIDGETS_FULL_SHEET
             | TYPE_WIDGETS_BOTTOM_SHEET | TYPE_ON_BOARD_POPUP | TYPE_DISCOVERY_BOUNCE
-            | TYPE_ALL_APPS_EDU | TYPE_ICON_SURFACE | TYPE_WIDGETS_EDUCATION_DIALOG
-            | TYPE_TASKBAR_EDUCATION_DIALOG | TYPE_TASKBAR_ALL_APPS | TYPE_OPTIONS_POPUP_DIALOG
-            | TYPE_TASKBAR_OVERLAY_PROXY;
+            | TYPE_ALL_APPS_EDU | TYPE_ICON_SURFACE | TYPE_TASKBAR_EDUCATION_DIALOG
+            | TYPE_TASKBAR_ALL_APPS | TYPE_OPTIONS_POPUP_DIALOG | TYPE_TASKBAR_OVERLAY_PROXY
+            | TYPE_PIN_IME_POPUP;
 
+    /** Type of popups that should get exclusive accessibility focus. */
     public static final int TYPE_ACCESSIBLE = TYPE_ALL & ~TYPE_DISCOVERY_BOUNCE & ~TYPE_LISTENER
-            & ~TYPE_ALL_APPS_EDU;
+            & ~TYPE_ALL_APPS_EDU & ~TYPE_TASKBAR_ALL_APPS & ~TYPE_PIN_IME_POPUP
+            & ~TYPE_WIDGET_RESIZE_FRAME;
 
     // These view all have particular operation associated with swipe down interaction.
     public static final int TYPE_STATUS_BAR_SWIPE_DOWN_DISALLOW = TYPE_WIDGETS_BOTTOM_SHEET |
@@ -132,6 +133,13 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
     // Floating views that are exclusive to the taskbar overlay window.
     public static final int TYPE_TASKBAR_OVERLAYS =
             TYPE_TASKBAR_ALL_APPS | TYPE_TASKBAR_EDUCATION_DIALOG;
+
+    // Floating views that a TouchController should not try to intercept touches from.
+    public static final int TYPE_TOUCH_CONTROLLER_NO_INTERCEPT = TYPE_ALL & ~TYPE_DISCOVERY_BOUNCE
+            & ~TYPE_LISTENER & ~TYPE_TASKBAR_OVERLAYS;
+
+    public static final int TYPE_ALL_EXCEPT_ON_BOARD_POPUP = TYPE_ALL & ~TYPE_ON_BOARD_POPUP
+            & ~TYPE_PIN_IME_POPUP;
 
     protected boolean mIsOpen;
 
@@ -268,18 +276,7 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
 
     public static void closeOpenViews(ActivityContext activity, boolean animate,
             @FloatingViewType int type) {
-        BaseDragLayer dragLayer = activity.getDragLayer();
-        // Iterate in reverse order. AbstractFloatingView is added later to the dragLayer,
-        // and will be one of the last views.
-        for (int i = dragLayer.getChildCount() - 1; i >= 0; i--) {
-            View child = dragLayer.getChildAt(i);
-            if (child instanceof AbstractFloatingView) {
-                AbstractFloatingView abs = (AbstractFloatingView) child;
-                if (abs.isOfType(type)) {
-                    abs.close(animate);
-                }
-            }
-        }
+        new AbstractFloatingViewHelper().closeOpenViews(activity, animate, type);
     }
 
     public static void closeAllOpenViews(ActivityContext activity, boolean animate) {

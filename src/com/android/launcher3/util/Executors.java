@@ -15,12 +15,15 @@
  */
 package com.android.launcher3.util;
 
+import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
+
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Process;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -46,6 +49,12 @@ public class Executors {
             POOL_SIZE, POOL_SIZE, KEEP_ALIVE, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
     /**
+     * An {@link LooperExecutor} to be used with async task where order is important.
+     */
+    public static final LooperExecutor ORDERED_BG_EXECUTOR = new LooperExecutor(
+            createAndStartNewLooper("BackgroundExecutor", THREAD_PRIORITY_BACKGROUND));
+
+    /**
      * Returns the executor for running tasks on the main thread.
      */
     public static final LooperExecutor MAIN_EXECUTOR =
@@ -57,6 +66,13 @@ public class Executors {
     public static final LooperExecutor UI_HELPER_EXECUTOR =
             new LooperExecutor(
                     createAndStartNewLooper("UiThreadHelper", Process.THREAD_PRIORITY_FOREGROUND));
+
+
+    /** A background executor to preinflate views. */
+    public static final ExecutorService VIEW_PREINFLATION_EXECUTOR =
+            java.util.concurrent.Executors.newSingleThreadExecutor(
+                    new SimpleThreadFactory(
+                            "preinflate-allapps-icons", THREAD_PRIORITY_BACKGROUND));
 
     /**
      * Utility method to get a started handler thread statically

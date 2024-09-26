@@ -38,32 +38,40 @@ import com.android.quickstep.util.SplitSelectDataHolder.Companion.SplitLaunchTyp
 import java.io.PrintWriter
 
 /**
- * Holds/transforms/signs/seals/delivers information for the transient state of the user
- * selecting a first app to start split with and then choosing a second app.
- * This class DOES NOT associate itself with drag-and-drop split screen starts because they come
- * from the bad part of town.
+ * Holds/transforms/signs/seals/delivers information for the transient state of the user selecting a
+ * first app to start split with and then choosing a second app. This class DOES NOT associate
+ * itself with drag-and-drop split screen starts because they come from the bad part of town.
  *
  * After setting the correct fields for initial/second.* variables, this converts them into the
- * correct [PendingIntent] and [ShortcutInfo] objects where applicable and sends the necessary
- * data back via [getSplitLaunchData].
+ * correct [PendingIntent] and [ShortcutInfo] objects where applicable and sends the necessary data
+ * back via [getSplitLaunchData]. Note: there should be only one "initial" field and one "second"
+ * field set, with the rest remaining null. (Exception: [Intent] and [UserHandle] are always passed
+ * in together as a set, and are converted to a single [PendingIntent] or
+ * [ShortcutInfo]+[PendingIntent] before launch.)
+ *
  * [SplitLaunchType] indicates the type of tasks/apps/intents being launched given the provided
  * state
  */
-class SplitSelectDataHolder(
-        val context: Context
-) {
+class SplitSelectDataHolder(var context: Context?) {
     val TAG = SplitSelectDataHolder::class.simpleName
 
     /**
-     * Order of the constant indicates the order of which task/app was selected.
-     * Ex. SPLIT_TASK_SHORTCUT means primary split app identified by task, secondary is shortcut
+     * Order of the constant indicates the order of which task/app was selected. Ex.
+     * SPLIT_TASK_SHORTCUT means primary split app identified by task, secondary is shortcut
      * SPLIT_SHORTCUT_TASK means primary split app is determined by shortcut, secondary is task
      */
     companion object {
-        @IntDef(SPLIT_TASK_TASK, SPLIT_TASK_PENDINGINTENT, SPLIT_TASK_SHORTCUT,
-                SPLIT_PENDINGINTENT_TASK, SPLIT_PENDINGINTENT_PENDINGINTENT, SPLIT_SHORTCUT_TASK,
-                SPLIT_SINGLE_TASK_FULLSCREEN, SPLIT_SINGLE_INTENT_FULLSCREEN,
-                SPLIT_SINGLE_SHORTCUT_FULLSCREEN)
+        @IntDef(
+            SPLIT_TASK_TASK,
+            SPLIT_TASK_PENDINGINTENT,
+            SPLIT_TASK_SHORTCUT,
+            SPLIT_PENDINGINTENT_TASK,
+            SPLIT_PENDINGINTENT_PENDINGINTENT,
+            SPLIT_SHORTCUT_TASK,
+            SPLIT_SINGLE_TASK_FULLSCREEN,
+            SPLIT_SINGLE_INTENT_FULLSCREEN,
+            SPLIT_SINGLE_SHORTCUT_FULLSCREEN
+        )
         @Retention(AnnotationRetention.SOURCE)
         annotation class SplitLaunchType
 
@@ -80,30 +88,39 @@ class SplitSelectDataHolder(
         const val SPLIT_SINGLE_SHORTCUT_FULLSCREEN = 8
     }
 
+    @StagePosition private var initialStagePosition: Int = STAGE_POSITION_UNDEFINED
+    private var itemInfo: ItemInfo? = null
+    private var secondItemInfo: ItemInfo? = null
+    private var splitEvent: EventEnum? = null
 
-    @StagePosition
-    private var initialStagePosition: Int = STAGE_POSITION_UNDEFINED
     private var initialTaskId: Int = INVALID_TASK_ID
     private var secondTaskId: Int = INVALID_TASK_ID
-    private var initialUser: UserHandle? = null
-    private var secondUser: UserHandle? = null
     private var initialIntent: Intent? = null
     private var secondIntent: Intent? = null
+    private var widgetSecondIntent: Intent? = null
+    private var initialUser: UserHandle? = null
+    private var secondUser: UserHandle? = null
+    private var initialPendingIntent: PendingIntent? = null
     private var secondPendingIntent: PendingIntent? = null
-    private var itemInfo: ItemInfo? = null
-    private var splitEvent: EventEnum? = null
     private var initialShortcut: ShortcutInfo? = null
     private var secondShortcut: ShortcutInfo? = null
-    private var initialPendingIntent: PendingIntent? = null
+
+    fun onDestroy() {
+        context = null
+    }
 
     /**
      * @param alreadyRunningTask if set to [android.app.ActivityTaskManager.INVALID_TASK_ID]
-     * then @param intent will be used to launch the initial task
+     *   then @param intent will be used to launch the initial task
      * @param intent will be ignored if @param alreadyRunningTask is set
      */
-    fun setInitialTaskSelect(intent: Intent?, @StagePosition stagePosition: Int,
-                             itemInfo: ItemInfo?, splitEvent: EventEnum?,
-                             alreadyRunningTask: Int) {
+    fun setInitialTaskSelect(
+        intent: Intent?,
+        @StagePosition stagePosition: Int,
+        itemInfo: ItemInfo?,
+        splitEvent: EventEnum?,
+        alreadyRunningTask: Int
+    ) {
         if (alreadyRunningTask != INVALID_TASK_ID) {
             initialTaskId = alreadyRunningTask
         } else {
@@ -117,15 +134,21 @@ class SplitSelectDataHolder(
      * To be called after first task selected from using a split shortcut from the fullscreen
      * running app.
      */
-    fun setInitialTaskSelect(info: RunningTaskInfo,
-                             @StagePosition stagePosition: Int, itemInfo: ItemInfo?,
-                             splitEvent: EventEnum?) {
+    fun setInitialTaskSelect(
+        info: RunningTaskInfo,
+        @StagePosition stagePosition: Int,
+        itemInfo: ItemInfo?,
+        splitEvent: EventEnum?
+    ) {
         initialTaskId = info.taskId
         setInitialData(stagePosition, splitEvent, itemInfo)
     }
 
-    private fun setInitialData(@StagePosition stagePosition: Int,
-                               event: EventEnum?, item: ItemInfo?) {
+    private fun setInitialData(
+        @StagePosition stagePosition: Int,
+        event: EventEnum?,
+        item: ItemInfo?
+    ) {
         itemInfo = item
         initialStagePosition = stagePosition
         splitEvent = event
@@ -133,41 +156,58 @@ class SplitSelectDataHolder(
 
     /**
      * To be called as soon as user selects the second task (even if animations aren't complete)
+     *
      * @param taskId The second task that will be launched.
      */
-    fun setSecondTask(taskId: Int) {
+    fun setSecondTask(taskId: Int, itemInfo: ItemInfo) {
         secondTaskId = taskId
+        secondItemInfo = itemInfo
     }
 
     /**
      * To be called as soon as user selects the second app (even if animations aren't complete)
+     *
      * @param intent The second intent that will be launched.
      * @param user The user of that intent.
      */
-    fun setSecondTask(intent: Intent, user: UserHandle) {
+    fun setSecondTask(intent: Intent, user: UserHandle, itemInfo: ItemInfo) {
         secondIntent = intent
         secondUser = user
+        secondItemInfo = itemInfo
     }
 
     /**
-     * To be called as soon as user selects the second app (even if animations aren't complete)
-     * Sets [secondUser] from that of the pendingIntent
+     * To be called as soon as user selects the second app (even if animations aren't complete) Sets
+     * [secondUser] from that of the pendingIntent
+     *
      * @param pendingIntent The second PendingIntent that will be launched.
      */
-    fun setSecondTask(pendingIntent: PendingIntent) {
+    fun setSecondTask(pendingIntent: PendingIntent, itemInfo: ItemInfo) {
         secondPendingIntent = pendingIntent
-        secondUser = pendingIntent.creatorUserHandle!!
+        secondUser = pendingIntent.creatorUserHandle
+        secondItemInfo = itemInfo
+    }
+
+    /**
+     * Similar to [setSecondTask] except this is to be called for widgets which can pass through an
+     * extra intent from their RemoteResponse. See
+     * [android.widget.RemoteViews.RemoteResponse.getLaunchOptions].first
+     */
+    fun setSecondWidget(pendingIntent: PendingIntent, widgetIntent: Intent?, itemInfo: ItemInfo) {
+        setSecondTask(pendingIntent, itemInfo)
+        widgetSecondIntent = widgetIntent
     }
 
     private fun getShortcutInfo(intent: Intent?, user: UserHandle?): ShortcutInfo? {
-        if (intent?.getPackage() == null) {
-            return null
-        }
-        val shortcutId = intent.getStringExtra(ShortcutKey.EXTRA_SHORTCUT_ID)
-                ?: return null
+        val intentPackage = intent?.getPackage() ?: return null
+        val shortcutId = intent.getStringExtra(ShortcutKey.EXTRA_SHORTCUT_ID) ?: return null
         try {
-            val context: Context = context.createPackageContextAsUser(
-                    intent.getPackage(), 0 /* flags */, user)
+            val context: Context =
+                if (user != null) {
+                    context!!.createPackageContextAsUser(intentPackage, 0 /* flags */, user)
+                } else {
+                    context!!.createPackageContext(intentPackage, 0 /* *flags */)
+                }
             return ShortcutInfo.Builder(context, shortcutId).build()
         } catch (e: PackageManager.NameNotFoundException) {
             Log.w(TAG, "Failed to create a ShortcutInfo for " + intent.getPackage())
@@ -175,9 +215,7 @@ class SplitSelectDataHolder(
         return null
     }
 
-    /**
-     * Converts intents to pendingIntents, associating the [user] with the intent if provided
-     */
+    /** Converts intents to pendingIntents, associating the [user] with the intent if provided */
     private fun getPendingIntent(intent: Intent?, user: UserHandle?): PendingIntent? {
         if (intent != initialIntent && intent != secondIntent) {
             throw IllegalStateException("Invalid intent to convert to PendingIntent")
@@ -186,12 +224,21 @@ class SplitSelectDataHolder(
         return if (intent == null) {
             null
         } else if (user != null) {
-            PendingIntent.getActivityAsUser(context, 0, intent,
-                    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT,
-                    null /* options */, user)
+            PendingIntent.getActivityAsUser(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT,
+                null /* options */,
+                user
+            )
         } else {
-            PendingIntent.getActivity(context, 0, intent,
-                    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT)
+            PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
+            )
         }
     }
 
@@ -199,7 +246,7 @@ class SplitSelectDataHolder(
      * @return [SplitLaunchData] with the necessary fields populated as determined by
      *   [SplitLaunchData.splitLaunchType]. This is to be used for launching splitscreen
      */
-    fun getSplitLaunchData() : SplitLaunchData {
+    fun getSplitLaunchData(): SplitLaunchData {
         // Convert all intents to shortcut infos to see if determine if we launch shortcut or intent
         convertIntentsToFinalTypes()
         val splitLaunchType = getSplitLaunchType()
@@ -216,28 +263,30 @@ class SplitSelectDataHolder(
      *   [SplitLaunchData.splitLaunchType]. This is to be used for launching an initially selected
      *   split task in fullscreen
      */
-    fun getFullscreenLaunchData() : SplitLaunchData {
-        // Convert all intents to shortcut infos to see if determine if we launch shortcut or intent
+    fun getFullscreenLaunchData(): SplitLaunchData {
+        // Convert all intents to shortcut infos to determine if we launch shortcut or intent
         convertIntentsToFinalTypes()
         val splitLaunchType = getFullscreenLaunchType()
 
         return generateSplitLaunchData(splitLaunchType)
     }
 
-    private fun generateSplitLaunchData(@SplitLaunchType splitLaunchType: Int) : SplitLaunchData {
+    private fun generateSplitLaunchData(@SplitLaunchType splitLaunchType: Int): SplitLaunchData {
         return SplitLaunchData(
-                splitLaunchType,
-                initialTaskId,
-                secondTaskId,
-                initialPendingIntent,
-                secondPendingIntent,
-                initialUser?.identifier ?: -1,
-                secondUser?.identifier ?: -1,
-                initialShortcut,
-                secondShortcut,
-                itemInfo,
-                splitEvent,
-                initialStagePosition)
+            splitLaunchType,
+            initialTaskId,
+            secondTaskId,
+            initialPendingIntent,
+            secondPendingIntent,
+            widgetSecondIntent,
+            initialUser?.identifier ?: -1,
+            secondUser?.identifier ?: -1,
+            initialShortcut,
+            secondShortcut,
+            itemInfo,
+            splitEvent,
+            initialStagePosition
+        )
     }
 
     /**
@@ -247,7 +296,7 @@ class SplitSelectDataHolder(
      * Note that both [initialIntent] and [secondIntent] will be nullified on method return
      *
      * One caveat is that if [secondPendingIntent] is set, we will use that and *not* attempt to
-     * convert [secondIntent]
+     * convert [secondIntent]. This also leaves [widgetSecondIntent] untouched.
      */
     private fun convertIntentsToFinalTypes() {
         initialShortcut = getShortcutInfo(initialIntent, initialUser)
@@ -270,8 +319,8 @@ class SplitSelectDataHolder(
     }
 
     /**
-     * Only valid data fields at this point should be tasks, shortcuts, or pendingIntents
-     * Intents need to be converted in [convertIntentsToFinalTypes] prior to calling this method
+     * Only valid data fields at this point should be tasks, shortcuts, or pendingIntents Intents
+     * need to be converted in [convertIntentsToFinalTypes] prior to calling this method
      */
     @VisibleForTesting
     @SplitLaunchType
@@ -327,39 +376,40 @@ class SplitSelectDataHolder(
     }
 
     data class SplitLaunchData(
-            @SplitLaunchType
-            val splitLaunchType: Int,
-            var initialTaskId: Int = INVALID_TASK_ID,
-            var secondTaskId: Int = INVALID_TASK_ID,
-            var initialPendingIntent: PendingIntent? = null,
-            var secondPendingIntent: PendingIntent? = null,
-            var initialUserId: Int = -1,
-            var secondUserId: Int = -1,
-            var initialShortcut: ShortcutInfo? = null,
-            var secondShortcut: ShortcutInfo? = null,
-            var itemInfo: ItemInfo? = null,
-            var splitEvent: EventEnum? = null,
-            val initialStagePosition: Int = STAGE_POSITION_UNDEFINED
+        @SplitLaunchType val splitLaunchType: Int,
+        var initialTaskId: Int = INVALID_TASK_ID,
+        var secondTaskId: Int = INVALID_TASK_ID,
+        var initialPendingIntent: PendingIntent? = null,
+        var secondPendingIntent: PendingIntent? = null,
+        var widgetSecondIntent: Intent? = null,
+        var initialUserId: Int = -1,
+        var secondUserId: Int = -1,
+        var initialShortcut: ShortcutInfo? = null,
+        var secondShortcut: ShortcutInfo? = null,
+        var itemInfo: ItemInfo? = null,
+        var splitEvent: EventEnum? = null,
+        val initialStagePosition: Int = STAGE_POSITION_UNDEFINED
     )
 
     /**
-     * @return `true` if first task has been selected and waiting for the second task to be
-     * chosen
+     * @return `true` if first task has been selected and waiting for the second task to be chosen
      */
     fun isSplitSelectActive(): Boolean {
         return isInitialTaskIntentSet() && !isSecondTaskIntentSet()
     }
 
     /**
-     * @return `true` if the first and second task have been chosen and split is waiting to
-     * be launched
+     * @return `true` if the first and second task have been chosen and split is waiting to be
+     *   launched
      */
     fun isBothSplitAppsConfirmed(): Boolean {
         return isInitialTaskIntentSet() && isSecondTaskIntentSet()
     }
 
     private fun isInitialTaskIntentSet(): Boolean {
-        return initialTaskId != INVALID_TASK_ID || initialIntent != null
+        return initialTaskId != INVALID_TASK_ID ||
+            initialIntent != null ||
+            initialPendingIntent != null
     }
 
     fun getInitialTaskId(): Int {
@@ -370,9 +420,26 @@ class SplitSelectDataHolder(
         return secondTaskId
     }
 
+    fun getSplitEvent(): EventEnum? {
+        return splitEvent
+    }
+
+    fun getInitialStagePosition(): Int {
+        return initialStagePosition
+    }
+
+    fun getItemInfo(): ItemInfo? {
+        return itemInfo
+    }
+
+    fun getSecondItemInfo(): ItemInfo? {
+        return secondItemInfo
+    }
+
     private fun isSecondTaskIntentSet(): Boolean {
-        return secondTaskId != INVALID_TASK_ID || secondIntent != null
-                || secondPendingIntent != null
+        return secondTaskId != INVALID_TASK_ID ||
+            secondIntent != null ||
+            secondPendingIntent != null
     }
 
     fun resetState() {
@@ -383,6 +450,7 @@ class SplitSelectDataHolder(
         secondUser = null
         initialIntent = null
         secondIntent = null
+        initialPendingIntent = null
         secondPendingIntent = null
         itemInfo = null
         splitEvent = null
@@ -391,7 +459,7 @@ class SplitSelectDataHolder(
     }
 
     fun dump(prefix: String, writer: PrintWriter) {
-        writer.println("$prefix ${javaClass.simpleName}")
+        writer.println("$prefix SplitSelectDataHolder")
         writer.println("$prefix\tinitialStagePosition= $initialStagePosition")
         writer.println("$prefix\tinitialTaskId= $initialTaskId")
         writer.println("$prefix\tsecondTaskId= $secondTaskId")

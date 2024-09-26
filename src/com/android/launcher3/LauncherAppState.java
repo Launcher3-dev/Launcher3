@@ -17,51 +17,55 @@
 package com.android.launcher3;
 
 import static android.app.admin.DevicePolicyManager.ACTION_DEVICE_POLICY_RESOURCE_UPDATED;
+import static android.content.Context.RECEIVER_EXPORTED;
 
+import static com.android.launcher3.Flags.enableSmartspaceRemovalToggle;
 import static com.android.launcher3.LauncherPrefs.ICON_STATE;
 import static com.android.launcher3.LauncherPrefs.THEMED_ICONS;
+import static com.android.launcher3.model.LoaderTask.SMARTSPACE_ON_HOME_SCREEN;
 import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 import static com.android.launcher3.util.SettingsCache.NOTIFICATION_BADGING_URI;
+import static com.android.launcher3.util.SettingsCache.PRIVATE_SPACE_HIDE_WHEN_LOCKED_URI;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.LauncherApps;
+import android.content.pm.LauncherApps.ArchiveCompatibilityParams;
 import android.os.UserHandle;
 import android.util.Log;
-import android.util.SparseArray;
-import android.widget.RemoteViews;
 
-import androidx.annotation.GuardedBy;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.os.BuildCompat;
 
-import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.graphics.IconShape;
 import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.icons.IconProvider;
 import com.android.launcher3.icons.LauncherIconProvider;
 import com.android.launcher3.icons.LauncherIcons;
+import com.android.launcher3.model.ModelLauncherCallbacks;
 import com.android.launcher3.notification.NotificationListener;
 import com.android.launcher3.pm.InstallSessionHelper;
 import com.android.launcher3.pm.InstallSessionTracker;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.util.LockedUserState;
 import com.android.launcher3.util.MainThreadInitializedObject;
+import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.util.SettingsCache;
 import com.android.launcher3.util.SimpleBroadcastReceiver;
 import com.android.launcher3.util.Themes;
+import com.android.launcher3.util.TraceHelper;
 import com.android.launcher3.widget.custom.CustomWidgetManager;
 
 public class LauncherAppState implements SafeCloseable {
 
     public static final String ACTION_FORCE_ROLOAD = "force-reload-launcher";
-    public static final String KEY_ICON_STATE = "pref_icon_shape_path";
 
     // We do not need any synchronization for this variable as its only written on UI thread.
     public static final MainThreadInitializedObject<LauncherAppState> INSTANCE =
@@ -72,59 +76,79 @@ public class LauncherAppState implements SafeCloseable {
     private final LauncherIconProvider mIconProvider;
     private final IconCache mIconCache;
     private final InvariantDeviceProfile mInvariantDeviceProfile;
+    private boolean mIsSafeModeEnabled;
+
     private final RunnableList mOnTerminateCallback = new RunnableList();
 
-    // WORKAROUND: b/269335387 remove this after widget background listener is enabled
-    /* Array of RemoteViews cached by Launcher process */
-    @GuardedBy("itself")
-    @NonNull
-    public final SparseArray<RemoteViews> mCachedRemoteViews = new SparseArray<>();
-
-    public static LauncherAppState getInstance(final Context context) {
+    public static LauncherAppState getInstance(Context context) {
         return INSTANCE.get(context);
-    }
-
-    public static LauncherAppState getInstanceNoCreate() {
-        return INSTANCE.getNoCreate();
     }
 
     public Context getContext() {
         return mContext;
     }
 
+    @SuppressWarnings("NewApi")
     public LauncherAppState(Context context) {
         this(context, LauncherFiles.APP_ICONS_DB);
         Log.v(Launcher.TAG, "LauncherAppState initiated");
         Preconditions.assertUIThread();
 
+        mIsSafeModeEnabled = TraceHelper.allowIpcs("isSafeMode",
+                () -> context.getPackageManager().isSafeMode());
         mInvariantDeviceProfile.addOnChangeListener(modelPropertiesChanged -> {
             if (modelPropertiesChanged) {
                 refreshAndReloadLauncher();
             }
         });
 
-        mContext.getSystemService(LauncherApps.class).registerCallback(mModel);
+        ModelLauncherCallbacks callbacks = mModel.newModelCallbacks();
+        LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
+        launcherApps.registerCallback(callbacks);
+        mOnTerminateCallback.add(() ->
+                mContext.getSystemService(LauncherApps.class).unregisterCallback(callbacks));
+
+        if (BuildCompat.isAtLeastV() && Flags.enableSupportForArchiving()) {
+            ArchiveCompatibilityParams params = new ArchiveCompatibilityParams();
+            params.setEnableUnarchivalConfirmation(false);
+            launcherApps.setArchiveCompatibility(params);
+        }
 
         SimpleBroadcastReceiver modelChangeReceiver =
                 new SimpleBroadcastReceiver(mModel::onBroadcastIntent);
         modelChangeReceiver.register(mContext, Intent.ACTION_LOCALE_CHANGED,
-                Intent.ACTION_MANAGED_PROFILE_AVAILABLE,
-                Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE,
-                Intent.ACTION_MANAGED_PROFILE_UNLOCKED,
-                Intent.ACTION_PROFILE_INACCESSIBLE,
                 ACTION_DEVICE_POLICY_RESOURCE_UPDATED);
-        if (FeatureFlags.IS_STUDIO_BUILD) {
-            modelChangeReceiver.register(mContext, ACTION_FORCE_ROLOAD);
+        if (BuildConfig.IS_STUDIO_BUILD) {
+            mContext.registerReceiver(modelChangeReceiver, new IntentFilter(ACTION_FORCE_ROLOAD),
+                    RECEIVER_EXPORTED);
         }
         mOnTerminateCallback.add(() -> mContext.unregisterReceiver(modelChangeReceiver));
 
         SafeCloseable userChangeListener = UserCache.INSTANCE.get(mContext)
-                .addUserChangeListener(mModel::forceReload);
+                .addUserEventListener(mModel::onUserEvent);
         mOnTerminateCallback.add(userChangeListener::close);
 
+        if (enableSmartspaceRemovalToggle()) {
+            OnSharedPreferenceChangeListener firstPagePinnedItemListener =
+                    new OnSharedPreferenceChangeListener() {
+                        @Override
+                        public void onSharedPreferenceChanged(
+                                SharedPreferences sharedPreferences, String key) {
+                            if (SMARTSPACE_ON_HOME_SCREEN.equals(key)) {
+                                mModel.forceReload();
+                            }
+                        }
+                    };
+            LauncherPrefs.getPrefs(mContext).registerOnSharedPreferenceChangeListener(
+                    firstPagePinnedItemListener);
+            mOnTerminateCallback.add(() -> LauncherPrefs.getPrefs(mContext)
+                    .unregisterOnSharedPreferenceChangeListener(firstPagePinnedItemListener));
+        }
+
         LockedUserState.get(context).runOnUserUnlocked(() -> {
-            CustomWidgetManager.INSTANCE.get(mContext)
-                    .setWidgetRefreshCallback(mModel::refreshAndBindWidgetsAndShortcuts);
+            CustomWidgetManager cwm = CustomWidgetManager.INSTANCE.get(mContext);
+            cwm.setWidgetRefreshCallback(mModel::refreshAndBindWidgetsAndShortcuts);
+            mOnTerminateCallback.add(() -> cwm.setWidgetRefreshCallback(null));
 
             IconObserver observer = new IconObserver();
             SafeCloseable iconChangeTracker = mIconProvider.registerIconChangeListener(
@@ -147,6 +171,8 @@ public class LauncherAppState implements SafeCloseable {
         onNotificationSettingsChanged(settingsCache.getValue(NOTIFICATION_BADGING_URI));
         mOnTerminateCallback.add(() ->
                 settingsCache.unregister(NOTIFICATION_BADGING_URI, notificationLister));
+        // Register an observer to notify Launcher about Private Space settings toggle.
+        registerPrivateSpaceHideWhenLockListener(settingsCache);
     }
 
     public LauncherAppState(Context context, @Nullable String iconCacheFileName) {
@@ -157,8 +183,9 @@ public class LauncherAppState implements SafeCloseable {
         mIconCache = new IconCache(mContext, mInvariantDeviceProfile,
                 iconCacheFileName, mIconProvider);
         mModel = new LauncherModel(context, this, mIconCache, new AppFilter(mContext),
-                iconCacheFileName != null);
+                PackageManagerHelper.INSTANCE.get(context), iconCacheFileName != null);
         mOnTerminateCallback.add(mIconCache::close);
+        mOnTerminateCallback.add(mModel::destroy);
     }
 
     private void onNotificationSettingsChanged(boolean areNotificationDotsEnabled) {
@@ -168,8 +195,20 @@ public class LauncherAppState implements SafeCloseable {
         }
     }
 
+    private void registerPrivateSpaceHideWhenLockListener(SettingsCache settingsCache) {
+        SettingsCache.OnChangeListener psHideWhenLockChangedListener =
+                this::onPrivateSpaceHideWhenLockChanged;
+        settingsCache.register(PRIVATE_SPACE_HIDE_WHEN_LOCKED_URI, psHideWhenLockChangedListener);
+        mOnTerminateCallback.add(() -> settingsCache.unregister(PRIVATE_SPACE_HIDE_WHEN_LOCKED_URI,
+                psHideWhenLockChangedListener));
+    }
+
+    private void onPrivateSpaceHideWhenLockChanged(boolean isPrivateSpaceHideOnLockEnabled) {
+        mModel.forceReload();
+    }
+
     private void refreshAndReloadLauncher() {
-        LauncherIcons.clearPool();
+        LauncherIcons.clearPool(mContext);
         mIconCache.updateIconParams(
                 mInvariantDeviceProfile.fillResIconDpi, mInvariantDeviceProfile.iconBitmapSize);
         mModel.forceReload();
@@ -180,9 +219,6 @@ public class LauncherAppState implements SafeCloseable {
      */
     @Override
     public void close() {
-        mModel.destroy();
-        mContext.getSystemService(LauncherApps.class).unregisterCallback(mModel);
-        CustomWidgetManager.INSTANCE.get(mContext).setWidgetRefreshCallback(null);
         mOnTerminateCallback.executeAllAndDestroy();
     }
 
@@ -202,6 +238,10 @@ public class LauncherAppState implements SafeCloseable {
         return mInvariantDeviceProfile;
     }
 
+    public boolean isSafeModeEnabled() {
+        return mIsSafeModeEnabled;
+    }
+
     /**
      * Shorthand for {@link #getInvariantDeviceProfile()}
      */
@@ -219,7 +259,7 @@ public class LauncherAppState implements SafeCloseable {
 
         @Override
         public void onSystemIconStateChanged(String iconState) {
-            IconShape.init(mContext);
+            IconShape.INSTANCE.get(mContext).pickBestShape(mContext);
             refreshAndReloadLauncher();
             LauncherPrefs.get(mContext).put(ICON_STATE, iconState);
         }

@@ -33,6 +33,7 @@ import android.text.TextUtils;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.logging.StatsLogManager.LauncherEvent;
+import com.android.launcher3.util.MainThreadInitializedObject.SandboxContext;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -51,6 +52,13 @@ public class DeviceGridState implements Comparable<DeviceGridState> {
     private final int mNumHotseat;
     private final @DeviceType int mDeviceType;
     private final String mDbFile;
+
+    public DeviceGridState(int columns, int row, int numHotseat, int deviceType, String dbFile) {
+        mGridSizeString = String.format(Locale.ENGLISH, "%d,%d", columns, row);
+        mNumHotseat = numHotseat;
+        mDeviceType = deviceType;
+        mDbFile = dbFile;
+    }
 
     public DeviceGridState(InvariantDeviceProfile idp) {
         mGridSizeString = String.format(Locale.ENGLISH, "%d,%d", idp.numColumns, idp.numRows);
@@ -92,6 +100,9 @@ public class DeviceGridState implements Comparable<DeviceGridState> {
      * Stores the device state to shared preferences
      */
     public void writeToPrefs(Context context) {
+        if (context instanceof SandboxContext) {
+            return;
+        }
         LauncherPrefs.get(context).put(
                 WORKSPACE_SIZE.to(mGridSizeString),
                 HOTSEAT_COUNT.to(mNumHotseat),
@@ -145,11 +156,11 @@ public class DeviceGridState implements Comparable<DeviceGridState> {
     }
 
     public Integer getColumns() {
-        return Integer.parseInt(String.valueOf(mGridSizeString.charAt(0)));
+        return Integer.parseInt(String.valueOf(mGridSizeString.split(",")[0]));
     }
 
     public Integer getRows() {
-        return Integer.parseInt(String.valueOf(mGridSizeString.charAt(2)));
+        return Integer.parseInt(String.valueOf(mGridSizeString.split(",")[1]));
     }
 
     @Override

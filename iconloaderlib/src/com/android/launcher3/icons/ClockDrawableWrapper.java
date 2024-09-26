@@ -56,6 +56,8 @@ import java.util.function.IntFunction;
 @TargetApi(Build.VERSION_CODES.O)
 public class ClockDrawableWrapper extends AdaptiveIconDrawable implements BitmapInfo.Extender {
 
+    public static boolean sRunningInTest = false;
+
     private static final String TAG = "ClockDrawableWrapper";
 
     private static final boolean DISABLE_SECONDS = true;
@@ -477,7 +479,6 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
             if (!isVisible()) {
                 return;
             }
-
             unscheduleSelf(this);
             final long upTime = SystemClock.uptimeMillis();
             final long step = TICK_MS; /* tick every 200 ms */

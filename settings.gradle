@@ -5,3 +5,4 @@ project(':IconLoader').projectDir = new File(rootDir, 'iconloaderlib')
 //project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')
 
 include ':systemUIPluginCore'
+include ':animationlib'

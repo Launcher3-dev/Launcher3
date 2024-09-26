@@ -17,6 +17,7 @@ package com.android.quickstep.interaction;
 
 import android.app.Activity;
 
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -26,6 +27,15 @@ public abstract class GestureSandboxFragment extends Fragment {
     void onAttachedToWindow() {}
 
     void onDetachedFromWindow() {}
+
+    boolean canRecreateFragment() {
+        return false;
+    }
+
+    @Nullable
+    GestureSandboxFragment recreateFragment() {
+        return null;
+    }
 
     boolean shouldDisableSystemGestures() {
         return true;

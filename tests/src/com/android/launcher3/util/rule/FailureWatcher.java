@@ -8,10 +8,9 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.core.app.ApplicationProvider;
 import androidx.test.uiautomator.UiDevice;
 
-import com.android.app.viewcapture.ViewCapture;
+import com.android.app.viewcapture.data.ExportedData;
 import com.android.launcher3.tapl.LauncherInstrumentation;
 import com.android.launcher3.ui.AbstractLauncherUiTest;
 
@@ -24,22 +23,35 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class FailureWatcher extends TestWatcher {
     private static final String TAG = "FailureWatcher";
     private static boolean sSavedBugreport = false;
-    final private UiDevice mDevice;
+    private static Description sDescriptionForLastSavedArtifacts;
+
     private final LauncherInstrumentation mLauncher;
     @NonNull
-    private final ViewCapture mViewCapture;
+    private final Supplier<ExportedData> mViewCaptureDataSupplier;
 
-    public FailureWatcher(UiDevice device, LauncherInstrumentation launcher,
-            @NonNull ViewCapture viewCapture) {
-        mDevice = device;
+    public FailureWatcher(LauncherInstrumentation launcher,
+            @NonNull Supplier<ExportedData> viewCaptureDataSupplier) {
         mLauncher = launcher;
-        mViewCapture = viewCapture;
+        mViewCaptureDataSupplier = viewCaptureDataSupplier;
+    }
+
+    @Override
+    protected void starting(Description description) {
+        mLauncher.setOnFailure(() -> onError(mLauncher, description, mViewCaptureDataSupplier));
+        super.starting(description);
+    }
+
+    @Override
+    protected void finished(Description description) {
+        super.finished(description);
+        mLauncher.setOnFailure(null);
     }
 
     @Override
@@ -61,8 +73,9 @@ public class FailureWatcher extends TestWatcher {
                         throw new AssertionError(
                                 "Launcher received events not sent by the test. This may mean "
                                         + "that the touch screen of the lab device has sent false"
-                                        + " events. See the logcat for TaplEvents tag and look "
-                                        + "for events with deviceId != -1");
+                                        + " events. See the logcat for "
+                                        + "TaplEvents|LauncherEvents|TaplTarget tag and look for "
+                                        + "events with deviceId != -1");
                     }
                 }
             }
@@ -71,7 +84,7 @@ public class FailureWatcher extends TestWatcher {
 
     @Override
     protected void failed(Throwable e, Description description) {
-        onError(mLauncher, description, e, mViewCapture);
+        onError(mLauncher, description, mViewCaptureDataSupplier);
     }
 
     static File diagFile(Description description, String prefix, String ext) {
@@ -80,13 +93,18 @@ public class FailureWatcher extends TestWatcher {
                         + description.getMethodName() + "." + ext);
     }
 
-    public static void onError(LauncherInstrumentation launcher, Description description,
-            Throwable e) {
-        onError(launcher, description, e, null);
+    /** Action executed when an error condition is expected. Saves artifacts. */
+    public static void onError(LauncherInstrumentation launcher, Description description) {
+        onError(launcher, description, null);
     }
 
     private static void onError(LauncherInstrumentation launcher, Description description,
-            Throwable e, @Nullable ViewCapture viewCapture) {
+            @Nullable Supplier<ExportedData> viewCaptureDataSupplier) {
+        if (description.equals(sDescriptionForLastSavedArtifacts)) {
+            // This test has already saved its artifacts.
+            return;
+        }
+        sDescriptionForLastSavedArtifacts = description;
 
         final File sceenshot = diagFile(description, "TestScreenshot", "png");
         final File hierarchy = diagFile(description, "Hierarchy", "zip");
@@ -103,9 +121,10 @@ public class FailureWatcher extends TestWatcher {
             dumpCommand("cmd window dump-visible-window-views", out);
             out.closeEntry();
 
-            if (viewCapture != null) {
+            if (viewCaptureDataSupplier != null) {
                 out.putNextEntry(new ZipEntry("FS/data/misc/wmtrace/failed_test.vc"));
-                viewCapture.dumpTo(out, ApplicationProvider.getApplicationContext());
+                final ExportedData exportedData = viewCaptureDataSupplier.get();
+                if (exportedData != null) exportedData.writeTo(out);
                 out.closeEntry();
             }
         } catch (Exception ignored) {
@@ -114,7 +133,7 @@ public class FailureWatcher extends TestWatcher {
         Log.e(TAG, "Failed test " + description.getMethodName()
                 + ",\nscreenshot will be saved to " + sceenshot
                 + ",\nUI dump at: " + hierarchy
-                + " (use go/web-hv to open the dump file)", e);
+                + " (use go/web-hv to open the dump file)");
         final UiDevice device = launcher.getDevice();
         device.takeScreenshot(sceenshot);
 
@@ -124,8 +143,6 @@ public class FailureWatcher extends TestWatcher {
         } catch (IOException ex) {
             Log.e(TAG, "Failed to save accessibility hierarchy", ex);
         }
-
-        dumpCommand("logcat -d -s TestRunner", diagFile(description, "FilteredLogcat", "txt"));
 
         // Dump bugreport
         if (!sSavedBugreport) {

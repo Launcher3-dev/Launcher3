@@ -15,9 +15,12 @@
  */
 package com.android.quickstep.util;
 
+import static com.android.launcher3.Flags.enableScalingRevealHomeAnimation;
+
 import android.app.WallpaperManager;
 import android.os.IBinder;
 import android.util.FloatProperty;
+import android.util.Log;
 import android.view.AttachedSurfaceControl;
 import android.view.SurfaceControl;
 
@@ -32,6 +35,9 @@ import com.android.systemui.shared.system.BlurUtils;
  * Utility class for applying depth effect
  */
 public class BaseDepthController {
+    public static final float DEPTH_0_PERCENT = 0f;
+    public static final float DEPTH_60_PERCENT = 0.6f;
+    public static final float DEPTH_70_PERCENT = 0.7f;
 
     private static final FloatProperty<BaseDepthController> DEPTH =
             new FloatProperty<BaseDepthController>("depth") {
@@ -49,6 +55,9 @@ public class BaseDepthController {
     private static final int DEPTH_INDEX_STATE_TRANSITION = 0;
     private static final int DEPTH_INDEX_WIDGET = 1;
     private static final int DEPTH_INDEX_COUNT = 2;
+
+    // b/291401432
+    private static final String TAG = "BaseDepthController";
 
     protected final Launcher mLauncher;
     /** Property to set the depth for state transition. */
@@ -88,7 +97,7 @@ public class BaseDepthController {
      */
     protected boolean mInEarlyWakeUp;
 
-    private boolean mWaitingOnSurfaceValidity;
+    protected boolean mWaitingOnSurfaceValidity;
 
     public BaseDepthController(Launcher activity) {
         mLauncher = activity;
@@ -123,19 +132,25 @@ public class BaseDepthController {
         float depth = mDepth;
         IBinder windowToken = mLauncher.getRootView().getWindowToken();
         if (windowToken != null) {
-            // The API's full zoom-out is three times larger than the zoom-out we apply to the
-            // icons. To keep the two consistent throughout the animation while keeping Launcher's
-            // concept of full depth unchanged, we divide the depth by 3 here.
-            mWallpaperManager.setWallpaperZoomOut(windowToken, depth / 3);
+            if (enableScalingRevealHomeAnimation()) {
+                mWallpaperManager.setWallpaperZoomOut(windowToken, depth);
+            } else {
+                // The API's full zoom-out is three times larger than the zoom-out we apply to the
+                // icons. To keep the two consistent throughout the animation while keeping
+                // Launcher's concept of full depth unchanged, we divide the depth by 3 here.
+                mWallpaperManager.setWallpaperZoomOut(windowToken, depth / 3);
+            }
         }
 
         if (!BlurUtils.supportsBlursOnWindows()) {
             return;
         }
         if (mSurface == null) {
+            Log.d(TAG, "mSurface is null and mCurrentBlur is: " + mCurrentBlur);
             return;
         }
         if (!mSurface.isValid()) {
+            Log.d(TAG, "mSurface is not valid");
             mWaitingOnSurfaceValidity = true;
             onInvalidSurface();
             return;
@@ -144,8 +159,15 @@ public class BaseDepthController {
         boolean hasOpaqueBg = mLauncher.getScrimView().isFullyOpaque();
         boolean isSurfaceOpaque = !mHasContentBehindLauncher && hasOpaqueBg && !mPauseBlurs;
 
+        float blurAmount;
+        if (enableScalingRevealHomeAnimation()) {
+            blurAmount = mapDepthToBlur(depth);
+        } else {
+            blurAmount = depth;
+        }
         mCurrentBlur = !mCrossWindowBlursEnabled || hasOpaqueBg || mPauseBlurs
-                ? 0 : (int) (depth * mMaxBlurRadius);
+                ? 0 : (int) (blurAmount * mMaxBlurRadius);
+
         SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()
                 .setBackgroundBlurRadius(mSurface, mCurrentBlur)
                 .setOpaque(mSurface, isSurfaceOpaque);
@@ -186,7 +208,17 @@ public class BaseDepthController {
     protected void setSurface(SurfaceControl surface) {
         if (mSurface != surface || mWaitingOnSurfaceValidity) {
             mSurface = surface;
+            Log.d(TAG, "setSurface:\n\tmWaitingOnSurfaceValidity: " + mWaitingOnSurfaceValidity
+                    + "\n\tmSurface: " + mSurface);
             applyDepthAndBlur();
         }
+    }
+
+    /**
+     * Maps depth values to blur amounts as a percentage of the max blur.
+     * The blur percentage grows linearly with depth, and maxes out at 30% depth.
+     */
+    private static float mapDepthToBlur(float depth) {
+        return Math.min(3 * depth, 1f);
     }
 }

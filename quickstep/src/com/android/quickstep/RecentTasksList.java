@@ -16,20 +16,22 @@
 
 package com.android.quickstep;
 
+import static android.content.Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
+
 import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
-import static com.android.quickstep.views.DesktopTaskView.DESKTOP_IS_PROTO2_ENABLED;
+import static com.android.quickstep.util.SplitScreenUtils.convertShellSplitBoundsToLauncher;
+import static com.android.window.flags.Flags.enableDesktopWindowingMode;
 import static com.android.wm.shell.util.GroupedRecentTaskInfo.TYPE_FREEFORM;
 
-import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.app.TaskInfo;
 import android.content.ComponentName;
-import android.os.Build;
 import android.os.Process;
 import android.os.RemoteException;
 import android.util.SparseBooleanArray;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.launcher3.util.LooperExecutor;
@@ -39,11 +41,11 @@ import com.android.quickstep.util.GroupTask;
 import com.android.systemui.shared.recents.model.Task;
 import com.android.wm.shell.recents.IRecentTasksListener;
 import com.android.wm.shell.util.GroupedRecentTaskInfo;
-import com.android.wm.shell.util.SplitBounds;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -51,7 +53,6 @@ import java.util.stream.Collectors;
 /**
  * Manages the recent task list from the system, caching it as necessary.
  */
-@TargetApi(Build.VERSION_CODES.R)
 public class RecentTasksList {
 
     private static final TaskLoadResult INVALID_RESULT = new TaskLoadResult(-1, false, 0);
@@ -74,7 +75,7 @@ public class RecentTasksList {
     private ArrayList<ActivityManager.RunningTaskInfo> mRunningTasks;
 
     public RecentTasksList(LooperExecutor mainThreadExecutor, KeyguardManager keyguardManager,
-            SystemUiProxy sysUiProxy) {
+            SystemUiProxy sysUiProxy, TopTaskTracker topTaskTracker) {
         mMainThreadExecutor = mainThreadExecutor;
         mKeyguardManager = keyguardManager;
         mChangeId = 1;
@@ -96,6 +97,20 @@ public class RecentTasksList {
             public void onRunningTaskVanished(ActivityManager.RunningTaskInfo taskInfo) {
                 mMainThreadExecutor.execute(() -> {
                     RecentTasksList.this.onRunningTaskVanished(taskInfo);
+                });
+            }
+
+            @Override
+            public void onRunningTaskChanged(ActivityManager.RunningTaskInfo taskInfo) {
+                mMainThreadExecutor.execute(() -> {
+                    RecentTasksList.this.onRunningTaskChanged(taskInfo);
+                });
+            }
+
+            @Override
+            public void onTaskMovedToFront(ActivityManager.RunningTaskInfo taskInfo) {
+                mMainThreadExecutor.execute(() -> {
+                    topTaskTracker.onTaskMovedToFront(taskInfo);
                 });
             }
         });
@@ -127,11 +142,11 @@ public class RecentTasksList {
      * Asynchronously fetches the list of recent tasks, reusing cached list if available.
      *
      * @param loadKeysOnly Whether to load other associated task data, or just the key
-     * @param callback The callback to receive the list of recent tasks
+     * @param callback     The callback to receive the list of recent tasks
      * @return The change id of the current task list
      */
     public synchronized int getTasks(boolean loadKeysOnly,
-            Consumer<ArrayList<GroupTask>> callback, Predicate<GroupTask> filter) {
+            @Nullable Consumer<List<GroupTask>> callback, Predicate<GroupTask> filter) {
         final int requestLoadId = mChangeId;
         if (mResultsUi.isValidForRequest(requestLoadId, loadKeysOnly)) {
             // The list is up to date, send the callback on the next frame,
@@ -192,7 +207,7 @@ public class RecentTasksList {
         mChangeId++;
     }
 
-     /**
+    /**
      * Registers a listener for running tasks
      */
     public void registerRunningTasksListener(RecentsModel.RunningTasksListener listener) {
@@ -245,6 +260,20 @@ public class RecentTasksList {
         }
     }
 
+    private void onRunningTaskChanged(ActivityManager.RunningTaskInfo taskInfo) {
+        // Find the task from the list of running tasks, if it exists
+        for (ActivityManager.RunningTaskInfo existingTask : mRunningTasks) {
+            if (existingTask.taskId != taskInfo.taskId) continue;
+
+            mRunningTasks.remove(existingTask);
+            mRunningTasks.add(taskInfo);
+            if (mRunningTasksListener != null) {
+                mRunningTasksListener.onRunningTasksChanged();
+            }
+            return;
+        }
+    }
+
     /**
      * Loads and creates a list of all the recent tasks.
      */
@@ -269,10 +298,15 @@ public class RecentTasksList {
 
         TaskLoadResult allTasks = new TaskLoadResult(requestId, loadKeysOnly, rawTasks.size());
 
+        int numVisibleTasks = 0;
         for (GroupedRecentTaskInfo rawTask : rawTasks) {
-            if (DESKTOP_IS_PROTO2_ENABLED && rawTask.getType() == TYPE_FREEFORM) {
-                GroupTask desktopTask = createDesktopTask(rawTask);
-                allTasks.add(desktopTask);
+            if (rawTask.getType() == TYPE_FREEFORM) {
+                // TYPE_FREEFORM tasks is only created when enableDesktopWindowingMode() is true,
+                // leftover TYPE_FREEFORM tasks created when flag was on should be ignored.
+                if (enableDesktopWindowingMode()) {
+                    GroupTask desktopTask = createDesktopTask(rawTask);
+                    allTasks.add(desktopTask);
+                }
                 continue;
             }
             ActivityManager.RecentTaskInfo taskInfo1 = rawTask.getTaskInfo1();
@@ -285,15 +319,30 @@ public class RecentTasksList {
             task1.setLastSnapshotData(taskInfo1);
             Task task2 = null;
             if (taskInfo2 != null) {
+                // Is split task
                 Task.TaskKey task2Key = new Task.TaskKey(taskInfo2);
                 task2 = loadKeysOnly
                         ? new Task(task2Key)
                         : Task.from(task2Key, taskInfo2,
                                 tmpLockedUsers.get(task2Key.userId) /* isLocked */);
                 task2.setLastSnapshotData(taskInfo2);
+            } else {
+                // Is fullscreen task
+                if (numVisibleTasks > 0) {
+                    boolean isExcluded = (taskInfo1.baseIntent.getFlags()
+                            & FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) != 0;
+                    if (taskInfo1.isTopActivityTransparent && isExcluded) {
+                        // If there are already visible tasks, then ignore the excluded tasks and
+                        // don't add them to the returned list
+                        continue;
+                    }
+                }
+            }
+            if (taskInfo1.isVisible) {
+                numVisibleTasks++;
             }
             final SplitConfigurationOptions.SplitBounds launcherSplitBounds =
-                    convertSplitBounds(rawTask.getSplitBounds());
+                    convertShellSplitBoundsToLauncher(rawTask.getSplitBounds());
             allTasks.add(new GroupTask(task1, task2, launcherSplitBounds));
         }
 
@@ -308,19 +357,9 @@ public class RecentTasksList {
             task.setLastSnapshotData(taskInfo);
             task.positionInParent = taskInfo.positionInParent;
             task.appBounds = taskInfo.configuration.windowConfiguration.getAppBounds();
-            // TODO(b/244348395): tasks should be sorted from oldest to most recently used
             tasks.add(task);
         }
         return new DesktopTask(tasks);
-    }
-
-    private SplitConfigurationOptions.SplitBounds convertSplitBounds(
-            SplitBounds shellSplitBounds) {
-        return shellSplitBounds == null ?
-                null :
-                new SplitConfigurationOptions.SplitBounds(
-                        shellSplitBounds.leftTopBounds, shellSplitBounds.rightBottomBounds,
-                        shellSplitBounds.leftTopTaskId, shellSplitBounds.rightBottomTaskId);
     }
 
     private ArrayList<GroupTask> copyOf(ArrayList<GroupTask> tasks) {
@@ -363,7 +402,8 @@ public class RecentTasksList {
         writer.println(prefix + "  ]");
     }
 
-    private static class TaskLoadResult extends ArrayList<GroupTask> {
+    @VisibleForTesting
+    static class TaskLoadResult extends ArrayList<GroupTask> {
 
         final int mRequestId;
 

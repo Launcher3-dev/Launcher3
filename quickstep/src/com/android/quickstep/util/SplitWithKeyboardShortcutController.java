@@ -16,7 +16,7 @@
 
 package com.android.quickstep.util;
 
-import static com.android.launcher3.config.FeatureFlags.ENABLE_SPLIT_FROM_FULLSCREEN_WITH_KEYBOARD_SHORTCUTS;
+import static com.android.launcher3.config.FeatureFlags.enableSplitContextually;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_KEYBOARD_SHORTCUT_SPLIT_LEFT_TOP;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_KEYBOARD_SHORTCUT_SPLIT_RIGHT_BOTTOM;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
@@ -27,21 +27,16 @@ import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_POSITIO
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.ActivityManager;
-import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.SystemClock;
-import android.os.UserHandle;
-import android.view.View;
 
 import androidx.annotation.BinderThread;
 
-import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.PendingAnimation;
-import com.android.launcher3.model.data.WorkspaceItemInfo;
+import com.android.launcher3.taskbar.LauncherTaskbarUIController;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
-import com.android.quickstep.OverviewCommandHelper;
 import com.android.quickstep.OverviewComponentObserver;
 import com.android.quickstep.RecentsAnimationCallbacks;
 import com.android.quickstep.RecentsAnimationController;
@@ -49,6 +44,7 @@ import com.android.quickstep.RecentsAnimationDeviceState;
 import com.android.quickstep.RecentsAnimationTargets;
 import com.android.quickstep.RecentsModel;
 import com.android.quickstep.SystemUiProxy;
+import com.android.quickstep.TopTaskTracker;
 import com.android.quickstep.views.FloatingTaskView;
 import com.android.quickstep.views.RecentsView;
 import com.android.systemui.shared.recents.model.Task;
@@ -59,19 +55,20 @@ public class SplitWithKeyboardShortcutController {
 
     private final QuickstepLauncher mLauncher;
     private final SplitSelectStateController mController;
+    private final RecentsAnimationDeviceState mDeviceState;
     private final OverviewComponentObserver mOverviewComponentObserver;
 
     private final int mSplitPlaceholderSize;
     private final int mSplitPlaceholderInset;
 
     public SplitWithKeyboardShortcutController(QuickstepLauncher launcher,
-            SplitSelectStateController controller) {
+            SplitSelectStateController controller,
+            OverviewComponentObserver overviewComponentObserver,
+            RecentsAnimationDeviceState deviceState) {
         mLauncher = launcher;
         mController = controller;
-        RecentsAnimationDeviceState deviceState = new RecentsAnimationDeviceState(
-                launcher.getApplicationContext());
-        mOverviewComponentObserver = new OverviewComponentObserver(launcher.getApplicationContext(),
-                deviceState);
+        mDeviceState = deviceState;
+        mOverviewComponentObserver = overviewComponentObserver;
 
         mSplitPlaceholderSize = mLauncher.getResources().getDimensionPixelSize(
                 R.dimen.split_placeholder_size);
@@ -81,7 +78,9 @@ public class SplitWithKeyboardShortcutController {
 
     @BinderThread
     public void enterStageSplit(boolean leftOrTop) {
-        if (!ENABLE_SPLIT_FROM_FULLSCREEN_WITH_KEYBOARD_SHORTCUTS.get()) {
+        if (!enableSplitContextually() ||
+                // Do not enter stage split from keyboard shortcuts if the user is already in split
+                TopTaskTracker.INSTANCE.get(mLauncher).getRunningSplitTaskIds().length == 2) {
             return;
         }
         RecentsAnimationCallbacks callbacks = new RecentsAnimationCallbacks(
@@ -103,6 +102,7 @@ public class SplitWithKeyboardShortcutController {
 
     public void onDestroy() {
         mOverviewComponentObserver.onDestroy();
+        mDeviceState.destroy();
     }
 
     private class SplitWithKeyboardShortcutRecentsAnimationListener implements
@@ -136,18 +136,14 @@ public class SplitWithKeyboardShortcutController {
             RectF startingTaskRect = new RectF();
             final FloatingTaskView floatingTaskView = FloatingTaskView.getFloatingTaskView(
                     mLauncher, mLauncher.getDragLayer(),
-                    controller.screenshotTask(runningTaskInfo.taskId).thumbnail,
+                    controller.screenshotTask(runningTaskInfo.taskId).getThumbnail(),
                     null /* icon */, startingTaskRect);
             RecentsModel.INSTANCE.get(mLauncher.getApplicationContext())
                     .getIconCache()
                     .updateIconInBackground(
                             Task.from(new Task.TaskKey(runningTaskInfo), runningTaskInfo,
                                     false /* isLocked */),
-                            (task) -> {
-                                if (task.thumbnail != null) {
-                                    floatingTaskView.setIcon(task.thumbnail.thumbnail);
-                                }
-                            });
+                            (task) -> floatingTaskView.setIcon(task.icon));
             floatingTaskView.setAlpha(1);
             floatingTaskView.addStagingAnimation(anim, startingTaskRect, mTempRect,
                     false /* fadeWithThumbnail */, true /* isStagedTask */);
@@ -156,10 +152,29 @@ public class SplitWithKeyboardShortcutController {
             anim.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationStart(Animator animation) {
-                    controller.finish(true /* toRecents */, null /* onFinishComplete */,
+                    controller.finish(
+                            true /* toRecents */,
+                            () -> {
+                                LauncherTaskbarUIController controller =
+                                        mLauncher.getTaskbarUIController();
+                                if (controller != null) {
+                                    controller.updateTaskbarLauncherStateGoingHome();
+                                }
+
+                            },
                             false /* sendUserLeaveHint */);
                 }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    mLauncher.getDragLayer().removeView(floatingTaskView);
+                    mController.getSplitAnimationController()
+                            .removeSplitInstructionsView(mLauncher);
+                    mController.resetState();
+                }
             });
+            anim.add(mController.getSplitAnimationController()
+                    .getShowSplitInstructionsAnim(mLauncher).buildAnim());
             anim.buildAnim().start();
         }
     };

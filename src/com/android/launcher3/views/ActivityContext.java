@@ -17,12 +17,12 @@ package com.android.launcher3.views;
 
 import static android.window.SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR;
 
+import static com.android.launcher3.BuildConfig.WIDGETS_ENABLED;
 import static com.android.launcher3.LauncherSettings.Animation.DEFAULT_NO_ICON;
-import static com.android.launcher3.logging.KeyboardStateManager.KeyboardState.HIDE;
+import static com.android.launcher3.Utilities.allowBGLaunch;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALLAPPS_KEYBOARD_CLOSED;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_APP_LAUNCH_PENDING_INTENT;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_APP_LAUNCH_TAP;
-import static com.android.launcher3.model.WidgetsModel.GO_DISABLE_WIDGETS;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
 
@@ -33,14 +33,15 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Process;
-import android.os.StrictMode;
 import android.os.UserHandle;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -52,6 +53,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.DeviceProfile;
@@ -74,7 +76,6 @@ import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.popup.PopupDataProvider;
 import com.android.launcher3.util.ActivityOptionsWrapper;
-import com.android.launcher3.util.OnboardingPrefs;
 import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.RunnableList;
@@ -143,6 +144,28 @@ public interface ActivityContext {
     default void startSplitSelection(
             SplitConfigurationOptions.SplitSelectSource splitSelectSource) {
         // Overridden, intentionally empty
+    }
+
+    /**
+     * @return {@code true} if user has selected the first split app and is in the process of
+     *         selecting the second
+     */
+    default boolean isSplitSelectionActive() {
+        // Overridden
+        return false;
+    }
+
+    /**
+     * Handle user tapping on unsupported target when in split selection mode.
+     * See {@link #isSplitSelectionActive()}
+     *
+     * @return {@code true} if this method will handle the incorrect target selection,
+     *         {@code false} if it could not be handled or if not possible to handle based on
+     *         current split state
+     */
+    default boolean handleIncorrectSplitTargetSelection() {
+        // Overridden
+        return false;
     }
 
     /**
@@ -222,12 +245,6 @@ public interface ActivityContext {
      */
     default void applyOverwritesToLogItem(LauncherAtom.ItemInfo.Builder itemInfoBuilder) { }
 
-    /** Onboarding preferences for any onboarding data within this context. */
-    @Nullable
-    default OnboardingPrefs<?> getOnboardingPrefs() {
-        return null;
-    }
-
     /** Returns {@code true} if items are currently being bound within this context. */
     default boolean isBindingItems() {
         return false;
@@ -237,6 +254,11 @@ public interface ActivityContext {
         return v -> {
             // No op.
         };
+    }
+
+    /** Long-click callback used for All Apps items. */
+    default View.OnLongClickListener getAllAppsItemLongClickListener() {
+        return v -> false;
     }
 
     @Nullable
@@ -257,26 +279,26 @@ public interface ActivityContext {
         if (root == null) {
             return;
         }
-        if (Utilities.ATLEAST_R) {
-            Preconditions.assertUIThread();
-            //  Hide keyboard with WindowInsetsController if could. In case
-            //  hideSoftInputFromWindow may get ignored by input connection being finished
-            //  when the screen is off.
-            //
-            // In addition, inside IMF, the keyboards are closed asynchronously that launcher no
-            // longer need to post to the message queue.
-            final WindowInsetsController wic = root.getWindowInsetsController();
-            WindowInsets insets = root.getRootWindowInsets();
-            boolean isImeShown = insets != null && insets.isVisible(WindowInsets.Type.ime());
-            if (wic != null && isImeShown) {
-                StatsLogManager slm  = getStatsLogManager();
-                slm.keyboardStateManager().setKeyboardState(HIDE);
-
+        Preconditions.assertUIThread();
+        // Hide keyboard with WindowInsetsController if could. In case hideSoftInputFromWindow may
+        // get ignored by input connection being finished when the screen is off.
+        //
+        // In addition, inside IMF, the keyboards are closed asynchronously that launcher no longer
+        // need to post to the message queue.
+        final WindowInsetsController wic = root.getWindowInsetsController();
+        WindowInsets insets = root.getRootWindowInsets();
+        boolean isImeShown = insets != null && insets.isVisible(WindowInsets.Type.ime());
+        if (wic != null) {
+            // Only hide the keyboard if it is actually showing.
+            if (isImeShown) {
                 // this method cannot be called cross threads
                 wic.hide(WindowInsets.Type.ime());
-                slm.logger().log(LAUNCHER_ALLAPPS_KEYBOARD_CLOSED);
-                return;
+                getStatsLogManager().logger().log(LAUNCHER_ALLAPPS_KEYBOARD_CLOSED);
             }
+
+            // If the WindowInsetsController is not null, we end here regardless of whether we hid
+            // the keyboard or not.
+            return;
         }
 
         InputMethodManager imm = root.getContext().getSystemService(InputMethodManager.class);
@@ -289,6 +311,33 @@ public interface ActivityContext {
                             getStatsLogManager().logger().log(LAUNCHER_ALLAPPS_KEYBOARD_CLOSED));
                 }
             });
+        }
+    }
+
+    /**
+     * Returns if the connected keyboard is a hardware keyboard.
+     */
+    default boolean isHardwareKeyboard() {
+        return Configuration.KEYBOARD_QWERTY
+                == ((Context) this).getResources().getConfiguration().keyboard;
+    }
+
+    /**
+     * Returns if the software keyboard (including input toolbar) is hidden. Hardware
+     * keyboards do not display on screen by default.
+     */
+    default boolean isSoftwareKeyboardHidden() {
+        if (isHardwareKeyboard()) {
+            return true;
+        } else {
+            View dragLayer = getDragLayer();
+            WindowInsets insets = dragLayer.getRootWindowInsets();
+            if (insets == null) {
+                return false;
+            }
+            WindowInsetsCompat insetsCompat =
+                    WindowInsetsCompat.toWindowInsetsCompat(insets, dragLayer);
+            return !insetsCompat.isVisible(WindowInsetsCompat.Type.ime());
         }
     }
 
@@ -338,6 +387,12 @@ public interface ActivityContext {
             return null;
         }
 
+        boolean isShortcut = (item instanceof WorkspaceItemInfo)
+                && item.itemType == LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT
+                && !((WorkspaceItemInfo) item).isPromise();
+        if (isShortcut && !WIDGETS_ENABLED) {
+            return null;
+        }
         ActivityOptionsWrapper options = v != null ? getActivityLaunchOptions(v, item)
                 : makeDefaultActivityOptions(item != null && item.animationType == DEFAULT_NO_ICON
                         ? SPLASH_SCREEN_STYLE_SOLID_COLOR : -1 /* SPLASH_SCREEN_STYLE_UNDEFINED */);
@@ -349,13 +404,11 @@ public interface ActivityContext {
             intent.setSourceBounds(Utilities.getViewBounds(v));
         }
         try {
-            boolean isShortcut = (item instanceof WorkspaceItemInfo)
-                    && (item.itemType == LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT
-                    || item.itemType == LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT)
-                    && !((WorkspaceItemInfo) item).isPromise();
             if (isShortcut) {
-                // Shortcuts need some special checks due to legacy reasons.
-                startShortcutIntentSafely(intent, optsBundle, item);
+                String id = ((WorkspaceItemInfo) item).getDeepShortcutId();
+                String packageName = intent.getPackage();
+                ((Context) this).getSystemService(LauncherApps.class).startShortcut(
+                        packageName, id, intent.getSourceBounds(), optsBundle, user);
             } else if (user == null || user.equals(Process.myUserHandle())) {
                 // Could be launching some bookkeeping activity
                 context.startActivity(intent, optsBundle);
@@ -410,8 +463,7 @@ public interface ActivityContext {
             }
         }
         ActivityOptions options =
-                ActivityOptions.makeClipRevealAnimation(v, left, top, width, height);
-
+                allowBGLaunch(ActivityOptions.makeClipRevealAnimation(v, left, top, width, height));
         options.setLaunchDisplayId(
                 (v != null && v.getDisplay() != null) ? v.getDisplay().getDisplayId()
                         : Display.DEFAULT_DISPLAY);
@@ -423,64 +475,26 @@ public interface ActivityContext {
      * Creates a default activity option and we do not want association with any launcher element.
      */
     default ActivityOptionsWrapper makeDefaultActivityOptions(int splashScreenStyle) {
-        ActivityOptions options = ActivityOptions.makeBasic();
+        ActivityOptions options = allowBGLaunch(ActivityOptions.makeBasic());
         if (Utilities.ATLEAST_T) {
             options.setSplashScreenStyle(splashScreenStyle);
         }
         return new ActivityOptionsWrapper(options, new RunnableList());
     }
 
-    /**
-     * Safely launches an intent for a shortcut.
-     *
-     * @param intent Intent to start.
-     * @param optsBundle Optional launch arguments.
-     * @param info Shortcut information.
-     */
-    default void startShortcutIntentSafely(Intent intent, Bundle optsBundle, ItemInfo info) {
-        try {
-            StrictMode.VmPolicy oldPolicy = StrictMode.getVmPolicy();
-            try {
-                // Temporarily disable deathPenalty on all default checks. For eg, shortcuts
-                // containing file Uri's would cause a crash as penaltyDeathOnFileUriExposure
-                // is enabled by default on NYC.
-                StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll()
-                        .penaltyLog().build());
-
-                if (info.itemType == LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT) {
-                    String id = ((WorkspaceItemInfo) info).getDeepShortcutId();
-                    String packageName = intent.getPackage();
-                    startShortcut(packageName, id, intent.getSourceBounds(), optsBundle, info.user);
-                } else {
-                    // Could be launching some bookkeeping activity
-                    ((Context) this).startActivity(intent, optsBundle);
-                }
-            } finally {
-                StrictMode.setVmPolicy(oldPolicy);
-            }
-        } catch (SecurityException e) {
-            throw e;
-        }
-    }
-
-    /**
-     * A wrapper around the platform method with Launcher specific checks.
-     */
-    default void startShortcut(String packageName, String id, Rect sourceBounds,
-            Bundle startActivityOptions, UserHandle user) {
-        if (GO_DISABLE_WIDGETS) {
-            return;
-        }
-        try {
-            ((Context) this).getSystemService(LauncherApps.class).startShortcut(packageName, id,
-                    sourceBounds, startActivityOptions, user);
-        } catch (SecurityException | IllegalStateException e) {
-            Log.e(TAG, "Failed to start shortcut", e);
-        }
-    }
-
     default CellPosMapper getCellPosMapper() {
-        return CellPosMapper.DEFAULT;
+        DeviceProfile dp = getDeviceProfile();
+        return new CellPosMapper(dp.isVerticalBarLayout(), dp.numShownHotseatIcons);
+    }
+
+    /** Whether bubbles are enabled. */
+    default boolean isBubbleBarEnabled() {
+        return false;
+    }
+
+    /** Whether the bubble bar has bubbles. */
+    default boolean hasBubbles() {
+        return false;
     }
 
     /**
@@ -502,10 +516,21 @@ public interface ActivityContext {
     static <T extends Context & ActivityContext> T lookupContextNoThrow(Context context) {
         if (context instanceof ActivityContext) {
             return (T) context;
+        } else if (context instanceof ActivityContextDelegate acd) {
+            return (T) acd.mDelegate;
         } else if (context instanceof ContextWrapper) {
             return lookupContextNoThrow(((ContextWrapper) context).getBaseContext());
         } else {
             return null;
+        }
+    }
+
+    class ActivityContextDelegate extends ContextThemeWrapper {
+        public final ActivityContext mDelegate;
+
+        public ActivityContextDelegate(Context base, int themeResId, ActivityContext delegate) {
+            super(base, themeResId);
+            mDelegate = delegate;
         }
     }
 }

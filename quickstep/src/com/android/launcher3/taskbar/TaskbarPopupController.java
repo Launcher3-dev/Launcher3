@@ -15,7 +15,6 @@
  */
 package com.android.launcher3.taskbar;
 
-import static com.android.launcher3.config.FeatureFlags.ENABLE_MATERIAL_U_POPUP;
 import static com.android.launcher3.util.SplitConfigurationOptions.getLogEventForPosition;
 
 import android.content.Intent;
@@ -41,7 +40,6 @@ import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.notification.NotificationListener;
 import com.android.launcher3.popup.PopupContainerWithArrow;
 import com.android.launcher3.popup.PopupDataProvider;
-import com.android.launcher3.popup.PopupLiveUpdateHandler;
 import com.android.launcher3.popup.SystemShortcut;
 import com.android.launcher3.shortcuts.DeepShortcutView;
 import com.android.launcher3.splitscreen.SplitShortcut;
@@ -118,9 +116,9 @@ public class TaskbarPopupController implements TaskbarControllers.LoggableTaskba
                 }
             } else if (info instanceof FolderInfo && v instanceof FolderIcon) {
                 FolderInfo fi = (FolderInfo) info;
-                if (fi.contents.stream().anyMatch(matcher)) {
+                if (fi.anyMatch(matcher)) {
                     FolderDotInfo folderDotInfo = new FolderDotInfo();
-                    for (WorkspaceItemInfo si : fi.contents) {
+                    for (ItemInfo si : fi.getContents()) {
                         folderDotInfo.addDotInfo(mPopupDataProvider.getDotInfoForItem(si));
                     }
                     ((FolderIcon) v).setDotInfo(folderDotInfo);
@@ -163,27 +161,10 @@ public class TaskbarPopupController implements TaskbarControllers.LoggableTaskba
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        if (ENABLE_MATERIAL_U_POPUP.get()) {
-            container = (PopupContainerWithArrow) context.getLayoutInflater().inflate(
-                    R.layout.popup_container_material_u, context.getDragLayer(), false);
-            container.populateAndShowRowsMaterialU(icon, deepShortcutCount, systemShortcuts);
-        } else {
-            container = (PopupContainerWithArrow) context.getLayoutInflater().inflate(
+        container = (PopupContainerWithArrow) context.getLayoutInflater().inflate(
                     R.layout.popup_container, context.getDragLayer(), false);
-            container.populateAndShow(
-                    icon,
-                    deepShortcutCount,
-                    mPopupDataProvider.getNotificationKeysForItem(item),
-                    systemShortcuts);
-        }
+        container.populateAndShowRows(icon, deepShortcutCount, systemShortcuts);
 
-        container.addOnAttachStateChangeListener(
-                new PopupLiveUpdateHandler<BaseTaskbarContext>(context, container) {
-                    @Override
-                    protected void showPopupContainerForIcon(BubbleTextView originalIcon) {
-                        showForIcon(originalIcon);
-                    }
-                });
         // TODO (b/198438631): configure for taskbar/context
         container.setPopupItemDragHandler(new TaskbarPopupItemDragHandler());
         mControllers.taskbarDragController.addDragListener(container);

@@ -26,7 +26,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.launcher3.R;
-import com.android.launcher3.Utilities;
 import com.android.launcher3.model.StringCache;
 import com.android.launcher3.views.ActivityContext;
 
@@ -57,6 +56,10 @@ public class WorkPausedCard extends LinearLayout implements View.OnClickListener
         mBtn = findViewById(R.id.enable_work_apps);
         mBtn.setOnClickListener(this);
 
+        updateStringFromCache();
+    }
+
+    public void updateStringFromCache() {
         StringCache cache = mActivityContext.getStringCache();
         if (cache != null) {
             setWorkProfilePausedResources(cache);
@@ -76,11 +79,9 @@ public class WorkPausedCard extends LinearLayout implements View.OnClickListener
 
     @Override
     public void onClick(View view) {
-        if (Utilities.ATLEAST_P) {
-            setEnabled(false);
-            mActivityContext.getAppsView().getWorkManager().setWorkProfileEnabled(true);
-            mActivityContext.getStatsLogManager().logger().log(LAUNCHER_TURN_ON_WORK_APPS_TAP);
-        }
+        setEnabled(false);
+        mActivityContext.getAppsView().getWorkManager().setWorkProfileEnabled(true);
+        mActivityContext.getStatsLogManager().logger().log(LAUNCHER_TURN_ON_WORK_APPS_TAP);
     }
 
     @Override

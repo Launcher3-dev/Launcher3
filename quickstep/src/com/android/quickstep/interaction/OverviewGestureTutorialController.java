@@ -15,15 +15,13 @@
  */
 package com.android.quickstep.interaction;
 
-import static com.android.launcher3.anim.Interpolators.ACCEL;
+import static com.android.app.animation.Interpolators.ACCELERATE;
 import static com.android.launcher3.config.FeatureFlags.ENABLE_NEW_GESTURE_NAV_TUTORIAL;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
-import android.annotation.TargetApi;
 import android.graphics.PointF;
-import android.os.Build;
 import android.os.Handler;
 
 import androidx.annotation.ColorInt;
@@ -42,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Map;
 
 /** A {@link TutorialController} for the Overview tutorial. */
-@TargetApi(Build.VERSION_CODES.R)
 final class OverviewGestureTutorialController extends SwipeUpGestureTutorialController {
 
     private static final float LAUNCHER_COLOR_BLENDING_RATIO = 0.4f;
@@ -53,13 +50,13 @@ final class OverviewGestureTutorialController extends SwipeUpGestureTutorialCont
 
         // Set the Lottie animation colors specifically for the Overview gesture
         if (ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()) {
-            LottieAnimationColorUtils.updateColors(
+            LottieAnimationColorUtils.updateToArgbColors(
                     mAnimatedGestureDemonstration,
                     Map.of(".onSurfaceOverview", fragment.mRootView.mColorOnSurfaceOverview,
                             ".surfaceOverview", fragment.mRootView.mColorSurfaceOverview,
                             ".secondaryOverview", fragment.mRootView.mColorSecondaryOverview));
 
-            LottieAnimationColorUtils.updateColors(
+            LottieAnimationColorUtils.updateToArgbColors(
                     mCheckmarkAnimation,
                     Map.of(".checkmark",
                             Utilities.isDarkTheme(mContext)
@@ -179,7 +176,7 @@ final class OverviewGestureTutorialController extends SwipeUpGestureTutorialCont
 
     @Override
     public void onBackGestureAttempted(BackGestureResult result) {
-        if (skipGestureAttempt()) {
+        if (isGestureCompleted()) {
             return;
         }
         switch (mTutorialType) {
@@ -206,7 +203,7 @@ final class OverviewGestureTutorialController extends SwipeUpGestureTutorialCont
 
     @Override
     public void onNavBarGestureAttempted(NavBarGestureResult result, PointF finalVelocity) {
-        if (skipGestureAttempt()) {
+        if (isGestureCompleted()) {
             return;
         }
         switch (mTutorialType) {
@@ -254,7 +251,7 @@ final class OverviewGestureTutorialController extends SwipeUpGestureTutorialCont
     public void animateTaskViewToOverview(boolean animateDelayedSuccessFeedback) {
         PendingAnimation anim = new PendingAnimation(TASK_VIEW_END_ANIMATION_DURATION_MILLIS);
         anim.setFloat(mTaskViewSwipeUpAnimation
-                .getCurrentShift(), AnimatedFloat.VALUE, 1, ACCEL);
+                .getCurrentShift(), AnimatedFloat.VALUE, 1, ACCELERATE);
 
         if (animateDelayedSuccessFeedback) {
             anim.addListener(new AnimatorListenerAdapter() {

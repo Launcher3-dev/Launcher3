@@ -23,7 +23,6 @@ import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
 import com.android.launcher3.util.Themes;
-import com.android.quickstep.views.DesktopTaskView;
 
 /**
  * State to indicate we are about to launch a recent task. Note that this state is only used when
@@ -46,11 +45,9 @@ public class QuickSwitchState extends BackgroundAppState {
 
     @Override
     public int getWorkspaceScrimColor(Launcher launcher) {
-        if (DesktopTaskView.DESKTOP_MODE_SUPPORTED) {
-            if (launcher.areFreeformTasksVisible()) {
-                // No scrim while freeform tasks are visible
-                return Color.TRANSPARENT;
-            }
+        if (launcher.areDesktopTasksVisible()) {
+            // No scrim while desktop tasks are visible
+            return Color.TRANSPARENT;
         }
         DeviceProfile dp = launcher.getDeviceProfile();
         if (dp.isTaskbarPresentInApps) {

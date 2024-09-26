@@ -26,8 +26,8 @@ import android.animation.ValueAnimator;
 import androidx.annotation.Nullable;
 import androidx.dynamicanimation.animation.SpringForce;
 
+import com.android.app.animation.Interpolators;
 import com.android.launcher3.anim.AnimatedFloat;
-import com.android.launcher3.anim.Interpolators;
 import com.android.launcher3.anim.SpringAnimationBuilder;
 import com.android.launcher3.util.DisplayController;
 
@@ -53,6 +53,7 @@ public class TaskbarTranslationController implements TaskbarControllers.Loggable
 
     private boolean mHasSprungOnceThisGesture;
     private @Nullable ValueAnimator mSpringBounce;
+    private boolean mGestureInProgress;
     private boolean mGestureEnded;
     private boolean mAnimationToHomeRunning;
 
@@ -92,6 +93,10 @@ public class TaskbarTranslationController implements TaskbarControllers.Loggable
         mControllers.stashedHandleViewController.setTranslationYForSwipe(transY);
         mControllers.taskbarViewController.setTranslationYForSwipe(transY);
         mControllers.taskbarDragLayerController.setTranslationYForSwipe(transY);
+        mControllers.bubbleControllers.ifPresent(controllers -> {
+            controllers.bubbleBarViewController.setTranslationYForSwipe(transY);
+            controllers.bubbleStashedHandleViewController.setTranslationYForSwipe(transY);
+        });
     }
 
     /**
@@ -151,7 +156,12 @@ public class TaskbarTranslationController implements TaskbarControllers.Loggable
     /**
      * Returns an animation to reset the taskbar translation to {@code 0}.
      */
-    public ObjectAnimator createAnimToResetTranslation(long duration) {
+    public ValueAnimator createAnimToResetTranslation(long duration) {
+        if (mGestureInProgress) {
+            // Return an empty animator as the translation will reset itself after gesture ends.
+            return ValueAnimator.ofFloat(0).setDuration(duration);
+        }
+
         ObjectAnimator animator = mTranslationYForSwipe.animateToValue(0);
         animator.setInterpolator(Interpolators.LINEAR);
         animator.setDuration(duration);
@@ -188,6 +198,7 @@ public class TaskbarTranslationController implements TaskbarControllers.Loggable
             mAnimationToHomeRunning = false;
             cancelSpringIfExists();
             reset();
+            mGestureInProgress = true;
         }
         /**
          * Called when there is movement to move the taskbar.
@@ -211,6 +222,7 @@ public class TaskbarTranslationController implements TaskbarControllers.Loggable
                 mGestureEnded = true;
                 startSpring();
             }
+            mGestureInProgress = false;
         }
     }
 

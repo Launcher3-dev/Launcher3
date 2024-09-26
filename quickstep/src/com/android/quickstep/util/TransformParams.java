@@ -15,14 +15,11 @@
  */
 package com.android.quickstep.util;
 
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 
 import android.util.FloatProperty;
 import android.view.RemoteAnimationTarget;
 
-import com.android.launcher3.Utilities;
-import com.android.launcher3.anim.Interpolators;
 import com.android.quickstep.RemoteAnimationTargets;
 import com.android.quickstep.util.SurfaceTransaction.SurfaceProperties;
 
@@ -54,6 +51,7 @@ public class TransformParams {
         }
     };
 
+    /** Progress from 0 to 1 where 0 is in-app and 1 is Overview */
     private float mProgress;
     private float mTargetAlpha;
     private float mCornerRadius;
@@ -135,6 +133,7 @@ public class TransformParams {
         return this;
     }
 
+    /** Builds the SurfaceTransaction from the given BuilderProxy params. */
     public SurfaceTransaction createSurfaceParams(BuilderProxy proxy) {
         RemoteAnimationTargets targets = mTargetSet;
         SurfaceTransaction transaction = new SurfaceTransaction();
@@ -150,14 +149,7 @@ public class TransformParams {
                 if (activityType == ACTIVITY_TYPE_HOME) {
                     mHomeBuilderProxy.onBuildTargetParams(builder, app, this);
                 } else {
-                    // Fade out Assistant overlay.
-                    if (activityType == ACTIVITY_TYPE_ASSISTANT && app.isNotInRecents) {
-                        float progress = Utilities.boundToRange(getProgress(), 0, 1);
-                        builder.setAlpha(1 - Interpolators.DEACCEL_2_5.getInterpolation(progress));
-                    } else {
-                        builder.setAlpha(getTargetAlpha());
-                    }
-
+                    builder.setAlpha(getTargetAlpha());
                     proxy.onBuildTargetParams(builder, app, this);
                 }
             } else {

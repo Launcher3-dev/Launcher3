@@ -39,9 +39,9 @@ import android.view.MotionEvent;
 import android.view.RemoteAnimationTarget;
 import android.view.VelocityTracker;
 
+import com.android.app.animation.Interpolators;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.AnimatedFloat;
-import com.android.launcher3.anim.Interpolators;
 import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
 import com.android.launcher3.util.DisplayController;
@@ -68,6 +68,7 @@ import java.util.HashMap;
  */
 public class DeviceLockedInputConsumer implements InputConsumer,
         RecentsAnimationCallbacks.RecentsAnimationListener, BuilderProxy {
+    private final String TAG = "DeviceLockedInputConsumer";
 
     private static final String[] STATE_NAMES = DEBUG_STATES ? new String[2] : null;
     private static int getFlagForIndex(int index, String name) {
@@ -153,8 +154,7 @@ public class DeviceLockedInputConsumer implements InputConsumer,
                 if (!mThresholdCrossed) {
                     // Cancel interaction in case of multi-touch interaction
                     int ptrIdx = ev.getActionIndex();
-                    if (!mDeviceState.getRotationTouchHelper().isInSwipeUpTouchRegion(ev, ptrIdx,
-                            mGestureState.getActivityInterface())) {
+                    if (!mDeviceState.getRotationTouchHelper().isInSwipeUpTouchRegion(ev, ptrIdx)) {
                         int action = ev.getAction();
                         ev.setAction(ACTION_CANCEL);
                         finishTouchTracking(ev);
@@ -204,11 +204,16 @@ public class DeviceLockedInputConsumer implements InputConsumer,
             // Animate back to fullscreen before finishing
             ObjectAnimator animator = mProgress.animateToValue(mProgress.value, 0);
             animator.setDuration(100);
-            animator.setInterpolator(Interpolators.ACCEL);
+            animator.setInterpolator(Interpolators.ACCELERATE);
             animator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    if (ENABLE_SHELL_TRANSITIONS) {
+                    if (dismissTask) {
+                        // Just start the home intent so the user is prompted to unlock the device.
+                        // This will come back and cancel the interaction.
+                        startHomeIntentSafely(mContext, mGestureState.getHomeIntent(), null, TAG);
+                        mHomeLaunched = true;
+                    } else if (ENABLE_SHELL_TRANSITIONS) {
                         if (mTaskAnimationManager.getCurrentCallbacks() != null) {
                             if (mRecentsAnimationController != null) {
                                 finishRecentsAnimationForShell(dismissTask);
@@ -218,11 +223,6 @@ public class DeviceLockedInputConsumer implements InputConsumer,
                                 mDismissTask = dismissTask;
                             }
                         }
-                    } else if (dismissTask) {
-                        // For now, just start the home intent so user is prompted to
-                        // unlock the device.
-                        startHomeIntentSafely(mContext, mGestureState.getHomeIntent(), null);
-                        mHomeLaunched = true;
                     }
                     mStateCallback.setState(STATE_HANDLER_INVALIDATED);
                 }

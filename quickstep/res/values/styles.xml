@@ -169,17 +169,17 @@
 
     <style name="TextAppearance.GestureTutorial.MainTitle.Home"
         parent="TextAppearance.GestureTutorial.MainTitle">
-        <item name="android:textColor">?attr/onSurfaceHome</item>
+        <item name="android:textColor">?attr/secondaryHome</item>
     </style>
 
     <style name="TextAppearance.GestureTutorial.MainTitle.Back"
         parent="TextAppearance.GestureTutorial.MainTitle">
-        <item name="android:textColor">?attr/onSurfaceBack</item>
+        <item name="android:textColor">?attr/secondaryBack</item>
     </style>
 
     <style name="TextAppearance.GestureTutorial.MainTitle.Overview"
         parent="TextAppearance.GestureTutorial.MainTitle">
-        <item name="android:textColor">?attr/onSurfaceOverview</item>
+        <item name="android:textColor">?attr/secondaryOverview</item>
     </style>
 
     <style name="TextAppearance.GestureTutorial.MainTitle.Success.Home"
@@ -273,7 +273,7 @@
     </style>
 
     <style name="KeyboardQuickSwitchText.OnBackground" parent="KeyboardQuickSwitchText">
-        <item name="android:textColor">?androidprv:attr/materialColorOnSurfaceInverse</item>
+        <item name="android:textColor">?androidprv:attr/materialColorOnSurface</item>
     </style>
 
     <style name="GestureTutorialActivity" parent="@style/AppTheme">
@@ -297,5 +297,24 @@
 
     <style name="rotate_prompt_subtitle" parent="TextAppearance.GestureTutorial.Dialog.Subtitle">
         <item name="android:textColor">?androidprv:attr/materialColorOnSurfaceVariant</item>
+    </style>
+
+    <style name="ArrowTipTaskbarStyle">
+        <item name="arrowTipBackground">?androidprv:attr/materialColorSurfaceContainer</item>
+        <item name="arrowTipTextColor">?androidprv:attr/materialColorOnSurface</item>
+    </style>
+
+    <style name="IconAppChipMenuTextStyle">
+        <item name="android:fontFamily">google-sans-text-medium</item>
+        <item name="android:textSize">@dimen/task_thumbnail_icon_menu_text_size</item>
+        <item name="android:textColor">?androidprv:attr/materialColorOnSurface</item>
+        <item name="android:letterSpacing">0.025</item>
+        <item name="android:lineHeight">20sp</item>
+    </style>
+
+    <style name="WidgetPickerActivityTheme" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="widgetsTheme">@style/WidgetContainerTheme</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="pageIndicatorDotColor">@color/page_indicator_dot_color_light</item>
     </style>
 </resources>

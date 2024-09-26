@@ -18,7 +18,8 @@
 * Launcher3-12（可以编译Quickstep版本）
 * Launcher3-13-Qc（高通版本，可以编译Quickstep版本）
 * Launcher3-13 (Launcher3-13.0.0_r83(7e9e70085176ea46bf773019a5054942d2fc3811))--Android-13
-* master (Launcher3-android14-s2-release)--Android-14
+* Launcher3-14-s2-release (android14-s2-release)
+* main (android15-s1-release)--Android-15
 
 ## 源码参考
 https://cs.android.com/android/platform/superproject/+/master:packages/apps/Launcher3/

@@ -76,11 +76,7 @@ public class WorkEduCard extends FrameLayout implements
         super.onFinishInflate();
         findViewById(R.id.action_btn).setOnClickListener(this);
 
-        StringCache cache = mActivityContext.getStringCache();
-        if (cache != null) {
-            TextView title = findViewById(R.id.work_apps_paused_title);
-            title.setText(cache.workProfileEdu);
-        }
+        updateStringFromCache();
     }
 
     @Override
@@ -107,6 +103,8 @@ public class WorkEduCard extends FrameLayout implements
             AllAppsRecyclerView rv = mActivityContext.getAppsView().mAH.get(
                     ActivityAllAppsContainerView.AdapterHolder.WORK).mRecyclerView;
             rv.getApps().getAdapterItems().remove(mPosition);
+            // Remove the educard fast scroll section.
+            rv.getApps().getFastScrollerSections().remove(0);
             rv.getAdapter().notifyItemRemoved(mPosition);
         }
     }
@@ -120,5 +118,13 @@ public class WorkEduCard extends FrameLayout implements
 
     public void setPosition(int position) {
         mPosition = position;
+    }
+
+    public void updateStringFromCache() {
+        StringCache cache = mActivityContext.getStringCache();
+        if (cache != null) {
+            TextView title = findViewById(R.id.work_apps_paused_title);
+            title.setText(cache.workProfileEdu);
+        }
     }
 }

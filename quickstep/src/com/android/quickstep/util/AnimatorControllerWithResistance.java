@@ -15,9 +15,9 @@
  */
 package com.android.quickstep.util;
 
-import static com.android.launcher3.anim.Interpolators.DEACCEL;
-import static com.android.launcher3.anim.Interpolators.LINEAR;
-import static com.android.quickstep.AbsSwipeUpHandler.ALL_APPS_SHIFT_THRESHOLD;
+import static com.android.app.animation.Interpolators.DECELERATE;
+import static com.android.app.animation.Interpolators.LINEAR;
+import static com.android.launcher3.Flags.enableGridOnlyOverview;
 import static com.android.quickstep.views.RecentsView.RECENTS_SCALE_PROPERTY;
 import static com.android.quickstep.views.RecentsView.TASK_SECONDARY_TRANSLATION;
 
@@ -42,8 +42,10 @@ import com.android.launcher3.statemanager.StateManager;
 import com.android.launcher3.statemanager.StatefulActivity;
 import com.android.launcher3.states.StateAnimationConfig;
 import com.android.launcher3.touch.AllAppsSwipeController;
-import com.android.launcher3.touch.PagedOrientationHandler;
+import com.android.quickstep.DeviceConfigWrapper;
+import com.android.quickstep.orientation.RecentsPagedOrientationHandler;
 import com.android.quickstep.views.RecentsView;
+import com.android.quickstep.views.RecentsViewContainer;
 
 /**
  * Controls an animation that can go beyond progress = 1, at which point resistance should be
@@ -55,8 +57,9 @@ public class AnimatorControllerWithResistance {
 
     private enum RecentsResistanceParams {
         FROM_APP(0.75f, 0.5f, 1f, false),
-        FROM_APP_TO_ALL_APPS(0.75f, 0.5f, 0.8f, false),
+        FROM_APP_TO_ALL_APPS(1f, 0.6f, 0.8f, false),
         FROM_APP_TABLET(1f, 0.7f, 1f, true),
+        FROM_APP_TABLET_GRID_ONLY(1f, 1f, 1f, true),
         FROM_APP_TO_ALL_APPS_TABLET(1f, 0.5f, 0.5f, false),
         FROM_OVERVIEW(1f, 0.75f, 0.5f, false);
 
@@ -91,7 +94,7 @@ public class AnimatorControllerWithResistance {
         public final boolean stopScalingAtTop;
     }
 
-    private static final TimeInterpolator RECENTS_SCALE_RESIST_INTERPOLATOR = DEACCEL;
+    private static final TimeInterpolator RECENTS_SCALE_RESIST_INTERPOLATOR = DECELERATE;
     private static final TimeInterpolator RECENTS_TRANSLATE_RESIST_INTERPOLATOR = LINEAR;
 
     private static final Rect TEMP_RECT = new Rect();
@@ -156,11 +159,13 @@ public class AnimatorControllerWithResistance {
         PendingAnimation resistAnim = createRecentsResistanceAnim(params);
 
         // Apply All Apps animation during the resistance animation.
-        if (recentsOrientedState.getActivityInterface().allowAllAppsFromOverview()) {
-            StatefulActivity activity =
-                    recentsOrientedState.getActivityInterface().getCreatedActivity();
-            if (activity != null) {
-                StateManager<LauncherState> stateManager = activity.getStateManager();
+        if (recentsOrientedState.getContainerInterface().allowAllAppsFromOverview()) {
+            RecentsViewContainer container =
+                    recentsOrientedState.getContainerInterface().getCreatedContainer();
+            if (container != null) {
+                RecentsView recentsView = container.getOverviewPanel();
+                StateManager<LauncherState, StatefulActivity<LauncherState>> stateManager =
+                        recentsView.getStateManager();
                 if (stateManager.isInStableState(LauncherState.BACKGROUND_APP)
                         && stateManager.isInTransition()) {
 
@@ -183,12 +188,13 @@ public class AnimatorControllerWithResistance {
     private static float getAllAppsThreshold(Context context,
             RecentsOrientedState recentsOrientedState, DeviceProfile dp) {
         int transitionDragLength =
-                recentsOrientedState.getActivityInterface().getSwipeUpDestinationAndLength(
+                recentsOrientedState.getContainerInterface().getSwipeUpDestinationAndLength(
                         dp, context, TEMP_RECT,
                         recentsOrientedState.getOrientationHandler());
         float dragLengthFactor = (float) dp.heightPx / transitionDragLength;
         // -1s are because 0-1 is reserved for the normal transition.
-        return (ALL_APPS_SHIFT_THRESHOLD - 1) / (dragLengthFactor - 1);
+        float threshold = DeviceConfigWrapper.get().getAllAppsOverviewThreshold() / 100f;
+        return (threshold - 1) / (dragLengthFactor - 1);
     }
 
     /**
@@ -198,9 +204,9 @@ public class AnimatorControllerWithResistance {
     public static <SCALE, TRANSLATION> PendingAnimation createRecentsResistanceAnim(
             RecentsParams<SCALE, TRANSLATION> params) {
         Rect startRect = new Rect();
-        PagedOrientationHandler orientationHandler = params.recentsOrientedState
+        RecentsPagedOrientationHandler orientationHandler = params.recentsOrientedState
                 .getOrientationHandler();
-        params.recentsOrientedState.getActivityInterface()
+        params.recentsOrientedState.getContainerInterface()
                 .calculateTaskSize(params.context, params.dp, startRect, orientationHandler);
         long distanceToCover = startRect.bottom;
         PendingAnimation resistAnim = params.resistAnim != null
@@ -237,10 +243,10 @@ public class AnimatorControllerWithResistance {
         float stopResist =
                 params.resistanceParams.stopScalingAtTop ? 1f - startRect.top / endRectF.top : 1f;
         final TimeInterpolator scaleInterpolator = t -> {
-            if (t < startResist) {
+            if (t <= startResist) {
                 return t;
             }
-            if (t > stopResist) {
+            if (t >= stopResist) {
                 return maxResist;
             }
             float resistProgress = Utilities.getProgress(t, startResist, stopResist);
@@ -300,12 +306,14 @@ public class AnimatorControllerWithResistance {
             this.translationProperty = translationProperty;
             if (dp.isTablet) {
                 resistanceParams =
-                        recentsOrientedState.getActivityInterface().allowAllAppsFromOverview()
+                        recentsOrientedState.getContainerInterface().allowAllAppsFromOverview()
                                 ? RecentsResistanceParams.FROM_APP_TO_ALL_APPS_TABLET
-                                : RecentsResistanceParams.FROM_APP_TABLET;
+                                : enableGridOnlyOverview()
+                                        ? RecentsResistanceParams.FROM_APP_TABLET_GRID_ONLY
+                                        : RecentsResistanceParams.FROM_APP_TABLET;
             } else {
                 resistanceParams =
-                        recentsOrientedState.getActivityInterface().allowAllAppsFromOverview()
+                        recentsOrientedState.getContainerInterface().allowAllAppsFromOverview()
                                 ? RecentsResistanceParams.FROM_APP_TO_ALL_APPS
                                 : RecentsResistanceParams.FROM_APP;
             }
