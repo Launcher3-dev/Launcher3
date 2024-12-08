@@ -1,6 +1,7 @@
 # Launcher3
 
 ## 更新：20241208
+该分支主要是一些实验性功能
 
 ## 版本信息
 * Launcher3-android14-s2-release
@@ -10,16 +11,18 @@
 目前只支持withoutQuickstep编译
 
 ## 主要分支
-* Launcher3-6.0
-* Launcher3-7.0
-* Launcher3-8.0 (android-8.0.0_r24)
-* Launcher3-9.0
-* Launcher3-10.0 (android-10.0.0_r46)
-* Launcher3-11
-* Launcher3-12（可以编译Quickstep版本）
-* Launcher3-13-Qc（高通版本，可以编译Quickstep版本）
-* Launcher3-13 (Launcher3-13.0.0_r83(7e9e70085176ea46bf773019a5054942d2fc3811))--Android-13
 * master (Launcher3-android14-s2-release)--Android-14
+* Launcher3-14-s2-mx (Launcher3-android14-s2-release)--Android-14
+* Launcher3-13 (Launcher3-13.0.0_r83(7e9e70085176ea46bf773019a5054942d2fc3811))--Android-13
+* Launcher3-13-Qc（高通版本，可以编译Quickstep版本）
+* Launcher3-12（可以编译Quickstep版本）
+* Launcher3-11
+* Launcher3-10.0 (android-10.0.0_r46)
+* Launcher3-9.0
+* Launcher3-8.0 (android-8.0.0_r24)
+* Launcher3-7.0
+* Launcher3-6.0
+
 
 ## 源码参考
 https://cs.android.com/android/platform/superproject/+/master:packages/apps/Launcher3/
