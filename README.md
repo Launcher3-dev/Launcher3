@@ -1,7 +1,6 @@
 # Launcher3
 
 ## 更新：20241208
-该版本为部分功能实验版本
 
 ## 基础版本信息
 * Launcher3-android14-s2-release
