@@ -1,14 +1,15 @@
 # Launcher3
 
-## 更新：20231209
-* Android-13 (Launcher3-13.0.0_r83(7e9e70085176ea46bf773019a5054942d2fc3811)版本源码)
-* https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/tags/android-13.0.0_r83
+## 更新：20241208
+
+## 版本信息
+* Launcher3-android14-s2-release
+* https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/heads/android14-s2-release
 
 ## 说明
 目前只支持withoutQuickstep编译
 
 ## 主要分支
-
 * Launcher3-6.0
 * Launcher3-7.0
 * Launcher3-8.0 (android-8.0.0_r24)
