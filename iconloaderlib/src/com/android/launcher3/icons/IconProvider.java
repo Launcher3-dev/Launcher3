@@ -58,6 +58,7 @@ import java.util.function.Supplier;
 /**
  * Class to handle icon loading from different packages
  */
+@SuppressWarnings("deprecation")
 public class IconProvider {
 
     private final String ACTION_OVERLAY_CHANGED = "android.intent.action.OVERLAY_CHANGED";
@@ -145,6 +146,7 @@ public class IconProvider {
         return null;
     }
 
+    @SuppressWarnings("deprecation")
     private Drawable loadActivityInfoIcon(ActivityInfo ai, int density) {
         final int iconRes = ai.getIconResource();
         Drawable icon = null;
@@ -164,6 +166,7 @@ public class IconProvider {
     }
 
     @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    @SuppressWarnings("deprecation")
     private Drawable loadCalendarDrawable(int iconDpi, @Nullable ThemeData td) {
         PackageManager pm = mContext.getPackageManager();
         try {
@@ -262,6 +265,7 @@ public class IconProvider {
             mResID = resID;
         }
 
+        @SuppressWarnings("deprecation")
         Drawable loadPaddedDrawable() {
             if (!"drawable".equals(mResources.getResourceTypeName(mResID))) {
                 return null;

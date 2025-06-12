@@ -31,6 +31,10 @@ android {
     }
 }
 
+final String ANDROID_TOP = "${rootDir}/"
+final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/libs/"
+
 dependencies {
     implementation "androidx.core:core:1.13.1"
+    compileOnly files("${FRAMEWORK_PREBUILTS_DIR}/framework.jar")
 }

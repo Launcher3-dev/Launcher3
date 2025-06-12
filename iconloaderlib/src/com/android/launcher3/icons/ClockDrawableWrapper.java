@@ -94,6 +94,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
         super(base.getBackground(), base.getForeground());
     }
 
+    @SuppressWarnings("deprecation")
     private void applyThemeData(ThemeData themeData) {
         if (!IconProvider.ATLEAST_T || mThemeInfo != null) {
             return;
@@ -140,6 +141,7 @@ public class ClockDrawableWrapper extends AdaptiveIconDrawable implements Bitmap
      * Loads and returns the wrapper from the provided package, or returns null
      * if it is unable to load.
      */
+    @SuppressWarnings("deprecation")
     public static ClockDrawableWrapper forPackage(Context context, String pkg, int iconDpi,
             @Nullable ThemeData themeData) {
         try {

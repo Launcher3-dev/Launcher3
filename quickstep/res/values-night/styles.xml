@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
      Copyright (C) 2021 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources
-    xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
+<resources xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
 
     <style name="AllSetTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:navigationBarColor">@android:color/transparent</item>
@@ -25,73 +23,61 @@
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.MainTitle.Home"
-        parent="TextAppearance.GestureTutorial.MainTitle">
+    <style name="TextAppearance.GestureTutorial.MainTitle.Home" parent="TextAppearance.GestureTutorial.MainTitle">
         <item name="android:textColor">?attr/onSurfaceHome</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.MainTitle.Back"
-        parent="TextAppearance.GestureTutorial.MainTitle">
+    <style name="TextAppearance.GestureTutorial.MainTitle.Back" parent="TextAppearance.GestureTutorial.MainTitle">
         <item name="android:textColor">?attr/onSurfaceBack</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.MainTitle.Overview"
-        parent="TextAppearance.GestureTutorial.MainTitle">
+    <style name="TextAppearance.GestureTutorial.MainTitle.Overview" parent="TextAppearance.GestureTutorial.MainTitle">
         <item name="android:textColor">?attr/onSurfaceOverview</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.MenuButton.Home"
-        parent="TextAppearance.GestureTutorial.MenuButton">
+    <style name="TextAppearance.GestureTutorial.MenuButton.Home" parent="TextAppearance.GestureTutorial.MenuButton">
         <item name="android:textColor">?attr/onSurfaceHome</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.MenuButton.Back"
-        parent="TextAppearance.GestureTutorial.MenuButton">
+    <style name="TextAppearance.GestureTutorial.MenuButton.Back" parent="TextAppearance.GestureTutorial.MenuButton">
         <item name="android:textColor">?attr/onSurfaceBack</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.MenuButton.Overview"
-        parent="TextAppearance.GestureTutorial.MenuButton">
+    <style name="TextAppearance.GestureTutorial.MenuButton.Overview" parent="TextAppearance.GestureTutorial.MenuButton">
         <item name="android:textColor">?attr/onSurfaceOverview</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.ButtonLabel.Home"
-        parent="TextAppearance.GestureTutorial.ButtonLabel">
+    <style name="TextAppearance.GestureTutorial.ButtonLabel.Home" parent="TextAppearance.GestureTutorial.ButtonLabel">
         <item name="android:textColor">?attr/secondaryHome</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.ButtonLabel.Back"
-        parent="TextAppearance.GestureTutorial.ButtonLabel">
+    <style name="TextAppearance.GestureTutorial.ButtonLabel.Back" parent="TextAppearance.GestureTutorial.ButtonLabel">
         <item name="android:textColor">?attr/secondaryBack</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.ButtonLabel.Overview"
-        parent="TextAppearance.GestureTutorial.ButtonLabel">
+    <style name="TextAppearance.GestureTutorial.ButtonLabel.Overview" parent="TextAppearance.GestureTutorial.ButtonLabel">
         <item name="android:textColor">?attr/secondaryOverview</item>
     </style>
 
-    <style name="TextAppearance.GestureTutorial.MainTitle.Success.Home"
-        parent="TextAppearance.GestureTutorial.MainTitle.Home" />
+    <style name="TextAppearance.GestureTutorial.MainTitle.Success.Home" parent="TextAppearance.GestureTutorial.MainTitle.Home" />
 
-    <style name="TextAppearance.GestureTutorial.MainTitle.Success.Back"
-        parent="TextAppearance.GestureTutorial.MainTitle.Back" />
+    <style name="TextAppearance.GestureTutorial.MainTitle.Success.Back" parent="TextAppearance.GestureTutorial.MainTitle.Back" />
 
-    <style name="TextAppearance.GestureTutorial.MainTitle.Success.Overview"
-        parent="TextAppearance.GestureTutorial.MainTitle.Overview" />
+    <style name="TextAppearance.GestureTutorial.MainTitle.Success.Overview" parent="TextAppearance.GestureTutorial.MainTitle.Overview" />
 
     <style name="GestureTutorialActivity" parent="@style/AppTheme">
         <item name="background">@android:color/transparent</item>
         <item name="tutorialSubtitle">@android:color/white</item>
-        <item name="surfaceContainer">?androidprv:attr/materialColorSurfaceContainer</item>
-        <item name="onSurfaceHome">?androidprv:attr/materialColorPrimaryFixedDim</item>
-        <item name="surfaceHome">?androidprv:attr/materialColorOnPrimaryFixedVariant</item>
-        <item name="secondaryHome">?androidprv:attr/materialColorOnPrimaryFixed</item>
-        <item name="onSurfaceBack">?androidprv:attr/materialColorTertiaryFixedDim</item>
-        <item name="surfaceBack">?androidprv:attr/materialColorOnTertiaryFixedVariant</item>
-        <item name="secondaryBack">?androidprv:attr/materialColorOnTertiaryFixed</item>
-        <item name="onSurfaceOverview">?androidprv:attr/materialColorPrimaryFixed</item>
-        <item name="surfaceOverview">?androidprv:attr/materialColorOnSecondaryFixedVariant</item>
-        <item name="secondaryOverview">?androidprv:attr/materialColorOnSecondaryFixed</item>
+        <item name="surfaceContainer">@color/system_on_surface_dark_launcher</item>
+        <item name="onSurfaceHome">@color/system_primary_fixed_dim_launcher</item>
+        <item name="surfaceHome">@color/system_primary_fixed_dim_launcher</item>
+        <item name="secondaryHome">@color/system_on_primary_fixed_launcher</item>
+        <item name="onSurfaceBack">@color/system_tertiary_fixed_dim_launcher</item>
+        <item name="surfaceBack">@color/system_on_tertiary_fixed_variant_launcher</item>
+        <item name="secondaryBack">@color/system_on_tertiary_fixed_launcher</item>
+        <item name="onSurfaceOverview">@color/system_primary_fixed_launcher</item>
+        <item name="surfaceOverview">@color/system_on_secondary_fixed_variant_launcher</item>
+        <item name="secondaryOverview">@color/system_on_secondary_fixed_launcher</item>
     </style>
 
 </resources>

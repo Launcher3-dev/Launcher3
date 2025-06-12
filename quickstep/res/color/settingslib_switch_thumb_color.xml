@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Disabled status of thumb -->
+    <item android:state_enabled="false"
+        android:color="@*android:color/system_neutral2_500"
+        android:alpha="?android:attr/disabledAlpha" />
+    <!-- Toggle off status of thumb -->
+    <item android:state_checked="false"
+        android:color="@*android:color/system_neutral2_500" />
+    <!-- Enabled or toggle on status of thumb -->
+    <item android:color="@*android:color/system_accent1_0" />
+</selector>

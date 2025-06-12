@@ -94,7 +94,21 @@
     <color name="lottie_yellow600">#f9ab00</color>
 
     <!-- Turn on work apps button -->
-    <color name="work_turn_on_stroke">?androidprv:attr/colorAccentPrimaryVariant</color>
-    <color name="work_fab_bg_color">?androidprv:attr/materialColorPrimaryFixedDim</color>
-    <color name="work_fab_icon_color">?androidprv:attr/materialColorOnPrimaryFixed</color>
+    <color name="work_turn_on_stroke">#7A90C8</color>
+    <color name="work_fab_bg_color">#455B8F</color>
+    <color name="work_fab_icon_color">#FFFFFF</color>
+    <color name="system_surface_container_lowest_dark_launcher">#0D0E13</color>
+    <color name="system_on_surface_dark_launcher">#E3E2E9</color>
+    <color name="system_primary_fixed_launcher">#DAE2FF</color>
+    <color name="system_primary_fixed_dim_launcher">#B2C5FF</color>
+    <color name="system_tertiary_fixed_launcher">#FED6F9</color>
+    <color name="system_on_tertiary_fixed_launcher">#2B122B</color>
+    <color name="system_on_tertiary_fixed_variant_launcher">#5A3D59</color>
+    <color name="system_on_primary_fixed_launcher">#001849</color>
+    <color name="system_tertiary_fixed_dim_launcher">#E1BBDC</color>
+    <color name="system_on_secondary_fixed_variant_launcher">#414659</color>
+    <color name="system_on_secondary_fixed_launcher">#151B2C</color>
+    <color name="system_on_primary_light_launcher">#FFFFFF</color>
+    <!-- Yellow 600, used for highlighting "important" conversations in settings & notifications -->
+    <color name="important_conversation">#f9ab00</color>
 </resources>

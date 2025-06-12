@@ -161,8 +161,9 @@ public class WidgetManagerHelper {
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     public RemoteViews loadGeneratedPreview(@NonNull AppWidgetProviderInfo info,
             int widgetCategory) {
-        if (!com.android.wm.shell.Flags.generatedPreviews()) return null;
-//        if (!android.appwidget.flags.Flags.generatedPreviews()) return null;
+        //tjlong 2025-6-7
+        //if (!com.android.wm.shell.Flags.generatedPreviews()) return null;
+        if (!android.appwidget.flags.Flags.generatedPreviews()) return null;
         return mAppWidgetManager.getWidgetPreview(info.provider, info.getProfile(), widgetCategory);
     }
 

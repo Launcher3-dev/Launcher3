@@ -475,6 +475,7 @@ public final class TaskViewUtils {
      * case where launcher handles animating starting split tasks from app icon)
      * @deprecated with shell transitions
      */
+    @Deprecated
     public static void composeRecentsSplitLaunchAnimatorLegacy(
             @Nullable GroupedTaskView launchingTaskView, int initialTaskId, int secondTaskId,
             @NonNull RemoteAnimationTarget[] appTargets,

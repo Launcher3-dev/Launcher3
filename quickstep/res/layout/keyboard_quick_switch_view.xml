@@ -43,7 +43,7 @@
             android:layout_height="@dimen/keyboard_quick_switch_no_recent_items_icon_size"
             android:layout_marginBottom="@dimen/keyboard_quick_switch_no_recent_items_icon_margin"
             android:src="@drawable/view_carousel"
-            android:tint="?androidprv:attr/materialColorOnSurface"
+            android:tint="@color/system_on_surface_dark_launcher"
             android:importantForAccessibility="no"
 
             app:layout_constraintVertical_chainStyle="packed"

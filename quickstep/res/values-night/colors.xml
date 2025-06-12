@@ -23,9 +23,9 @@
     <color name="mock_webpage_url_bar_item">#3c4043</color>
 
     <color name="all_set_page_background">#FF000000</color>
+    <!-- Turn on work apps button @android:color/system_primary_fixed_dim-->
+    <color name="work_turn_on_stroke">#8A90A5</color>
+    <color name="work_fab_bg_color">#455B8F</color>
+    <color name="work_fab_icon_color">#FFFFFF</color>
 
-    <!-- Turn on work apps button -->
-    <color name="work_turn_on_stroke">?androidprv:attr/colorAccentSecondaryVariant</color>
-    <color name="work_fab_bg_color">?androidprv:attr/materialColorPrimaryFixedDim</color>
-    <color name="work_fab_icon_color">?androidprv:attr/materialColorOnPrimaryFixed</color>
 </resources>

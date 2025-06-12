@@ -625,6 +625,37 @@
     <attr name="materialColorSurfaceContainerHighest" format="color" />
     <attr name="materialColorSurfaceContainer" format="color" />
 
+    <attr name="splitMaxAspectRatioInPortrait"  format="float">
+        <!-- Special value to always allow split in portrait regardless of the aspect ratio. -->
+        <enum name="alwaysAllow" value="0" />
+        <!-- Special value to always disallow split in portrait regardless of the aspect ratio. -->
+        <enum name="alwaysDisallow" value="-1" />
+    </attr>
+
+    <attr name="finishPrimaryWithSecondary" format="enum">
+        <!-- Never finish the primary container. -->
+        <enum name="never" value="0" />
+        <!-- Always finish the primary container. -->
+        <enum name="always" value="1" />
+        <!-- Only finish the primary container when the primary container is displayed adjacent to
+             the secondary container.
+             Does not finish the primary one when the secondary container is stacked on top of
+             the primary. -->
+        <enum name="adjacent" value="2" />
+    </attr>
+
+    <attr name="finishSecondaryWithPrimary" format="enum">
+        <!-- Never finish the secondary container. -->
+        <enum name="never" value="0" />
+        <!-- Always finish the secondary container. -->
+        <enum name="always" value="1" />
+        <!-- Only finish the secondary container when the primary container is displayed adjacent to
+             the secondary container.
+             Does not finish the secondary one when the secondary container is stacked on top of
+             the primary. -->
+        <enum name="adjacent" value="2" />
+    </attr>
+
     <declare-styleable name="WidgetSections">
         <!-- Component name of an app widget provider. -->
         <attr name="provider" format="string" />

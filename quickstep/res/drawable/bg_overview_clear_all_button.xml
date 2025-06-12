@@ -21,7 +21,7 @@
         <shape android:shape="rectangle"
             android:tint="?colorButtonNormal">
             <corners android:radius="@dimen/recents_clear_all_outline_radius" />
-            <solid android:color="?androidprv:attr/materialColorSurfaceBright"/>
+            <solid android:color="@*android:color/system_surface_bright_light"/>
         </shape>
     </item>
 </ripple>

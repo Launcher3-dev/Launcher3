@@ -124,11 +124,17 @@
     <style name="TextAppearance.GestureTutorial.ButtonLabel"
         parent="TextAppearance.GestureTutorial.CallToAction">
         <item name="android:gravity">center</item>
-        <item name="android:textColor">?androidprv:attr/materialColorOnPrimary</item>
+        <item name="android:textColor">@*android:color/system_on_primary_light</item>
         <item name="android:letterSpacing">0.02</item>
         <item name="android:textSize">16sp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:fontFamily">google-sans-text-medium</item>
+    </style>
+
+    <style name="Switch.SettingsLib" parent="@android:style/Widget.Material.CompoundButton.Switch">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:track">@drawable/settingslib_switch_track</item>
+        <item name="android:thumb">@drawable/settingslib_switch_thumb</item>
     </style>
 
     <style name="TextAppearance.GestureTutorial.ButtonLabel.Home"
@@ -268,46 +274,46 @@
     <style name="KeyboardQuickSwitchText">
         <item name="fontFamily">google-sans-text</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">?androidprv:attr/materialColorOnSurface</item>
+        <item name="android:textColor">@color/system_on_surface_dark_launcher</item>
         <item name="lineHeight">20sp</item>
     </style>
 
     <style name="KeyboardQuickSwitchText.OnBackground" parent="KeyboardQuickSwitchText">
-        <item name="android:textColor">?androidprv:attr/materialColorOnSurface</item>
+        <item name="android:textColor">@color/system_on_surface_dark_launcher</item>
     </style>
 
     <style name="GestureTutorialActivity" parent="@style/AppTheme">
         <item name="background">@android:color/transparent</item>
         <item name="tutorialSubtitle">@android:color/black</item>
-        <item name="surfaceContainer">?androidprv:attr/materialColorSurfaceContainer</item>
-        <item name="onSurfaceHome">?androidprv:attr/materialColorPrimaryFixed</item>
+        <item name="surfaceContainer">@color/system_on_surface_dark_launcher</item>
+        <item name="onSurfaceHome">@color/system_primary_fixed_launcher</item>
         <item name="surfaceHome">@android:color/system_accent1_300</item>
-        <item name="secondaryHome">?androidprv:attr/materialColorOnPrimaryFixedVariant</item>
-        <item name="onSurfaceBack">?androidprv:attr/materialColorTertiaryFixed</item>
+        <item name="secondaryHome">@color/system_primary_fixed_dim_launcher</item>
+        <item name="onSurfaceBack">@color/system_tertiary_fixed_launcher</item>
         <item name="surfaceBack">@android:color/system_accent3_300</item>
-        <item name="secondaryBack">?androidprv:attr/materialColorOnTertiaryFixedVariant</item>
-        <item name="onSurfaceOverview">?androidprv:attr/materialColorPrimaryFixed</item>
+        <item name="secondaryBack">@color/system_on_tertiary_fixed_variant_launcher</item>
+        <item name="onSurfaceOverview">@color/system_primary_fixed_launcher</item>
         <item name="surfaceOverview">@android:color/system_accent2_300</item>
-        <item name="secondaryOverview">?androidprv:attr/materialColorOnSecondaryFixedVariant</item>
+        <item name="secondaryOverview">@color/system_on_secondary_fixed_variant_launcher</item>
     </style>
 
     <style name="rotate_prompt_title" parent="TextAppearance.GestureTutorial.Dialog.Title">
-        <item name="android:textColor">?androidprv:attr/materialColorOnSurface</item>
+        <item name="android:textColor">@color/system_on_surface_dark_launcher</item>
     </style>
 
     <style name="rotate_prompt_subtitle" parent="TextAppearance.GestureTutorial.Dialog.Subtitle">
-        <item name="android:textColor">?androidprv:attr/materialColorOnSurfaceVariant</item>
+        <item name="android:textColor">@*android:color/system_on_surface_variant_light</item>
     </style>
 
     <style name="ArrowTipTaskbarStyle">
-        <item name="arrowTipBackground">?androidprv:attr/materialColorSurfaceContainer</item>
-        <item name="arrowTipTextColor">?androidprv:attr/materialColorOnSurface</item>
+        <item name="arrowTipBackground">@color/system_on_surface_dark_launcher</item>
+        <item name="arrowTipTextColor">@color/system_on_surface_dark_launcher</item>
     </style>
 
     <style name="IconAppChipMenuTextStyle">
         <item name="android:fontFamily">google-sans-text-medium</item>
         <item name="android:textSize">@dimen/task_thumbnail_icon_menu_text_size</item>
-        <item name="android:textColor">?androidprv:attr/materialColorOnSurface</item>
+        <item name="android:textColor">@color/system_on_surface_dark_launcher</item>
         <item name="android:letterSpacing">0.025</item>
         <item name="android:lineHeight">20sp</item>
     </style>

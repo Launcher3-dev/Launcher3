@@ -197,6 +197,7 @@ public abstract class BaseIconCache {
     }
 
     @Nullable
+    @SuppressWarnings("deprecation")
     private Drawable getFullResIcon(@Nullable final Resources resources, final int iconId) {
         if (resources != null && iconId != 0) {
             try {
@@ -364,6 +365,7 @@ public abstract class BaseIconCache {
      *
      * @param values {@link ContentValues} containing icon & title
      */
+    @SuppressWarnings("deprecation")
     private void addIconToDB(@NonNull final ContentValues values, @NonNull final ComponentName key,
             @NonNull final PackageInfo info, final long userSerial, final long lastUpdateTime) {
         values.put(IconDB.COLUMN_COMPONENT, key.flattenToString());
@@ -562,7 +564,7 @@ public abstract class BaseIconCache {
      */
     @WorkerThread
     @NonNull
-    @SuppressWarnings("NewApi")
+    @SuppressWarnings({"NewApi","deprecation"})
     protected CacheEntry getEntryForPackageLocked(@NonNull final String packageName,
             @NonNull final UserHandle user, final boolean useLowResIcon) {
         assertWorkerThread();

@@ -15,5 +15,5 @@
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
-    <item android:color="?androidprv:attr/materialColorSurfaceContainer"/>
+    <item android:color="@color/system_on_surface_dark_launcher"/>
 </selector>

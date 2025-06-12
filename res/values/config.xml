@@ -16,7 +16,7 @@
 <resources>
     <!-- Miscellaneous -->
     <bool name="config_largeHeap">false</bool>
-
+    <dimen name="settingslib_preferred_minimum_touch_target">48dp</dimen>
     <!-- A string pointer to the original app name string. This allows derived projects to
      easily override the app name without providing all translations -->
     <string name="derived_app_name" translatable="false">@string/app_name</string>

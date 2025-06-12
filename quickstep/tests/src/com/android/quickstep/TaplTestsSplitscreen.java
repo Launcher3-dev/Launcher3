@@ -34,7 +34,6 @@ import com.android.launcher3.tapl.Overview;
 import com.android.launcher3.tapl.Taskbar;
 import com.android.launcher3.tapl.TaskbarAppIcon;
 import com.android.launcher3.util.rule.TestStabilityRule;
-import com.android.wm.shell.Flags;
 
 import org.junit.After;
 import org.junit.Before;

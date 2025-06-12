@@ -23,7 +23,7 @@
     android:importantForAccessibility="yes"
     android:background="@drawable/keyboard_quick_switch_task_view_background"
     android:clipToOutline="true"
-    launcher:focusBorderColor="?androidprv:attr/materialColorOutline">
+    launcher:focusBorderColor="@*android:color/system_outline_dark">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/content"

@@ -1,18 +1,14 @@
 # Launcher3
 
-## 更新：20241208
-
-
-## 基础分支信息
-* android15-s1-release
-* https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/heads/android15-s1-release
+## 更新：20250612
 
 ## 说明
-目前只支持withoutQuickstep编译
+支持withQuickstep编译
 
 ## 主要分支
 
 * main (android15-s1-release)--Android-15
+* Launcher3-15-quickstep (原生版本，可以编译Quickstep版本)
 * Launcher3-15-s1-mx (基于android15-s1-release进行部分功能试验)
 * Launcher3-14-s2-release (android14-s2-release)
 * Launcher3-13 (Launcher3-13.0.0_r83(7e9e70085176ea46bf773019a5054942d2fc3811))--Android-13

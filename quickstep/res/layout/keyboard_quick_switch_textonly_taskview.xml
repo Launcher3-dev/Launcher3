@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2023 The Android Open Source Project
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2023 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,8 +12,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<com.android.launcher3.taskbar.KeyboardQuickSwitchTaskView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.android.launcher3.taskbar.KeyboardQuickSwitchTaskView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:launcher="http://schemas.android.com/apk/res-auto"
@@ -22,7 +20,7 @@
     android:layout_height="@dimen/keyboard_quick_switch_taskview_height"
     android:clipToOutline="true"
     android:importantForAccessibility="yes"
-    launcher:focusBorderColor="?androidprv:attr/materialColorOutline">
+    launcher:focusBorderColor="@*android:color/system_outline_dark">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/content"
@@ -30,35 +28,35 @@
         android:layout_height="match_parent"
         android:background="@drawable/keyboard_quick_switch_overview_button_background"
 
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/icon"
             android:layout_width="@dimen/keyboard_quick_switch_recents_icon_size"
             android:layout_height="@dimen/keyboard_quick_switch_recents_icon_size"
             android:layout_marginBottom="8dp"
-            android:tint="?androidprv:attr/materialColorOnSurface"
-
-            app:layout_constraintVertical_chainStyle="packed"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/text"
+
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:tint="@color/system_on_surface_dark_launcher" />
 
         <TextView
-            style="@style/KeyboardQuickSwitchText"
             android:id="@+id/text"
+            style="@style/KeyboardQuickSwitchText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAlignment="center"
 
-            app:layout_constraintTop_toBottomOf="@id/icon"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintTop_toBottomOf="@id/icon" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

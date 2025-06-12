@@ -74,8 +74,8 @@ public class SimpleIconCache extends BaseIconCache {
                 return mUserSerialMap.valueAt(index);
             }
             long serial = mUserManager.getSerialNumberForUser(user);
-            mUserSerialMap.put(user.hashCode(), serial);
-//            mUserSerialMap.put(user.getIdentifier(), serial);
+           mUserSerialMap.put(user.hashCode(), serial);
+ //           mUserSerialMap.put(user.getIdentifier(), serial);
             return serial;
         }
     }

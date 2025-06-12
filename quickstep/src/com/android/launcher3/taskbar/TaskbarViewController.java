@@ -38,7 +38,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;

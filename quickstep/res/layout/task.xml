@@ -25,8 +25,8 @@
     android:clipChildren="false"
     android:defaultFocusHighlightEnabled="false"
     android:focusable="true"
-    launcher:focusBorderColor="?androidprv:attr/materialColorOutline"
-    launcher:hoverBorderColor="?androidprv:attr/materialColorPrimary">
+    launcher:focusBorderColor="@*android:color/system_outline_dark"
+    launcher:hoverBorderColor="@*android:color/system_primary_dark">
 
     <include layout="@layout/task_thumbnail" />
 

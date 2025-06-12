@@ -19,10 +19,6 @@ android {
             res.srcDirs = ['res']
             manifest.srcFile 'AndroidManifest.xml'
         }
-        androidTest {
-            java.srcDirs = ["tests/src", "tests/robolectric/src"]
-            manifest.srcFile 'tests/AndroidManifest.xml'
-        }
     }
 
     lintOptions {
@@ -33,7 +29,7 @@ android {
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
         freeCompilerArgs = ["-Xjvm-default=all"]
     }
     compileOptions {

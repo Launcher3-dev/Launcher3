@@ -481,6 +481,7 @@ public class BaseIconFactory implements AutoCloseable {
     }
 
     @NonNull
+    @SuppressWarnings("deprecation")
     public static Drawable getFullResDefaultActivityIcon(final int iconDpi) {
         return Objects.requireNonNull(Resources.getSystem().getDrawableForDensity(
                 android.R.drawable.sym_def_app_icon, iconDpi));

@@ -806,11 +806,17 @@ abstract class TutorialController implements BackGestureAttemptCallback,
         GestureSandboxActivity sandboxActivity = (GestureSandboxActivity) mContext;
         View contentView = View.inflate(
                 sandboxActivity, R.layout.gesture_tutorial_dialog, null);
+        //tjlong 2025-6-7
+        AlertDialog tutorialDialog = new AlertDialog
+                .Builder(sandboxActivity, androidx.appcompat.R.style.Base_Theme_AppCompat_Dialog)
+                .setView(contentView)
+                .create();
+        /*
         AlertDialog tutorialDialog = new AlertDialog
                 .Builder(sandboxActivity, R.style.Theme_AppCompat_Dialog_Alert)
                 .setView(contentView)
                 .create();
-
+        */
         PackageManager packageManager = mContext.getPackageManager();
         CharSequence tipsAppName = DEFAULT_PIXEL_TIPS_APP_NAME;
 

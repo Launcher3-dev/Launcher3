@@ -18,7 +18,8 @@ package com.android.quickstep.views;
 
 import static com.android.launcher3.LauncherState.NORMAL;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SPLIT_SELECTION_EXIT_CANCEL_BUTTON;
-import static com.android.settingslib.widget.theme.R.dimen.settingslib_preferred_minimum_touch_target;
+//tjlong 2025-06-07
+//import static com.android.settingslib.widget.theme.R.dimen.settingslib_preferred_minimum_touch_target;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -134,11 +135,11 @@ public class SplitInstructionsView extends LinearLayout {
             cancelTextView.setVisibility(VISIBLE);
             cancelTextView.setOnClickListener((v) -> exitSplitSelection());
             instructionTextView.setText(R.string.toast_contextual_split_select_app);
-
+            ////tjlong 2025-06-07
             // After layout, expand touch target of cancel button to meet minimum a11y measurements.
             post(() -> {
                 int minTouchSize = getResources()
-                        .getDimensionPixelSize(settingslib_preferred_minimum_touch_target);
+                        .getDimensionPixelSize(R.dimen.settingslib_preferred_minimum_touch_target);
                 Rect r = new Rect();
                 cancelTextView.getHitRect(r);
 

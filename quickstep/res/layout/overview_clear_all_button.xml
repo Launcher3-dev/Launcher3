@@ -23,6 +23,6 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="@string/recents_clear_all"
-    android:textColor="?androidprv:attr/materialColorOnSurface"
-    launcher:focusBorderColor="?androidprv:attr/materialColorOutline"
+    android:textColor="@color/system_on_surface_dark_launcher"
+    launcher:focusBorderColor="@*android:color/system_outline_dark"
     android:textSize="14sp" />

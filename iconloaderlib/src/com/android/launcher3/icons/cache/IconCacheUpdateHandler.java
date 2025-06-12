@@ -134,7 +134,7 @@ public class IconCacheUpdateHandler {
      *
      * @return The set of packages for which icons have updated.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","deprecation"})
     private <T> void updateIconsPerUser(UserHandle user, HashMap<ComponentName, T> componentMap,
             CachingLogic<T> cachingLogic, OnUpdateCallback onUpdateCallback) {
         Set<String> ignorePackages = mPackagesToIgnore.get(user);

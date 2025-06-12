@@ -176,6 +176,7 @@ public class FastBitmapDrawable extends Drawable implements Drawable.Callback {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public int getOpacity() {
         return PixelFormat.TRANSLUCENT;
     }
