@@ -20,6 +20,7 @@ final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/libs/"
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion COMPILE_SDK
@@ -155,6 +156,15 @@ android {
 
 }
 
+// 启用增量注解处理（提升编译速度）
+kapt {
+    useBuildCache = true
+    correctErrorTypes = true
+    javacOptions {
+        option("-Xmaxerrs", 1000)
+    }
+}
+
 allprojects {
     repositories {
 //        maven { url "../../../prebuilts/sdk/current/androidx/m2repository" }
@@ -176,6 +186,8 @@ dependencies {
     implementation project(':IconLoader')
     implementation project(':systemUIPluginCore')
     implementation project(':animationlib')
+    implementation project(':Shared')
+    implementation project(':msdllib')
 //    implementation project(':UiTestsLibLauncher')
 //    withQuickstepImplementation project(':SharedLibWrapper')
     implementation 'com.google.protobuf:protobuf-javalite:4.26.1'
@@ -199,7 +211,7 @@ dependencies {
 
     api 'com.airbnb.android:lottie:6.6.6'
     implementation 'com.google.dagger:dagger:2.56.2'
-    annotationProcessor 'com.google.dagger:dagger-compiler:2.56.2'
+    kapt 'com.google.dagger:dagger-compiler:2.56.2'
 
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.slice:slice-builders:1.0.0'

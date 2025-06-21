@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.android.launcher3.icons"
+    namespace = "com.google.android.msdl"
 
     compileSdk = 36
 
@@ -17,7 +17,7 @@ android {
     }
     sourceSets {
         named("main") {
-            java.setSrcDirs(listOf("src", "src_full_lib"))
+            java.setSrcDirs(listOf("src"))
             manifest.srcFile("AndroidManifest.xml")
             res.setSrcDirs(listOf("res"))
         }
@@ -30,5 +30,4 @@ android {
 dependencies {
     implementation("androidx.core:core:1.16.0")
     implementation("androidx.annotation:annotation:1.9.1")
-//    api(project(":NexusLauncher:Flags"))
 }

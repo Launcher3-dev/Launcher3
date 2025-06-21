@@ -1,5 +1,9 @@
 include ':IconLoader'
 project(':IconLoader').projectDir = new File(rootDir, 'iconloaderlib')
+include ':Shared'
+project(':Shared').projectDir = new File(rootDir, 'shared')
+include ':msdllib'
+project(':msdllib').projectDir = new File(rootDir, 'msdllib')
 
 //include ':SharedLibWrapper'
 //project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')

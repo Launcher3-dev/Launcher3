@@ -474,15 +474,15 @@
     <dimen name="bubblebar_overflow_inset">16dp</dimen>
     <dimen name="bubblebar_icon_spacing">6dp</dimen>
     <dimen name="bubblebar_icon_spacing_large">8dp</dimen>
-    <dimen name="bubblebar_icon_spacing_persistent_taskbar">@dimen/bubblebar_icon_spacing</dimen>
+    <dimen name="bubblebar_icon_spacing_persistent_taskbar">6dp</dimen>
     <dimen name="bubblebar_expanded_icon_spacing">12dp</dimen>
     <dimen name="bubblebar_icon_elevation">1dp</dimen>
     <dimen name="bubblebar_transient_taskbar_min_distance">12dp</dimen>
 
     <!-- Bubble bar dismiss view -->
-    <dimen name="bubblebar_dismiss_target_size">@dimen/floating_dismiss_background_size</dimen>
+    <dimen name="bubblebar_dismiss_target_size">96dp</dimen>
     <dimen name="bubblebar_dismiss_target_small_size">60dp</dimen>
-    <dimen name="bubblebar_dismiss_target_icon_size">@dimen/floating_dismiss_icon_size</dimen>
+    <dimen name="bubblebar_dismiss_target_icon_size">32dp</dimen>
     <dimen name="bubblebar_dismiss_target_bottom_margin">50dp</dimen>
     <dimen name="bubblebar_dismiss_floating_gradient_height">548dp</dimen>
     <dimen name="bubblebar_dismiss_zone_width">192dp</dimen>
