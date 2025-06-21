@@ -49,6 +49,8 @@ public interface LauncherOverlayManager {
 
     default void onActivityDestroyed() { }
 
+    default void onDisallowSwipeToMinusOnePage() {}
+
     /**
      * @deprecated use LauncherOverlayTouchProxy directly
      */

@@ -21,7 +21,6 @@ import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_ALL_APP
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -36,6 +35,7 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.pm.PackageInstallInfo;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.util.ApiWrapper;
+import com.android.launcher3.util.ApplicationInfoWrapper;
 import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.UserIconInfo;
 
@@ -187,8 +187,8 @@ public class AppInfo extends ItemInfoWithIcon implements WorkspaceItemFactory {
             ApiWrapper apiWrapper, PackageManagerHelper pmHelper) {
         final int oldProgressLevel = info.getProgressLevel();
         final int oldRuntimeStatusFlags = info.runtimeStatusFlags;
-        ApplicationInfo appInfo = lai.getApplicationInfo();
-        if (PackageManagerHelper.isAppSuspended(appInfo)) {
+        ApplicationInfoWrapper appInfo = new ApplicationInfoWrapper(lai.getApplicationInfo());
+        if (appInfo.isSuspended()) {
             info.runtimeStatusFlags |= FLAG_DISABLED_SUSPENDED;
         } else {
             info.runtimeStatusFlags &= ~FLAG_DISABLED_SUSPENDED;
@@ -200,8 +200,7 @@ public class AppInfo extends ItemInfoWithIcon implements WorkspaceItemFactory {
                 info.runtimeStatusFlags &= ~FLAG_ARCHIVED;
             }
         }
-        info.runtimeStatusFlags |= (appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0
-                ? FLAG_SYSTEM_NO : FLAG_SYSTEM_YES;
+        info.runtimeStatusFlags |= appInfo.isSystem() ? FLAG_SYSTEM_YES : FLAG_SYSTEM_NO;
 
         if (Flags.privateSpaceRestrictAccessibilityDrag()) {
             if (userIconInfo.isPrivate()) {
@@ -216,8 +215,7 @@ public class AppInfo extends ItemInfoWithIcon implements WorkspaceItemFactory {
                 PackageManagerHelper.getLoadingProgress(lai),
                 PackageInstallInfo.STATUS_INSTALLED_DOWNLOADING);
         info.setNonResizeable(apiWrapper.isNonResizeableActivity(lai));
-        info.setSupportsMultiInstance(
-                pmHelper.supportsMultiInstance(lai.getComponentName()));
+        info.setSupportsMultiInstance(apiWrapper.supportsMultiInstance(lai));
         return (oldProgressLevel != info.getProgressLevel())
                 || (oldRuntimeStatusFlags != info.runtimeStatusFlags);
     }

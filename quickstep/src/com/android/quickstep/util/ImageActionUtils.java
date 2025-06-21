@@ -85,6 +85,7 @@ public class ImageActionUtils {
                 .setBitmap(screenshot)
                 .setBoundsOnScreen(screenshotBounds)
                 .setInsets(visibleInsets)
+                .setDisplayId(task.displayId)
                 .build();
         systemUiProxy.takeScreenshot(request);
     }

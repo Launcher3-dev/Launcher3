@@ -32,6 +32,7 @@ import android.widget.RemoteViews;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
 
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.model.data.LauncherAppWidgetInfo;
@@ -57,8 +58,13 @@ public class WidgetManagerHelper {
     final Context mContext;
 
     public WidgetManagerHelper(Context context) {
+        this(context, AppWidgetManager.getInstance(context));
+    }
+
+    @VisibleForTesting
+    public WidgetManagerHelper(Context context, AppWidgetManager appWidgetManager) {
         mContext = context;
-        mAppWidgetManager = AppWidgetManager.getInstance(context);
+        mAppWidgetManager = appWidgetManager;
     }
 
     /**
@@ -161,8 +167,7 @@ public class WidgetManagerHelper {
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     public RemoteViews loadGeneratedPreview(@NonNull AppWidgetProviderInfo info,
             int widgetCategory) {
-        if (!com.android.wm.shell.Flags.generatedPreviews()) return null;
-//        if (!android.appwidget.flags.Flags.generatedPreviews()) return null;
+        if (!android.appwidget.flags.Flags.generatedPreviews()) return null;
         return mAppWidgetManager.getWidgetPreview(info.provider, info.getProfile(), widgetCategory);
     }
 

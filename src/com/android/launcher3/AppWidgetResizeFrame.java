@@ -216,6 +216,13 @@ public class AppWidgetResizeFrame extends AbstractFloatingView implements View.O
         AppWidgetResizeFrame frame = (AppWidgetResizeFrame) launcher.getLayoutInflater()
                 .inflate(R.layout.app_widget_resize_frame, dl, false);
         frame.setupForWidget(widget, cellLayout, dl);
+        // Save widget item info as tag on resize frame; so that, the accessibility delegate can
+        // attach actions that typically happen on widget (e.g. resize, move) also on the resize
+        // frame.
+        frame.setTag(widget.getTag());
+        frame.setAccessibilityDelegate(launcher.getAccessibilityDelegate());
+        frame.setContentDescription(launcher.asContext().getString(R.string.widget_frame_name,
+                widget.getContentDescription()));
         ((DragLayer.LayoutParams) frame.getLayoutParams()).customPosition = true;
 
         dl.addView(frame);
@@ -233,6 +240,13 @@ public class AppWidgetResizeFrame extends AbstractFloatingView implements View.O
                 gd.setCornerRadius(enforcedCornerRadius);
             }
         }
+    }
+
+    /**
+     *  Retrieves the view where accessibility actions happen.
+     */
+    public View getViewForAccessibility() {
+        return mWidgetView;
     }
 
     private void setupForWidget(LauncherAppWidgetHostView widgetView, CellLayout cellLayout,

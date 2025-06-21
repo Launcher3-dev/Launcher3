@@ -16,6 +16,7 @@
 
 package com.android.launcher3;
 
+import static com.android.launcher3.AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME;
 import static com.android.launcher3.BubbleTextView.DISPLAY_FOLDER;
 import static com.android.launcher3.Flags.enableSmartspaceRemovalToggle;
 import static com.android.launcher3.LauncherAnimUtils.SPRING_LOADED_EXIT_DELAY;
@@ -52,8 +53,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
-import android.os.Message;
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -67,8 +67,10 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
+import androidx.core.view.ViewCompat;
 
 import com.android.app.animation.Interpolators;
 import com.android.launcher3.accessibility.AccessibleDragListenerAdapter;
@@ -80,7 +82,8 @@ import com.android.launcher3.celllayout.CellLayoutLayoutParams;
 import com.android.launcher3.celllayout.CellPosMapper;
 import com.android.launcher3.celllayout.CellPosMapper.CellPos;
 import com.android.launcher3.config.FeatureFlags;
-import com.android.launcher3.dot.FolderDotInfo;
+import com.android.launcher3.debug.TestEventEmitter;
+import com.android.launcher3.debug.TestEventEmitter.TestEvent;
 import com.android.launcher3.dragndrop.DragController;
 import com.android.launcher3.dragndrop.DragLayer;
 import com.android.launcher3.dragndrop.DragOptions;
@@ -105,6 +108,7 @@ import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pageindicators.PageIndicator;
 import com.android.launcher3.statemanager.StateManager;
 import com.android.launcher3.statemanager.StateManager.StateHandler;
+import com.android.launcher3.statemanager.StateManager.StateListener;
 import com.android.launcher3.states.StateAnimationConfig;
 import com.android.launcher3.touch.WorkspaceTouchListener;
 import com.android.launcher3.util.EdgeEffectCompat;
@@ -113,29 +117,26 @@ import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.IntSparseArrayMap;
 import com.android.launcher3.util.LauncherBindableItemsContainer;
+import com.android.launcher3.util.MSDLPlayerWrapper;
 import com.android.launcher3.util.OverlayEdgeEffect;
-import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.util.Thunk;
 import com.android.launcher3.util.WallpaperOffsetInterpolator;
 import com.android.launcher3.widget.LauncherAppWidgetHostView;
-import com.android.launcher3.widget.LauncherWidgetHolder;
-import com.android.launcher3.widget.LauncherWidgetHolder.ProviderChangedListener;
 import com.android.launcher3.widget.NavigableAppWidgetHostView;
 import com.android.launcher3.widget.PendingAddShortcutInfo;
 import com.android.launcher3.widget.PendingAddWidgetInfo;
-import com.android.launcher3.widget.PendingAppWidgetHostView;
-import com.android.launcher3.widget.WidgetManagerHelper;
 import com.android.launcher3.widget.util.WidgetSizes;
 import com.android.systemui.plugins.shared.LauncherOverlayManager.LauncherOverlayCallbacks;
 import com.android.systemui.plugins.shared.LauncherOverlayManager.LauncherOverlayTouchProxy;
+
+import com.google.android.msdl.data.model.MSDLToken;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * The workspace is a wide area with a wallpaper and a finite number of pages.
@@ -233,6 +234,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     boolean mChildrenLayersEnabled = true;
 
     private boolean mStripScreensOnPageStopMoving = false;
+    public boolean mHasOnLayoutBeenCalled = false;
 
     private boolean mWorkspaceFadeInAdjacentScreens;
 
@@ -295,6 +297,21 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     private final StatsLogManager mStatsLogManager;
 
+    private final MSDLPlayerWrapper mMSDLPlayerWrapper;
+
+    private final StateManager.StateListener<LauncherState> mAccessibilityDropListener =
+            new StateListener<>() {
+                @Override
+                public void onStateTransitionComplete(LauncherState finalState) {
+                    if (finalState == NORMAL) {
+                        performAccessibilityActionOnViewTree(Workspace.this);
+                    }
+                }
+            };
+
+    @Nullable
+    private DragController.DragListener mAccessibilityDragListener;
+
     /**
      * Used to inflate the Workspace from XML.
      *
@@ -314,7 +331,6 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
      */
     public Workspace(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
         mLauncher = Launcher.getLauncher(context);
         mStateTransitionAnimation = new WorkspaceStateTransitionAnimation(mLauncher, this);
         mWallpaperManager = WallpaperManager.getInstance(context);
@@ -328,6 +344,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         setMotionEventSplittingEnabled(true);
         setOnTouchListener(new WorkspaceTouchListener(mLauncher, this));
         mStatsLogManager = StatsLogManager.newInstance(context);
+        mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(context);
     }
 
     @Override
@@ -503,6 +520,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             }
         }
 
+        if (mAccessibilityDragListener != null) {
+            mAccessibilityDragListener.onDragStart(dragObject, options);
+        }
         if (!mLauncher.isInState(EDIT_MODE)) {
             mLauncher.getStateManager().goToState(SPRING_LOADED);
         }
@@ -539,6 +559,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             }
         });
 
+        if (mAccessibilityDragListener != null) {
+            mAccessibilityDragListener.onDragEnd();
+        }
         mDragInfo = null;
         mDragSourceInternal = null;
     }
@@ -635,7 +658,6 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         }
 
         // Remove the pages and clear the screen models
-        removeFolderListeners();
         removeAllViews();
         mScreenOrder.clear();
         mWorkspaceScreens.clear();
@@ -644,9 +666,6 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         if (!enableSmartspaceRemovalToggle()) {
             bindAndInitFirstWorkspaceScreen();
         }
-
-        // Remove any deferred refresh callbacks
-        mLauncher.mHandler.removeCallbacksAndMessages(DeferredWidgetRefresh.class);
 
         // Re-enable the layout transitions
         enableLayoutTransitions();
@@ -871,6 +890,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                 mScreenOrder.removeValue(extraEmptyPageId);
             });
 
+            // Since we removed some screens, before moving to next page, update the state
+            // description with correct page numbers.
+            updateAccessibilityViewPageDescription();
             setCurrentPage(getNextPage());
 
             // Update the page indicator to reflect the removed page.
@@ -1096,6 +1118,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         if (pageShift >= 0) {
             setCurrentPage(currentPage - pageShift);
         }
+
+        // Now that we have removed some pages, ensure state description is up to date.
+        updateAccessibilityViewPageDescription();
     }
 
     /**
@@ -1119,6 +1144,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             return false;
         }
         return super.onTouchEvent(ev);
+    }
+
+    @Override
+    protected void onDisallowSwipeToMinusOnePage() {
+        mLauncher.getOverlayManager().onDisallowSwipeToMinusOnePage();
     }
 
     /**
@@ -1215,6 +1245,10 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     }
 
     protected void onPageBeginTransition() {
+        // Widget resize frame doesn't receive events to close when talkback is enabled. For that
+        // case, close it here.
+        AbstractFloatingView.closeOpenViews(mLauncher, false, TYPE_WIDGET_RESIZE_FRAME);
+
         super.onPageBeginTransition();
         updateChildrenLayersEnabled();
     }
@@ -1435,15 +1469,18 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         super.onAttachedToWindow();
         mWallpaperOffset.setWindowToken(getWindowToken());
         computeScroll();
+        mLauncher.getStateManager().addStateListener(mAccessibilityDropListener);
     }
 
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mWallpaperOffset.setWindowToken(null);
+        mLauncher.getStateManager().removeStateListener(mAccessibilityDropListener);
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        mHasOnLayoutBeenCalled = true; // b/349929393 - is the required call to onLayout not done?
         if (mUnlockWallpaperFromDefaultPageOnLayout) {
             mWallpaperOffset.setLockToDefaultPage(false);
             mUnlockWallpaperFromDefaultPageOnLayout = false;
@@ -1637,7 +1674,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         child.setVisibility(INVISIBLE);
 
         if (options.isAccessibleDrag) {
-            mDragController.addDragListener(
+            mAccessibilityDragListener =
                     new AccessibleDragListenerAdapter(this, WorkspaceAccessibilityHelper::new) {
                         @Override
                         protected void enableAccessibleDrag(boolean enable,
@@ -1650,7 +1687,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                                         IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
                             }
                         }
-                    });
+                    };
         }
 
         beginDragShared(child, this, options);
@@ -1742,7 +1779,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         }
 
         final DragView dv;
-        if (contentView instanceof View) {
+        if (contentView != null) {
             dv = mDragController.startDrag(
                     contentView,
                     draggableView,
@@ -1875,7 +1912,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
         boolean aboveShortcut = Folder.willAccept(dropOverView.getTag())
                 && ((ItemInfo) dropOverView.getTag()).container != CONTAINER_HOTSEAT_PREDICTION;
-        boolean willBecomeShortcut = Folder.willAcceptItemType(info.itemType);
+        boolean willBecomeShortcut = FolderInfo.willAcceptItemType(info.itemType);
 
         return (aboveShortcut && willBecomeShortcut);
     }
@@ -1955,8 +1992,8 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                 fi.performCreateAnimation(destInfo, v, sourceInfo, d, folderLocation, scale);
             } else {
                 fi.prepareCreateAnimation(v);
-                fi.addItem(destInfo);
-                fi.addItem(sourceInfo);
+                fi.getFolder().addFolderContent(destInfo);
+                fi.getFolder().addFolderContent(sourceInfo);
             }
             return true;
         }
@@ -2213,11 +2250,21 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             }
             mStatsLogManager.logger().withItemInfo(d.dragInfo).withInstanceId(d.logInstanceId)
                     .log(LauncherEvent.LAUNCHER_ITEM_DROP_COMPLETED);
+
+            if (mAccessibilityDragListener != null) {
+                // This code needs to be called after StateManager.cancelAnimation. Before changing
+                // the order of operations in this method related to the StateListener below, please
+                // test that accessibility moves retain focus after accessibility dropping an item.
+                // Accessibility focus must be requested after launcher is back to a normal state
+                cell.setTag(R.id.perform_a11y_action_on_launcher_state_normal_tag,
+                        AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+            }
         }
 
         if (d.stateAnnouncer != null && !droppedOnOriginalCell) {
             d.stateAnnouncer.completeAction(R.string.item_moved);
         }
+        TestEventEmitter.sendEvent(TestEvent.WORKSPACE_ON_DROP);
     }
 
     @Nullable
@@ -2665,7 +2712,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         ItemInfo info = dragObject.dragInfo;
         boolean userFolderPending = willCreateUserFolder(info, mDragOverView, false);
         if (mDragMode == DRAG_MODE_NONE && userFolderPending) {
-
+            if (Flags.msdlFeedback()) {
+                mMSDLPlayerWrapper.playToken(MSDLToken.DRAG_INDICATOR_DISCRETE);
+            }
             mFolderCreateBg = new PreviewBackground(getContext());
             mFolderCreateBg.setup(mLauncher, mLauncher, null,
                     mDragOverView.getMeasuredWidth(), mDragOverView.getPaddingTop());
@@ -3113,7 +3162,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                         + "Workspace#onDropCompleted. Please file a bug. ");
             }
         }
-        View cell = getHomescreenIconByItemId(d.originalDragInfo.id);
+        View cell = getViewByItemId(d.originalDragInfo.id);
         if (d.cancelled && cell != null) {
             cell.setVisibility(VISIBLE);
         }
@@ -3155,21 +3204,6 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                 }
             }
             return false;
-        });
-    }
-
-    /**
-     * Removes all folder listeners
-     */
-    public void removeFolderListeners() {
-        mapOverItems(new ItemOperator() {
-            @Override
-            public boolean evaluate(ItemInfo info, View view) {
-                if (view instanceof FolderIcon) {
-                    ((FolderIcon) view).removeListeners();
-                }
-                return false;
-            }
         });
     }
 
@@ -3262,29 +3296,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         return layouts;
     }
 
-    public View getHomescreenIconByItemId(final int id) {
-        return getFirstMatch((info, v) -> info != null && info.id == id);
-    }
-
     public LauncherAppWidgetHostView getWidgetForAppWidgetId(final int appWidgetId) {
-        return (LauncherAppWidgetHostView) getFirstMatch((info, v) ->
-                (info instanceof LauncherAppWidgetInfo) &&
-                        ((LauncherAppWidgetInfo) info).appWidgetId == appWidgetId);
-    }
-
-    public View getFirstMatch(final ItemOperator operator) {
-        final View[] value = new View[1];
-        mapOverItems(new ItemOperator() {
-            @Override
-            public boolean evaluate(ItemInfo info, View v) {
-                if (operator.evaluate(info, v)) {
-                    value[0] = v;
-                    return true;
-                }
-                return false;
-            }
-        });
-        return value[0];
+        return (LauncherAppWidgetHostView) mapOverItems((info, v) ->
+                (info instanceof LauncherAppWidgetInfo lawi) && lawi.appWidgetId == appWidgetId);
     }
 
     void clearDropTargets() {
@@ -3318,15 +3332,15 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                     if (child instanceof DropTarget) {
                         mDragController.removeDropTarget((DropTarget) child);
                     }
-                } else if (child instanceof FolderIcon) {
+                } else if (child instanceof FolderIcon folderIcon) {
                     FolderInfo folderInfo = (FolderInfo) info;
-                    List<ItemInfo> matches = folderInfo.getContents().stream()
+                    ItemInfo[] matches = folderInfo.getContents().stream()
                             .filter(matcher)
-                            .collect(Collectors.toList());
-                    if (!matches.isEmpty()) {
-                        folderInfo.removeAll(matches, false);
-                        if (((FolderIcon) child).getFolder().isOpen()) {
-                            ((FolderIcon) child).getFolder().close(false /* animate */);
+                            .toArray(ItemInfo[]::new);
+                    if (matches.length > 0) {
+                        folderIcon.getFolder().removeFolderContent(false, matches);
+                        if (folderIcon.getFolder().isOpen()) {
+                            folderIcon.getFolder().close(false /* animate */);
                         }
                     }
                 } else if (info instanceof AppPairInfo api) {
@@ -3343,66 +3357,29 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     }
 
     @Override
-    public void mapOverItems(ItemOperator op) {
-        for (CellLayout layout : getWorkspaceAndHotseatCellLayouts()) {
-            if (mapOverCellLayout(layout, op) != null) {
-                return;
-            }
-        }
+    public View mapOverItems(@NonNull ItemOperator op) {
+        return mapOverCellLayouts(getWorkspaceAndHotseatCellLayouts(), op);
     }
 
     /**
-     * Perform {param operator} over all the items in a given {param layout}.
-     *
-     * @return The first item that satisfies the operator or null.
+     * Perform {param op} over all the items in the provided {param layouts} until a match is found
      */
-    public View mapOverCellLayout(CellLayout layout, ItemOperator operator) {
-        // TODO(b/128460496) Potential race condition where layout is not yet loaded
-        if (layout == null) {
-            return null;
-        }
-        ShortcutAndWidgetContainer container = layout.getShortcutsAndWidgets();
-        // map over all the shortcuts on the workspace
-        final int itemCount = container.getChildCount();
-        for (int itemIdx = 0; itemIdx < itemCount; itemIdx++) {
-            View item = container.getChildAt(itemIdx);
-            if (operator.evaluate((ItemInfo) item.getTag(), item)) {
-                return item;
+    public static View mapOverCellLayouts(CellLayout[] layouts, ItemOperator op) {
+        for (CellLayout layout : layouts) {
+            // TODO(b/128460496) Potential race condition where layout is not yet loaded
+            if (layout == null) continue;
+
+            ShortcutAndWidgetContainer container = layout.getShortcutsAndWidgets();
+            // map over all the shortcuts on the layout
+            final int itemCount = container.getChildCount();
+            for (int itemIdx = 0; itemIdx < itemCount; itemIdx++) {
+                View item = container.getChildAt(itemIdx);
+                if (op.evaluate((ItemInfo) item.getTag(), item)) {
+                    return item;
+                }
             }
         }
         return null;
-    }
-
-    public void updateNotificationDots(Predicate<PackageUserKey> updatedDots) {
-        final PackageUserKey packageUserKey = new PackageUserKey(null, null);
-        Predicate<ItemInfo> matcher = info -> !packageUserKey.updateFromItemInfo(info)
-                || updatedDots.test(packageUserKey);
-
-        ItemOperator op = (info, v) -> {
-            if (info instanceof WorkspaceItemInfo && v instanceof BubbleTextView) {
-                if (matcher.test(info)) {
-                    ((BubbleTextView) v).applyDotState(info, true /* animate */);
-                }
-            } else if (info instanceof FolderInfo && v instanceof FolderIcon) {
-                FolderInfo fi = (FolderInfo) info;
-                if (fi.anyMatch(matcher)) {
-                    FolderDotInfo folderDotInfo = new FolderDotInfo();
-                    for (ItemInfo si : fi.getContents()) {
-                        folderDotInfo.addDotInfo(mLauncher.getDotInfoForItem(si));
-                    }
-                    ((FolderIcon) v).setDotInfo(folderDotInfo);
-                }
-            }
-
-            // process all the shortcuts
-            return false;
-        };
-
-        mapOverItems(op);
-        Folder folder = Folder.getOpen(mLauncher);
-        if (folder != null) {
-            folder.iterateOverItems(op);
-        }
     }
 
     /**
@@ -3414,43 +3391,6 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                                             @Nullable final String reason) {
         mLauncher.getModelWriter().deleteItemsFromDatabase(matcher, reason);
         removeItemsByMatcher(matcher);
-    }
-
-    public void widgetsRestored(final ArrayList<LauncherAppWidgetInfo> changedInfo) {
-        if (!changedInfo.isEmpty()) {
-            DeferredWidgetRefresh widgetRefresh = new DeferredWidgetRefresh(changedInfo,
-                    mLauncher.getAppWidgetHolder());
-
-            LauncherAppWidgetInfo item = changedInfo.get(0);
-            final AppWidgetProviderInfo widgetInfo;
-            WidgetManagerHelper widgetHelper = new WidgetManagerHelper(getContext());
-            if (item.hasRestoreFlag(LauncherAppWidgetInfo.FLAG_ID_NOT_VALID)) {
-                widgetInfo = widgetHelper.findProvider(item.providerName, item.user);
-            } else {
-                widgetInfo = widgetHelper.getLauncherAppWidgetInfo(item.appWidgetId,
-                        item.getTargetComponent());
-            }
-
-            if (widgetInfo != null) {
-                // Re-inflate the widgets which have changed status
-                widgetRefresh.run();
-            } else {
-                // widgetRefresh will automatically run when the packages are updated.
-                // For now just update the progress bars
-                mapOverItems(new ItemOperator() {
-                    @Override
-                    public boolean evaluate(ItemInfo info, View view) {
-                        if (view instanceof PendingAppWidgetHostView
-                                && changedInfo.contains(info)) {
-                            ((LauncherAppWidgetInfo) info).installProgress = 100;
-                            ((PendingAppWidgetHostView) view).applyState();
-                        }
-                        // process all the shortcuts
-                        return false;
-                    }
-                });
-            }
-        }
     }
 
     public boolean isOverlayShown() {
@@ -3497,9 +3437,27 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     @Override
     protected boolean canAnnouncePageDescription() {
-        // Disable announcements while overscrolling potentially to overlay screen because if we end
-        // up on the overlay screen, it will take care of announcing itself.
         return Float.compare(mOverlayProgress, 0f) == 0;
+    }
+
+    @Override
+    protected void announcePageForAccessibility() {
+        // Talkback focuses on AccessibilityActionView by default, so we need to modify the state
+        // description there in order for the change in page scroll to be announced.
+        updateAccessibilityViewPageDescription();
+    }
+
+    /**
+     * Updates the state description that is set on the accessibility actions view for the
+     * workspace.
+     * <p>The updated value is called out when talkback focuses on the view and is not disruptive.
+     * </p>
+     */
+    protected void updateAccessibilityViewPageDescription() {
+        // Set the state description on accessibility action view so that when it is focused,
+        // talkback describes the correct state of home screen pages.
+        ViewCompat.setStateDescription(mLauncher.getAccessibilityActionView(),
+                getCurrentPageDescription());
     }
 
     @Override
@@ -3517,7 +3475,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         int nScreens = getChildCount();
         int extraScreenId = mScreenOrder.indexOf(EXTRA_EMPTY_SCREEN_ID);
         if (extraScreenId >= 0 && nScreens > 1) {
-            if (page == extraScreenId) {
+            if (page == extraScreenId || (isTwoPanelEnabled() && page == extraScreenId + 1)) {
                 return getContext().getString(R.string.workspace_new_page);
             }
             nScreens--;
@@ -3529,6 +3487,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         int panelCount = getPanelCount();
         int currentPage = (page / panelCount) + 1;
         int totalPages = nScreens / panelCount + nScreens % panelCount;
+
+        // When dragging, a blank screen is added. This increases the total page count, but we still
+        // want to describe the original page count where icons are currently pinned
+        if (extraScreenId > 0) totalPages--;
+
         return getContext().getString(R.string.workspace_scroll_format, currentPage, totalPages);
     }
 
@@ -3548,62 +3511,6 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         return mLauncher.getCellPosMapper();
     }
 
-    /**
-     * Used as a workaround to ensure that the AppWidgetService receives the
-     * PACKAGE_ADDED broadcast before updating widgets.
-     */
-    private class DeferredWidgetRefresh implements Runnable, ProviderChangedListener {
-        private final ArrayList<LauncherAppWidgetInfo> mInfos;
-        private final LauncherWidgetHolder mWidgetHolder;
-        private final Handler mHandler;
-
-        private boolean mRefreshPending;
-
-        DeferredWidgetRefresh(ArrayList<LauncherAppWidgetInfo> infos,
-                              LauncherWidgetHolder holder) {
-            mInfos = infos;
-            mWidgetHolder = holder;
-            mHandler = mLauncher.mHandler;
-            mRefreshPending = true;
-
-            mWidgetHolder.addProviderChangeListener(this);
-            // Force refresh after 10 seconds, if we don't get the provider changed event.
-            // This could happen when the provider is no longer available in the app.
-            Message msg = Message.obtain(mHandler, this);
-            msg.obj = DeferredWidgetRefresh.class;
-            mHandler.sendMessageDelayed(msg, 10000);
-        }
-
-        @Override
-        public void run() {
-            mWidgetHolder.removeProviderChangeListener(this);
-            mHandler.removeCallbacks(this);
-
-            if (!mRefreshPending) {
-                return;
-            }
-
-            mRefreshPending = false;
-
-            ArrayList<PendingAppWidgetHostView> views = new ArrayList<>(mInfos.size());
-            mapOverItems((info, view) -> {
-                if (view instanceof PendingAppWidgetHostView && mInfos.contains(info)) {
-                    views.add((PendingAppWidgetHostView) view);
-                }
-                // process all children
-                return false;
-            });
-            for (PendingAppWidgetHostView view : views) {
-                view.reInflate();
-            }
-        }
-
-        @Override
-        public void notifyWidgetProvidersChanged() {
-            run();
-        }
-    }
-
     private class StateTransitionListener extends AnimatorListenerAdapter
             implements AnimatorUpdateListener {
 
@@ -3620,6 +3527,24 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         @Override
         public void onAnimationEnd(Animator animation) {
             onEndStateTransition();
+        }
+    }
+
+    /**
+     * Recursively check view tag {@link R.id.perform_a11y_action_on_launcher_state_normal_tag} and
+     * call {@link View#performAccessibilityAction(int, Bundle)} on view tree. The tag is cleared
+     * after this call.
+     */
+    private static void performAccessibilityActionOnViewTree(View view) {
+        Object tag = view.getTag(R.id.perform_a11y_action_on_launcher_state_normal_tag);
+        if (tag instanceof Integer) {
+            view.performAccessibilityAction((int) tag, null);
+            view.setTag(R.id.perform_a11y_action_on_launcher_state_normal_tag, null);
+        }
+        if (view instanceof ViewGroup viewgroup) {
+            for (int i = 0; i < viewgroup.getChildCount(); i++) {
+                performAccessibilityActionOnViewTree(viewgroup.getChildAt(i));
+            }
         }
     }
 }

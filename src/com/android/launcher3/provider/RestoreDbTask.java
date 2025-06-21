@@ -75,12 +75,12 @@ import com.android.launcher3.util.ContentWriter;
 import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.LogConfig;
 
-import java.io.File;
 import java.io.InvalidObjectException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -125,16 +125,17 @@ public class RestoreDbTask {
         // executed again.
         LauncherPrefs.get(context).removeSync(RESTORE_DEVICE);
 
-        if (Flags.enableNarrowGridRestore()) {
-            String oldPhoneFileName = idp.dbFile;
-            List<String> previousDbs = existingDbs();
-            removeOldDBs(context, oldPhoneFileName);
-            // The idp before this contains data about the old phone, after this it becomes the idp
-            // of the current phone.
+        DeviceGridState deviceGridState = new DeviceGridState(context);
+        FileLog.d(TAG, "restoreIfNeeded: deviceGridState from context: " + deviceGridState);
+        String oldPhoneFileName = deviceGridState.getDbFile();
+        List<String> previousDbs = existingDbs(context);
+        removeOldDBs(context, oldPhoneFileName);
+        // The idp before this contains data about the old phone, after this it becomes the idp
+        // of the current phone.
+        if (!Flags.oneGridSpecs()) {
+            FileLog.d(TAG, "Resetting IDP to default for restore dest device");
             idp.reset(context);
-            trySettingPreviousGidAsCurrent(context, idp, oldPhoneFileName, previousDbs);
-        } else {
-            idp.reinitializeAfterRestore(context);
+            trySettingPreviousGridAsCurrent(context, idp, oldPhoneFileName, previousDbs);
         }
     }
 
@@ -143,22 +144,30 @@ public class RestoreDbTask {
      * Try setting the gird used in the previous phone to the new one. If the current device doesn't
      * support the previous grid option it will not be set.
      */
-    private static void trySettingPreviousGidAsCurrent(Context context, InvariantDeviceProfile idp,
+    private static void trySettingPreviousGridAsCurrent(Context context, InvariantDeviceProfile idp,
             String oldPhoneDbFileName, List<String> previousDbs) {
         InvariantDeviceProfile.GridOption oldPhoneGridOption = idp.getGridOptionFromFileName(
                 context, oldPhoneDbFileName);
         // The grid option could be null if current phone doesn't support the previous db.
         if (oldPhoneGridOption != null) {
+            FileLog.d(TAG, "trySettingPreviousGridAsCurrent:"
+                    + ", oldPhoneDbFileName: " + oldPhoneDbFileName
+                    + ", oldPhoneGridOption: " + oldPhoneGridOption
+                    + ", previousDbs: " + previousDbs);
+
             /* If the user only used the default db on the previous phone and the new default db is
              * bigger than or equal to the previous one, then keep the new default db */
             if (previousDbs.size() == 1 && oldPhoneGridOption.numColumns <= idp.numColumns
                     && oldPhoneGridOption.numRows <= idp.numRows) {
                 /* Keep the user in default grid */
+                FileLog.d(TAG, "Keeping default db from restore as current grid");
                 return;
             }
             /*
              * Here we are setting the previous db as the current one.
              */
+            FileLog.d(TAG, "Setting grid from old device as current grid: "
+                + "oldPhoneGridOption:" + oldPhoneGridOption.name);
             idp.setCurrentGrid(context, oldPhoneGridOption.name);
         }
     }
@@ -166,17 +175,19 @@ public class RestoreDbTask {
     /**
      * Returns a list of paths of the existing launcher dbs.
      */
-    private static List<String> existingDbs() {
+    @VisibleForTesting
+    public static List<String> existingDbs(Context context) {
         // At this point idp.dbFile contains the name of the dbFile from the previous phone
         return LauncherFiles.GRID_DB_FILES.stream()
-                .filter(dbName -> new File(dbName).exists())
-                .toList();
+                .filter(dbName -> context.getDatabasePath(dbName).exists())
+                .collect(Collectors.toList());
     }
 
     /**
      * Only keep the last database used on the previous device.
      */
-    private static void removeOldDBs(Context context, String oldPhoneDbFileName) {
+    @VisibleForTesting
+    public static void removeOldDBs(Context context, String oldPhoneDbFileName) {
         // At this point idp.dbFile contains the name of the dbFile from the previous phone
         LauncherFiles.GRID_DB_FILES.stream()
                 .filter(dbName -> !dbName.equals(oldPhoneDbFileName))
@@ -196,7 +207,8 @@ public class RestoreDbTask {
             LauncherRestoreEventLogger restoreEventLogger =
                     LauncherRestoreEventLogger.Companion.newInstance(context);
             task.sanitizeDB(context, controller, db, backupManager, restoreEventLogger);
-            task.restoreAppWidgetIdsIfExists(context, controller, restoreEventLogger);
+            task.restoreAppWidgetIdsIfExists(context, controller, restoreEventLogger,
+                    () -> new AppWidgetHost(context, APPWIDGET_HOST_ID));
             t.commit();
             return true;
         } catch (Exception e) {
@@ -408,7 +420,11 @@ public class RestoreDbTask {
     }
 
     public static boolean isPending(Context context) {
-        return LauncherPrefs.get(context).has(RESTORE_DEVICE);
+        return isPending(LauncherPrefs.get(context));
+    }
+
+    public static boolean isPending(LauncherPrefs prefs) {
+        return prefs.has(RESTORE_DEVICE);
     }
 
     /**
@@ -424,14 +440,13 @@ public class RestoreDbTask {
     @WorkerThread
     @VisibleForTesting
     void restoreAppWidgetIdsIfExists(Context context, ModelDbController controller,
-            LauncherRestoreEventLogger restoreEventLogger) {
+            LauncherRestoreEventLogger restoreEventLogger, Supplier<AppWidgetHost> hostSupplier) {
         LauncherPrefs lp = LauncherPrefs.get(context);
         if (lp.has(APP_WIDGET_IDS, OLD_APP_WIDGET_IDS)) {
-            AppWidgetHost host = new AppWidgetHost(context, APPWIDGET_HOST_ID);
             restoreAppWidgetIds(context, controller, restoreEventLogger,
                     IntArray.fromConcatString(lp.get(OLD_APP_WIDGET_IDS)).toArray(),
                     IntArray.fromConcatString(lp.get(APP_WIDGET_IDS)).toArray(),
-                    host);
+                    hostSupplier.get());
         } else {
             FileLog.d(TAG, "Did not receive new app widget id map during Launcher restore");
         }
@@ -524,7 +539,7 @@ public class RestoreDbTask {
         }
 
         logFavoritesTable(controller.getDb(), "launcher db after remap widget ids", null, null);
-        LauncherAppState.INSTANCE.executeIfCreated(app -> app.getModel().forceReload());
+        LauncherAppState.INSTANCE.get(context).getModel().reloadIfActive();
     }
 
     private static void logDatabaseWidgetInfo(ModelDbController controller) {

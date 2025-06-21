@@ -60,8 +60,9 @@ import androidx.dynamicanimation.animation.SpringForce;
 import com.android.app.animation.Interpolators;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
+import com.android.launcher3.graphics.ThemeManager;
 import com.android.launcher3.icons.FastBitmapDrawable;
-import com.android.launcher3.icons.LauncherIcons;
+import com.android.launcher3.icons.IconNormalizer;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.views.ActivityContext;
@@ -224,7 +225,6 @@ public abstract class DragView<T extends Context & ActivityContext> extends Fram
         measure(makeMeasureSpec(width, EXACTLY), makeMeasureSpec(height, EXACTLY));
 
         mBlurSizeOutline = getResources().getDimensionPixelSize(R.dimen.blur_size_medium_outline);
-        setElevation(getResources().getDimension(R.dimen.drag_elevation));
         setWillNotDraw(false);
     }
 
@@ -246,10 +246,12 @@ public abstract class DragView<T extends Context & ActivityContext> extends Fram
     public void setItemInfo(final ItemInfo info) {
         // Load the adaptive icon on a background thread and add the view in ui thread.
         MODEL_EXECUTOR.getHandler().postAtFrontOfQueue(() -> {
+            ThemeManager themeManager = ThemeManager.INSTANCE.get(getContext());
             int w = mWidth;
             int h = mHeight;
             Pair<AdaptiveIconDrawable, Drawable> fullDrawable = Utilities.getFullDrawable(
-                    mActivity, info, w, h, true /* shouldThemeIcon */);
+                    mActivity, info, w, h,
+                    themeManager.isIconThemeEnabled());
             if (fullDrawable != null) {
                 AdaptiveIconDrawable adaptiveIcon = fullDrawable.first;
                 int blurMargin = (int) mActivity.getResources()
@@ -261,20 +263,17 @@ public abstract class DragView<T extends Context & ActivityContext> extends Fram
                 // be scaled down due to icon normalization.
                 mBadge = fullDrawable.second;
                 FastBitmapDrawable.setBadgeBounds(mBadge, bounds);
-
-                try (LauncherIcons li = LauncherIcons.obtain(mActivity)) {
-                    // Since we just want the scale, avoid heavy drawing operations
-                    Utilities.scaleRectAboutCenter(bounds, li.getNormalizer().getScale(
-                            new AdaptiveIconDrawable(new ColorDrawable(Color.BLACK), null),
-                            null, null, null));
-                }
+                Utilities.scaleRectAboutCenter(bounds, IconNormalizer.ICON_VISIBLE_AREA_FACTOR);
 
                 // Shrink very tiny bit so that the clip path is smaller than the original bitmap
                 // that has anti aliased edges and shadows.
                 Rect shrunkBounds = new Rect(bounds);
                 Utilities.scaleRectAboutCenter(shrunkBounds, 0.98f);
                 adaptiveIcon.setBounds(shrunkBounds);
-                final Path mask = adaptiveIcon.getIconMask();
+
+                final Path mask = (adaptiveIcon instanceof FolderAdaptiveIcon
+                        ? themeManager.getFolderShape() : themeManager.getIconShape())
+                        .getPath(shrunkBounds);
 
                 mTranslateX = new SpringFloatValue(DragView.this,
                         w * AdaptiveIconDrawable.getExtraInsetFraction());
@@ -564,7 +563,7 @@ public abstract class DragView<T extends Context & ActivityContext> extends Fram
         return mContentViewParent;
     }
 
-    /** Return true if {@link mContent} is a {@link AppWidgetHostView}. */
+    /** Return true if {@link #mContent} is a {@link AppWidgetHostView}. */
     public boolean containsAppWidgetHostView() {
         return mContent instanceof AppWidgetHostView;
     }

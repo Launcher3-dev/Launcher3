@@ -16,21 +16,16 @@
 
 package com.android.launcher3.util;
 
-import static android.view.WindowManager.PROPERTY_SUPPORTS_MULTI_INSTANCE_SYSTEM_UI;
-
 import static com.android.launcher3.model.data.ItemInfoWithIcon.FLAG_INSTALL_SESSION_ACTIVE;
 
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.ResolveInfo;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Process;
@@ -42,10 +37,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.launcher3.Flags;
 import com.android.launcher3.PendingAddItemInfo;
 import com.android.launcher3.R;
-import com.android.launcher3.Utilities;
+import com.android.launcher3.dagger.ApplicationContext;
+import com.android.launcher3.dagger.LauncherAppSingleton;
+import com.android.launcher3.dagger.LauncherBaseAppComponent;
 import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.ItemInfoWithIcon;
@@ -55,16 +51,19 @@ import com.android.launcher3.model.data.WorkspaceItemInfo;
 import java.util.List;
 import java.util.Objects;
 
+import javax.inject.Inject;
+
 /**
  * Utility methods using package manager
  */
-public class PackageManagerHelper implements SafeCloseable{
+@LauncherAppSingleton
+public class PackageManagerHelper {
 
     private static final String TAG = "PackageManagerHelper";
 
     @NonNull
-    public static final MainThreadInitializedObject<PackageManagerHelper> INSTANCE =
-            new MainThreadInitializedObject<>(PackageManagerHelper::new);
+    public static DaggerSingletonObject<PackageManagerHelper> INSTANCE =
+            new DaggerSingletonObject<>(LauncherBaseAppComponent::getPackageManagerHelper);
 
     @NonNull
     private final Context mContext;
@@ -75,80 +74,11 @@ public class PackageManagerHelper implements SafeCloseable{
     @NonNull
     private final LauncherApps mLauncherApps;
 
-    private final String[] mLegacyMultiInstanceSupportedApps;
-
-    public PackageManagerHelper(@NonNull final Context context) {
+    @Inject
+    public PackageManagerHelper(@ApplicationContext final Context context) {
         mContext = context;
         mPm = context.getPackageManager();
         mLauncherApps = Objects.requireNonNull(context.getSystemService(LauncherApps.class));
-        mLegacyMultiInstanceSupportedApps = mContext.getResources().getStringArray(
-                R.array.config_appsSupportMultiInstancesSplit);
-    }
-
-    @Override
-    public void close() { }
-
-    /**
-     * Returns true if the app can possibly be on the SDCard. This is just a workaround and doesn't
-     * guarantee that the app is on SD card.
-     */
-    public boolean isAppOnSdcard(@NonNull final String packageName,
-            @NonNull final UserHandle user) {
-        final ApplicationInfo info = getApplicationInfo(
-                packageName, user, PackageManager.MATCH_UNINSTALLED_PACKAGES);
-        return info != null && (info.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) != 0;
-    }
-
-    /**
-     * Returns whether the target app is suspended for a given user as per
-     * {@link android.app.admin.DevicePolicyManager#isPackageSuspended}.
-     */
-    public boolean isAppSuspended(@NonNull final String packageName,
-            @NonNull final UserHandle user) {
-        final ApplicationInfo info = getApplicationInfo(packageName, user, 0);
-        return info != null && isAppSuspended(info);
-    }
-
-    /**
-     * Returns whether the target app is installed for a given user
-     */
-    public boolean isAppInstalled(@NonNull final String packageName,
-            @NonNull final UserHandle user) {
-        final ApplicationInfo info = getApplicationInfo(packageName, user, 0);
-        return info != null;
-    }
-
-    /**
-     * Returns whether the target app is archived for a given user
-     */
-    @SuppressWarnings("NewApi")
-    public boolean isAppArchivedForUser(@NonNull final String packageName,
-            @NonNull final UserHandle user) {
-        if (!Flags.enableSupportForArchiving()) {
-            return false;
-        }
-        final ApplicationInfo info = getApplicationInfo(
-                // LauncherApps does not support long flags currently. Since archived apps are
-                // subset of uninstalled apps, this filter also includes archived apps.
-                packageName, user, PackageManager.MATCH_UNINSTALLED_PACKAGES);
-        return info != null && info.isArchived;
-    }
-
-    /**
-     * Returns whether the target app is in archived state
-     */
-    @SuppressWarnings("NewApi")
-    public boolean isAppArchived(@NonNull final String packageName) {
-        final ApplicationInfo info;
-        try {
-            info = mPm.getPackageInfo(packageName,
-                    PackageManager.PackageInfoFlags.of(
-                            PackageManager.MATCH_ARCHIVED_PACKAGES)).applicationInfo;
-            return info.isArchived;
-        } catch (NameNotFoundException e) {
-            Log.e(TAG, "Failed to get applicationInfo for package: " + packageName, e);
-            return false;
-        }
     }
 
     /**
@@ -159,20 +89,6 @@ public class PackageManagerHelper implements SafeCloseable{
             return mPm.getInstallSourceInfo(packageName).getInstallingPackageName();
         } catch (NameNotFoundException e) {
             Log.e(TAG, "Failed to get installer package for app package:" + packageName, e);
-            return null;
-        }
-    }
-
-    /**
-     * Returns the application info for the provided package or null
-     */
-    @Nullable
-    public ApplicationInfo getApplicationInfo(@NonNull final String packageName,
-            @NonNull final UserHandle user, final int flags) {
-        try {
-            ApplicationInfo info = mLauncherApps.getApplicationInfo(packageName, flags, user);
-            return !isPackageInstalledOrArchived(info) || !info.enabled ? null : info;
-        } catch (PackageManager.NameNotFoundException e) {
             return null;
         }
     }
@@ -197,14 +113,6 @@ public class PackageManagerHelper implements SafeCloseable{
     }
 
     /**
-     * Returns whether an application is suspended as per
-     * {@link android.app.admin.DevicePolicyManager#isPackageSuspended}.
-     */
-    public static boolean isAppSuspended(ApplicationInfo info) {
-        return (info.flags & ApplicationInfo.FLAG_SUSPENDED) != 0;
-    }
-
-    /**
      * Starts the details activity for {@code info}
      */
     public static void startDetailsActivityForInfo(Context context, ItemInfo info,
@@ -212,7 +120,7 @@ public class PackageManagerHelper implements SafeCloseable{
         if (info instanceof ItemInfoWithIcon appInfo
                 && (appInfo.runtimeStatusFlags & FLAG_INSTALL_SESSION_ACTIVE) != 0) {
             context.startActivity(ApiWrapper.INSTANCE.get(context).getAppMarketActivityIntent(
-                    appInfo.getTargetComponent().getPackageName(), Process.myUserHandle()));
+                    appInfo.getTargetComponent().getPackageName(), Process.myUserHandle()), opts);
             return;
         }
         ComponentName componentName = null;
@@ -233,35 +141,6 @@ public class PackageManagerHelper implements SafeCloseable{
                 Toast.makeText(context, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Unable to launch settings", e);
             }
-        }
-    }
-
-    public static boolean isSystemApp(@NonNull final Context context,
-            @NonNull final Intent intent) {
-        PackageManager pm = context.getPackageManager();
-        ComponentName cn = intent.getComponent();
-        String packageName = null;
-        if (cn == null) {
-            ResolveInfo info = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-            if ((info != null) && (info.activityInfo != null)) {
-                packageName = info.activityInfo.packageName;
-            }
-        } else {
-            packageName = cn.getPackageName();
-        }
-        if (packageName == null) {
-            packageName = intent.getPackage();
-        }
-        if (packageName != null) {
-            try {
-                PackageInfo info = pm.getPackageInfo(packageName, 0);
-                return (info != null) && (info.applicationInfo != null) &&
-                        ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0);
-            } catch (NameNotFoundException e) {
-                return false;
-            }
-        } else {
-            return false;
         }
     }
 
@@ -303,50 +182,7 @@ public class PackageManagerHelper implements SafeCloseable{
 
     /** Returns the incremental download progress for the given shortcut's app. */
     public static int getLoadingProgress(LauncherActivityInfo info) {
-        if (Utilities.ATLEAST_S) {
-            return (int) (100 * info.getLoadingProgress());
-        }
-        return 100;
-    }
-
-    /** Returns true in case app is installed on the device or in archived state. */
-    @SuppressWarnings("NewApi")
-    private boolean isPackageInstalledOrArchived(ApplicationInfo info) {
-        return (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 || (
-                Flags.enableSupportForArchiving() && info.isArchived);
-    }
-
-    /**
-     * Returns whether the given component or its application has the multi-instance property set.
-     */
-    public boolean supportsMultiInstance(@NonNull ComponentName component) {
-        // Check the legacy hardcoded allowlist first
-        for (String pkg : mLegacyMultiInstanceSupportedApps) {
-            if (pkg.equals(component.getPackageName())) {
-                return true;
-            }
-        }
-
-        // Check app multi-instance properties after V
-        if (!Utilities.ATLEAST_V) {
-            return false;
-        }
-
-        try {
-            // Check if the component has the multi-instance property
-            return mPm.getProperty(PROPERTY_SUPPORTS_MULTI_INSTANCE_SYSTEM_UI, component)
-                    .getBoolean();
-        } catch (PackageManager.NameNotFoundException e1) {
-            try {
-                // Check if the application has the multi-instance property
-                return mPm.getProperty(PROPERTY_SUPPORTS_MULTI_INSTANCE_SYSTEM_UI,
-                                component.getPackageName())
-                    .getBoolean();
-            } catch (PackageManager.NameNotFoundException e2) {
-                // Fall through
-            }
-        }
-        return false;
+        return (int) (100 * info.getLoadingProgress());
     }
 
     /**

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
      Copyright (C) 2022 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,40 +14,33 @@
      limitations under the License.
 -->
 
-<com.android.quickstep.views.DesktopTaskView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
+<com.android.quickstep.views.DesktopTaskView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:launcher="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/task"
+    android:id="@+id/task_view_desktop"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clipChildren="true"
+    android:contentDescription="@string/recent_task_desktop"
     android:defaultFocusHighlightEnabled="false"
     android:focusable="true"
-    launcher:focusBorderColor="?androidprv:attr/materialColorOutline"
-    launcher:hoverBorderColor="?androidprv:attr/materialColorPrimary"
-    android:clipToPadding="true"
-    android:padding="0.1dp">
-    <!-- Setting a padding of 0.1 dp since android:clipToPadding needs a non-zero value for
-    padding to work-->
-    <View
-        android:id="@+id/background"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <!--
-         TODO(b249371338): DesktopTaskView extends from TaskView. TaskView expects TaskThumbnailView
-         and IconView with these ids to be present. Need to refactor RecentsView to accept child
-         views that do not inherint from TaskView only or create a generic TaskView that have
-         N number of tasks.
-     -->
-    <include layout="@layout/task_thumbnail"
-        android:visibility="gone" />
+    launcher:focusBorderColor="@color/materialColorOutline"
+    launcher:hoverBorderColor="@color/materialColorPrimary">
 
     <ViewStub
         android:id="@+id/icon"
-        android:inflatedId="@id/icon"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content" />
+        android:inflatedId="@id/icon" />
+
+    <com.android.quickstep.views.DesktopTaskContentView
+        android:id="@+id/desktop_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <View
+            android:id="@+id/background"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </com.android.quickstep.views.DesktopTaskContentView>
 
 </com.android.quickstep.views.DesktopTaskView>

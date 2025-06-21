@@ -40,7 +40,7 @@ android_library {
 android_library {
     name: "animationlib-tests-base",
     libs: [
-        "android.test.base",
+        "android.test.base.stubs.system",
         "androidx.test.core",
     ],
     static_libs: [
@@ -68,7 +68,6 @@ android_robolectric_test {
     ],
     java_resource_dirs: ["tests/robolectric/config"],
     instrumentation_for: "TestAnimationLibApp",
-    upstream: true,
     strict_mode: false,
 }
 

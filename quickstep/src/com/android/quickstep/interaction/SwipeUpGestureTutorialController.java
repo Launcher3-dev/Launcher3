@@ -34,6 +34,7 @@ import android.graphics.Outline;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 
@@ -48,10 +49,8 @@ import com.android.launcher3.anim.AnimatedFloat;
 import com.android.launcher3.anim.AnimatorListeners;
 import com.android.launcher3.anim.AnimatorPlaybackController;
 import com.android.launcher3.anim.PendingAnimation;
-import com.android.launcher3.config.FeatureFlags;
 import com.android.quickstep.GestureState;
 import com.android.quickstep.OverviewComponentObserver;
-import com.android.quickstep.RecentsAnimationDeviceState;
 import com.android.quickstep.RemoteTargetGluer;
 import com.android.quickstep.SwipeUpAnimationLogic;
 import com.android.quickstep.SwipeUpAnimationLogic.RunningWindowAnim;
@@ -86,12 +85,8 @@ abstract class SwipeUpGestureTutorialController extends TutorialController {
 
     SwipeUpGestureTutorialController(TutorialFragment tutorialFragment, TutorialType tutorialType) {
         super(tutorialFragment, tutorialType);
-        RecentsAnimationDeviceState deviceState = new RecentsAnimationDeviceState(mContext);
-        OverviewComponentObserver observer = new OverviewComponentObserver(mContext, deviceState);
-        mTaskViewSwipeUpAnimation = new ViewSwipeUpAnimation(mContext, deviceState,
-                new GestureState(observer, -1));
-        observer.onDestroy();
-        deviceState.destroy();
+        mTaskViewSwipeUpAnimation = new ViewSwipeUpAnimation(mContext, new GestureState(
+                OverviewComponentObserver.INSTANCE.get(mContext), Display.DEFAULT_DISPLAY, -1));
 
         DeviceProfile dp = InvariantDeviceProfile.INSTANCE.get(mContext)
                 .getDeviceProfile(mContext)
@@ -127,9 +122,7 @@ abstract class SwipeUpGestureTutorialController extends TutorialController {
     void resetTaskViews() {
         mFakeHotseatView.setVisibility(View.INVISIBLE);
         mFakeIconView.setVisibility(View.INVISIBLE);
-        if (FeatureFlags.ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()) {
-            mFakeIconView.getBackground().setTint(getFakeTaskViewColor());
-        }
+        mFakeIconView.getBackground().setTint(getFakeTaskViewColor());
         if (mTutorialFragment.getActivity() != null) {
             int height = mTutorialFragment.getRootView().getFullscreenHeight();
             int width = mTutorialFragment.getRootView().getWidth();
@@ -138,9 +131,7 @@ abstract class SwipeUpGestureTutorialController extends TutorialController {
         mFakeTaskViewRadius = 0;
         mFakeTaskView.invalidateOutline();
         mFakeTaskView.setVisibility(View.VISIBLE);
-        if (FeatureFlags.ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()) {
-            mFakeTaskView.setBackgroundColor(getFakeTaskViewColor());
-        }
+        mFakeTaskView.setBackgroundColor(getFakeTaskViewColor());
         mFakeTaskView.setAlpha(1);
         mFakePreviousTaskView.setVisibility(View.INVISIBLE);
         mFakePreviousTaskView.setAlpha(1);
@@ -318,9 +309,8 @@ abstract class SwipeUpGestureTutorialController extends TutorialController {
 
     class ViewSwipeUpAnimation extends SwipeUpAnimationLogic {
 
-        ViewSwipeUpAnimation(Context context, RecentsAnimationDeviceState deviceState,
-                             GestureState gestureState) {
-            super(context, deviceState, gestureState);
+        ViewSwipeUpAnimation(Context context, GestureState gestureState) {
+            super(context, gestureState);
             mRemoteTargetHandles[0] = new RemoteTargetGluer.RemoteTargetHandle(
                     mRemoteTargetHandles[0].getTaskViewSimulator(), new FakeTransformParams());
 
@@ -390,12 +380,10 @@ abstract class SwipeUpGestureTutorialController extends TutorialController {
                             false, /* isOpening */
                             mFakeIconView, mDp);
                     mFakeIconView.setAlpha(1);
-                    if (FeatureFlags.ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()) {
-                        int iconColor = ColorUtils.blendARGB(
-                                getFakeTaskViewColor(), getHotseatIconColor(), progress);
-                        mFakeIconView.getBackground().setTint(iconColor);
-                        mFakeTaskView.setBackgroundColor(iconColor);
-                    }
+                    int iconColor = ColorUtils.blendARGB(
+                            getFakeTaskViewColor(), getHotseatIconColor(), progress);
+                    mFakeIconView.getBackground().setTint(iconColor);
+                    mFakeTaskView.setBackgroundColor(iconColor);
                     mFakeTaskView.setAlpha(getWindowAlpha(progress));
                     mFakePreviousTaskView.setAlpha(getWindowAlpha(progress));
                 }

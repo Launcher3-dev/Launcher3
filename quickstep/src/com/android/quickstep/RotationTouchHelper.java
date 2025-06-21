@@ -33,39 +33,44 @@ import android.content.res.Resources;
 import android.view.MotionEvent;
 import android.view.OrientationEventListener;
 
+import com.android.launcher3.dagger.ApplicationContext;
+import com.android.launcher3.dagger.LauncherAppComponent;
+import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.testing.shared.TestProtocol;
+import com.android.launcher3.util.DaggerSingletonObject;
+import com.android.launcher3.util.DaggerSingletonTracker;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.DisplayController.DisplayInfoChangeListener;
 import com.android.launcher3.util.DisplayController.Info;
-import com.android.launcher3.util.MainThreadInitializedObject;
 import com.android.launcher3.util.NavigationMode;
-import com.android.launcher3.util.SafeCloseable;
 import com.android.quickstep.util.RecentsOrientedState;
+import com.android.systemui.shared.Flags;
 import com.android.systemui.shared.system.QuickStepContract;
 import com.android.systemui.shared.system.TaskStackChangeListener;
 import com.android.systemui.shared.system.TaskStackChangeListeners;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
+
+import javax.inject.Inject;
 
 /**
  * Helper class for transforming touch events
  */
-public class RotationTouchHelper implements DisplayInfoChangeListener, SafeCloseable {
+@LauncherAppSingleton
+public class RotationTouchHelper implements DisplayInfoChangeListener {
 
-    public static final MainThreadInitializedObject<RotationTouchHelper> INSTANCE =
-            new MainThreadInitializedObject<>(RotationTouchHelper::new);
+    public static final DaggerSingletonObject<RotationTouchHelper> INSTANCE =
+            new DaggerSingletonObject<>(LauncherAppComponent::getRotationTouchHelper);
 
-    private OrientationTouchTransformer mOrientationTouchTransformer;
-    private DisplayController mDisplayController;
-    private int mDisplayId;
+    private final OrientationTouchTransformer mOrientationTouchTransformer;
+    private final DisplayController mDisplayController;
+    private final SystemUiProxy mSystemUiProxy;
+    private final int mDisplayId;
     private int mDisplayRotation;
-
-    private final ArrayList<Runnable> mOnDestroyActions = new ArrayList<>();
 
     private NavigationMode mMode = THREE_BUTTONS;
 
-    private TaskStackChangeListener mFrozenTaskListener = new TaskStackChangeListener() {
+    private final TaskStackChangeListener mFrozenTaskListener = new TaskStackChangeListener() {
         @Override
         public void onRecentTaskListFrozenChanged(boolean frozen) {
             mTaskListFrozen = frozen;
@@ -92,7 +97,7 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
         }
     };
 
-    private Runnable mExitOverviewRunnable = new Runnable() {
+    private final Runnable mExitOverviewRunnable = new Runnable() {
         @Override
         public void run() {
             mInOverview = false;
@@ -106,7 +111,7 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
      * rotates rotates the device to match that orientation, this triggers calls to sysui to adjust
      * the navbar.
      */
-    private OrientationEventListener mOrientationListener;
+    private final OrientationEventListener mOrientationListener;
     private int mSensorRotation = ROTATION_0;
     /**
      * This is the configuration of the foreground app or the app that will be in the foreground
@@ -119,7 +124,6 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
      * would indicate the user's intention to rotate the foreground app.
      */
     private boolean mPrioritizeDeviceRotation = false;
-    private Runnable mOnDestroyFrozenTaskRunnable;
     /**
      * Set to true when user swipes to recents. In recents, we ignore the state of the recents
      * task list being frozen or not to allow the user to keep interacting with nav bar rotation
@@ -130,35 +134,26 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
     private boolean mTaskListFrozen;
     private final Context mContext;
 
-    /**
-     * Keeps track of whether destroy has been called for this instance. Mainly used for TAPL tests
-     * where multiple instances of RotationTouchHelper are being created. b/177316094
-     */
-    private boolean mNeedsInit = true;
-
-    private RotationTouchHelper(Context context) {
+    @Inject
+    RotationTouchHelper(@ApplicationContext Context context,
+            DisplayController displayController,
+            SystemUiProxy systemUiProxy,
+            DaggerSingletonTracker lifeCycle) {
         mContext = context;
-        if (mNeedsInit) {
-            init();
-        }
-    }
-
-    public void init() {
-        if (!mNeedsInit) {
-            return;
-        }
-        mDisplayController = DisplayController.INSTANCE.get(mContext);
-        Resources resources = mContext.getResources();
+        mDisplayController = displayController;
+        mSystemUiProxy = systemUiProxy;
+        // TODO (b/398195845): this needs updating so non-default displays do not rotate with the
+        //  default display.
         mDisplayId = DEFAULT_DISPLAY;
 
+        Resources resources = mContext.getResources();
         mOrientationTouchTransformer = new OrientationTouchTransformer(resources, mMode,
                 () -> QuickStepContract.getWindowCornerRadius(mContext));
 
-        // Register for navigation mode changes
-        mDisplayController.addChangeListener(this);
-        DisplayController.Info info = mDisplayController.getInfo();
-        onDisplayInfoChangedInternal(info, CHANGE_ALL, info.getNavigationMode().hasGestures);
-        runOnDestroy(() -> mDisplayController.removeChangeListener(this));
+        // Register for navigation mode and rotation changes
+        mDisplayController.addChangeListenerForDisplay(this, mDisplayId);
+        DisplayController.Info info = mDisplayController.getInfoForDisplay(mDisplayId);
+        onDisplayInfoChanged(context, info, CHANGE_ALL);
 
         mOrientationListener = new OrientationEventListener(mContext) {
             @Override
@@ -179,38 +174,13 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
                 }
             }
         };
-        mNeedsInit = false;
-    }
 
-    private void setupOrientationSwipeHandler() {
-        TaskStackChangeListeners.getInstance().registerTaskStackListener(mFrozenTaskListener);
-        mOnDestroyFrozenTaskRunnable = () -> TaskStackChangeListeners.getInstance()
-                .unregisterTaskStackListener(mFrozenTaskListener);
-        runOnDestroy(mOnDestroyFrozenTaskRunnable);
-    }
-
-    private void destroyOrientationSwipeHandlerCallback() {
-        TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mFrozenTaskListener);
-        mOnDestroyActions.remove(mOnDestroyFrozenTaskRunnable);
-    }
-
-    private void runOnDestroy(Runnable action) {
-        mOnDestroyActions.add(action);
-    }
-
-    @Override
-    public void close() {
-        destroy();
-    }
-
-    /**
-     * Cleans up all the registered listeners and receivers.
-     */
-    public void destroy() {
-        for (Runnable r : mOnDestroyActions) {
-            r.run();
-        }
-        mNeedsInit = true;
+        lifeCycle.addCloseable(() -> {
+            mDisplayController.removeChangeListenerForDisplay(this, mDisplayId);
+            mOrientationListener.disable();
+            TaskStackChangeListeners.getInstance()
+                    .unregisterTaskStackListener(mFrozenTaskListener);
+        });
     }
 
     public boolean isTaskListFrozen() {
@@ -229,11 +199,13 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
      * Updates the regions for detecting the swipe up/quickswitch and assistant gestures.
      */
     public void updateGestureTouchRegions() {
-        if (!mMode.hasGestures) {
+        if (!hasGestures(mMode)) {
             return;
         }
 
-        mOrientationTouchTransformer.createOrAddTouchRegion(mDisplayController.getInfo());
+        mOrientationTouchTransformer.createOrAddTouchRegion(
+                mDisplayController.getInfoForDisplay(mDisplayId),
+                "RTH.updateGestureTouchRegions");
     }
 
     /**
@@ -260,17 +232,14 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
 
     @Override
     public void onDisplayInfoChanged(Context context, Info info, int flags) {
-        onDisplayInfoChangedInternal(info, flags, false);
-    }
-
-    private void onDisplayInfoChangedInternal(Info info, int flags, boolean forceRegister) {
         if ((flags & (CHANGE_ROTATION | CHANGE_ACTIVE_SCREEN | CHANGE_NAVIGATION_MODE
                 | CHANGE_SUPPORTED_BOUNDS)) != 0) {
             mDisplayRotation = info.rotation;
 
-            if (mMode.hasGestures) {
+            if (hasGestures(mMode)) {
                 updateGestureTouchRegions();
-                mOrientationTouchTransformer.createOrAddTouchRegion(info);
+                mOrientationTouchTransformer.createOrAddTouchRegion(info,
+                        "RTH.onDisplayInfoChanged");
                 mCurrentAppRotation = mDisplayRotation;
 
                 /* Update nav bars on the following:
@@ -292,15 +261,16 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
 
         if ((flags & CHANGE_NAVIGATION_MODE) != 0) {
             NavigationMode newMode = info.getNavigationMode();
-            mOrientationTouchTransformer.setNavigationMode(newMode, mDisplayController.getInfo(),
+            mOrientationTouchTransformer.setNavigationMode(newMode,
+                    mDisplayController.getInfoForDisplay(mDisplayId),
                     mContext.getResources());
 
-            if (forceRegister || (!mMode.hasGestures && newMode.hasGestures)) {
-                setupOrientationSwipeHandler();
-            } else if (mMode.hasGestures && !newMode.hasGestures) {
-                destroyOrientationSwipeHandlerCallback();
+            TaskStackChangeListeners.getInstance()
+                    .unregisterTaskStackListener(mFrozenTaskListener);
+            if (hasGestures(newMode)) {
+                TaskStackChangeListeners.getInstance()
+                        .registerTaskStackListener(mFrozenTaskListener);
             }
-
             mMode = newMode;
         }
     }
@@ -314,7 +284,8 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
      */
     void setGesturalHeight(int newGesturalHeight) {
         mOrientationTouchTransformer.setGesturalHeight(
-                newGesturalHeight, mDisplayController.getInfo(), mContext.getResources());
+                newGesturalHeight, mDisplayController.getInfoForDisplay(mDisplayId),
+                mContext.getResources());
     }
 
     /**
@@ -330,7 +301,8 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
     }
 
     private void enableMultipleRegions(boolean enable) {
-        mOrientationTouchTransformer.enableMultipleRegions(enable, mDisplayController.getInfo());
+        mOrientationTouchTransformer.enableMultipleRegions(enable,
+                mDisplayController.getInfoForDisplay(mDisplayId));
         notifySysuiOfCurrentRotation(mOrientationTouchTransformer.getQuickStepStartingRotation());
         if (enable && !mInOverview && !TestProtocol.sDisableSensorRotation) {
             // Clear any previous state from sensor manager
@@ -358,7 +330,7 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
                 // If we're in landscape w/o ever quickswitching, show the navbar in landscape
                 enableMultipleRegions(true);
             }
-            containerInterface.onExitOverview(this, mExitOverviewRunnable);
+            containerInterface.onExitOverview(mExitOverviewRunnable);
         } else if (endTarget == GestureState.GestureEndTarget.HOME
                 || endTarget == GestureState.GestureEndTarget.ALL_APPS) {
             enableMultipleRegions(false);
@@ -385,8 +357,7 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
     }
 
     private void notifySysuiOfCurrentRotation(int rotation) {
-        UI_HELPER_EXECUTOR.execute(() -> SystemUiProxy.INSTANCE.get(mContext)
-                .notifyPrioritizedRotation(rotation));
+        UI_HELPER_EXECUTOR.execute(() -> mSystemUiProxy.notifyPrioritizedRotation(rotation));
     }
 
     /**
@@ -394,12 +365,13 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
      * notifies system UI of the primary rotation the user is interacting with
      */
     private void toggleSecondaryNavBarsForRotation() {
-        mOrientationTouchTransformer.setSingleActiveRegion(mDisplayController.getInfo());
+        mOrientationTouchTransformer.setSingleActiveRegion(
+                mDisplayController.getInfoForDisplay(mDisplayId));
         notifySysuiOfCurrentRotation(mOrientationTouchTransformer.getCurrentActiveRotation());
     }
 
     public int getCurrentActiveRotation() {
-        if (!mMode.hasGestures) {
+        if (!hasGestures(mMode)) {
             // touch rotation should always match that of display for 3 button
             return mDisplayRotation;
         }
@@ -415,5 +387,9 @@ public class RotationTouchHelper implements DisplayInfoChangeListener, SafeClose
 
     public OrientationTouchTransformer getOrientationTouchTransformer() {
         return mOrientationTouchTransformer;
+    }
+
+    private boolean hasGestures(NavigationMode mode) {
+        return mode.hasGestures || (mode == THREE_BUTTONS && Flags.threeButtonCornerSwipe());
     }
 }

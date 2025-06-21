@@ -34,6 +34,7 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
+import android.content.pm.ShortcutInfo;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Point;
@@ -51,6 +52,7 @@ import android.view.ViewRootImpl;
 import android.window.SurfaceSyncGroup;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.android.app.animation.Interpolators;
 import com.android.internal.logging.InstanceId;
@@ -66,6 +68,7 @@ import com.android.launcher3.dragndrop.DragDriver;
 import com.android.launcher3.dragndrop.DragOptions;
 import com.android.launcher3.dragndrop.DragView;
 import com.android.launcher3.dragndrop.DraggableView;
+import com.android.launcher3.folder.Folder;
 import com.android.launcher3.graphics.DragPreviewProvider;
 import com.android.launcher3.logger.LauncherAtom.ContainerInfo;
 import com.android.launcher3.logging.StatsLogManager;
@@ -74,18 +77,18 @@ import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.popup.PopupContainerWithArrow;
 import com.android.launcher3.shortcuts.DeepShortcutView;
 import com.android.launcher3.shortcuts.ShortcutDragPreviewProvider;
-import com.android.launcher3.statehandlers.DesktopVisibilityController;
+import com.android.launcher3.taskbar.bubbles.BubbleBarViewController;
 import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
-import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.ItemInfoMatcher;
 import com.android.launcher3.views.BubbleTextHolder;
-import com.android.quickstep.LauncherActivityInterface;
 import com.android.quickstep.util.LogUtils;
 import com.android.quickstep.util.MultiValueUpdateListener;
+import com.android.quickstep.util.SingleTask;
 import com.android.systemui.shared.recents.model.Task;
-import com.android.wm.shell.draganddrop.DragAndDropConstants;
+import com.android.wm.shell.shared.bubbles.BubbleAnythingFlagHelper;
+import com.android.wm.shell.shared.draganddrop.DragAndDropConstants;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
@@ -113,6 +116,7 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
     private int mRegistrationY;
 
     private boolean mIsSystemDragInProgress;
+    private boolean mIsDropHandledByDropTarget;
 
     // Animation for the drag shadow back into position after an unsuccessful drag
     private ValueAnimator mReturnAnimator;
@@ -127,6 +131,14 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
 
     public void init(TaskbarControllers controllers) {
         mControllers = controllers;
+        mControllers.bubbleControllers.ifPresent(
+                c -> c.bubbleBarViewController.addBubbleBarDropTargets(this));
+    }
+
+    /** Called when the controller is destroyed. */
+    public void onDestroy() {
+        mControllers.bubbleControllers.ifPresent(
+                c -> c.bubbleBarViewController.removeBubbleBarDropTargets(this));
     }
 
     public void setDisallowGlobalDrag(boolean disallowGlobalDrag) {
@@ -181,7 +193,9 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
 
     private DragView startInternalDrag(
             BubbleTextView btv, @Nullable DragPreviewProvider dragPreviewProvider) {
-        float iconScale = btv.getIcon().getAnimatedScale();
+        // TODO(b/344038728): null check is only necessary because Recents doesn't use
+        //  FastBitmapDrawable
+        float iconScale = btv.getIcon() == null ? 1f : btv.getIcon().getAnimatedScale();
 
         // Clear the pressed state if necessary
         btv.clearFocus();
@@ -247,8 +261,9 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
                 /* originalView = */ btv,
                 dragLayerX + dragOffset.x,
                 dragLayerY + dragOffset.y,
-                (View target, DropTarget.DragObject d, boolean success) -> {} /* DragSource */,
-                (ItemInfo) btv.getTag(),
+                (View target, DropTarget.DragObject d, boolean success) ->
+                        mIsDropHandledByDropTarget = success /* DragSource */,
+                btv.getTag() instanceof ItemInfo itemInfo ? itemInfo : null,
                 dragRect,
                 scale * iconScale,
                 scale,
@@ -288,7 +303,9 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
                 initialDragViewScale,
                 dragViewScaleOnDrop,
                 scalePx);
-        dragView.setItemInfo(dragInfo);
+        if (dragInfo != null) {
+            dragView.setItemInfo(dragInfo);
+        }
         mDragObject.dragComplete = false;
 
         mDragObject.xOffset = mMotionDown.x - (dragLayerX + dragRegionLeft);
@@ -301,7 +318,8 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
 
         mDragObject.dragSource = source;
         mDragObject.dragInfo = dragInfo;
-        mDragObject.originalDragInfo = mDragObject.dragInfo.makeShallowCopy();
+        mDragObject.originalDragInfo =
+                mDragObject.dragInfo != null ? mDragObject.dragInfo.makeShallowCopy() : null;
 
         if (mOptions.preDragCondition != null) {
             dragView.setHasDragOffset(mOptions.preDragCondition.getDragOffset().x != 0
@@ -338,12 +356,10 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
     protected void callOnDragStart() {
         super.callOnDragStart();
         // TODO(297921594) clean it up when taskbar to desktop drag is implemented.
-        DesktopVisibilityController desktopController =
-                LauncherActivityInterface.INSTANCE.getDesktopVisibilityController();
-
         // Pre-drag has ended, start the global system drag.
-        if (mDisallowGlobalDrag || (desktopController != null
-                && desktopController.areDesktopTasksVisible())) {
+        if (mDisallowGlobalDrag
+                || mControllers.taskbarDesktopModeController
+                    .isInDesktopModeAndNotInOverview(mActivity.getDisplayId())) {
             AbstractFloatingView.closeAllOpenViewsExcept(mActivity, TYPE_TASKBAR_ALL_APPS);
             return;
         }
@@ -414,6 +430,10 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
                                 item.user));
                 intent.putExtra(Intent.EXTRA_PACKAGE_NAME, item.getIntent().getPackage());
                 intent.putExtra(Intent.EXTRA_SHORTCUT_ID, deepShortcutId);
+                ShortcutInfo shortcutInfo = ((WorkspaceItemInfo) item).getDeepShortcutInfo();
+                if (BubbleAnythingFlagHelper.enableCreateAnyBubble() && shortcutInfo != null) {
+                    intent.putExtra(DragAndDropConstants.EXTRA_SHORTCUT_INFO, shortcutInfo);
+                }
             } else if (item.itemType == ITEM_TYPE_SEARCH_ACTION) {
                 // TODO(b/289261756): Buggy behavior when split opposite to an existing search pane.
                 intent.putExtra(
@@ -431,8 +451,8 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
                                 null, item.user));
             }
             intent.putExtra(Intent.EXTRA_USER, item.user);
-        } else if (tag instanceof Task) {
-            Task task = (Task) tag;
+        } else if (tag instanceof SingleTask singleTask) {
+            Task task = singleTask.getTask();
             clipDescription = new ClipDescription(task.titleDescription,
                     new String[] {
                             ClipDescription.MIMETYPE_APPLICATION_TASK
@@ -450,7 +470,7 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
             com.android.launcher3.logging.InstanceId launcherInstanceId = instanceIds.second;
 
             intent.putExtra(ClipDescription.EXTRA_LOGGING_INSTANCE_ID, internalInstanceId);
-            if (DisplayController.isTransientTaskbar(mActivity)) {
+            if (mActivity.isTransientTaskbar()) {
                 // Tell WM Shell to ignore drag events in the provided transient taskbar region.
                 TaskbarDragLayer dragLayer = mControllers.taskbarActivityContext.getDragLayer();
                 int[] locationOnScreen = dragLayer.getLocationOnScreen();
@@ -490,6 +510,8 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
                     } else {
                         // This will take care of calling maybeOnDragEnd() after the animation
                         animateGlobalDragViewToOriginalPosition(btv, dragEvent);
+                        //TODO(b/399678274): hide drop target in shell
+                        notifyBubbleBarItemDragCanceled();
                     }
                     mActivity.getDragLayer().setOnDragListener(null);
 
@@ -509,27 +531,54 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
         return mIsSystemDragInProgress;
     }
 
+    @VisibleForTesting
     private void maybeOnDragEnd() {
         if (!isDragging()) {
             ((BubbleTextView) mDragObject.originalView).setIconDisabled(false);
             mControllers.taskbarAutohideSuspendController.updateFlag(
                     TaskbarAutohideSuspendController.FLAG_AUTOHIDE_SUSPEND_DRAGGING, false);
             mActivity.onDragEnd();
+            // If an item is dropped on the bubble bar, the bubble bar handles the drop,
+            // so it should not collapse along with the taskbar.
+            boolean droppedOnBubbleBar = notifyBubbleBarItemDropped();
             if (mReturnAnimator == null) {
                 // Upon successful drag, immediately stash taskbar.
                 // Note, this must be done last to ensure no AutohideSuspendFlags are active, as
                 // that will prevent us from stashing until the timeout.
-                mControllers.taskbarStashController.updateAndAnimateTransientTaskbar(true);
-
+                mControllers.taskbarStashController.updateAndAnimateTransientTaskbar(
+                        /* stash = */ true,
+                        /* shouldBubblesFollow = */ !droppedOnBubbleBar
+                );
                 mActivity.getStatsLogManager().logger().withItemInfo(mDragObject.dragInfo)
                         .log(LAUNCHER_APP_LAUNCH_DRAGDROP);
             }
         }
     }
 
+    /**
+     * Exits the Bubble Bar drop target mode if applicable.
+     *
+     * @return {@code true} if drop target mode was active.
+     */
+    private boolean notifyBubbleBarItemDropped() {
+        return mControllers.bubbleControllers.map(bc -> {
+            BubbleBarViewController bubbleBarViewController = bc.bubbleBarViewController;
+            boolean showingDropTarget = bubbleBarViewController.isShowingDropTarget();
+            if (showingDropTarget) {
+                bubbleBarViewController.onItemDragCompleted();
+            }
+            return showingDropTarget;
+        }).orElse(false);
+    }
+
+    private void notifyBubbleBarItemDragCanceled() {
+        mControllers.bubbleControllers.ifPresent(bc ->
+                bc.bubbleBarViewController.onItemDraggedOutsideBubbleBarDropZone());
+    }
+
     @Override
     protected void endDrag() {
-        if (mDisallowGlobalDrag) {
+        if (mDisallowGlobalDrag && !mIsDropHandledByDropTarget) {
             // We need to explicitly set deferDragViewCleanupPostAnimation to true here so the
             // super call doesn't remove it from the drag layer before the animation completes.
             // This variable gets set in to false in super.dispatchDropComplete() because it
@@ -733,8 +782,11 @@ public class TaskbarDragController extends DragController<BaseTaskbarContext> im
 
     @Override
     public void addDropTarget(DropTarget target) {
-        // No-op as Taskbar currently doesn't support any drop targets internally.
-        // Note: if we do add internal DropTargets, we'll still need to ignore Folder.
+        if (target instanceof Folder) {
+            // we need to ignore Folder.
+            return;
+        }
+        super.addDropTarget(target);
     }
 
     @Override

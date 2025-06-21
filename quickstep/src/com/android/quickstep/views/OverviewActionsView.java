@@ -40,6 +40,8 @@ import com.android.launcher3.util.MultiValueAlpha;
 import com.android.launcher3.util.NavigationMode;
 import com.android.quickstep.TaskOverlayFactory.OverlayUICallbacks;
 import com.android.quickstep.util.LayoutUtils;
+import com.android.wm.shell.shared.TypefaceUtils;
+import com.android.wm.shell.shared.TypefaceUtils.FontFamily;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -157,6 +159,7 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
         // Currently, the only grouped task action is "save app pairs".
         mActionButtons = findViewById(R.id.action_buttons);
         mSaveAppPairButton = findViewById(R.id.action_save_app_pair);
+        TypefaceUtils.setTypeface(mSaveAppPairButton, FontFamily.GSF_LABEL_LARGE);
         // Initialize a list to hold alphas for mActionButtons and any group action buttons.
         mMultiValueAlphas[ACTIONS_ALPHAS] = new MultiValueAlpha(mActionButtons, NUM_ALPHAS);
         mMultiValueAlphas[GROUP_ACTIONS_ALPHAS] =
@@ -274,7 +277,9 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
     }
 
     private void updateActionButtonsVisibility() {
-        assert mDp != null;
+        if (mDp == null) {
+            return;
+        }
         boolean showSingleTaskActions = !mIsGroupedTask;
         boolean showGroupActions = mIsGroupedTask && mDp.isTablet && mCanSaveAppPair;
         Log.d(TAG, "updateActionButtonsVisibility() called: showSingleTaskActions = ["

@@ -16,9 +16,10 @@
 package com.android.launcher3.uioverrides.states;
 
 import static com.android.app.animation.Interpolators.DECELERATE_2;
+import static com.android.launcher3.Flags.enableDesktopExplodedView;
+import static com.android.launcher3.Flags.enableOverviewBackgroundWallpaperBlur;
 import static com.android.launcher3.Flags.enableScalingRevealHomeAnimation;
 import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_OVERVIEW;
-import static com.android.wm.shell.Flags.enableSplitContextual;
 
 import android.content.Context;
 import android.graphics.Rect;
@@ -30,10 +31,12 @@ import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.Themes;
+import com.android.launcher3.views.ActivityContext;
 import com.android.quickstep.util.BaseDepthController;
 import com.android.quickstep.util.LayoutUtils;
 import com.android.quickstep.views.RecentsView;
 import com.android.quickstep.views.TaskView;
+import com.android.systemui.shared.system.BlurUtils;
 
 /**
  * Definition for overview state
@@ -63,10 +66,10 @@ public class OverviewState extends LauncherState {
     }
 
     @Override
-    public int getTransitionDuration(Context context, boolean isToState) {
+    public int getTransitionDuration(ActivityContext context, boolean isToState) {
         if (isToState) {
             // In gesture modes, overview comes in all the way from the side, so give it more time.
-            return DisplayController.getNavigationMode(context).hasGestures
+            return DisplayController.getNavigationMode(context.asContext()).hasGestures
                     ? OVERVIEW_SLIDE_IN_DURATION
                     : OVERVIEW_POP_IN_DURATION;
         } else {
@@ -110,7 +113,7 @@ public class OverviewState extends LauncherState {
 
     @Override
     public int getVisibleElements(Launcher launcher) {
-        int elements = CLEAR_ALL_BUTTON | OVERVIEW_ACTIONS;
+        int elements = CLEAR_ALL_BUTTON | OVERVIEW_ACTIONS | ADD_DESK_BUTTON;
         DeviceProfile dp = launcher.getDeviceProfile();
         boolean showFloatingSearch;
         if (dp.isPhone) {
@@ -123,15 +126,15 @@ public class OverviewState extends LauncherState {
         if (showFloatingSearch) {
             elements |= FLOATING_SEARCH_BAR;
         }
-        if (enableSplitContextual() && launcher.isSplitSelectionActive()) {
-            elements &= ~CLEAR_ALL_BUTTON;
+        if (launcher.isSplitSelectionActive()) {
+            elements &= ~CLEAR_ALL_BUTTON & ~ADD_DESK_BUTTON;
         }
         return elements;
     }
 
     @Override
     public float getSplitSelectTranslation(Launcher launcher) {
-        if (!enableSplitContextual() || !launcher.isSplitSelectionActive()) {
+        if (!launcher.isSplitSelectionActive()) {
             return 0f;
         }
         RecentsView recentsView = launcher.getOverviewPanel();
@@ -157,12 +160,24 @@ public class OverviewState extends LauncherState {
 
     @Override
     public int getWorkspaceScrimColor(Launcher launcher) {
-        return Themes.getAttrColor(launcher, R.attr.overviewScrimColor);
+        return enableOverviewBackgroundWallpaperBlur() && BlurUtils.supportsBlursOnWindows()
+                ? Themes.getAttrColor(launcher, R.attr.overviewScrimColorOverBlur)
+                : Themes.getAttrColor(launcher, R.attr.overviewScrimColor);
     }
 
     @Override
     public boolean displayOverviewTasksAsGrid(DeviceProfile deviceProfile) {
         return deviceProfile.isTablet;
+    }
+
+    @Override
+    public boolean detachDesktopCarousel() {
+        return false;
+    }
+
+    @Override
+    public boolean showExplodedDesktopView() {
+        return enableDesktopExplodedView();
     }
 
     @Override
@@ -209,7 +224,7 @@ public class OverviewState extends LauncherState {
         TaskView taskView = recentsView.getRunningTaskView();
         if (taskView != null) {
             if (recentsView.isTaskViewFullyVisible(taskView)) {
-                taskView.launchTasks();
+                taskView.launchWithAnimation();
             } else {
                 recentsView.snapToPage(recentsView.indexOfChild(taskView));
             }

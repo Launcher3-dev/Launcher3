@@ -19,6 +19,7 @@ package com.android.launcher3.folder;
 import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.MAX_NUM_ITEMS_IN_PREVIEW;
 
 import android.graphics.Point;
+import android.util.Log;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.model.data.FolderInfo;
@@ -47,10 +48,17 @@ public class FolderGridOrganizer {
     /**
      * Note: must call {@link #setFolderInfo(FolderInfo)} manually for verifier to work.
      */
-    public FolderGridOrganizer(DeviceProfile profile) {
-        mMaxCountX = profile.numFolderColumns;
-        mMaxCountY = profile.numFolderRows;
+    public FolderGridOrganizer(int maxCountX, int maxCountY) {
+        mMaxCountX = maxCountX;
+        mMaxCountY = maxCountY;
         mMaxItemsPerPage = mMaxCountX * mMaxCountY;
+    }
+
+    /**
+     * Creates a FolderGridOrganizer for the given DeviceProfile
+     */
+    public static FolderGridOrganizer createFolderGridOrganizer(DeviceProfile profile) {
+        return new FolderGridOrganizer(profile.numFolderColumns, profile.numFolderRows);
     }
 
     /**
@@ -171,6 +179,14 @@ public class FolderGridOrganizer {
                 break;
             }
         }
+
+        if (result.isEmpty()) {
+            // Log specifics since we are getting empty result
+            Log.d("b/383526431", "previewItemsForPage: "
+                    + "mCountX = " + mCountX
+                    + ", mCountY = " + mCountY
+                    + ", content size = " + contents.size());
+        }
         return result;
     }
 
@@ -194,6 +210,7 @@ public class FolderGridOrganizer {
             int row = rank / mCountX;
             return col < PREVIEW_MAX_COLUMNS && row < PREVIEW_MAX_ROWS;
         }
+        // If we have less than 4 items do this
         return rank < MAX_NUM_ITEMS_IN_PREVIEW;
     }
 }

@@ -15,10 +15,9 @@
  */
 package com.android.launcher3.widget.picker;
 
-import static com.android.launcher3.Flags.enableCategorizedWidgetSuggestions;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_WIDGETS_PREDICTION;
 import static com.android.launcher3.widget.util.WidgetSizes.getWidgetSizePx;
-import static com.android.launcher3.widget.util.WidgetsTableUtils.WIDGETS_TABLE_ROW_SIZE_COMPARATOR;
+import static com.android.launcher3.widget.util.WidgetsTableUtils.WIDGETS_TABLE_ROW_COUNT_COMPARATOR;
 
 import static java.lang.Math.max;
 
@@ -41,6 +40,7 @@ import com.android.launcher3.widget.picker.util.WidgetPreviewContainerSize;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** A {@link TableLayout} for showing recommended widgets. */
 public final class WidgetsRecommendationTableLayout extends TableLayout {
@@ -111,10 +111,8 @@ public final class WidgetsRecommendationTableLayout extends TableLayout {
                 WidgetCell widgetCell = addItemCell(tableRow);
                 widgetCell.applyFromCellItem(widgetItem);
                 widgetCell.showAppIconInWidgetTitle(true);
-                if (enableCategorizedWidgetSuggestions()) {
-                    widgetCell.showDescription(false);
-                    widgetCell.showDimensions(false);
-                }
+                widgetCell.showDescription(false);
+                widgetCell.showDimensions(false);
             }
             addView(tableRow);
         }
@@ -163,6 +161,7 @@ public final class WidgetsRecommendationTableLayout extends TableLayout {
         }
 
         // Perform re-ordering once we have filtered out recommendations that fit.
-        return filteredRows.stream().sorted(WIDGETS_TABLE_ROW_SIZE_COMPARATOR).toList();
+        return filteredRows.stream().sorted(WIDGETS_TABLE_ROW_COUNT_COMPARATOR)
+                .collect(Collectors.toList());
     }
 }

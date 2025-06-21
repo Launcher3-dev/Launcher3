@@ -21,10 +21,10 @@ import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_BOTTOM_
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_PIN_WIDGETS;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_WIDGETS_PREDICTION;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_WIDGETS_TRAY;
-import static com.android.launcher3.Utilities.ATLEAST_S;
 
 import android.appwidget.AppWidgetHostView;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Process;
@@ -233,16 +233,16 @@ public class LauncherAppWidgetInfo extends ItemInfo {
         if (providerInfo.isConfigurationOptional()) {
             widgetFeatures |= FEATURE_OPTIONAL_CONFIGURATION;
         }
-        if (ATLEAST_S && providerInfo.previewLayout != Resources.ID_NULL) {
+        if (providerInfo.previewLayout != Resources.ID_NULL) {
             widgetFeatures |= FEATURE_PREVIEW_LAYOUT;
         }
-        if (ATLEAST_S && providerInfo.targetCellWidth > 0 || providerInfo.targetCellHeight > 0) {
+        if (providerInfo.targetCellWidth > 0 || providerInfo.targetCellHeight > 0) {
             widgetFeatures |= FEATURE_TARGET_CELL_SIZE;
         }
         if (providerInfo.minResizeWidth > 0 || providerInfo.minResizeHeight > 0) {
             widgetFeatures |= FEATURE_MIN_SIZE;
         }
-        if (ATLEAST_S && providerInfo.maxResizeWidth > 0 || providerInfo.maxResizeHeight > 0) {
+        if (providerInfo.maxResizeWidth > 0 || providerInfo.maxResizeHeight > 0) {
             widgetFeatures |= FEATURE_MAX_SIZE;
         }
         if (hostView instanceof LauncherAppWidgetHostView &&
@@ -271,8 +271,9 @@ public class LauncherAppWidgetInfo extends ItemInfo {
 
     @NonNull
     @Override
-    public LauncherAtom.ItemInfo buildProto(@Nullable CollectionInfo collectionInfo) {
-        LauncherAtom.ItemInfo info = super.buildProto(collectionInfo);
+    public LauncherAtom.ItemInfo buildProto(
+            @Nullable CollectionInfo collectionInfo, Context context) {
+        LauncherAtom.ItemInfo info = super.buildProto(collectionInfo, context);
         return info.toBuilder()
                 .setWidget(info.getWidget().toBuilder().setWidgetFeatures(widgetFeatures))
                 .addItemAttributes(getAttribute(sourceContainer))

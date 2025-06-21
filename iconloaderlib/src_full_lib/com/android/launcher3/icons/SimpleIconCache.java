@@ -66,16 +66,16 @@ public class SimpleIconCache extends BaseIconCache {
     }
 
     @Override
-    protected long getSerialNumberForUser(@NonNull UserHandle user) {
+    public long getSerialNumberForUser(@NonNull UserHandle user) {
         synchronized (mUserSerialMap) {
-            int index = mUserSerialMap.indexOfKey(user.hashCode());
-//            int index = mUserSerialMap.indexOfKey(user.getIdentifier());
+//            int userId = user.getIdentifier();
+            int userId = 0;
+            int index = mUserSerialMap.indexOfKey(userId);
             if (index >= 0) {
                 return mUserSerialMap.valueAt(index);
             }
             long serial = mUserManager.getSerialNumberForUser(user);
-            mUserSerialMap.put(user.hashCode(), serial);
-//            mUserSerialMap.put(user.getIdentifier(), serial);
+            mUserSerialMap.put(userId, serial);
             return serial;
         }
     }
@@ -88,14 +88,14 @@ public class SimpleIconCache extends BaseIconCache {
 
     @Override
     protected boolean isInstantApp(@NonNull ApplicationInfo info) {
-        return false;
 //        return info.isInstantApp();
+        return false;
     }
 
     @NonNull
     @Override
     public BaseIconFactory getIconFactory() {
-        return IconFactory.obtain(mContext);
+        return IconFactory.obtain(context);
     }
 
     public static SimpleIconCache getIconCache(Context context) {

@@ -15,11 +15,15 @@
  */
 package com.android.launcher3.widget.picker;
 
-import static com.android.launcher3.Flags.enableCategorizedWidgetSuggestions;
-import static com.android.launcher3.Flags.enableUnfoldedTwoPanePicker;
+import static com.android.launcher3.Flags.enableTieredWidgetsByDefaultInPicker;
 import static com.android.launcher3.allapps.ActivityAllAppsContainerView.AdapterHolder.SEARCH;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WIDGETSTRAY_EXPAND_PRESS;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WIDGETSTRAY_SEARCHED;
 import static com.android.launcher3.testing.shared.TestProtocol.NORMAL_STATE_ORDINAL;
+import static com.android.launcher3.views.RecyclerViewFastScroller.FastScrollerLocation.WIDGET_SCROLLER;
+
+import static java.lang.Math.abs;
+import static java.util.Collections.emptyList;
 
 import android.animation.Animator;
 import android.content.Context;
@@ -36,6 +40,7 @@ import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.WindowInsets;
@@ -55,7 +60,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.BaseActivity;
 import com.android.launcher3.DeviceProfile;
-import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.PendingAnimation;
 import com.android.launcher3.compat.AccessibilityManagerCompat;
@@ -68,8 +72,10 @@ import com.android.launcher3.views.StickyHeaderLayout;
 import com.android.launcher3.widget.BaseWidgetSheet;
 import com.android.launcher3.widget.WidgetCell;
 import com.android.launcher3.widget.model.WidgetsListBaseEntry;
+import com.android.launcher3.widget.picker.model.data.WidgetPickerData;
 import com.android.launcher3.widget.picker.search.SearchModeListener;
 import com.android.launcher3.widget.picker.search.WidgetsSearchBar;
+import com.android.launcher3.widget.picker.search.WidgetsSearchBar.WidgetsSearchDataProvider;
 import com.android.launcher3.workprofile.PersonalWorkPagedView;
 import com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip.OnActivePageChangedListener;
 
@@ -85,7 +91,8 @@ import java.util.stream.IntStream;
  */
 public class WidgetsFullSheet extends BaseWidgetSheet
         implements OnActivePageChangedListener,
-        WidgetsRecyclerView.HeaderViewDimensionsProvider, SearchModeListener {
+        WidgetsRecyclerView.HeaderViewDimensionsProvider, SearchModeListener,
+        WidgetsListAdapter.ExpandButtonClickListener {
 
     private static final long FADE_IN_DURATION = 150;
 
@@ -111,6 +118,10 @@ public class WidgetsFullSheet extends BaseWidgetSheet
     protected int mRecommendationsCurrentPage = 0;
     protected final SparseArray<AdapterHolder> mAdapters = new SparseArray();
 
+    // Helps with removing focus from searchbar by analyzing motion events.
+    private final SearchClearFocusHelper mSearchClearFocusHelper = new SearchClearFocusHelper();
+    private final float mTouchSlop; // initialized in constructor
+
     private final OnAttachStateChangeListener mBindScrollbarInSearchMode =
             new OnAttachStateChangeListener() {
                 @Override
@@ -118,7 +129,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
                     WidgetsRecyclerView searchRecyclerView =
                             mAdapters.get(AdapterHolder.SEARCH).mWidgetsRecyclerView;
                     if (mIsInSearchMode && searchRecyclerView != null) {
-                        searchRecyclerView.bindFastScrollbar(mFastScroller);
+                        searchRecyclerView.bindFastScrollbar(mFastScroller, WIDGET_SCROLLER);
                     }
                 }
 
@@ -136,14 +147,16 @@ public class WidgetsFullSheet extends BaseWidgetSheet
     private WidgetsRecyclerView mCurrentTouchEventRecyclerView;
     @Nullable
     PersonalWorkPagedView mViewPager;
-    private boolean mIsInSearchMode;
+    protected boolean mIsInSearchMode;
     private boolean mIsNoWidgetsViewNeeded;
     @Px
     protected int mMaxSpanPerRow;
     protected DeviceProfile mDeviceProfile;
 
     protected TextView mNoWidgetsView;
-    protected StickyHeaderLayout mSearchScrollView;
+    protected LinearLayout mSearchScrollView;
+    // Reference to the mSearchScrollView when it is is a sticky header.
+    private @Nullable StickyHeaderLayout mStickyHeaderLayout;
     protected WidgetRecommendationsView mWidgetRecommendationsView;
     protected LinearLayout mWidgetRecommendationsContainer;
     protected View mTabBar;
@@ -155,6 +168,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
 
     public WidgetsFullSheet(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         mDeviceProfile = mActivityContext.getDeviceProfile();
         mUserCache = UserCache.INSTANCE.get(context);
         mHasWorkProfile = mUserCache.getUserProfiles()
@@ -218,7 +232,11 @@ public class WidgetsFullSheet extends BaseWidgetSheet
 
     protected void setupViews() {
         mSearchScrollView = findViewById(R.id.search_and_recommendations_container);
-        mSearchScrollView.setCurrentRecyclerView(findViewById(R.id.primary_widgets_list_view));
+        if (mSearchScrollView instanceof StickyHeaderLayout) {
+            mStickyHeaderLayout = (StickyHeaderLayout) mSearchScrollView;
+            mStickyHeaderLayout.setCurrentRecyclerView(
+                    findViewById(R.id.primary_widgets_list_view));
+        }
         mNoWidgetsView = findViewById(R.id.no_widgets_text);
         mFastScroller = findViewById(R.id.fast_scroller);
         mFastScroller.setPopupView(findViewById(R.id.fast_scroller_popup));
@@ -246,8 +264,18 @@ public class WidgetsFullSheet extends BaseWidgetSheet
         mSearchBarContainer = mSearchScrollView.findViewById(R.id.search_bar_container);
         mSearchBar = mSearchScrollView.findViewById(R.id.widgets_search_bar);
 
-        mSearchBar.initialize(
-                mActivityContext.getPopupDataProvider(), /* searchModeListener= */ this);
+        mSearchBar.initialize(new WidgetsSearchDataProvider() {
+            @Override
+            public List<WidgetsListBaseEntry> getWidgets() {
+                if (enableTieredWidgetsByDefaultInPicker()) {
+                    // search all
+                    return mActivityContext.getWidgetPickerDataProvider().get().getAllWidgets();
+                } else {
+                    // Can be removed when inlining enableTieredWidgetsByDefaultInPicker flag
+                    return getWidgetsToDisplay();
+                }
+            }
+        }, /* searchModeListener= */ this);
     }
 
     private void setDeviceManagementResources() {
@@ -271,24 +299,29 @@ public class WidgetsFullSheet extends BaseWidgetSheet
     }
 
     private void attachScrollbarToRecyclerView(WidgetsRecyclerView recyclerView) {
-        recyclerView.bindFastScrollbar(mFastScroller);
         if (mCurrentWidgetsRecyclerView != recyclerView) {
+            // Bind scrollbar if changing the recycler view. If widgets list updates, since
+            // scrollbar is already attached to the recycler view, it will automatically adjust as
+            // needed with recycler view's onScrollListener.
+            recyclerView.bindFastScrollbar(mFastScroller, WIDGET_SCROLLER);
             // Only reset the scroll position & expanded apps if the currently shown recycler view
             // has been updated.
             reset();
             resetExpandedHeaders();
             mCurrentWidgetsRecyclerView = recyclerView;
-            mSearchScrollView.setCurrentRecyclerView(recyclerView);
+            if (mStickyHeaderLayout != null) {
+                mStickyHeaderLayout.setCurrentRecyclerView(recyclerView);
+            }
         }
     }
 
     protected void updateRecyclerViewVisibility(AdapterHolder adapterHolder) {
         // The first item is always an empty space entry. Look for any more items.
         boolean isWidgetAvailable = adapterHolder.mWidgetsListAdapter.hasVisibleEntries();
-        adapterHolder.mWidgetsRecyclerView.setVisibility(isWidgetAvailable ? VISIBLE : GONE);
 
         if (adapterHolder.mAdapterType == AdapterHolder.SEARCH) {
             mNoWidgetsView.setText(R.string.no_search_results);
+            adapterHolder.mWidgetsRecyclerView.setVisibility(isWidgetAvailable ? VISIBLE : GONE);
         } else if (adapterHolder.mAdapterType == AdapterHolder.WORK
                 && mUserCache.getUserProfiles().stream()
                 .filter(userHandle -> mUserCache.getUserInfo(userHandle).isWork())
@@ -307,7 +340,9 @@ public class WidgetsFullSheet extends BaseWidgetSheet
             mAdapters.get(AdapterHolder.WORK).mWidgetsRecyclerView.scrollToTop();
         }
         mAdapters.get(AdapterHolder.SEARCH).mWidgetsRecyclerView.scrollToTop();
-        mSearchScrollView.reset(/* animate= */ true);
+        if (mStickyHeaderLayout != null) {
+            mStickyHeaderLayout.reset(/* animate= */ true);
+        }
     }
 
     @VisibleForTesting
@@ -416,19 +451,18 @@ public class WidgetsFullSheet extends BaseWidgetSheet
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int availableWidth = MeasureSpec.getSize(widthMeasureSpec);
+        updateMaxSpansPerRow(availableWidth);
         doMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        if (updateMaxSpansPerRow()) {
-            doMeasure(widthMeasureSpec, heightMeasureSpec);
-        }
     }
 
-    /** Returns {@code true} if the max spans have been updated. */
-    private boolean updateMaxSpansPerRow() {
-        if (getMeasuredWidth() == 0) return false;
-
-        @Px int maxHorizontalSpan = getContentView().getMeasuredWidth()
-                - (2 * mContentHorizontalMargin);
+    /** Returns {@code true} if the max spans have been updated.
+     *
+     * @param availableWidth Total width available within parent (includes insets).
+     */
+    private void updateMaxSpansPerRow(int availableWidth) {
+        @Px int maxHorizontalSpan = getAvailableWidthForSuggestions(
+                availableWidth - getInsetsWidth());
         if (mMaxSpanPerRow != maxHorizontalSpan) {
             mMaxSpanPerRow = maxHorizontalSpan;
             mAdapters.get(AdapterHolder.PRIMARY).mWidgetsListAdapter.setMaxHorizontalSpansPxPerRow(
@@ -439,16 +473,15 @@ public class WidgetsFullSheet extends BaseWidgetSheet
                 mAdapters.get(AdapterHolder.WORK).mWidgetsListAdapter.setMaxHorizontalSpansPxPerRow(
                         maxHorizontalSpan);
             }
-            onRecommendedWidgetsBound();
-            return true;
+            post(this::onRecommendedWidgetsBound);
         }
-        return false;
     }
 
-    protected View getContentView() {
-        return mHasWorkProfile
-                ? mViewPager
-                : mAdapters.get(AdapterHolder.PRIMARY).mWidgetsRecyclerView;
+    /**
+     * Returns the width available to display suggestions.
+     */
+    protected int getAvailableWidthForSuggestions(int pickerAvailableWidth) {
+        return pickerAvailableWidth -  (2 * mContentHorizontalMargin);
     }
 
     @Override
@@ -465,22 +498,42 @@ public class WidgetsFullSheet extends BaseWidgetSheet
         setTranslationShift(mTranslationShift);
     }
 
+    /**
+     * Returns all displayable widgets.
+     */
+    // Used by the two pane sheet to show 3-dot menu to toggle between default lists and all lists
+    // when enableTieredWidgetsByDefaultInPicker is OFF. This code path and the 3-dot menu can be
+    // safely deleted when it's alternative "enableTieredWidgetsByDefaultInPicker" flag is inlined.
+    protected List<WidgetsListBaseEntry> getWidgetsToDisplay() {
+        return mActivityContext.getWidgetPickerDataProvider().get().getAllWidgets();
+    }
+
     @Override
     public void onWidgetsBound() {
         if (mIsInSearchMode) {
             return;
         }
-        List<WidgetsListBaseEntry> allWidgets =
-                mActivityContext.getPopupDataProvider().getAllWidgets();
+        List<WidgetsListBaseEntry> widgets;
+        List<WidgetsListBaseEntry> defaultWidgets = emptyList();
+
+        if (enableTieredWidgetsByDefaultInPicker()) {
+            WidgetPickerData dataProvider =
+                    mActivityContext.getWidgetPickerDataProvider().get();
+            widgets = dataProvider.getAllWidgets();
+            defaultWidgets = dataProvider.getDefaultWidgets();
+        } else {
+            // This code path can be deleted once enableTieredWidgetsByDefaultInPicker is inlined.
+            widgets = getWidgetsToDisplay();
+        }
 
         AdapterHolder primaryUserAdapterHolder = mAdapters.get(AdapterHolder.PRIMARY);
-        primaryUserAdapterHolder.mWidgetsListAdapter.setWidgets(allWidgets);
+        primaryUserAdapterHolder.mWidgetsListAdapter.setWidgets(widgets, defaultWidgets);
 
         if (mHasWorkProfile) {
             mViewPager.setVisibility(VISIBLE);
             mTabBar.setVisibility(VISIBLE);
             AdapterHolder workUserAdapterHolder = mAdapters.get(AdapterHolder.WORK);
-            workUserAdapterHolder.mWidgetsListAdapter.setWidgets(allWidgets);
+            workUserAdapterHolder.mWidgetsListAdapter.setWidgets(widgets, defaultWidgets);
             onActivePageChanged(mViewPager.getCurrentPage());
         } else {
             onActivePageChanged(0);
@@ -493,8 +546,18 @@ public class WidgetsFullSheet extends BaseWidgetSheet
                         .mWidgetsListAdapter.hasVisibleEntries());
         if (mIsNoWidgetsViewNeeded != isNoWidgetsViewNeeded) {
             mIsNoWidgetsViewNeeded = isNoWidgetsViewNeeded;
-            onRecommendedWidgetsBound();
+            post(this::onRecommendedWidgetsBound);
         }
+    }
+
+    @Override
+    public void onWidgetsListExpandButtonClick(View v) {
+        AdapterHolder currentAdapterHolder = mAdapters.get(getCurrentAdapterHolderType());
+        currentAdapterHolder.mWidgetsListAdapter.useExpandedList();
+        onWidgetsBound();
+        currentAdapterHolder.mWidgetsRecyclerView.announceForAccessibility(
+                mActivityContext.getString(R.string.widgets_list_expanded));
+        mActivityContext.getStatsLogManager().logger().log(LAUNCHER_WIDGETSTRAY_EXPAND_PRESS);
     }
 
     @Override
@@ -511,14 +574,11 @@ public class WidgetsFullSheet extends BaseWidgetSheet
     public void exitSearchMode() {
         if (!mIsInSearchMode) return;
         onSearchResults(new ArrayList<>());
-        WidgetsRecyclerView searchRecyclerView = mAdapters.get(
-                AdapterHolder.SEARCH).mWidgetsRecyclerView;
         // Remove all views when exiting the search mode; this prevents animating from stale results
         // to new ones the next time we enter search mode. By the time recycler view is hidden,
         // layout may not have happened to clear up existing results. So, instead of waiting for it
         // to happen, we clear the views here.
-        searchRecyclerView.swapAdapter(
-                searchRecyclerView.getAdapter(), /*removeAndRecycleExistingViews=*/ true);
+        mAdapters.get(AdapterHolder.SEARCH).reset();
         setViewVisibilityBasedOnSearch(/*isInSearchMode=*/ false);
         if (mHasWorkProfile) {
             mViewPager.snapToPage(AdapterHolder.PRIMARY);
@@ -547,9 +607,13 @@ public class WidgetsFullSheet extends BaseWidgetSheet
             mNoWidgetsView.setVisibility(GONE);
         } else {
             mAdapters.get(AdapterHolder.SEARCH).mWidgetsRecyclerView.setVisibility(GONE);
-            // Visibility of recommended widgets, recycler views and headers are handled in methods
-            // below.
-            onRecommendedWidgetsBound();
+            AdapterHolder currentAdapterHolder = mAdapters.get(getCurrentAdapterHolderType());
+            // Remove all views when exiting the search mode; this prevents animating / flashing old
+            // list position / state.
+            currentAdapterHolder.reset();
+            currentAdapterHolder.mWidgetsRecyclerView.setVisibility(VISIBLE);
+            post(this::onRecommendedWidgetsBound);
+            // Visibility of recycler views and headers are handled in methods below.
             onWidgetsBound();
         }
     }
@@ -564,34 +628,23 @@ public class WidgetsFullSheet extends BaseWidgetSheet
         if (mIsInSearchMode) {
             return;
         }
-
-        if (enableCategorizedWidgetSuggestions()) {
-            // We avoid applying new recommendations when some are already displayed.
-            if (mRecommendedWidgetsMap.isEmpty()) {
-                mRecommendedWidgetsMap =
-                        mActivityContext.getPopupDataProvider().getCategorizedRecommendedWidgets();
-            }
-            mRecommendedWidgetsCount = mWidgetRecommendationsView.setRecommendations(
-                    mRecommendedWidgetsMap,
-                    mDeviceProfile,
-                    /* availableHeight= */ getMaxAvailableHeightForRecommendations(),
-                    /* availableWidth= */ mMaxSpanPerRow,
-                    /* cellPadding= */ mWidgetCellHorizontalPadding,
-                    /* requestedPage= */ mRecommendationsCurrentPage
-            );
-        } else {
-            if (mRecommendedWidgets.isEmpty()) {
-                mRecommendedWidgets =
-                        mActivityContext.getPopupDataProvider().getRecommendedWidgets();
-            }
-            mRecommendedWidgetsCount = mWidgetRecommendationsView.setRecommendations(
-                    mRecommendedWidgets,
-                    mDeviceProfile,
-                    /* availableHeight= */ getMaxAvailableHeightForRecommendations(),
-                    /* availableWidth= */ mMaxSpanPerRow,
-                    /* cellPadding= */ mWidgetCellHorizontalPadding
-            );
+        boolean forceUpdate = false;
+        // We avoid applying new recommendations when some are already displayed.
+        if (mRecommendedWidgetsMap.isEmpty()) {
+            mRecommendedWidgetsMap =
+                    mActivityContext.getWidgetPickerDataProvider().get().getRecommendations();
+            forceUpdate = true;
         }
+        mRecommendedWidgetsCount = mWidgetRecommendationsView.setRecommendations(
+                mRecommendedWidgetsMap,
+                mDeviceProfile,
+                /* availableHeight= */ getMaxAvailableHeightForRecommendations(),
+                /* availableWidth= */ mMaxSpanPerRow,
+                /* cellPadding= */ mWidgetCellHorizontalPadding,
+                /* requestedPage= */ mRecommendationsCurrentPage,
+                /* forceUpdate= */ forceUpdate
+        );
+
         mWidgetRecommendationsContainer.setVisibility(
                 mRecommendedWidgetsCount > 0 ? VISIBLE : GONE);
     }
@@ -648,10 +701,14 @@ public class WidgetsFullSheet extends BaseWidgetSheet
     public boolean onControllerInterceptTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             mNoIntercept = shouldScroll(ev);
-            if (mSearchBar.isSearchBarFocused()
-                    && !getPopupContainer().isEventOverView(mSearchBarContainer, ev)) {
-                mSearchBar.clearSearchBarFocus();
-            }
+        }
+
+        // Clear focus only if user touched outside of search area and handling focus out ourselves
+        // was necessary (e.g. when it's not predictive back, but other user interaction).
+        if (mSearchBar.isSearchBarFocused()
+                && !getPopupContainer().isEventOverView(mSearchBarContainer, ev)
+                && mSearchClearFocusHelper.shouldClearFocus(ev, mTouchSlop)) {
+            mSearchBar.clearSearchBarFocus();
         }
 
         return super.onControllerInterceptTouchEvent(ev);
@@ -682,6 +739,18 @@ public class WidgetsFullSheet extends BaseWidgetSheet
         return sheet;
     }
 
+    /**
+     * Updates the widget picker's title and description in the header to the provided values (if
+     * present).
+     */
+    public void mayUpdateTitleAndDescription(@Nullable String title,
+            @Nullable String descriptionRes) {
+        if (title != null) {
+            mHeaderTitle.setText(title);
+        }
+        // Full sheet doesn't support a description.
+    }
+
     @Override
     public void saveHierarchyState(SparseArray<Parcelable> sparseArray) {
         Bundle bundle = new Bundle();
@@ -706,13 +775,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
     }
 
     private static int getWidgetSheetId(BaseActivity activity) {
-        boolean isTwoPane = (activity.getDeviceProfile().isTablet
-                // Enables two pane picker for tablets in all orientations when the
-                // enableCategorizedWidgetSuggestions flag is on.
-                && (activity.getDeviceProfile().isLandscape || enableCategorizedWidgetSuggestions())
-                && !activity.getDeviceProfile().isTwoPanels)
-                // Enables two pane picker for unfolded foldables if the flag is on.
-                || (activity.getDeviceProfile().isTwoPanels && enableUnfoldedTwoPanePicker());
+        boolean isTwoPane = activity.getDeviceProfile().isTablet;
 
         return isTwoPane ? R.layout.widgets_two_pane_sheet : R.layout.widgets_full_sheet;
     }
@@ -796,7 +859,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
                 + marginLayoutParams.topMargin;
     }
 
-    private int getCurrentAdapterHolderType() {
+    protected int getCurrentAdapterHolderType() {
         if (mIsInSearchMode) {
             return SEARCH;
         } else if (mViewPager != null) {
@@ -825,6 +888,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
             WidgetsFullSheet sheet = show(BaseActivity.fromContext(getContext()), false);
             sheet.restoreRecommendations(mRecommendedWidgets, mRecommendedWidgetsMap);
             sheet.restoreHierarchyState(widgetsState);
+            sheet.restoreAdapterStates(mAdapters);
             sheet.restorePreviousAdapterHolderType(getCurrentAdapterHolderType());
         } else if (!isTwoPane()) {
             reset();
@@ -840,6 +904,17 @@ public class WidgetsFullSheet extends BaseWidgetSheet
         mRecommendedWidgetsMap = recommendedWidgetsMap;
     }
 
+    private void restoreAdapterStates(SparseArray<AdapterHolder> adapters) {
+        if (adapters.contains(AdapterHolder.WORK)) {
+            mAdapters.get(AdapterHolder.WORK).mWidgetsListAdapter.restoreState(
+                    adapters.get(AdapterHolder.WORK).mWidgetsListAdapter);
+        }
+        mAdapters.get(AdapterHolder.PRIMARY).mWidgetsListAdapter.restoreState(
+                adapters.get(AdapterHolder.PRIMARY).mWidgetsListAdapter);
+        mAdapters.get(AdapterHolder.SEARCH).mWidgetsListAdapter.restoreState(
+                adapters.get(AdapterHolder.SEARCH).mWidgetsListAdapter);
+    }
+
     /**
      * Indicates if layout should be re-created on device profile change - so that a different
      * layout can be displayed.
@@ -847,16 +922,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
     private static boolean shouldRecreateLayout(DeviceProfile oldDp, DeviceProfile newDp) {
         // When folding/unfolding the foldables, we need to switch between the regular widget picker
         // and the two pane picker, so we rebuild the picker with the correct layout.
-        boolean isFoldUnFold =
-                oldDp.isTwoPanels != newDp.isTwoPanels && enableUnfoldedTwoPanePicker();
-        // In tablets, on orientation change we switch between single and two pane picker unless the
-        // categorized suggestions flag was on. With the categorized suggestions feature, we use a
-        // two pane picker across all orientations.
-        boolean useDifferentLayoutOnOrientationChange =
-                (!enableCategorizedWidgetSuggestions() && (newDp.isTablet && !newDp.isTwoPanels
-                        && oldDp.isLandscape != newDp.isLandscape));
-
-        return isFoldUnFold || useDifferentLayoutOnOrientationChange;
+        return oldDp.isTwoPanels != newDp.isTwoPanels;
     }
 
     /**
@@ -1009,6 +1075,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
                     this::getEmptySpaceHeight,
                     /* iconClickListener= */ WidgetsFullSheet.this,
                     /* iconLongClickListener= */ WidgetsFullSheet.this,
+                    /* expandButtonClickListener= */ WidgetsFullSheet.this,
                     isTwoPane());
             mWidgetsListAdapter.setHasStableIds(true);
             switch (mAdapterType) {
@@ -1024,8 +1091,23 @@ public class WidgetsFullSheet extends BaseWidgetSheet
             mWidgetsListItemAnimator = new WidgetsListItemAnimator();
         }
 
+        /**
+         * Swaps the adapter to existing adapter to prevent the recycler view from using stale view
+         * to animate in the new visibility update.
+         *
+         * <p>For instance, when clearing search text and re-entering search with new list shouldn't
+         * use stale results to animate in new results. Alternative is setting list animators to
+         * null, but, we need animations with the default item animator.
+         */
+        private void reset() {
+            mWidgetsRecyclerView.swapAdapter(
+                    mWidgetsListAdapter,
+                    /*removeAndRecycleExistingViews=*/ true
+            );
+        }
+
         private int getEmptySpaceHeight() {
-            return mSearchScrollView.getHeaderHeight();
+            return mStickyHeaderLayout != null ? mStickyHeaderLayout.getHeaderHeight() : 0;
         }
 
         void setup(WidgetsRecyclerView recyclerView) {
@@ -1034,7 +1116,7 @@ public class WidgetsFullSheet extends BaseWidgetSheet
             mWidgetsRecyclerView.setClipToOutline(true);
             mWidgetsRecyclerView.setClipChildren(false);
             mWidgetsRecyclerView.setAdapter(mWidgetsListAdapter);
-            mWidgetsRecyclerView.bindFastScrollbar(mFastScroller);
+            mWidgetsRecyclerView.bindFastScrollbar(mFastScroller, WIDGET_SCROLLER);
             mWidgetsRecyclerView.setItemAnimator(isTwoPane() ? null : mWidgetsListItemAnimator);
             mWidgetsRecyclerView.setHeaderViewDimensionsProvider(WidgetsFullSheet.this);
             if (!isTwoPane()) {
@@ -1048,6 +1130,55 @@ public class WidgetsFullSheet extends BaseWidgetSheet
                 mWidgetsRecyclerView.addOnAttachStateChangeListener(mBindScrollbarInSearchMode);
             }
             mWidgetsListAdapter.setMaxHorizontalSpansPxPerRow(mMaxSpanPerRow);
+        }
+    }
+
+    /**
+     * Helper to identify if searchbar's focus can be cleared when user performs an action
+     * outside search.
+     */
+    private static class SearchClearFocusHelper {
+        private float mFirstInteractionX = -1f;
+        private float mFirstInteractionY = -1f;
+
+        /**
+         * For a given [MotionEvent] indicates if we should clear focus from search (and hide IME).
+         */
+        boolean shouldClearFocus(MotionEvent ev, float touchSlop) {
+            int action = ev.getAction();
+            boolean clearFocus = false;
+
+            if (action == MotionEvent.ACTION_DOWN) {
+                mFirstInteractionX = ev.getX();
+                mFirstInteractionY = ev.getY();
+            } else if (action == MotionEvent.ACTION_CANCEL) {
+                // This is when user performed a gesture e.g. predictive back
+                // We don't handle it ourselves and let IME handle the close.
+                mFirstInteractionY = -1;
+                mFirstInteractionX = -1;
+            } else if (action == MotionEvent.ACTION_UP) {
+                // Its clear that user action wasn't predictive back - but press / scroll etc. that
+                // should hide the keyboard.
+                clearFocus = true;
+                mFirstInteractionY = -1;
+                mFirstInteractionX = -1;
+            } else if (action == MotionEvent.ACTION_MOVE) {
+                // Sometimes, on move, we may not receive ACTION_UP, but if the move was within
+                // touch slop and we didn't know if its moved or cancelled, we can clear focus.
+                // Example case: Apps list is small and you do a little scroll on list - in such, we
+                // want to still hide the keyboard.
+                if (mFirstInteractionX != -1 && mFirstInteractionY != -1) {
+                    float distY = abs(mFirstInteractionY - ev.getY());
+                    float distX = abs(mFirstInteractionX - ev.getX());
+                    if (distY >= touchSlop || distX >= touchSlop) {
+                        clearFocus = true;
+                        mFirstInteractionY = -1;
+                        mFirstInteractionX = -1;
+                    }
+                }
+            }
+
+            return clearFocus;
         }
     }
 }

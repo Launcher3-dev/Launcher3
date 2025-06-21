@@ -18,6 +18,7 @@ package com.android.launcher3.allapps;
 
 import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
 
+import android.content.Context;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -26,6 +27,7 @@ import androidx.annotation.IntDef;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.pm.UserCache;
+import com.android.launcher3.util.ApiWrapper;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -69,14 +71,26 @@ public abstract class UserProfileManager {
     }
 
     /** Sets quiet mode as enabled/disabled for the profile type. */
-    protected void setQuietMode(boolean enabled) {
+    protected void setQuietMode(boolean enabled, Context context) {
         UI_HELPER_EXECUTOR.post(() ->
                 mUserCache.getUserProfiles()
                         .stream()
                         .filter(getUserMatcher())
                         .findFirst()
                         .ifPresent(userHandle ->
-                                mUserManager.requestQuietModeEnabled(enabled, userHandle)));
+                                setQuietModeSafely(enabled, userHandle, context)));
+    }
+
+    /**
+     * Sets Quiet Mode for Private Profile.
+     * If {@link SecurityException} is thrown, prompts the user to set this launcher as HOME app.
+     */
+    private void setQuietModeSafely(boolean enable, UserHandle userHandle, Context context) {
+        try {
+            mUserManager.requestQuietModeEnabled(enable, userHandle);
+        } catch (SecurityException ex) {
+            ApiWrapper.INSTANCE.get(context).assignDefaultHomeRole(context);
+        }
     }
 
     /** Sets current state for the profile type. */

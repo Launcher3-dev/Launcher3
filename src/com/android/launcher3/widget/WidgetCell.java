@@ -16,17 +16,16 @@
 
 package com.android.launcher3.widget;
 
-import static android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK;
 
-import static com.android.launcher3.Flags.enableWidgetTapToAdd;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_WIDGETS_TRAY;
-import static com.android.launcher3.widget.LauncherAppWidgetProviderInfo.fromProviderInfo;
 import static com.android.launcher3.widget.util.WidgetSizes.getWidgetItemSizePx;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -47,13 +46,10 @@ import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.app.animation.Interpolators;
 import com.android.launcher3.CheckLongPressHelper;
-import com.android.launcher3.Flags;
-import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.AnimatedPropertySetter;
@@ -64,10 +60,9 @@ import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.model.data.PackageItemInfo;
 import com.android.launcher3.util.CancellableTask;
 import com.android.launcher3.views.ActivityContext;
+import com.android.launcher3.widget.DatabaseWidgetPreviewLoader.WidgetPreviewInfo;
 import com.android.launcher3.widget.picker.util.WidgetPreviewContainerSize;
 import com.android.launcher3.widget.util.WidgetSizes;
-
-import java.util.function.Consumer;
 
 /**
  * Represents the individual cell of the widget inside the widget tray. The preview is drawn
@@ -155,9 +150,23 @@ public class WidgetCell extends LinearLayout {
         mWidgetDescription = findViewById(R.id.widget_description);
         mWidgetTextContainer = findViewById(R.id.widget_text_container);
         mWidgetAddButton = findViewById(R.id.widget_add_button);
-        if (enableWidgetTapToAdd()) {
-            mWidgetAddButton.setVisibility(INVISIBLE);
-        }
+
+        setAccessibilityDelegate(new AccessibilityDelegate() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(View host,
+                    AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                if (hasOnClickListeners()) {
+                    String accessibilityLabel = getResources().getString(
+                            mWidgetAddButton.isShown()
+                                    ? R.string.widget_cell_tap_to_hide_add_button_label
+                                    : R.string.widget_cell_tap_to_show_add_button_label);
+                    info.addAction(new AccessibilityNodeInfo.AccessibilityAction(ACTION_CLICK,
+                            accessibilityLabel));
+                }
+            }
+        });
+        mWidgetAddButton.setVisibility(INVISIBLE);
     }
 
     public void setRemoteViewsPreview(RemoteViews view) {
@@ -198,9 +207,7 @@ public class WidgetCell extends LinearLayout {
         showDescription(true);
         showDimensions(true);
 
-        if (enableWidgetTapToAdd()) {
-            hideAddButton(/* animate= */ false);
-        }
+        hideAddButton(/* animate= */ false);
 
         if (mActiveRequest != null) {
             mActiveRequest.cancel();
@@ -227,17 +234,6 @@ public class WidgetCell extends LinearLayout {
      * Applies the item to this view
      */
     public void applyFromCellItem(WidgetItem item) {
-        applyFromCellItem(item, this::applyPreview, /*cachedPreview=*/null);
-    }
-
-    /**
-     * Applies the item to this view
-     * @param item item to apply
-     * @param callback callback when preview is loaded in case the preview is being loaded or cached
-     * @param cachedPreview previously cached preview bitmap is present
-     */
-    public void applyFromCellItem(WidgetItem item, @NonNull Consumer<Bitmap> callback,
-            @Nullable Bitmap cachedPreview) {
         Context context = getContext();
         mItem = item;
         mWidgetSize = getWidgetItemSizePx(getContext(), mActivity.getDeviceProfile(), mItem);
@@ -268,34 +264,25 @@ public class WidgetCell extends LinearLayout {
         }
 
         if (mRemoteViewsPreview != null) {
-            mAppWidgetHostViewPreview = createAppWidgetHostView(context);
-            setAppWidgetHostViewPreview(mAppWidgetHostViewPreview, item.widgetInfo,
-                    mRemoteViewsPreview);
-        } else if (Flags.enableGeneratedPreviews()
-                && item.hasGeneratedPreview(WIDGET_CATEGORY_HOME_SCREEN)) {
-            mAppWidgetHostViewPreview = createAppWidgetHostView(context);
-            setAppWidgetHostViewPreview(mAppWidgetHostViewPreview, item.widgetInfo,
-                    item.generatedPreviews.get(WIDGET_CATEGORY_HOME_SCREEN));
-        } else if (item.hasPreviewLayout()) {
-            // If the context is a Launcher activity, DragView will show mAppWidgetHostViewPreview
-            // as a preview during drag & drop. And thus, we should use LauncherAppWidgetHostView,
-            // which supports applying local color extraction during drag & drop.
-            mAppWidgetHostViewPreview = isLauncherContext(context)
-                    ? new LauncherAppWidgetHostView(context)
-                    : createAppWidgetHostView(context);
-            LauncherAppWidgetProviderInfo providerInfo =
-                    fromProviderInfo(context, item.widgetInfo.clone());
-            // A hack to force the initial layout to be the preview layout since there is no API for
-            // rendering a preview layout for work profile apps yet. For non-work profile layout, a
-            // proper solution is to use RemoteViews(PackageName, LayoutId).
-            providerInfo.initialLayout = item.widgetInfo.previewLayout;
-            setAppWidgetHostViewPreview(mAppWidgetHostViewPreview, providerInfo, null);
-        } else if (cachedPreview != null) {
-            applyPreview(cachedPreview);
+            WidgetPreviewInfo previewInfo = new WidgetPreviewInfo();
+            previewInfo.providerInfo = item.widgetInfo;
+            previewInfo.remoteViews = mRemoteViewsPreview;
+            applyPreview(previewInfo);
         } else {
             if (mActiveRequest == null) {
-                mActiveRequest = mWidgetPreviewLoader.loadPreview(mItem, mWidgetSize, callback);
+                mActiveRequest = mWidgetPreviewLoader.loadPreview(
+                        mItem, mWidgetSize, this::applyPreview);
             }
+        }
+    }
+
+    private void applyPreview(WidgetPreviewInfo previewInfo) {
+        if (previewInfo.providerInfo != null) {
+            mAppWidgetHostViewPreview = createAppWidgetHostView(getContext());
+            setAppWidgetHostViewPreview(mAppWidgetHostViewPreview, previewInfo.providerInfo,
+                    previewInfo.remoteViews);
+        } else {
+            applyBitmapPreview(previewInfo.previewBitmap);
         }
     }
 
@@ -322,7 +309,7 @@ public class WidgetCell extends LinearLayout {
 
     private void setAppWidgetHostViewPreview(
             NavigableAppWidgetHostView appWidgetHostViewPreview,
-            LauncherAppWidgetProviderInfo providerInfo,
+            AppWidgetProviderInfo providerInfo,
             @Nullable RemoteViews remoteViews) {
         appWidgetHostViewPreview.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         appWidgetHostViewPreview.setAppWidget(/* appWidgetId= */ -1, providerInfo);
@@ -334,7 +321,7 @@ public class WidgetCell extends LinearLayout {
                 mWidgetSize.getWidth(), mWidgetSize.getHeight(), Gravity.CENTER);
         mWidgetImageContainer.addView(appWidgetHostViewPreview, /* index= */ 0, widgetHostLP);
         mWidgetImage.setVisibility(View.GONE);
-        applyPreview(null);
+        applyBitmapPreview(null);
 
         appWidgetHostViewPreview.addOnLayoutChangeListener(
                 (v, l, t, r, b, ol, ot, or, ob) ->
@@ -392,7 +379,7 @@ public class WidgetCell extends LinearLayout {
         mAnimatePreview = shouldAnimate;
     }
 
-    private void applyPreview(Bitmap bitmap) {
+    private void applyBitmapPreview(Bitmap bitmap) {
         if (bitmap != null) {
             Drawable drawable = new RoundDrawableWrapper(
                     new FastBitmapDrawable(bitmap), mEnforcedCornerRadius);
@@ -481,8 +468,8 @@ public class WidgetCell extends LinearLayout {
         mLongPressHelper.cancelLongPress();
     }
 
-    private static NavigableAppWidgetHostView createAppWidgetHostView(Context context) {
-        return new NavigableAppWidgetHostView(context) {
+    private static LauncherAppWidgetHostView createAppWidgetHostView(Context context) {
+        return new LauncherAppWidgetHostView(context) {
             @Override
             protected boolean shouldAllowDirectClick() {
                 return false;
@@ -490,19 +477,9 @@ public class WidgetCell extends LinearLayout {
         };
     }
 
-    private static boolean isLauncherContext(Context context) {
-        return ActivityContext.lookupContext(context) instanceof Launcher;
-    }
-
     @Override
     public CharSequence getAccessibilityClassName() {
         return WidgetCell.class.getName();
-    }
-
-    @Override
-    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
-        super.onInitializeAccessibilityNodeInfo(info);
-        info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK);
     }
 
     @Override

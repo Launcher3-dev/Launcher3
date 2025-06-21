@@ -20,7 +20,6 @@ import static com.android.app.animation.Interpolators.LINEAR;
 import static com.android.launcher3.Flags.enableScalingRevealHomeAnimation;
 import static com.android.launcher3.LauncherState.NORMAL;
 import static com.android.launcher3.Utilities.mapBoundToRange;
-import static com.android.launcher3.model.data.ItemInfo.NO_MATCHING_ID;
 import static com.android.launcher3.views.FloatingIconView.SHAPE_PROGRESS_DURATION;
 import static com.android.launcher3.views.FloatingIconView.getFloatingIconView;
 
@@ -40,9 +39,11 @@ import androidx.annotation.Nullable;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.anim.AnimatorPlaybackController;
 import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.statehandlers.DesktopVisibilityController;
 import com.android.launcher3.states.StateAnimationConfig;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
-import com.android.launcher3.util.ObjectWrapper;
+import com.android.launcher3.util.MSDLPlayerWrapper;
+import com.android.launcher3.util.StableViewInfo;
 import com.android.launcher3.views.ClipIconView;
 import com.android.launcher3.views.FloatingIconView;
 import com.android.launcher3.views.FloatingView;
@@ -54,6 +55,8 @@ import com.android.quickstep.util.TaskViewSimulator;
 import com.android.quickstep.views.FloatingWidgetView;
 import com.android.quickstep.views.RecentsView;
 import com.android.quickstep.views.TaskView;
+import com.android.systemui.animation.TransitionAnimator;
+import com.android.systemui.shared.recents.model.Task;
 import com.android.systemui.shared.system.InputConsumerController;
 
 import java.util.Collections;
@@ -62,14 +65,14 @@ import java.util.List;
 /**
  * Temporary class to allow easier refactoring
  */
-public class LauncherSwipeHandlerV2 extends
-        AbsSwipeUpHandler<QuickstepLauncher, RecentsView, LauncherState> {
+public class LauncherSwipeHandlerV2 extends AbsSwipeUpHandler<
+        QuickstepLauncher, RecentsView<QuickstepLauncher, LauncherState>, LauncherState> {
 
-    public LauncherSwipeHandlerV2(Context context, RecentsAnimationDeviceState deviceState,
-            TaskAnimationManager taskAnimationManager, GestureState gestureState, long touchTimeMs,
-            boolean continuingLastGesture, InputConsumerController inputConsumer) {
-        super(context, deviceState, taskAnimationManager, gestureState, touchTimeMs,
-                continuingLastGesture, inputConsumer);
+    public LauncherSwipeHandlerV2(Context context, TaskAnimationManager taskAnimationManager,
+            GestureState gestureState, long touchTimeMs, boolean continuingLastGesture,
+            InputConsumerController inputConsumer, MSDLPlayerWrapper msdlPlayerWrapper) {
+        super(context, taskAnimationManager, gestureState, touchTimeMs,
+                continuingLastGesture, inputConsumer, msdlPlayerWrapper);
     }
 
 
@@ -103,15 +106,14 @@ public class LauncherSwipeHandlerV2 extends
         boolean canUseWorkspaceView = workspaceView != null
                 && workspaceView.isAttachedToWindow()
                 && workspaceView.getHeight() > 0
-                && (mContainer.getDesktopVisibilityController() == null
-                || !mContainer.getDesktopVisibilityController().areDesktopTasksVisible());
+                && !DesktopVisibilityController.INSTANCE.get(mContainer)
+                        .isInDesktopModeAndNotInOverview(mContainer.getDisplayId());
 
         mContainer.getRootView().setForceHideBackArrow(true);
-        if (!TaskAnimationManager.ENABLE_SHELL_TRANSITIONS) {
-            mContainer.setHintUserWillBeActive();
-        }
 
-        if (!canUseWorkspaceView || appCanEnterPip || mIsSwipeForSplit) {
+        boolean handOffAnimation = TransitionAnimator.Companion.longLivedReturnAnimationsEnabled()
+                && mHandOffAnimationToHome;
+        if (handOffAnimation || !canUseWorkspaceView || appCanEnterPip || mIsSwipeForSplit) {
             return new LauncherHomeAnimationFactory() {
 
                 @Nullable
@@ -144,8 +146,6 @@ public class LauncherSwipeHandlerV2 extends
         return new FloatingViewHomeAnimationFactory(floatingIconView) {
             @Nullable
             private RectF mTargetRect;
-            @Nullable
-            private RectFSpringAnim mSiblingAnimation;
 
             @Nullable
             @Override
@@ -169,14 +169,6 @@ public class LauncherSwipeHandlerV2 extends
                     return mTargetRect;
                 } else {
                     return iconLocation;
-                }
-            }
-
-            @Override
-            protected void playScalingRevealAnimation() {
-                if (mContainer != null) {
-                    new ScalingWorkspaceRevealAnim(mContainer, mSiblingAnimation,
-                            getWindowTargetRect()).start();
                 }
             }
 
@@ -245,6 +237,8 @@ public class LauncherSwipeHandlerV2 extends
                 isTargetTranslucent, fallbackBackgroundColor);
 
         return new FloatingViewHomeAnimationFactory(floatingWidgetView) {
+            @Nullable
+            private RectF mTargetRect;
 
             @Override
             @Nullable
@@ -254,8 +248,14 @@ public class LauncherSwipeHandlerV2 extends
 
             @Override
             public RectF getWindowTargetRect() {
-                super.getWindowTargetRect();
-                return backgroundLocation;
+                if (enableScalingRevealHomeAnimation()) {
+                    if (mTargetRect == null) {
+                        mTargetRect = new RectF(backgroundLocation);
+                    }
+                    return mTargetRect;
+                } else {
+                    return backgroundLocation;
+                }
             }
 
             @Override
@@ -266,10 +266,11 @@ public class LauncherSwipeHandlerV2 extends
             @Override
             public void setAnimation(RectFSpringAnim anim) {
                 super.setAnimation(anim);
-
-                anim.addAnimatorListener(floatingWidgetView);
-                floatingWidgetView.setOnTargetChangeListener(anim::onTargetPositionChanged);
-                floatingWidgetView.setFastFinishRunnable(anim::end);
+                mSiblingAnimation = anim;
+                mSiblingAnimation.addAnimatorListener(floatingWidgetView);
+                floatingWidgetView.setOnTargetChangeListener(
+                        mSiblingAnimation::onTargetPositionChanged);
+                floatingWidgetView.setFastFinishRunnable(mSiblingAnimation::end);
             }
 
             @Override
@@ -300,26 +301,17 @@ public class LauncherSwipeHandlerV2 extends
             // Disable if swiping to PIP
             return null;
         }
-        if (sourceTaskView == null || sourceTaskView.getFirstTask().key.getComponent() == null) {
+        Task firstTask;
+        if (sourceTaskView == null || ((firstTask = sourceTaskView.getFirstTask()) == null)
+                || firstTask.key.getComponent() == null) {
             // Disable if it's an invalid task
             return null;
         }
 
-        // Find the associated item info for the launch cookie (if available), note that predicted
-        // apps actually have an id of -1, so use another default id here
-        int launchCookieItemId = NO_MATCHING_ID;
-        for (IBinder cookie : launchCookies) {
-            Integer itemId = ObjectWrapper.unwrap(cookie);
-            if (itemId != null) {
-                launchCookieItemId = itemId;
-                break;
-            }
-        }
-
-        return mContainer.getFirstMatchForAppClose(launchCookieItemId,
+        return mContainer.getFirstHomeElementForAppClose(
+                StableViewInfo.fromLaunchCookies(launchCookies),
                 sourceTaskView.getFirstTask().key.getComponent().getPackageName(),
-                UserHandle.of(sourceTaskView.getFirstTask().key.userId),
-                false /* supportsAllAppsState */);
+                UserHandle.of(sourceTaskView.getFirstTask().key.userId));
     }
 
     @Override
@@ -330,11 +322,20 @@ public class LauncherSwipeHandlerV2 extends
     }
 
     private class FloatingViewHomeAnimationFactory extends LauncherHomeAnimationFactory {
-
         private final FloatingView mFloatingView;
+        @Nullable
+        protected RectFSpringAnim mSiblingAnimation;
 
         FloatingViewHomeAnimationFactory(FloatingView floatingView) {
             mFloatingView = floatingView;
+        }
+
+        @Override
+        protected void playScalingRevealAnimation() {
+            if (mContainer != null) {
+                new ScalingWorkspaceRevealAnim(mContainer, mSiblingAnimation,
+                        getWindowTargetRect(), true /* playAlphaReveal */).start();
+            }
         }
 
         @Override
@@ -383,7 +384,7 @@ public class LauncherSwipeHandlerV2 extends
             if (mContainer != null) {
                 new ScalingWorkspaceRevealAnim(
                         mContainer, null /* siblingAnimation */,
-                        null /* windowTargetRect */).start();
+                        null /* windowTargetRect */, true /* playAlphaReveal */).start();
             }
         }
     }

@@ -21,6 +21,7 @@ import static android.view.View.ALPHA;
 import static com.android.launcher3.BubbleTextView.TEXT_ALPHA_PROPERTY;
 import static com.android.launcher3.LauncherAnimUtils.SCALE_PROPERTY;
 import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.MAX_NUM_ITEMS_IN_PREVIEW;
+import static com.android.launcher3.folder.FolderGridOrganizer.createFolderGridOrganizer;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -34,6 +35,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.util.Property;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.CellLayout;
@@ -44,8 +46,8 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.anim.PropertyResetListener;
 import com.android.launcher3.apppairs.AppPairIcon;
 import com.android.launcher3.celllayout.CellLayoutLayoutParams;
-import com.android.launcher3.graphics.IconShape;
-import com.android.launcher3.graphics.IconShape.ShapeDelegate;
+import com.android.launcher3.graphics.ShapeDelegate;
+import com.android.launcher3.graphics.ThemeManager;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.BaseDragLayer;
 
@@ -60,6 +62,7 @@ import java.util.List;
  */
 public class FolderAnimationManager {
 
+    private static final float EXTRA_FOLDER_REVEAL_RADIUS_PERCENTAGE = 0.125F;
     private static final int FOLDER_NAME_ALPHA_DURATION = 32;
     private static final int LARGE_FOLDER_FOOTER_DURATION = 128;
 
@@ -77,9 +80,10 @@ public class FolderAnimationManager {
     private final int mDuration;
     private final int mDelay;
 
-    private final TimeInterpolator mFolderInterpolator;
-    private final TimeInterpolator mLargeFolderPreviewItemOpenInterpolator;
-    private final TimeInterpolator mLargeFolderPreviewItemCloseInterpolator;
+    private final Interpolator mFolderOpenInterpolator;
+    private final Interpolator mFolderCloseInterpolator;
+    private final Interpolator mLargeFolderPreviewItemOpenInterpolator;
+    private final Interpolator mLargeFolderPreviewItemCloseInterpolator;
 
     private final PreviewItemDrawingParams mTmpParams = new PreviewItemDrawingParams(0, 0, 0);
     private final FolderGridOrganizer mPreviewVerifier;
@@ -98,7 +102,7 @@ public class FolderAnimationManager {
 
         mContext = folder.getContext();
         mDeviceProfile = folder.mActivityContext.getDeviceProfile();
-        mPreviewVerifier = new FolderGridOrganizer(mDeviceProfile);
+        mPreviewVerifier = createFolderGridOrganizer(mDeviceProfile);
 
         mIsOpening = isOpening;
 
@@ -106,12 +110,14 @@ public class FolderAnimationManager {
         mDuration = res.getInteger(R.integer.config_materialFolderExpandDuration);
         mDelay = res.getInteger(R.integer.config_folderDelay);
 
-        mFolderInterpolator = AnimationUtils.loadInterpolator(mContext,
-                com.android.app.animation.R.interpolator.standard_interpolator);
+        mFolderOpenInterpolator = AnimationUtils.loadInterpolator(mContext,
+                R.interpolator.standard_interpolator);
+        mFolderCloseInterpolator = AnimationUtils.loadInterpolator(mContext,
+                R.interpolator.standard_interpolator);
         mLargeFolderPreviewItemOpenInterpolator = AnimationUtils.loadInterpolator(mContext,
                 R.interpolator.large_folder_preview_item_open_interpolator);
         mLargeFolderPreviewItemCloseInterpolator = AnimationUtils.loadInterpolator(mContext,
-                com.android.app.animation.R.interpolator.standard_accelerate_interpolator);
+                R.interpolator.standard_accelerate_interpolator);
     }
 
     /**
@@ -158,12 +164,9 @@ public class FolderAnimationManager {
         mFolder.mFooter.setPivotX(0);
         mFolder.mFooter.setPivotY(0);
 
-        // We want to create a small X offset for the preview items, so that they follow their
-        // expected path to their final locations. ie. an icon should not move right, if it's final
-        // location is to its left. This value is arbitrarily defined.
-        int previewItemOffsetX = (int) (previewSize / 2);
+        int previewItemOffsetX = 0;
         if (Utilities.isRtl(mContext.getResources())) {
-            previewItemOffsetX = (int) (lp.width * initialScale - initialSize - previewItemOffsetX);
+            previewItemOffsetX = (int) (lp.width * initialScale - initialSize);
         }
 
         final int paddingOffsetX = (int) (mContent.getPaddingLeft() * initialScale);
@@ -234,41 +237,32 @@ public class FolderAnimationManager {
         }
         play(a, getAnimator(mFolder.mFooter, ALPHA, 0, 1f), footerStartDelay, footerAlphaDuration);
 
-        ShapeDelegate shapeDelegate = IconShape.INSTANCE.get(mContext).getShape();
+        ShapeDelegate shapeDelegate = ThemeManager.INSTANCE.get(mContext).getFolderShape();
         // Create reveal animator for the folder background
         play(a, shapeDelegate.createRevealAnimator(
                 mFolder, startRect, endRect, finalRadius, !mIsOpening));
 
-        // Create reveal animator for the folder content (capture the top 4 icons 2x2)
-        int width = mDeviceProfile.folderCellLayoutBorderSpacePx.x
-                + mDeviceProfile.folderCellWidthPx * 2;
-        int rtlExtraWidth = 0;
-        int height = mDeviceProfile.folderCellLayoutBorderSpacePx.y
-                + mDeviceProfile.folderCellHeightPx * 2;
         int page = mIsOpening ? mContent.getCurrentPage() : mContent.getDestinationPage();
-        // In RTL we want to move to the last 2 columns of icons in the folder.
         if (Utilities.isRtl(mContext.getResources())) {
             page = (mContent.getPageCount() - 1) - page;
-            CellLayout clAtPage = mContent.getPageAt(page);
-            if (clAtPage != null) {
-                int numExtraRows = clAtPage.getCountX() - 2;
-                rtlExtraWidth = (int) Math.max(numExtraRows * (mDeviceProfile.folderCellWidthPx
-                        + mDeviceProfile.folderCellLayoutBorderSpacePx.x), rtlExtraWidth);
-            }
         }
-        int left = mContent.getPaddingLeft() + page * lp.width;
+        int left = page * lp.width;
+
+        int extraRadius = (int) ((mDeviceProfile.folderIconSizePx / initialScale)
+                * EXTRA_FOLDER_REVEAL_RADIUS_PERCENTAGE);
         Rect contentStart = new Rect(
-                left + rtlExtraWidth,
-                0,
-                left + width + mContent.getPaddingRight() + rtlExtraWidth,
-                height);
+                (int) (left + (startRect.left / initialScale)) - extraRadius,
+                (int) (startRect.top / initialScale) - extraRadius,
+                (int) (left + (startRect.right / initialScale)) + extraRadius,
+                (int) (startRect.bottom / initialScale) + extraRadius);
         Rect contentEnd = new Rect(left, 0, left + lp.width, lp.height);
+        // animated contents of folder with the folder background
         play(a, shapeDelegate.createRevealAnimator(
                 mFolder.getContent(), contentStart, contentEnd, finalRadius, !mIsOpening));
 
         // Fade in the folder name, as the text can overlap the icons when grid size is small.
-        mFolder.mFolderName.setAlpha(mIsOpening ? 0f : 1f);
-        play(a, getAnimator(mFolder.mFolderName, View.ALPHA, 0, 1),
+        mFolder.getFolderName().setAlpha(mIsOpening ? 0f : 1f);
+        play(a, getAnimator(mFolder.getFolderName(), View.ALPHA, 0, 1),
                 mIsOpening ? FOLDER_NAME_ALPHA_DURATION : 0,
                 mIsOpening ? mDuration - FOLDER_NAME_ALPHA_DURATION : FOLDER_NAME_ALPHA_DURATION);
 
@@ -329,7 +323,7 @@ public class FolderAnimationManager {
                 mFolder.mFooter.setScaleX(1f);
                 mFolder.mFooter.setScaleY(1f);
                 mFolder.mFooter.setTranslationX(0f);
-                mFolder.mFolderName.setAlpha(1f);
+                mFolder.getFolderName().setAlpha(1f);
 
                 mFolder.setClipChildren(mFolderClipChildren);
                 mFolder.setClipToPadding(mFolderClipToPadding);
@@ -343,7 +337,11 @@ public class FolderAnimationManager {
         // We set the interpolator on all current child animators here, because the preview item
         // animators may use a different interpolator.
         for (Animator animator : a.getChildAnimations()) {
-            animator.setInterpolator(mFolderInterpolator);
+            animator.setInterpolator(
+                    mIsOpening
+                    ? mFolderOpenInterpolator
+                    : mFolderCloseInterpolator
+            );
         }
 
         int radiusDiff = scaledRadius - mPreviewBackground.getRadius();
@@ -478,7 +476,7 @@ public class FolderAnimationManager {
         return mFolder.getItemCount() > MAX_NUM_ITEMS_IN_PREVIEW;
     }
 
-    private TimeInterpolator getPreviewItemInterpolator() {
+    private Interpolator getPreviewItemInterpolator() {
         if (isLargeFolder()) {
             // With larger folders, we want the preview items to reach their final positions faster
             // (when opening) and later (when closing) so that they appear aligned with the rest of
@@ -487,7 +485,7 @@ public class FolderAnimationManager {
                     ? mLargeFolderPreviewItemOpenInterpolator
                     : mLargeFolderPreviewItemCloseInterpolator;
         }
-        return mFolderInterpolator;
+        return mIsOpening ? mFolderOpenInterpolator : mFolderCloseInterpolator;
     }
 
     private Animator getAnimator(View view, Property property, float v1, float v2) {
