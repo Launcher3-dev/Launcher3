@@ -188,6 +188,7 @@ dependencies {
     implementation project(':animationlib')
     implementation project(':Shared')
     implementation project(':msdllib')
+    implementation project(':WindowManager-Shared')
 //    implementation project(':UiTestsLibLauncher')
 //    withQuickstepImplementation project(':SharedLibWrapper')
     implementation 'com.google.protobuf:protobuf-javalite:4.26.1'
