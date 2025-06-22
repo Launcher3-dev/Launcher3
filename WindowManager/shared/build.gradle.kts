@@ -34,3 +34,4 @@ dependencies {
     implementation("androidx.annotation:annotation:1.7.0")
     implementation("androidx.dynamicanimation:dynamicanimation-ktx:1.1.0")
 }
+
