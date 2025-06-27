@@ -18,7 +18,6 @@ package com.android.wm.shell.shared
 
 import android.graphics.Typeface
 import android.widget.TextView
-import com.android.wm.shell.Flags
 
 /**
  * Utility class to apply a specified typeface to a [TextView].

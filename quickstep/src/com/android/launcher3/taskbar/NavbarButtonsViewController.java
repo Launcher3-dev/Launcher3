@@ -51,6 +51,7 @@ import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_S
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_SHORTCUT_HELPER_SHOWING;
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_VOICE_INTERACTION_WINDOW_SHOWING;
 import static com.android.window.flags.Flags.predictiveBackThreeButtonNav;
+import static com.android.window.flags2.Flags.predictiveBackThreeButtonNav;
 
 import android.animation.Animator;
 import android.animation.ArgbEvaluator;

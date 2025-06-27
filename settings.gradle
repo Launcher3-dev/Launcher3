@@ -1,14 +1,46 @@
 include ':IconLoader'
 project(':IconLoader').projectDir = new File(rootDir, 'iconloaderlib')
+
 include ':Shared'
 project(':Shared').projectDir = new File(rootDir, 'shared')
+
 include ':msdllib'
 project(':msdllib').projectDir = new File(rootDir, 'msdllib')
+
 include ':WindowManager-Shared'
 project(':WindowManager-Shared').projectDir = new File(rootDir, 'WindowManager/shared')
+
+include ':wmshell'
+project(':wmshell').projectDir = new File(rootDir, 'wmshell')
+
+include ':systemuishared'
+project(':systemuishared').projectDir = new File(rootDir, 'systemUI/shared')
+
+include ':plugin'
+project(':plugin').projectDir = new File(rootDir, 'systemUI/plugin')
+
+include ':plugincore'
+project(':plugincore').projectDir = new File(rootDir, 'systemUI/plugin_core')
+
+include ':common'
+project(':common').projectDir = new File(rootDir, 'systemUI/common')
+
+include ':log'
+project(':log').projectDir = new File(rootDir, 'systemUI/log')
+
+include ':anim'
+project(':anim').projectDir = new File(rootDir, 'systemUI/animation')
+
+include ':unfold'
+project(':unfold').projectDir = new File(rootDir, 'systemUI/unfold')
+
+include ':viewcapture'
+project(':viewcapture').projectDir = new File(rootDir, 'systemUI/viewcapture')
 
 //include ':SharedLibWrapper'
 //project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')
 
 include ':systemUIPluginCore'
 include ':animationlib'
+include ':flags'
+include ':androidx-lib'

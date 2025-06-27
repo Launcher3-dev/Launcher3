@@ -29,7 +29,6 @@ import com.android.launcher3.taskbar.TaskbarActivityContext
 import com.android.launcher3.taskbar.TaskbarViewCallbacks
 import com.android.launcher3.views.ActivityContext
 import com.android.launcher3.views.IconButtonView
-import com.android.wm.shell.Flags
 
 /** Taskbar divider view container for customizable taskbar. */
 class TaskbarDividerContainer

@@ -45,7 +45,6 @@ import com.android.quickstep.util.ActiveGestureProtoLogProxy
 import com.android.quickstep.views.RecentsViewContainer
 import com.android.systemui.shared.system.InputChannelCompat
 import com.android.systemui.shared.system.InputMonitorCompat
-import com.android.wm.shell.Flags
 import java.util.function.Consumer
 import java.util.function.Function
 
