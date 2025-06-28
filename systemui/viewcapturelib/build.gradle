@@ -6,6 +6,15 @@ plugins {
 android {
     namespace = "com.android.app.viewcapture"
     testNamespace = "com.android.app.viewcapture.test"
+
+    compileSdk 36
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 36
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -7,9 +7,6 @@ project(':Shared').projectDir = new File(rootDir, 'shared')
 include ':msdllib'
 project(':msdllib').projectDir = new File(rootDir, 'msdllib')
 
-include ':WindowManager-Shared'
-project(':WindowManager-Shared').projectDir = new File(rootDir, 'WindowManager/shared')
-
 include ':wmshell'
 project(':wmshell').projectDir = new File(rootDir, 'wmshell')
 

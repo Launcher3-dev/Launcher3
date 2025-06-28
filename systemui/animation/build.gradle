@@ -10,6 +10,17 @@ android {
 //        }
 //    }
 
+    namespace = "com.android.systemui.animation"
+
+    compileSdk 36
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 36
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+
     buildFeatures {
         aidl true
     }

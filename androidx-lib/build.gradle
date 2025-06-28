@@ -5,6 +5,16 @@ plugins {
 
 android {
     namespace "androidx.dynamicanimation.animation"
+
+    compileSdk 36
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 36
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+
     sourceSets {
         main {
             java.srcDirs = ['src']
