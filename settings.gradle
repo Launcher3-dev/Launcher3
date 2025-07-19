@@ -34,10 +34,12 @@ project(':unfold').projectDir = new File(rootDir, 'systemUI/unfold')
 include ':viewcapture'
 project(':viewcapture').projectDir = new File(rootDir, 'systemUI/viewcapture')
 
+include ':animationlib'
+project(':animationlib').projectDir = new File(rootDir, 'animationlib')
+
 //include ':SharedLibWrapper'
 //project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')
 
 include ':systemUIPluginCore'
-include ':animationlib'
 include ':flags'
 include ':androidx-lib'

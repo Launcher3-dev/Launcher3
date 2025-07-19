@@ -40,6 +40,7 @@ dependencies {
     compileOnly project(':plugin')
     compileOnly project(':plugincore')
     compileOnly project(':flags')
+    compileOnly project(':animationlib')
 //    compileOnly projects.hiddenApi
 
     implementation "com.google.dagger:hilt-android:$daggerVersion"
