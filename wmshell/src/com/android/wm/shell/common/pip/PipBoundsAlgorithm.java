@@ -24,10 +24,11 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
+import android.util.Rational;
 import android.util.Size;
 import android.view.Gravity;
 
-import com.android.internal.protolog.common.ProtoLog;
+import com.android.internal.protolog.ProtoLog;
 import com.android.wm.shell.R;
 import com.android.wm.shell.protolog.ShellProtoLogGroup;
 
@@ -40,9 +41,6 @@ public class PipBoundsAlgorithm {
 
     private static final String TAG = PipBoundsAlgorithm.class.getSimpleName();
     private static final float INVALID_SNAP_FRACTION = -1f;
-
-    // The same value (with the same name) is used in Launcher.
-    private static final float PIP_ASPECT_RATIO_MISMATCH_THRESHOLD = 0.01f;
 
     @NonNull private final PipBoundsState mPipBoundsState;
     @NonNull protected final PipDisplayLayoutState mPipDisplayLayoutState;
@@ -223,9 +221,11 @@ public class PipBoundsAlgorithm {
                             + " than destination(%s)", sourceRectHint, destinationBounds);
             return false;
         }
-        final float reportedRatio = destinationBounds.width() / (float) destinationBounds.height();
-        final float inferredRatio = sourceRectHint.width() / (float) sourceRectHint.height();
-        if (Math.abs(reportedRatio - inferredRatio) > PIP_ASPECT_RATIO_MISMATCH_THRESHOLD) {
+        // We use the aspect ratio of source rect hint to check against destination bounds
+        // here to avoid upscaling error.
+        final Rational srcAspectRatio = new Rational(
+                sourceRectHint.width(), sourceRectHint.height());
+        if (!PictureInPictureParams.isSameAspectRatio(destinationBounds, srcAspectRatio)) {
             ProtoLog.d(ShellProtoLogGroup.WM_SHELL_PICTURE_IN_PICTURE,
                     "isSourceRectHintValidForEnterPip=false, hint(%s) does not match"
                             + " destination(%s) aspect ratio", sourceRectHint, destinationBounds);

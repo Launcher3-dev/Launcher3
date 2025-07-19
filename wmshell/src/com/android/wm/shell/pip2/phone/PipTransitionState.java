@@ -17,6 +17,7 @@
 package com.android.wm.shell.pip2.phone;
 
 import android.annotation.IntDef;
+import android.app.TaskInfo;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,10 +26,15 @@ import android.window.WindowContainerToken;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
+import com.android.internal.protolog.ProtoLog;
 import com.android.internal.util.Preconditions;
+import com.android.wm.shell.common.pip.PipDesktopState;
+import com.android.wm.shell.protolog.ShellProtoLogGroup;
 import com.android.wm.shell.shared.annotations.ShellMainThread;
 
+import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -62,6 +68,8 @@ import java.util.List;
  * and throw an <code>IllegalStateException</code> otherwise.</p>
  */
 public class PipTransitionState {
+    private static final String TAG = PipTransitionState.class.getSimpleName();
+
     public static final int UNDEFINED = 0;
 
     // State for Launcher animating the swipe PiP to home animation.
@@ -117,6 +125,8 @@ public class PipTransitionState {
     @ShellMainThread
     private final Handler mMainHandler;
 
+    private final PipDesktopState mPipDesktopState;
+
     //
     // Swipe up to enter PiP related state
     //
@@ -130,21 +140,29 @@ public class PipTransitionState {
     private final Rect mSwipePipToHomeAppBounds = new Rect();
 
     //
-    // Tokens and leashes
+    // Task related caches
     //
-
-    // pinned PiP task's WC token
-    @Nullable
-    WindowContainerToken mPipTaskToken;
 
     // pinned PiP task's leash
     @Nullable
-    SurfaceControl mPinnedTaskLeash;
+    private SurfaceControl mPinnedTaskLeash;
+
+    // pinned PiP task info
+    @Nullable
+    private TaskInfo mPipTaskInfo;
 
     // Overlay leash potentially used during swipe PiP to home transition;
     // if null while mInSwipePipToHomeTransition is true, then srcRectHint was invalid.
     @Nullable
     private SurfaceControl mSwipePipToHomeOverlay;
+
+    //
+    // Scheduling-related state
+    //
+    @Nullable
+    private Runnable mOnIdlePipTransitionStateRunnable;
+
+    private boolean mInFixedRotation = false;
 
     /**
      * An interface to track state updates as we progress through PiP transitions.
@@ -158,8 +176,9 @@ public class PipTransitionState {
 
     private final List<PipTransitionStateChangedListener> mCallbacks = new ArrayList<>();
 
-    public PipTransitionState(@ShellMainThread Handler handler) {
+    public PipTransitionState(@ShellMainThread Handler handler, PipDesktopState pipDesktopState) {
         mMainHandler = handler;
+        mPipDesktopState = pipDesktopState;
     }
 
     /**
@@ -189,10 +208,20 @@ public class PipTransitionState {
             Preconditions.checkArgument(extra != null && !extra.isEmpty(),
                     "No extra bundle for " + stateToString(state) + " state.");
         }
-        if (mState != state) {
-            dispatchPipTransitionStateChanged(mState, state, extra);
-            mState = state;
+        if (!shouldTransitionToState(state)) {
+            ProtoLog.v(ShellProtoLogGroup.WM_SHELL_PICTURE_IN_PICTURE,
+                    "%s: Attempted to transition to an invalid state=%s, while in %s",
+                    TAG, stateToString(state), this);
+            return;
         }
+
+        if (mState != state) {
+            final int prevState = mState;
+            mState = state;
+            dispatchPipTransitionStateChanged(prevState, mState, extra);
+        }
+
+        maybeRunOnIdlePipTransitionStateCallback();
     }
 
     /**
@@ -224,6 +253,29 @@ public class PipTransitionState {
     private void dispatchPipTransitionStateChanged(@TransitionState int oldState,
             @TransitionState int newState, @Nullable Bundle extra) {
         mCallbacks.forEach(l -> l.onPipTransitionStateChanged(oldState, newState, extra));
+    }
+
+    /**
+     * Schedule a callback to run when in a valid idle PiP state.
+     *
+     * <p>We only allow for one callback to be scheduled to avoid cases with multiple transitions
+     * being scheduled. For instance, if user double taps and IME shows, this would
+     * schedule a bounds change transition for IME appearing. But if some other transition would
+     * want to animate PiP before the scheduled callback executes, we would rather want to replace
+     * the existing callback with a new one, to avoid multiple animations
+     * as soon as we are idle.</p>
+     */
+    public void setOnIdlePipTransitionStateRunnable(
+            @Nullable Runnable onIdlePipTransitionStateRunnable) {
+        mOnIdlePipTransitionStateRunnable = onIdlePipTransitionStateRunnable;
+        maybeRunOnIdlePipTransitionStateCallback();
+    }
+
+    private void maybeRunOnIdlePipTransitionStateCallback() {
+        if (mOnIdlePipTransitionStateRunnable != null && isPipStateIdle()) {
+            mMainHandler.post(mOnIdlePipTransitionStateRunnable);
+            mOnIdlePipTransitionStateRunnable = null;
+        }
     }
 
     /**
@@ -267,6 +319,44 @@ public class PipTransitionState {
         mSwipePipToHomeAppBounds.setEmpty();
     }
 
+    @Nullable
+    public WindowContainerToken getPipTaskToken() {
+        return mPipTaskInfo != null ? mPipTaskInfo.getToken() : null;
+    }
+
+    @Nullable SurfaceControl getPinnedTaskLeash() {
+        return mPinnedTaskLeash;
+    }
+
+    void setPinnedTaskLeash(@Nullable SurfaceControl leash) {
+        mPinnedTaskLeash = leash;
+    }
+
+    @Nullable TaskInfo getPipTaskInfo() {
+        return mPipTaskInfo;
+    }
+
+    void setPipTaskInfo(@Nullable TaskInfo pipTaskInfo) {
+        mPipTaskInfo = pipTaskInfo;
+    }
+
+    /**
+     * @return true if either in swipe or button-nav fixed rotation.
+     */
+    public boolean isInFixedRotation() {
+        return mInFixedRotation;
+    }
+
+    /**
+     * Sets the fixed rotation flag.
+     */
+    public void setInFixedRotation(boolean inFixedRotation) {
+        mInFixedRotation = inFixedRotation;
+        if (!inFixedRotation) {
+            maybeRunOnIdlePipTransitionStateCallback();
+        }
+    }
+
     /**
      * @return true if in swipe PiP to home. Note that this is true until overlay fades if used too.
      */
@@ -299,6 +389,21 @@ public class PipTransitionState {
         return ++mPrevCustomState;
     }
 
+    @VisibleForTesting
+    boolean shouldTransitionToState(@TransitionState int newState) {
+        switch (newState) {
+            case SCHEDULED_BOUNDS_CHANGE:
+                // Allow scheduling bounds change only when both of these are true:
+                // - while in PiP, except for if another bounds change was scheduled but hasn't
+                //   started playing yet
+                // - there is no drag-to-desktop gesture in progress; otherwise the PiP resize
+                //   transition will block the drag-to-desktop transitions from finishing
+                return isInPip() && !mPipDesktopState.isDragToDesktopInProgress();
+            default:
+                return true;
+        }
+    }
+
     private static String stateToString(int state) {
         switch (state) {
             case UNDEFINED: return "undefined";
@@ -314,9 +419,21 @@ public class PipTransitionState {
         throw new IllegalStateException("Unknown state: " + state);
     }
 
+    public boolean isPipStateIdle() {
+        // This needs to be a valid in-PiP state that isn't a transient state.
+        return (mState == ENTERED_PIP || mState == CHANGED_PIP_BOUNDS) && !isInFixedRotation();
+    }
+
     @Override
     public String toString() {
         return String.format("PipTransitionState(mState=%s, mInSwipePipToHomeTransition=%b)",
                 stateToString(mState), mInSwipePipToHomeTransition);
+    }
+
+    /** Dumps internal state. */
+    public void dump(PrintWriter pw, String prefix) {
+        final String innerPrefix = prefix + "  ";
+        pw.println(prefix + TAG);
+        pw.println(innerPrefix + "mState=" + stateToString(mState));
     }
 }

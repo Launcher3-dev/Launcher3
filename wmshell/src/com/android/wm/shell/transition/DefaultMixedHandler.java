@@ -39,10 +39,10 @@ import android.window.TransitionRequestInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
-import com.android.internal.protolog.common.ProtoLog;
+import com.android.internal.protolog.ProtoLog;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.activityembedding.ActivityEmbeddingController;
-import com.android.wm.shell.common.split.SplitScreenUtils;
+import com.android.wm.shell.common.ComponentUtils;
 import com.android.wm.shell.desktopmode.DesktopTasksController;
 import com.android.wm.shell.keyguard.KeyguardTransitionHandler;
 import com.android.wm.shell.pip.PipTransitionController;
@@ -83,8 +83,11 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
         /** Both the display and split-state (enter/exit) is changing */
         static final int TYPE_DISPLAY_AND_SPLIT_CHANGE = 2;
 
-        /** Pip was entered while handling an intent with its own remoteTransition. */
-        static final int TYPE_OPTIONS_REMOTE_AND_PIP_CHANGE = 3;
+        /**
+         * While handling an intent with its own remoteTransition, a PIP enter or Desktop immersive
+         * exit change is found.
+         */
+        static final int TYPE_OPTIONS_REMOTE_AND_PIP_OR_DESKTOP_CHANGE = 3;
 
         /** Recents transition while split-screen foreground. */
         static final int TYPE_RECENTS_DURING_SPLIT = 4;
@@ -109,6 +112,9 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
 
         /** The display changes when pip is entering. */
         static final int TYPE_ENTER_PIP_WITH_DISPLAY_CHANGE = 11;
+
+        /** Open transition during a desktop session. */
+        static final int TYPE_OPEN_IN_DESKTOP = 12;
 
         /** The default animation for this mixed transition. */
         static final int ANIM_TYPE_DEFAULT = 0;
@@ -169,7 +175,9 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
 
         abstract void mergeAnimation(
                 @NonNull IBinder transition, @NonNull TransitionInfo info,
-                @NonNull SurfaceControl.Transaction t, @NonNull IBinder mergeTarget,
+                @NonNull SurfaceControl.Transaction startT,
+                @NonNull SurfaceControl.Transaction finishT,
+                @NonNull IBinder mergeTarget,
                 @NonNull Transitions.TransitionFinishCallback finishCallback);
 
         abstract void onTransitionConsumed(
@@ -280,6 +288,7 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
                     MixedTransition.TYPE_ENTER_PIP_FROM_ACTIVITY_EMBEDDING, transition));
             // Postpone transition splitting to later.
             WindowContainerTransaction out = new WindowContainerTransaction();
+            mPipHandler.augmentRequest(transition, request, out);
             return out;
         } else if (request.getRemoteTransition() != null
                 && TransitionUtil.isOpeningType(request.getType())
@@ -296,7 +305,7 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
                 return null;
             }
             final MixedTransition mixed = createDefaultMixedTransition(
-                    MixedTransition.TYPE_OPTIONS_REMOTE_AND_PIP_CHANGE, transition);
+                    MixedTransition.TYPE_OPTIONS_REMOTE_AND_PIP_OR_DESKTOP_CHANGE, transition);
             mixed.mLeftoversHandler = handler.first;
             mActiveTransitions.add(mixed);
             if (mixed.mLeftoversHandler != mPlayer.getRemoteTransitionHandler()) {
@@ -334,6 +343,20 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
                         MixedTransition.TYPE_UNFOLD, transition));
             }
             return wct;
+        } else if (mDesktopTasksController != null
+                && mDesktopTasksController.shouldPlayDesktopAnimation(request)) {
+            final Pair<Transitions.TransitionHandler, WindowContainerTransaction> handler =
+                    mPlayer.dispatchRequest(transition, request, /* skip= */ this);
+            if (handler == null) {
+                return null;
+            }
+            ProtoLog.v(ShellProtoLogGroup.WM_SHELL_TRANSITIONS, " Got a desktop request, so"
+                    + " treat it as Mixed. handler=%s", handler.first);
+            final MixedTransition mixed = createDefaultMixedTransition(
+                    MixedTransition.TYPE_OPEN_IN_DESKTOP, transition);
+            mixed.mLeftoversHandler = handler.first;
+            mActiveTransitions.add(mixed);
+            return handler.second;
         }
         return null;
     }
@@ -341,23 +364,42 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
     private DefaultMixedTransition createDefaultMixedTransition(int type, IBinder transition) {
         return new DefaultMixedTransition(
                 type, transition, mPlayer, this, mPipHandler, mSplitHandler, mKeyguardHandler,
-                mUnfoldHandler, mActivityEmbeddingController);
+                mUnfoldHandler, mActivityEmbeddingController, mDesktopTasksController);
     }
 
     @Override
-    public Consumer<IBinder> handleRecentsRequest(WindowContainerTransaction outWCT) {
+    public Consumer<IBinder> handleRecentsRequest() {
         if (mRecentsHandler != null) {
             if (mSplitHandler.isSplitScreenVisible()) {
                 return this::setRecentsTransitionDuringSplit;
-            } else if (mKeyguardHandler.isKeyguardShowing()) {
+            } else if (mKeyguardHandler.isKeyguardShowing()
+                    && !mKeyguardHandler.isKeyguardAnimating()) {
                 return this::setRecentsTransitionDuringKeyguard;
             } else if (mDesktopTasksController != null
                     // Check on the default display. Recents/gesture nav is only available there
-                    && mDesktopTasksController.getVisibleTaskCount(DEFAULT_DISPLAY) > 0) {
+                    && mDesktopTasksController.isAnyDeskActive(DEFAULT_DISPLAY)) {
                 return this::setRecentsTransitionDuringDesktop;
             }
         }
         return null;
+    }
+
+    @Override
+    public void handleFinishRecents(boolean returnToApp,
+            @NonNull WindowContainerTransaction finishWct,
+            @NonNull SurfaceControl.Transaction finishT) {
+        if (mRecentsHandler != null) {
+            for (int i = mActiveTransitions.size() - 1; i >= 0; --i) {
+                final MixedTransition mixed = mActiveTransitions.get(i);
+                if (mixed.mType == MixedTransition.TYPE_RECENTS_DURING_SPLIT) {
+                    ((RecentsMixedTransition) mixed).onAnimateRecentsDuringSplitFinishing(
+                            returnToApp, finishWct, finishT);
+                } else if (mixed.mType == MixedTransition.TYPE_RECENTS_DURING_DESKTOP) {
+                    ((RecentsMixedTransition) mixed).onAnimateRecentsDuringDesktopFinishing(
+                            returnToApp, finishWct);
+                }
+            }
+        }
     }
 
     private void setRecentsTransitionDuringSplit(IBinder transition) {
@@ -399,7 +441,6 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
         for (int i = 0; i < info.getRootCount(); ++i) {
             out.addRoot(info.getRoot(i));
         }
-        out.setAnimationOptions(info.getAnimationOptions());
         return out;
     }
 
@@ -620,7 +661,7 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
         // task enter split.
         if (mPipHandler != null) {
             return mPipHandler
-                    .isPackageActiveInPip(SplitScreenUtils.getPackageName(intent.getIntent()));
+                    .isPackageActiveInPip(ComponentUtils.getPackageName(intent.getIntent()));
         }
         return false;
     }
@@ -632,7 +673,7 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
         // task enter split.
         if (mPipHandler != null) {
             return mPipHandler.isPackageActiveInPip(
-                    SplitScreenUtils.getPackageName(taskId, shellTaskOrganizer));
+                    ComponentUtils.getPackageName(taskId, shellTaskOrganizer));
         }
         return false;
     }
@@ -651,7 +692,9 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
 
     @Override
     public void mergeAnimation(@NonNull IBinder transition, @NonNull TransitionInfo info,
-            @NonNull SurfaceControl.Transaction t, @NonNull IBinder mergeTarget,
+            @NonNull SurfaceControl.Transaction startT,
+            @NonNull SurfaceControl.Transaction finishT,
+            @NonNull IBinder mergeTarget,
             @NonNull Transitions.TransitionFinishCallback finishCallback) {
         for (int i = 0; i < mActiveTransitions.size(); ++i) {
             if (mActiveTransitions.get(i).mTransition != mergeTarget) continue;
@@ -661,7 +704,7 @@ public class DefaultMixedHandler implements MixedTransitionHandler,
                 // Already done, so no need to end it.
                 return;
             }
-            mixed.mergeAnimation(transition, info, t, mergeTarget, finishCallback);
+            mixed.mergeAnimation(transition, info, startT, finishT, mergeTarget, finishCallback);
         }
     }
 

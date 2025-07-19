@@ -19,7 +19,6 @@ package com.android.wm.shell.bubbles
 import android.app.ActivityTaskManager.INVALID_TASK_ID
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Path
 import android.graphics.drawable.AdaptiveIconDrawable
@@ -73,14 +72,17 @@ class BubbleOverflow(private val context: Context, private val positioner: Bubbl
 
     fun initializeForBubbleBar(
         expandedViewManager: BubbleExpandedViewManager,
-        positioner: BubblePositioner
+        positioner: BubblePositioner,
     ) {
         createBubbleBarExpandedView()
             .initialize(
                 expandedViewManager,
                 positioner,
                 /* isOverflow= */ true,
-                /* bubbleTaskView= */ null
+                /* bubbleTaskView= */ null,
+                /* mainExecutor= */ null,
+                /* backgroundExecutor= */ null,
+                /* regionSamplingProvider= */ null,
             )
     }
 
@@ -112,18 +114,8 @@ class BubbleOverflow(private val context: Context, private val positioner: Bubbl
         val res = context.resources
 
         // Set overflow button accent color, dot color
-
-        val typedArray =
-            context.obtainStyledAttributes(
-                intArrayOf(
-                    com.android.internal.R.attr.materialColorPrimaryFixed,
-                    com.android.internal.R.attr.materialColorOnPrimaryFixed
-                )
-            )
-
-        val colorAccent = typedArray.getColor(0, Color.WHITE)
-        val shapeColor = typedArray.getColor(1, Color.BLACK)
-        typedArray.recycle()
+        val colorAccent = context.getColor(com.android.internal.R.color.materialColorPrimaryFixed)
+        val shapeColor = context.getColor(com.android.internal.R.color.materialColorOnPrimaryFixed)
 
         dotColor = colorAccent
         overflowBtn?.iconDrawable?.setTint(shapeColor)
@@ -142,23 +134,16 @@ class BubbleOverflow(private val context: Context, private val positioner: Bubbl
 
         // Update bitmap
         val fg = InsetDrawable(overflowBtn?.iconDrawable, overflowIconInset)
-        bitmap =
-            iconFactory
-                .createBadgedIconBitmap(AdaptiveIconDrawable(ColorDrawable(colorAccent), fg))
-                .icon
+        val drawable = AdaptiveIconDrawable(ColorDrawable(colorAccent), fg)
+        val bubbleBitmapScale = FloatArray(1)
+        bitmap = iconFactory.getBubbleBitmap(drawable, bubbleBitmapScale)
 
         // Update dot path
         dotPath =
             PathParser.createPathFromPathData(
                 res.getString(com.android.internal.R.string.config_icon_mask)
             )
-        val scale =
-            iconFactory.normalizer.getScale(
-                iconView!!.iconDrawable,
-                null /* outBounds */,
-                null /* path */,
-                null /* outMaskShape */
-            )
+        val scale = bubbleBitmapScale[0]
         val radius = BadgedImageView.DEFAULT_PATH_SIZE / 2f
         val matrix = Matrix()
         matrix.setScale(

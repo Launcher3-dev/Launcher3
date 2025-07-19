@@ -23,6 +23,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import android.app.NotificationChannel;
 import android.content.Intent;
+import android.content.pm.ShortcutInfo;
 import android.content.pm.UserInfo;
 import android.graphics.drawable.Icon;
 import android.hardware.HardwareBuffer;
@@ -35,11 +36,12 @@ import android.window.ScreenCapture.ScreenshotHardwareBuffer;
 import android.window.ScreenCapture.SynchronousScreenCaptureListener;
 
 import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.wm.shell.common.bubbles.BubbleBarLocation;
-import com.android.wm.shell.common.bubbles.BubbleBarUpdate;
 import com.android.wm.shell.shared.annotations.ExternalThread;
+import com.android.wm.shell.shared.bubbles.BubbleBarLocation;
+import com.android.wm.shell.shared.bubbles.BubbleBarUpdate;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -62,7 +64,7 @@ public interface Bubbles {
             DISMISS_USER_CHANGED, DISMISS_GROUP_CANCELLED, DISMISS_INVALID_INTENT,
             DISMISS_OVERFLOW_MAX_REACHED, DISMISS_SHORTCUT_REMOVED, DISMISS_PACKAGE_REMOVED,
             DISMISS_NO_BUBBLE_UP, DISMISS_RELOAD_FROM_DISK, DISMISS_USER_ACCOUNT_REMOVED,
-            DISMISS_SWITCH_TO_STACK})
+            DISMISS_SWITCH_TO_STACK, DISMISS_USER_GESTURE_FROM_LAUNCHER})
     @Target({FIELD, LOCAL_VARIABLE, PARAMETER})
     @interface DismissReason {
     }
@@ -84,6 +86,7 @@ public interface Bubbles {
     int DISMISS_RELOAD_FROM_DISK = 15;
     int DISMISS_USER_ACCOUNT_REMOVED = 16;
     int DISMISS_SWITCH_TO_STACK = 17;
+    int DISMISS_USER_GESTURE_FROM_LAUNCHER = 18;
 
     /** Returns a binder that can be passed to an external process to manipulate Bubbles. */
     default IBubbles createExternalInterface() {
@@ -117,6 +120,14 @@ public interface Bubbles {
 
     /**
      * Request the stack expand if needed, then select the specified Bubble as current.
+     * If no bubble exists for this entry, one is created.
+     *
+     * @param info the shortcut info to use to create the bubble.
+     */
+    void expandStackAndSelectBubble(ShortcutInfo info);
+
+    /**
+     * Request the stack expand if needed, then select the specified Bubble as current.
      *
      * @param bubble the bubble to be selected
      */
@@ -124,33 +135,31 @@ public interface Bubbles {
 
     /**
      * This method has different behavior depending on:
-     * - if an app bubble exists
-     * - if an app bubble is expanded
+     *    - if a notes bubble exists
+     *    - if a notes bubble is expanded
      *
-     * If no app bubble exists, this will add and expand a bubble with the provided intent. The
+     * If no notes bubble exists, this will add and expand a bubble with the provided intent. The
      * intent must be explicit (i.e. include a package name or fully qualified component class name)
      * and the activity for it should be resizable.
      *
-     * If an app bubble exists, this will toggle the visibility of it, i.e. if the app bubble is
-     * expanded, calling this method will collapse it. If the app bubble is not expanded, calling
+     * If a notes bubble exists, this will toggle the visibility of it, i.e. if the notes bubble is
+     * expanded, calling this method will collapse it. If the notes bubble is not expanded, calling
      * this method will expand it.
      *
      * These bubbles are <b>not</b> backed by a notification and remain until the user dismisses
      * the bubble or bubble stack.
      *
-     * Some notes:
-     * - Only one app bubble is supported at a time, regardless of users. Multi-users support is
-     * tracked in b/273533235.
-     * - Calling this method with a different intent than the existing app bubble will do nothing
+     * Some details:
+     *    - Calling this method with a different intent than the existing bubble will do nothing
      *
      * @param intent the intent to display in the bubble expanded view.
-     * @param user   the {@link UserHandle} of the user to start this activity for.
-     * @param icon   the {@link Icon} to use for the bubble view.
+     * @param user the {@link UserHandle} of the user to start this activity for.
+     * @param icon the {@link Icon} to use for the bubble view.
      */
-    void showOrHideAppBubble(Intent intent, UserHandle user, @Nullable Icon icon);
+    void showOrHideNoteBubble(Intent intent, UserHandle user, @Nullable Icon icon);
 
     /** @return true if the specified {@code taskId} corresponds to app bubble's taskId. */
-    boolean isAppBubbleTaskId(int taskId);
+    boolean isNoteBubbleTaskId(int taskId);
 
     /**
 `    * @return a {@link SynchronousScreenCaptureListener} after performing a screenshot that may
@@ -205,7 +214,8 @@ public interface Bubbles {
      *
      * @param entry          the {@link BubbleEntry} by the notification.
      * @param shouldBubbleUp {@code true} if this notification should bubble up.
-     * @param fromSystem     {@code true} if this update is from NotificationManagerService.
+     * @param fromSystem     {@code true} if this update is from NotificationManagerService or App,
+     *                                   false means this update is from SystemUi
      */
     void onEntryUpdated(BubbleEntry entry, boolean shouldBubbleUp, boolean fromSystem);
 
@@ -320,6 +330,18 @@ public interface Bubbles {
          * Does not result in a state change.
          */
         void animateBubbleBarLocation(BubbleBarLocation location);
+
+        /**
+         * Called when an application icon is being dragged over the Bubble Bar drop zone.
+         * The location of the Bubble Bar is provided as an argument.
+         */
+        void onDragItemOverBubbleBarDragZone(@NonNull BubbleBarLocation location);
+
+        /**
+         * Called when an application icon is being dragged outside the Bubble Bar drop zone.
+         * Always called after {@link #onDragItemOverBubbleBarDragZone(BubbleBarLocation)}
+         */
+        void onItemDraggedOutsideBubbleBarDropZone();
     }
 
     /** Listener to find out about stack expansion / collapse events. */

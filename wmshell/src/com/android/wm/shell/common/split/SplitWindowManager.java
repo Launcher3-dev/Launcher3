@@ -19,7 +19,6 @@ package com.android.wm.shell.common.split;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 import static android.view.WindowManager.LayoutParams.FLAG_SLIPPERY;
-import static android.view.WindowManager.LayoutParams.FLAG_SPLIT_TOUCH;
 import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_NO_MOVE_ANIMATION;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
@@ -36,8 +35,6 @@ import android.view.InsetsState;
 import android.view.LayoutInflater;
 import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost;
-import android.view.SurfaceSession;
-import android.view.View;
 import android.view.WindowManager;
 import android.view.WindowlessWindowManager;
 
@@ -69,6 +66,8 @@ public final class SplitWindowManager extends WindowlessWindowManager {
     public interface ParentContainerCallbacks {
         void attachToParentSurface(SurfaceControl.Builder b);
         void onLeashReady(SurfaceControl leash);
+        /** Inflates the given touch zone on the appropriate stage root. */
+        void inflateOnStageRoot(OffscreenTouchZone touchZone);
     }
 
     public SplitWindowManager(String windowName, Context context, Configuration config,
@@ -99,7 +98,7 @@ public final class SplitWindowManager extends WindowlessWindowManager {
     @Override
     protected SurfaceControl getParentSurface(IWindow window, WindowManager.LayoutParams attrs) {
         // Can't set position for the ViewRootImpl SC directly. Create a leash to manipulate later.
-        final SurfaceControl.Builder builder = new SurfaceControl.Builder(new SurfaceSession())
+        final SurfaceControl.Builder builder = new SurfaceControl.Builder()
                 .setContainerLayer()
                 .setName(TAG)
                 .setHidden(true)
@@ -126,7 +125,7 @@ public final class SplitWindowManager extends WindowlessWindowManager {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 dividerBounds.width(), dividerBounds.height(), TYPE_DOCK_DIVIDER,
                 FLAG_NOT_FOCUSABLE | FLAG_NOT_TOUCH_MODAL | FLAG_WATCH_OUTSIDE_TOUCH
-                        | FLAG_SPLIT_TOUCH | FLAG_SLIPPERY,
+                        | FLAG_SLIPPERY,
                 PixelFormat.TRANSLUCENT);
         lp.token = new Binder();
         lp.setTitle(mWindowName);
@@ -192,7 +191,7 @@ public final class SplitWindowManager extends WindowlessWindowManager {
         mDividerView.setInteractive(interactive, hideHandle, from);
     }
 
-    View getDividerView() {
+    DividerView getDividerView() {
         return mDividerView;
     }
 

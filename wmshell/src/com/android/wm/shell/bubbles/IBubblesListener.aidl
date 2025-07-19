@@ -17,7 +17,7 @@
 package com.android.wm.shell.bubbles;
 
 import android.os.Bundle;
-import com.android.wm.shell.common.bubbles.BubbleBarLocation;
+import com.android.wm.shell.shared.bubbles.BubbleBarLocation;
 /**
  * Listener interface that Launcher attaches to SystemUI to get bubbles callbacks.
  */
@@ -33,4 +33,16 @@ oneway interface IBubblesListener {
      * Does not result in a state change.
      */
     void animateBubbleBarLocation(in BubbleBarLocation location);
+
+    /**
+     * Called when an application icon is being dragged over the Bubble Bar drop zone.
+     * The location of the Bubble Bar is provided as an argument.
+     */
+    void onDragItemOverBubbleBarDragZone(in BubbleBarLocation location);
+
+    /**
+     * Called when an application icon is being dragged outside the Bubble Bar drop zone.
+     * Always called after {@link #onDragItemOverBubbleBarDragZone(BubbleBarLocation)}
+     */
+    void onItemDraggedOutsideBubbleBarDropZone();
 }

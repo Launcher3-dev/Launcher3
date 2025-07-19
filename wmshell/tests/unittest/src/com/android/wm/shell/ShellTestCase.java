@@ -17,25 +17,41 @@
 package com.android.wm.shell;
 
 import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.platform.test.flag.junit.SetFlagsRule;
 import android.testing.TestableContext;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.internal.protolog.common.ProtoLog;
+import com.android.internal.protolog.ProtoLog;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.mockito.MockitoAnnotations;
 
 /**
  * Base class that does shell test case setup.
  */
 public abstract class ShellTestCase {
+
+    @ClassRule
+    public static final SetFlagsRule.ClassRule mClassRule = new SetFlagsRule.ClassRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule
+    public final SetFlagsRule mSetFlagsRule = mClassRule.createSetFlagsRule();
 
     protected TestableContext mContext;
     private PackageManager mPm;
@@ -44,6 +60,9 @@ public abstract class ShellTestCase {
     public void shellSetup() {
         // Disable protolog tool when running the tests from studio
         ProtoLog.REQUIRE_PROTOLOGTOOL = false;
+
+        // Make sure ProtoLog is initialized before any logging occurs.
+        ProtoLog.init();
 
         MockitoAnnotations.initMocks(this);
         final Context context =

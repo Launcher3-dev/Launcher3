@@ -54,10 +54,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.internal.annotations.VisibleForTesting;
-import com.android.internal.protolog.common.ProtoLog;
+import com.android.internal.protolog.ProtoLog;
 import com.android.wm.shell.R;
-import com.android.wm.shell.animation.Interpolators;
 import com.android.wm.shell.protolog.ShellProtoLogGroup;
+import com.android.wm.shell.shared.animation.Interpolators;
+import com.android.wm.shell.shared.desktopmode.DesktopModeStatus;
 
 /**
  * Divider for multi window splits.
@@ -89,8 +90,8 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
     private int mHandleRegionHeight;
 
     /**
-     * Tracks divider bar visible bounds in screen-based coordination. Used to calculate with
-     * insets.
+     * This is not the visible bounds you see on screen, but the actual behind-the-scenes window
+     * bounds, which is larger.
      */
     private final Rect mDividerBounds = new Rect();
     private final Rect mTempRect = new Rect();
@@ -124,7 +125,7 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
         }
     };
 
-    private final AccessibilityDelegate mHandleDelegate = new AccessibilityDelegate() {
+    final AccessibilityDelegate mHandleDelegate = new AccessibilityDelegate() {
         @Override
         public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
             super.onInitializeAccessibilityNodeInfo(host, info);
@@ -147,6 +148,8 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
                 }
                 info.addAction(new AccessibilityAction(R.id.action_move_rb_full,
                         mContext.getString(R.string.accessibility_action_divider_right_full)));
+                info.addAction(new AccessibilityAction(R.id.action_swap_apps,
+                        mContext.getString(R.string.accessibility_action_divider_swap_horizontal)));
             } else {
                 info.addAction(new AccessibilityAction(R.id.action_move_tl_full,
                         mContext.getString(R.string.accessibility_action_divider_top_full)));
@@ -165,12 +168,19 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
                 }
                 info.addAction(new AccessibilityAction(R.id.action_move_rb_full,
                         mContext.getString(R.string.accessibility_action_divider_bottom_full)));
+                info.addAction(new AccessibilityAction(R.id.action_swap_apps,
+                        mContext.getString(R.string.accessibility_action_divider_swap_vertical)));
             }
         }
 
         @Override
         public boolean performAccessibilityAction(@NonNull View host, int action,
                 @Nullable Bundle args) {
+            if (action == R.id.action_swap_apps) {
+                mSplitLayout.onDoubleTappedDivider();
+                return true;
+            }
+
             DividerSnapAlgorithm.SnapTarget nextTarget = null;
             DividerSnapAlgorithm snapAlgorithm = mSplitLayout.mDividerSnapAlgorithm;
             if (action == R.id.action_move_tl_full) {
@@ -228,7 +238,9 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
                 : R.dimen.split_divider_handle_region_width);
         mHandleRegionHeight = getResources().getDimensionPixelSize(isLeftRightSplit
                 ? R.dimen.split_divider_handle_region_width
-                : R.dimen.split_divider_handle_region_height);
+                : DesktopModeStatus.canEnterDesktopMode(mContext)
+                        ? R.dimen.desktop_mode_portrait_split_divider_handle_region_height
+                        : R.dimen.split_divider_handle_region_height);
     }
 
     void onInsetsChanged(InsetsState insetsState, boolean animate) {
@@ -336,11 +348,6 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
                 setTouching();
                 mStartPos = touchPos;
                 mMoving = false;
-                // This triggers initialization of things like the resize veil in preparation for
-                // showing it when the user moves the divider past the slop, and has to be done
-                // before onStartDragging() which starts the jank interaction tracing
-                mSplitLayout.updateDividerBounds(mSplitLayout.getDividerPosition(),
-                        false /* shouldUseParallaxEffect */);
                 mSplitLayout.onStartDragging();
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -482,6 +489,7 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
                     mLastDraggingPosition,
                     position,
                     mSplitLayout.FLING_RESIZE_DURATION,
+                    Interpolators.FAST_OUT_SLOW_IN,
                     () -> mSplitLayout.setDividerPosition(position, true /* applyLayoutChange */));
             mMoving = false;
         }
@@ -495,6 +503,11 @@ public class DividerView extends FrameLayout implements View.OnTouchListener {
 
     boolean isHandleHidden() {
         return mHideHandle;
+    }
+
+    /** Returns true if the divider is currently being physically controlled by the user. */
+    boolean isMoving() {
+        return mMoving;
     }
 
     private class DoubleTapListener extends GestureDetector.SimpleOnGestureListener {

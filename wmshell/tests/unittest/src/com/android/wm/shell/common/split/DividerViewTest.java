@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
 import android.view.InputDevice;
@@ -35,6 +36,7 @@ import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import com.android.wm.shell.R;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.ShellTestCase;
 import com.android.wm.shell.common.DisplayController;
@@ -55,6 +57,8 @@ public class DividerViewTest extends ShellTestCase {
     private @Mock DisplayController mDisplayController;
     private @Mock DisplayImeController mDisplayImeController;
     private @Mock ShellTaskOrganizer mTaskOrganizer;
+    private @Mock SplitState mSplitState;
+    private @Mock Handler mHandler;
     private SplitLayout mSplitLayout;
     private DividerView mDividerView;
 
@@ -63,14 +67,14 @@ public class DividerViewTest extends ShellTestCase {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         Configuration configuration = getConfiguration();
-        mSplitLayout = new SplitLayout("TestSplitLayout", mContext, configuration,
+        mSplitLayout = spy(new SplitLayout("TestSplitLayout", mContext, configuration,
                 mSplitLayoutHandler, mCallbacks, mDisplayController, mDisplayImeController,
-                mTaskOrganizer, SplitLayout.PARALLAX_NONE);
+                mTaskOrganizer, SplitLayout.PARALLAX_NONE, mSplitState, mHandler));
         SplitWindowManager splitWindowManager = new SplitWindowManager("TestSplitWindowManager",
                 mContext,
                 configuration, mCallbacks);
         splitWindowManager.init(mSplitLayout, new InsetsState(), false /* isRestoring */);
-        mDividerView = spy((DividerView) splitWindowManager.getDividerView());
+        mDividerView = spy(splitWindowManager.getDividerView());
     }
 
     @Test
@@ -93,6 +97,14 @@ public class DividerViewTest extends ShellTestCase {
 
         DeviceConfig.setProperty(DeviceConfig.NAMESPACE_SYSTEMUI, CURSOR_HOVER_STATES_ENABLED,
                 "false", false);
+    }
+
+    @Test
+    public void swapDividerActionForA11y() {
+        mDividerView.setAccessibilityDelegate(mDividerView.mHandleDelegate);
+        mDividerView.getAccessibilityDelegate().performAccessibilityAction(mDividerView,
+                R.id.action_swap_apps, null);
+        verify(mSplitLayout, times(1)).onDoubleTappedDivider();
     }
 
     private static MotionEvent getMotionEvent(long eventTime, int action, float x, float y) {

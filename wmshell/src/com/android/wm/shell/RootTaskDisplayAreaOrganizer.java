@@ -38,7 +38,7 @@ import android.window.SystemPerformanceHinter;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.internal.protolog.common.ProtoLog;
+import com.android.internal.protolog.ProtoLog;
 import com.android.wm.shell.sysui.ShellInit;
 
 import java.io.PrintWriter;
@@ -228,6 +228,11 @@ public class RootTaskDisplayAreaOrganizer extends DisplayAreaOrganizer {
     @Nullable
     public DisplayAreaInfo getDisplayAreaInfo(int displayId) {
         return mDisplayAreasInfo.get(displayId);
+    }
+
+    @Nullable
+    public SurfaceControl getDisplayAreaLeash(int displayId) {
+        return mLeashes.get(displayId);
     }
 
     /**

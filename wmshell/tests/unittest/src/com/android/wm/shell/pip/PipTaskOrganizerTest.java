@@ -36,6 +36,7 @@ import android.content.ComponentName;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.RemoteException;
+import android.platform.test.annotations.DisableFlags;
 import android.testing.AndroidTestingRunner;
 import android.testing.TestableLooper;
 import android.util.Rational;
@@ -46,7 +47,9 @@ import android.window.WindowContainerToken;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.wm.shell.Flags;
 import com.android.wm.shell.MockSurfaceControlHelper;
+import com.android.wm.shell.RootTaskDisplayAreaOrganizer;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.ShellTestCase;
 import com.android.wm.shell.TestShellExecutor;
@@ -61,6 +64,7 @@ import com.android.wm.shell.common.pip.PipKeepClearAlgorithmInterface;
 import com.android.wm.shell.common.pip.PipSnapAlgorithm;
 import com.android.wm.shell.common.pip.PipUiEventLogger;
 import com.android.wm.shell.common.pip.SizeSpecSource;
+import com.android.wm.shell.desktopmode.DesktopUserRepositories;
 import com.android.wm.shell.pip.phone.PhonePipMenuController;
 import com.android.wm.shell.splitscreen.SplitScreenController;
 
@@ -79,6 +83,7 @@ import java.util.Optional;
 @SmallTest
 @RunWith(AndroidTestingRunner.class)
 @TestableLooper.RunWithLooper
+@DisableFlags(Flags.FLAG_ENABLE_PIP2)
 public class PipTaskOrganizerTest extends ShellTestCase {
     private PipTaskOrganizer mPipTaskOrganizer;
 
@@ -90,6 +95,8 @@ public class PipTaskOrganizerTest extends ShellTestCase {
     @Mock private PipSurfaceTransactionHelper mMockPipSurfaceTransactionHelper;
     @Mock private PipUiEventLogger mMockPipUiEventLogger;
     @Mock private Optional<SplitScreenController> mMockOptionalSplitScreen;
+    @Mock private Optional<DesktopUserRepositories> mMockOptionalDesktopUserRepositories;
+    @Mock private RootTaskDisplayAreaOrganizer mRootTaskDisplayAreaOrganizer;
     @Mock private ShellTaskOrganizer mMockShellTaskOrganizer;
     @Mock private PipParamsChangedForwarder mMockPipParamsChangedForwarder;
     private TestShellExecutor mMainExecutor;
@@ -120,8 +127,10 @@ public class PipTaskOrganizerTest extends ShellTestCase {
                 mPipBoundsAlgorithm, mMockPhonePipMenuController, mMockPipAnimationController,
                 mMockPipSurfaceTransactionHelper, mMockPipTransitionController,
                 mMockPipParamsChangedForwarder, mMockOptionalSplitScreen,
-                Optional.empty() /* pipPerfHintControllerOptional */, mMockDisplayController,
-                mMockPipUiEventLogger, mMockShellTaskOrganizer, mMainExecutor);
+                Optional.empty() /* pipPerfHintControllerOptional */,
+                mMockOptionalDesktopUserRepositories, mRootTaskDisplayAreaOrganizer,
+                mMockDisplayController, mMockPipUiEventLogger, mMockShellTaskOrganizer,
+                mMainExecutor);
         mMainExecutor.flushAll();
         preparePipTaskOrg();
         preparePipSurfaceTransactionHelper();
@@ -155,10 +164,12 @@ public class PipTaskOrganizerTest extends ShellTestCase {
 
     @Test
     public void startSwipePipToHome_updatesOverrideMinSize() {
-        final Size minSize = new Size(400, 320);
+        final Rational aspectRatio = new Rational(2, 1);
+        final Size defaultSize = mSizeSpecSource.getDefaultSize(aspectRatio.floatValue());
+        final Size minSize = new Size(defaultSize.getWidth() / 2, defaultSize.getHeight() / 2);
 
         mPipTaskOrganizer.startSwipePipToHome(mComponent1, createActivityInfo(minSize),
-                createPipParams(null));
+                createPipParams(aspectRatio));
 
         assertEquals(minSize, mPipBoundsState.getOverrideMinSize());
     }
@@ -183,10 +194,12 @@ public class PipTaskOrganizerTest extends ShellTestCase {
 
     @Test
     public void onTaskAppeared_updatesOverrideMinSize() {
-        final Size minSize = new Size(400, 320);
+        final Rational aspectRatio = new Rational(2, 1);
+        final Size defaultSize = mSizeSpecSource.getDefaultSize(aspectRatio.floatValue());
+        final Size minSize = new Size(defaultSize.getWidth() / 2, defaultSize.getHeight() / 2);
 
         mPipTaskOrganizer.onTaskAppeared(
-                createTaskInfo(mComponent1, createPipParams(null), minSize),
+                createTaskInfo(mComponent1, createPipParams(aspectRatio), minSize),
                 mock(SurfaceControl.class));
 
         assertEquals(minSize, mPipBoundsState.getOverrideMinSize());
@@ -239,13 +252,15 @@ public class PipTaskOrganizerTest extends ShellTestCase {
 
     @Test
     public void onTaskInfoChanged_inPip_updatesOverrideMinSize() {
+        final Rational aspectRatio = new Rational(2, 1);
+        final Size defaultSize = mSizeSpecSource.getDefaultSize(aspectRatio.floatValue());
+        final Size minSize = new Size(defaultSize.getWidth() / 2, defaultSize.getHeight() / 2);
         mPipTaskOrganizer.onTaskAppeared(createTaskInfo(mComponent1,
-                createPipParams(null)), mock(SurfaceControl.class));
+                createPipParams(aspectRatio)), mock(SurfaceControl.class));
         sendOnPipTransitionFinished(TRANSITION_DIRECTION_TO_PIP);
 
-        final Size minSize = new Size(400, 320);
         mPipTaskOrganizer.onTaskInfoChanged(createTaskInfo(mComponent2,
-                createPipParams(null), minSize));
+                createPipParams(aspectRatio), minSize));
 
         assertEquals(minSize, mPipBoundsState.getOverrideMinSize());
     }
@@ -272,7 +287,7 @@ public class PipTaskOrganizerTest extends ShellTestCase {
         DisplayLayout layout = new DisplayLayout(info,
                 mContext.getResources(), true, true);
         mPipDisplayLayoutState.setDisplayLayout(layout);
-        doReturn(PipAnimationController.ANIM_TYPE_ALPHA).when(mMockPipAnimationController)
+        doReturn(PipTransitionController.ANIM_TYPE_ALPHA).when(mMockPipAnimationController)
                 .takeOneShotEnterAnimationType();
         mPipTaskOrganizer.setSurfaceControlTransactionFactory(
                 MockSurfaceControlHelper::createMockSurfaceControlTransaction);
@@ -280,7 +295,7 @@ public class PipTaskOrganizerTest extends ShellTestCase {
 
     private void preparePipSurfaceTransactionHelper() {
         doReturn(mMockPipSurfaceTransactionHelper).when(mMockPipSurfaceTransactionHelper)
-                .crop(any(), any(), any());
+                .cropAndPosition(any(), any(), any());
         doReturn(mMockPipSurfaceTransactionHelper).when(mMockPipSurfaceTransactionHelper)
                 .resetScale(any(), any(), any());
         doReturn(mMockPipSurfaceTransactionHelper).when(mMockPipSurfaceTransactionHelper)

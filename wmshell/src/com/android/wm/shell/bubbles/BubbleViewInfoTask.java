@@ -20,11 +20,11 @@ import static com.android.wm.shell.bubbles.BadgedImageView.DEFAULT_PATH_SIZE;
 import static com.android.wm.shell.bubbles.BadgedImageView.WHITE_SCRIM_ALPHA;
 import static com.android.wm.shell.bubbles.BubbleDebugConfig.TAG_BUBBLES;
 import static com.android.wm.shell.bubbles.BubbleDebugConfig.TAG_WITH_CLASS_NAME;
+import static com.android.wm.shell.protolog.ShellProtoLogGroup.WM_SHELL_BUBBLES;
+import static com.android.wm.shell.shared.bubbles.FlyoutDrawableLoader.loadFlyoutDrawable;
 
-import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
@@ -33,30 +33,30 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.util.PathParser;
 import android.view.LayoutInflater;
+import android.view.View;
 
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.graphics.ColorUtils;
+import com.android.internal.protolog.ProtoLog;
 import com.android.launcher3.icons.BitmapInfo;
 import com.android.launcher3.icons.BubbleIconFactory;
 import com.android.wm.shell.R;
 import com.android.wm.shell.bubbles.bar.BubbleBarExpandedView;
 import com.android.wm.shell.bubbles.bar.BubbleBarLayerView;
+import com.android.wm.shell.shared.handles.RegionSamplingHelper;
 
 import java.lang.ref.WeakReference;
-import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Simple task to inflate views & load necessary info to display a bubble.
  */
-public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask.BubbleViewInfo> {
+public class BubbleViewInfoTask {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "BubbleViewInfoTask" : TAG_BUBBLES;
-
 
     /**
      * Callback to find out when the bubble has been inflated & necessary data loaded.
@@ -68,17 +68,22 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
         void onBubbleViewsReady(Bubble bubble);
     }
 
-    private Bubble mBubble;
-    private WeakReference<Context> mContext;
-    private WeakReference<BubbleExpandedViewManager> mExpandedViewManager;
-    private WeakReference<BubbleTaskViewFactory> mTaskViewFactory;
-    private WeakReference<BubblePositioner> mPositioner;
-    private WeakReference<BubbleStackView> mStackView;
-    private WeakReference<BubbleBarLayerView> mLayerView;
-    private BubbleIconFactory mIconFactory;
-    private boolean mSkipInflation;
-    private Callback mCallback;
-    private Executor mMainExecutor;
+    private final Bubble mBubble;
+    private final WeakReference<Context> mContext;
+    private final WeakReference<BubbleExpandedViewManager> mExpandedViewManager;
+    private final WeakReference<BubbleTaskViewFactory> mTaskViewFactory;
+    private final WeakReference<BubblePositioner> mPositioner;
+    private final WeakReference<BubbleStackView> mStackView;
+    private final WeakReference<BubbleBarLayerView> mLayerView;
+    private final BubbleIconFactory mIconFactory;
+    private final boolean mSkipInflation;
+    private final Callback mCallback;
+    private final Executor mMainExecutor;
+    private final Executor mBgExecutor;
+
+    private final AtomicBoolean mStarted = new AtomicBoolean();
+    private final AtomicBoolean mCancelled = new AtomicBoolean();
+    private final AtomicBoolean mFinished = new AtomicBoolean();
 
     /**
      * Creates a task to load information for the provided {@link Bubble}. Once all info
@@ -94,7 +99,8 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
             BubbleIconFactory factory,
             boolean skipInflation,
             Callback c,
-            Executor mainExecutor) {
+            Executor mainExecutor,
+            Executor bgExecutor) {
         mBubble = b;
         mContext = new WeakReference<>(context);
         mExpandedViewManager = new WeakReference<>(expandedViewManager);
@@ -106,40 +112,133 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
         mSkipInflation = skipInflation;
         mCallback = c;
         mMainExecutor = mainExecutor;
+        mBgExecutor = bgExecutor;
     }
 
-    @Override
-    protected BubbleViewInfo doInBackground(Void... voids) {
+    /**
+     * Load bubble view info in background using {@code bgExecutor} specified in constructor.
+     * <br>
+     * Use {@link #cancel()} to stop the task.
+     *
+     * @throws IllegalStateException if the task is already started
+     */
+    public void start() {
+        verifyCanStart();
+        if (mCancelled.get()) {
+            // We got cancelled even before start was called. Exit early
+            mFinished.set(true);
+            return;
+        }
+        mBgExecutor.execute(() -> {
+            if (mCancelled.get()) {
+                // We got cancelled while background executor was busy and this was waiting
+                mFinished.set(true);
+                return;
+            }
+            BubbleViewInfo viewInfo = loadViewInfo();
+            if (mCancelled.get()) {
+                // Do not schedule anything on main executor if we got cancelled.
+                // Loading view info involves inflating views and it is possible we get cancelled
+                // during it.
+                mFinished.set(true);
+                return;
+            }
+            mMainExecutor.execute(() -> {
+                // Before updating view info check that we did not get cancelled while waiting
+                // main executor to pick up the work
+                if (!mCancelled.get()) {
+                    updateViewInfo(viewInfo);
+                }
+                mFinished.set(true);
+            });
+        });
+    }
+
+    private void verifyCanStart() {
+        if (mStarted.getAndSet(true)) {
+            throw new IllegalStateException("Task already started");
+        }
+    }
+
+    /**
+     * Load bubble view info synchronously.
+     *
+     * @throws IllegalStateException if the task is already started
+     */
+    public void startSync() {
+        verifyCanStart();
+        if (mCancelled.get()) {
+            mFinished.set(true);
+            return;
+        }
+        updateViewInfo(loadViewInfo());
+        mFinished.set(true);
+    }
+
+    /**
+     * Cancel the task. Stops the task from running if called before {@link #start()} or
+     * {@link #startSync()}
+     */
+    public void cancel() {
+        mCancelled.set(true);
+    }
+
+    /**
+     * Return {@code true} when the task has completed loading the view info.
+     */
+    public boolean isFinished() {
+        return mFinished.get();
+    }
+
+    @Nullable
+    private BubbleViewInfo loadViewInfo() {
         if (!verifyState()) {
             // If we're in an inconsistent state, then switched modes and should just bail now.
             return null;
         }
+        ProtoLog.v(WM_SHELL_BUBBLES, "Task loading bubble view info key=%s", mBubble.getKey());
         if (mLayerView.get() != null) {
-            return BubbleViewInfo.populateForBubbleBar(mContext.get(), mExpandedViewManager.get(),
-                    mTaskViewFactory.get(), mPositioner.get(), mLayerView.get(), mIconFactory,
-                    mBubble, mSkipInflation);
+            return BubbleViewInfo.populateForBubbleBar(mContext.get(), mTaskViewFactory.get(),
+                    mLayerView.get(), mIconFactory, mBubble, mSkipInflation);
         } else {
-            return BubbleViewInfo.populate(mContext.get(), mExpandedViewManager.get(),
-                    mTaskViewFactory.get(), mPositioner.get(), mStackView.get(), mIconFactory,
-                    mBubble, mSkipInflation);
+            return BubbleViewInfo.populate(mContext.get(), mTaskViewFactory.get(),
+                    mPositioner.get(), mStackView.get(), mIconFactory, mBubble, mSkipInflation);
         }
     }
 
-    @Override
-    protected void onPostExecute(BubbleViewInfo viewInfo) {
-        if (isCancelled() || viewInfo == null) {
+    private void updateViewInfo(@Nullable BubbleViewInfo viewInfo) {
+        if (viewInfo == null || !verifyState()) {
             return;
         }
+        ProtoLog.v(WM_SHELL_BUBBLES, "Task updating bubble view info key=%s", mBubble.getKey());
+        if (!mBubble.isInflated()) {
+            if (viewInfo.expandedView != null) {
+                ProtoLog.v(WM_SHELL_BUBBLES, "Task initializing expanded view key=%s",
+                        mBubble.getKey());
+                viewInfo.expandedView.initialize(mExpandedViewManager.get(), mStackView.get(),
+                        mPositioner.get(), false /* isOverflow */, viewInfo.taskView);
+            } else if (viewInfo.bubbleBarExpandedView != null) {
+                ProtoLog.v(WM_SHELL_BUBBLES, "Task initializing bubble bar expanded view key=%s",
+                        mBubble.getKey());
+                viewInfo.bubbleBarExpandedView.initialize(mExpandedViewManager.get(),
+                        mPositioner.get(), false /* isOverflow */,
+                        viewInfo.taskView, mMainExecutor, mBgExecutor,
+                        new RegionSamplingProvider() {
+                            @Override
+                            public RegionSamplingHelper createHelper(View sampledView,
+                                    RegionSamplingHelper.SamplingCallback callback,
+                                    Executor backgroundExecutor, Executor mainExecutor) {
+                                return RegionSamplingProvider.super.createHelper(sampledView,
+                                        callback, backgroundExecutor, mainExecutor);
+                            }
+                        });
+            }
+        }
 
-        mMainExecutor.execute(() -> {
-            if (!verifyState()) {
-                return;
-            }
-            mBubble.setViewInfo(viewInfo);
-            if (mCallback != null) {
-                mCallback.onBubbleViewsReady(mBubble);
-            }
-        });
+        mBubble.setViewInfo(viewInfo);
+        if (mCallback != null) {
+            mCallback.onBubbleViewsReady(mBubble);
+        }
     }
 
     private boolean verifyState() {
@@ -157,6 +256,9 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
     public static class BubbleViewInfo {
         // TODO(b/273312602): for foldables it might make sense to populate all of the views
 
+        // Only set if views where inflated as part of the task
+        @Nullable BubbleTaskView taskView;
+
         // Always populated
         ShortcutInfo shortcutInfo;
         String appName;
@@ -170,15 +272,13 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
         @Nullable BubbleExpandedView expandedView;
         int dotColor;
         Path dotPath;
-        @Nullable Bubble.FlyoutMessage flyoutMessage;
+        Bubble.FlyoutMessage flyoutMessage;
         Bitmap bubbleBitmap;
         Bitmap badgeBitmap;
 
         @Nullable
         public static BubbleViewInfo populateForBubbleBar(Context c,
-                BubbleExpandedViewManager expandedViewManager,
                 BubbleTaskViewFactory taskViewFactory,
-                BubblePositioner positioner,
                 BubbleBarLayerView layerView,
                 BubbleIconFactory iconFactory,
                 Bubble b,
@@ -186,12 +286,11 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
             BubbleViewInfo info = new BubbleViewInfo();
 
             if (!skipInflation && !b.isInflated()) {
-                BubbleTaskView bubbleTaskView = b.getOrCreateBubbleTaskView(taskViewFactory);
+                ProtoLog.v(WM_SHELL_BUBBLES, "Task inflating bubble bar views key=%s", b.getKey());
+                info.taskView = b.getOrCreateBubbleTaskView(taskViewFactory);
                 LayoutInflater inflater = LayoutInflater.from(c);
                 info.bubbleBarExpandedView = (BubbleBarExpandedView) inflater.inflate(
                         R.layout.bubble_bar_expanded_view, layerView, false /* attachToRoot */);
-                info.bubbleBarExpandedView.initialize(
-                        expandedViewManager, positioner, false /* isOverflow */, bubbleTaskView);
             }
 
             if (!populateCommonInfo(info, c, b, iconFactory)) {
@@ -199,13 +298,16 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
                 return null;
             }
 
+            // set the flyout message but don't load the avatar because we can't pass it on the
+            // binder to launcher
+            info.flyoutMessage = b.getFlyoutMessage();
+
             return info;
         }
 
         @VisibleForTesting
         @Nullable
         public static BubbleViewInfo populate(Context c,
-                BubbleExpandedViewManager expandedViewManager,
                 BubbleTaskViewFactory taskViewFactory,
                 BubblePositioner positioner,
                 BubbleStackView stackView,
@@ -216,17 +318,15 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
 
             // View inflation: only should do this once per bubble
             if (!skipInflation && !b.isInflated()) {
+                ProtoLog.v(WM_SHELL_BUBBLES, "Task inflating bubble views key=%s", b.getKey());
                 LayoutInflater inflater = LayoutInflater.from(c);
                 info.imageView = (BadgedImageView) inflater.inflate(
                         R.layout.bubble_view, stackView, false /* attachToRoot */);
                 info.imageView.initialize(positioner);
 
-                BubbleTaskView bubbleTaskView = b.getOrCreateBubbleTaskView(taskViewFactory);
+                info.taskView = b.getOrCreateBubbleTaskView(taskViewFactory);
                 info.expandedView = (BubbleExpandedView) inflater.inflate(
                         R.layout.bubble_expanded_view, stackView, false /* attachToRoot */);
-                info.expandedView.initialize(
-                        expandedViewManager, stackView, positioner, false /* isOverflow */,
-                        bubbleTaskView);
             }
 
             if (!populateCommonInfo(info, c, b, iconFactory)) {
@@ -238,7 +338,7 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
             info.flyoutMessage = b.getFlyoutMessage();
             if (info.flyoutMessage != null) {
                 info.flyoutMessage.senderAvatar =
-                        loadSenderAvatar(c, info.flyoutMessage.senderIcon);
+                        loadFlyoutDrawable(info.flyoutMessage.senderIcon, c);
             }
             return info;
         }
@@ -319,22 +419,5 @@ public class BubbleViewInfoTask extends AsyncTask<Void, Void, BubbleViewInfoTask
         info.dotColor = ColorUtils.blendARGB(badgeBitmapInfo.color,
                 Color.WHITE, WHITE_SCRIM_ALPHA);
         return true;
-    }
-
-    @Nullable
-    static Drawable loadSenderAvatar(@NonNull final Context context, @Nullable final Icon icon) {
-        Objects.requireNonNull(context);
-        if (icon == null) return null;
-        try {
-            if (icon.getType() == Icon.TYPE_URI
-                    || icon.getType() == Icon.TYPE_URI_ADAPTIVE_BITMAP) {
-                context.grantUriPermission(context.getPackageName(),
-                        icon.getUri(), Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            }
-            return icon.loadDrawable(context);
-        } catch (Exception e) {
-            Log.w(TAG, "loadSenderAvatar failed: " + e.getMessage());
-            return null;
-        }
     }
 }

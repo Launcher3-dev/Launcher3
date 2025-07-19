@@ -35,7 +35,6 @@ android_app {
 android_robolectric_test {
     name: "WMShellRobolectricTests",
     instrumentation_for: "WindowManagerShellRobolectric",
-    upstream: true,
     java_resource_dirs: [
         "robolectric/config",
     ],
@@ -52,7 +51,11 @@ android_robolectric_test {
         "androidx.test.ext.junit",
         "mockito-robolectric-prebuilt",
         "mockito-kotlin2",
+        "platform-parametric-runner-lib",
         "truth",
+        "flag-junit-base",
+        "flag-junit",
+        "testables",
     ],
     auto_gen_config: true,
 }
@@ -72,13 +75,15 @@ android_test {
         "frameworks-base-testutils",
         "mockito-kotlin2",
         "mockito-target-extended-minus-junit4",
+        "platform-parametric-runner-lib",
         "truth",
         "platform-test-annotations",
         "platform-test-rules",
+        "testables",
     ],
     libs: [
-        "android.test.base",
-        "android.test.runner",
+        "android.test.base.stubs.system",
+        "android.test.runner.stubs.system",
     ],
     jni_libs: [
         "libdexmakerjvmtiagent",

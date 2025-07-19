@@ -9,6 +9,7 @@ particular order):
 4) [Threading model in the Shell](threading.md)
 5) [Making changes in the Shell](changes.md)
 6) [Extending the Shell for Products/OEMs](extending.md)
+6) [Shell transitions](transitions.md)
 7) [Debugging in the Shell](debugging.md)
 8) [Testing in the Shell](testing.md)
 

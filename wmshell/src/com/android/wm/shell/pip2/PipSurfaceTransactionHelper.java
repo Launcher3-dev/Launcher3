@@ -19,107 +19,25 @@ package com.android.wm.shell.pip2;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.view.Choreographer;
 import android.view.SurfaceControl;
 
 import com.android.wm.shell.R;
-import com.android.wm.shell.transition.Transitions;
 
 /**
  * Abstracts the common operations on {@link SurfaceControl.Transaction} for PiP transition.
  */
 public class PipSurfaceTransactionHelper {
-    /** for {@link #scale(SurfaceControl.Transaction, SurfaceControl, Rect, Rect)} operation */
     private final Matrix mTmpTransform = new Matrix();
     private final float[] mTmpFloat9 = new float[9];
-    private final RectF mTmpSourceRectF = new RectF();
-    private final RectF mTmpDestinationRectF = new RectF();
     private final Rect mTmpDestinationRect = new Rect();
 
-    private int mCornerRadius;
-    private int mShadowRadius;
+    private final int mCornerRadius;
+    private final int mShadowRadius;
 
     public PipSurfaceTransactionHelper(Context context) {
-        onDensityOrFontScaleChanged(context);
-    }
-
-    /**
-     * Called when display size or font size of settings changed
-     *
-     * @param context the current context
-     */
-    public void onDensityOrFontScaleChanged(Context context) {
         mCornerRadius = context.getResources().getDimensionPixelSize(R.dimen.pip_corner_radius);
         mShadowRadius = context.getResources().getDimensionPixelSize(R.dimen.pip_shadow_radius);
-    }
-
-    /**
-     * Operates the alpha on a given transaction and leash
-     * @return same {@link PipSurfaceTransactionHelper} instance for method chaining
-     */
-    public PipSurfaceTransactionHelper alpha(SurfaceControl.Transaction tx, SurfaceControl leash,
-            float alpha) {
-        tx.setAlpha(leash, alpha);
-        return this;
-    }
-
-    /**
-     * Operates the crop (and position) on a given transaction and leash
-     * @return same {@link PipSurfaceTransactionHelper} instance for method chaining
-     */
-    public PipSurfaceTransactionHelper crop(SurfaceControl.Transaction tx, SurfaceControl leash,
-            Rect destinationBounds) {
-        tx.setWindowCrop(leash, destinationBounds.width(), destinationBounds.height())
-                .setPosition(leash, destinationBounds.left, destinationBounds.top);
-        return this;
-    }
-
-    /**
-     * Operates the scale (setMatrix) on a given transaction and leash
-     * @return same {@link PipSurfaceTransactionHelper} instance for method chaining
-     */
-    public PipSurfaceTransactionHelper scale(SurfaceControl.Transaction tx, SurfaceControl leash,
-            Rect sourceBounds, Rect destinationBounds) {
-        mTmpDestinationRectF.set(destinationBounds);
-        return scale(tx, leash, sourceBounds, mTmpDestinationRectF, 0 /* degrees */);
-    }
-
-    /**
-     * Operates the scale (setMatrix) on a given transaction and leash
-     * @return same {@link PipSurfaceTransactionHelper} instance for method chaining
-     */
-    public PipSurfaceTransactionHelper scale(SurfaceControl.Transaction tx, SurfaceControl leash,
-            Rect sourceBounds, RectF destinationBounds) {
-        return scale(tx, leash, sourceBounds, destinationBounds, 0 /* degrees */);
-    }
-
-    /**
-     * Operates the scale (setMatrix) on a given transaction and leash
-     * @return same {@link PipSurfaceTransactionHelper} instance for method chaining
-     */
-    public PipSurfaceTransactionHelper scale(SurfaceControl.Transaction tx, SurfaceControl leash,
-            Rect sourceBounds, Rect destinationBounds, float degrees) {
-        mTmpDestinationRectF.set(destinationBounds);
-        return scale(tx, leash, sourceBounds, mTmpDestinationRectF, degrees);
-    }
-
-    /**
-     * Operates the scale (setMatrix) on a given transaction and leash, along with a rotation.
-     * @return same {@link PipSurfaceTransactionHelper} instance for method chaining
-     */
-    public PipSurfaceTransactionHelper scale(SurfaceControl.Transaction tx, SurfaceControl leash,
-            Rect sourceBounds, RectF destinationBounds, float degrees) {
-        mTmpSourceRectF.set(sourceBounds);
-        // We want the matrix to position the surface relative to the screen coordinates so offset
-        // the source to 0,0
-        mTmpSourceRectF.offsetTo(0, 0);
-        mTmpDestinationRectF.set(destinationBounds);
-        mTmpTransform.setRectToRect(mTmpSourceRectF, mTmpDestinationRectF, Matrix.ScaleToFit.FILL);
-        mTmpTransform.postRotate(degrees,
-                mTmpDestinationRectF.centerX(), mTmpDestinationRectF.centerY());
-        tx.setMatrix(leash, mTmpTransform, mTmpFloat9);
-        return this;
     }
 
     /**
@@ -180,8 +98,7 @@ public class PipSurfaceTransactionHelper {
         // destination are different.
         final float scale = srcW <= srcH ? (float) destW / srcW : (float) destH / srcH;
         final Rect crop = mTmpDestinationRect;
-        crop.set(0, 0, Transitions.SHELL_TRANSITIONS_ROTATION ? destH
-                : destW, Transitions.SHELL_TRANSITIONS_ROTATION ? destW : destH);
+        crop.set(0, 0, destW, destH);
         // Inverse scale for crop to fit in screen coordinates.
         crop.scale(1 / scale);
         crop.offset(insets.left, insets.top);
@@ -200,22 +117,9 @@ public class PipSurfaceTransactionHelper {
             }
         }
         mTmpTransform.setScale(scale, scale);
-        mTmpTransform.postRotate(degrees);
         mTmpTransform.postTranslate(positionX, positionY);
+        mTmpTransform.postRotate(degrees);
         tx.setMatrix(leash, mTmpTransform, mTmpFloat9).setCrop(leash, crop);
-        return this;
-    }
-
-    /**
-     * Resets the scale (setMatrix) on a given transaction and leash if there's any
-     *
-     * @return same {@link PipSurfaceTransactionHelper} instance for method chaining
-     */
-    public PipSurfaceTransactionHelper resetScale(SurfaceControl.Transaction tx,
-            SurfaceControl leash,
-            Rect destinationBounds) {
-        tx.setMatrix(leash, Matrix.IDENTITY_MATRIX, mTmpFloat9)
-                .setPosition(leash, destinationBounds.left, destinationBounds.top);
         return this;
     }
 
