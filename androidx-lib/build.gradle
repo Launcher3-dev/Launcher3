@@ -22,5 +22,12 @@ android {
     }
 }
 
+dependencies {
+    implementation "androidx.core:core:1.16.0"
+    implementation "androidx.annotation:annotation:1.9.1"
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation "androidx.test:rules:1.6.1"
+}
+
 addFrameworkJar('framework-15.jar')
 compileOnlyCommonJars()

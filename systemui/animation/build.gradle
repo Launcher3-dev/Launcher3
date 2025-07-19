@@ -33,6 +33,15 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+        freeCompilerArgs = ["-Xjvm-default=all"]
+    }
+
     lintOptions {
         abortOnError false
     }
@@ -43,7 +52,7 @@ android {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.21"
     implementation 'androidx.core:core-animation:1.0.0'
     implementation 'androidx.core:core-ktx:1.16.0'
 }

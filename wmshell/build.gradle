@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace "com.android.systemui.common"
+    namespace "com.android.wm.shell"
 
     compileSdk 36
 
@@ -14,10 +14,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
     sourceSets {
         main {
             java.srcDirs = ['src']
-            manifest.srcFile 'AndroidManifest.xml'
         }
     }
 
@@ -32,3 +32,4 @@ android {
 }
 
 addFrameworkJar('framework-15.jar')
+compileOnlyCommonJars()
