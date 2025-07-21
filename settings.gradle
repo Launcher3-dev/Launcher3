@@ -37,6 +37,9 @@ project(':viewcapture').projectDir = new File(rootDir, 'systemui/viewcapturelib'
 include ':animationlib'
 project(':animationlib').projectDir = new File(rootDir, 'animationlib')
 
+include ':switchpreference'
+project(':switchpreference').projectDir = new File(rootDir, 'settingslibs/MainSwitchPreference')
+
 //include ':SharedLibWrapper'
 //project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')
 
