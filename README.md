@@ -26,6 +26,8 @@
 ## 源码参考
 https://cs.android.com/android/platform/superproject/+/master:packages/apps/Launcher3/
 
+## android.jar
+> 替换https://github.com/Reginer/aosp-android-jar中的对应的android.jar，可以使不能读取的api读取到。
 
 ## 依赖库
 ### wmshell 
