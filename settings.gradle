@@ -34,6 +34,9 @@ project(':unfold').projectDir = new File(rootDir, 'systemui/unfold')
 include ':viewcapture'
 project(':viewcapture').projectDir = new File(rootDir, 'systemui/viewcapturelib')
 
+include ':tracinglib'
+project(':tracinglib').projectDir = new File(rootDir, 'systemui/tracinglib')
+
 include ':animationlib'
 project(':animationlib').projectDir = new File(rootDir, 'animationlib')
 

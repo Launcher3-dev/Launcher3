@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.devtools.ksp'
+}
+
+android {
+    namespace "com.android.app.tracing"
+
+    compileSdk 36
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 36
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        aidl true
+    }
+    sourceSets {
+        main {
+            java.srcDirs = ['src']
+        }
+    }
+    ksp {
+        arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
+    }
+}
+
+addFrameworkJar('framework-15.jar')
+compileOnlyCommonJars()
+
+dependencies {
+    implementation "com.google.dagger:hilt-android:$daggerVersion"
+    ksp "com.google.dagger:hilt-compiler:$daggerVersion"
+
+    implementation "androidx.concurrent:concurrent-futures:1.2.0"
+    implementation "androidx.lifecycle:lifecycle-common:2.9.1"
+}

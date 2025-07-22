@@ -31,5 +31,9 @@ android {
     }
 }
 
+dependencies {
+    implementation project(':androidx-lib')
+}
+
 addFrameworkJar('framework-15.jar')
 compileOnlyCommonJars()

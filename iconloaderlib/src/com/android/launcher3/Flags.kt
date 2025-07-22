@@ -301,4 +301,9 @@ object Flags {
     fun enableStrictMode(): Boolean {
         return true
     }
+
+    @JvmStatic
+    fun enableOverviewBackgroundWallpaperBlur(): Boolean {
+        return true
+    }
 }
