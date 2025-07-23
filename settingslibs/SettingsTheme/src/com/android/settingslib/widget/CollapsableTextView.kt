@@ -29,6 +29,7 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.android.settingslib.widget.theme.R

@@ -1,7 +1,6 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
-    id 'com.google.devtools.ksp'
 }
 
 android {
@@ -24,8 +23,13 @@ android {
             aidl.srcDirs = ['src']
         }
     }
-    ksp {
-        arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+        freeCompilerArgs = ["-Xjvm-default=all"]
     }
 }
 
@@ -33,11 +37,11 @@ addFrameworkJar('framework-15.jar')
 compileOnlyCommonJars()
 
 dependencies {
-    implementation "com.google.dagger:hilt-android:$daggerVersion"
-    ksp "com.google.dagger:hilt-compiler:$daggerVersion"
-
     implementation "androidx.concurrent:concurrent-futures:1.2.0"
     implementation "androidx.lifecycle:lifecycle-common:2.9.1"
+
+    implementation 'com.google.dagger:dagger:2.57'
+    kapt 'com.google.dagger:dagger-compiler:2.57'
 
     compileOnly project(':androidx-lib')
 

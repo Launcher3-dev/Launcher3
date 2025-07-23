@@ -18,6 +18,7 @@ android {
     sourceSets {
         main {
             java.srcDirs = ['src']
+            res.srcDirs = ['res']
         }
     }
 
@@ -33,6 +34,8 @@ android {
 
 dependencies {
     implementation project(':androidx-lib')
+    implementation "androidx.core:core-animation:1.0.0"
+    implementation "androidx.core:core-ktx:1.16.0"
 }
 
 addFrameworkJar('framework-15.jar')

@@ -25,6 +25,15 @@ android {
             res.srcDirs = ['res']
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+        freeCompilerArgs = ["-Xjvm-default=all"]
+    }
 }
 
 addFrameworkJar('framework-15.jar')

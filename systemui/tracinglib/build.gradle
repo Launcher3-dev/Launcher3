@@ -1,7 +1,6 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
-    id 'com.google.devtools.ksp'
 }
 
 android {
@@ -14,17 +13,18 @@ android {
         targetSdkVersion 36
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
-    buildFeatures {
-        aidl true
-    }
     sourceSets {
         main {
             java.srcDirs = ['src']
         }
     }
-    ksp {
-        arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+        freeCompilerArgs = ["-Xjvm-default=all"]
     }
 }
 
@@ -32,9 +32,7 @@ addFrameworkJar('framework-15.jar')
 compileOnlyCommonJars()
 
 dependencies {
-    implementation "com.google.dagger:hilt-android:$daggerVersion"
-    ksp "com.google.dagger:hilt-compiler:$daggerVersion"
-
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
     implementation "androidx.concurrent:concurrent-futures:1.2.0"
     implementation "androidx.lifecycle:lifecycle-common:2.9.1"
 }
