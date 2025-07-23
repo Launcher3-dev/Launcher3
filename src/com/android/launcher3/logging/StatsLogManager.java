@@ -166,9 +166,6 @@ public class StatsLogManager implements ResourceBasedOverride {
         @UiEvent(doc = "User tapped or long pressed on settings icon inside launcher settings.")
         LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS(463),
 
-        @UiEvent(doc = "User tapped or long pressed on apps icon inside launcher settings.")
-        LAUNCHER_ALL_APPS_TAP_OR_LONGPRESS(2204),
-
         @UiEvent(doc = "User tapped or long pressed on widget tray icon inside launcher settings.")
         LAUNCHER_WIDGETSTRAY_BUTTON_TAP_OR_LONGPRESS(464),
 
@@ -177,10 +174,6 @@ public class StatsLogManager implements ResourceBasedOverride {
 
         @UiEvent(doc = "User searched for a widget in the widget picker.")
         LAUNCHER_WIDGETSTRAY_SEARCHED(819),
-
-        @UiEvent(doc = "User clicked on view all button to expand the displayed list in the "
-                + "widget picker.")
-        LAUNCHER_WIDGETSTRAY_EXPAND_PRESS(1978),
 
         @UiEvent(doc = "A dragged item is dropped on 'Remove' button in the target bar")
         LAUNCHER_ITEM_DROPPED_ON_REMOVE(465),
@@ -227,12 +220,6 @@ public class StatsLogManager implements ResourceBasedOverride {
 
         @UiEvent(doc = "User tapped on desktop icon on a task menu.")
         LAUNCHER_SYSTEM_SHORTCUT_DESKTOP_TAP(1706),
-
-        @UiEvent(doc = "User tapped on external display icon on a task menu,")
-        LAUNCHER_SYSTEM_SHORTCUT_EXTERNAL_DISPLAY_TAP(1957),
-
-        @UiEvent(doc = "User tapped on close app on a task menu,")
-        LAUNCHER_SYSTEM_SHORTCUT_CLOSE_APP_TAP(2081),
 
         @UiEvent(doc = "User tapped on pause app system shortcut.")
         LAUNCHER_SYSTEM_SHORTCUT_PAUSE_TAP(521),
@@ -306,12 +293,6 @@ public class StatsLogManager implements ResourceBasedOverride {
 
         @UiEvent(doc = "User swipes or fling in RIGHT direction on the bottom bazel area.")
         LAUNCHER_QUICKSWITCH_RIGHT(572),
-
-        @UiEvent(doc = "User swipes or fling on the bottom bazel area to enter Desktop mode.")
-        LAUNCHER_QUICKSWITCH_ENTER_DESKTOP_MODE(2025),
-
-        @UiEvent(doc = "User swipes or fling on the bottom bazel area to exit Desktop mode.")
-        LAUNCHER_QUICKSWITCH_EXIT_DESKTOP_MODE(2026),
 
         @UiEvent(doc = "User swipes or fling in DOWN direction on the bottom bazel area.")
         LAUNCHER_SWIPEDOWN_NAVBAR(573),
@@ -436,29 +417,20 @@ public class StatsLogManager implements ResourceBasedOverride {
         @UiEvent(doc = "Notification dismissed by swiping right.")
         LAUNCHER_NOTIFICATION_DISMISSED(652),
 
-        @UiEvent(doc = "Current grid size is changed to 2x2")
-        LAUNCHER_GRID_SIZE_2_BY_2(2181),
+        @UiEvent(doc = "Current grid size is changed to 6.")
+        LAUNCHER_GRID_SIZE_6(930),
 
-        @UiEvent(doc = "Current grid size is changed to 3x3")
-        LAUNCHER_GRID_SIZE_3_BY_3(2182),
+        @UiEvent(doc = "Current grid size is changed to 5.")
+        LAUNCHER_GRID_SIZE_5(662),
 
-        @UiEvent(doc = "Current grid size is changed to 4x4")
-        LAUNCHER_GRID_SIZE_4_BY_4(2183),
+        @UiEvent(doc = "Current grid size is changed to 4.")
+        LAUNCHER_GRID_SIZE_4(663),
 
-        @UiEvent(doc = "Current grid size is changed to 4x5")
-        LAUNCHER_GRID_SIZE_4_BY_5(2184),
+        @UiEvent(doc = "Current grid size is changed to 3.")
+        LAUNCHER_GRID_SIZE_3(664),
 
-        @UiEvent(doc = "Current grid size is changed to 4x6")
-        LAUNCHER_GRID_SIZE_4_BY_6(2185),
-
-        @UiEvent(doc = "Current grid size is changed to 5x5")
-        LAUNCHER_GRID_SIZE_5_BY_5(2186),
-
-        @UiEvent(doc = "Current grid size is changed to 5x6")
-        LAUNCHER_GRID_SIZE_5_BY_6(2187),
-
-        @UiEvent(doc = "Current grid size is changed to 6x5")
-        LAUNCHER_GRID_SIZE_6_BY_5(2188),
+        @UiEvent(doc = "Current grid size is changed to 2.")
+        LAUNCHER_GRID_SIZE_2(665),
 
         @UiEvent(doc = "Launcher entered into AllApps state.")
         LAUNCHER_ALLAPPS_ENTRY(692),
@@ -823,82 +795,6 @@ public class StatsLogManager implements ResourceBasedOverride {
         @UiEvent(doc = "User launches Overview from meta+tab keyboard shortcut")
         LAUNCHER_OVERVIEW_SHOW_OVERVIEW_FROM_KEYBOARD_SHORTCUT(1765),
 
-        @UiEvent(doc = "User long pressed on the taskbar IME switcher button")
-        LAUNCHER_TASKBAR_IME_SWITCHER_BUTTON_LONGPRESS(1798),
-
-        @UiEvent(doc = "Failed to launch assistant due to Google assistant not available")
-        LAUNCHER_LAUNCH_ASSISTANT_FAILED_NOT_AVAILABLE(1465),
-
-        @UiEvent(doc = "Failed to launch assistant due to service error")
-        LAUNCHER_LAUNCH_ASSISTANT_FAILED_SERVICE_ERROR(1466),
-
-        @UiEvent(doc = "User launched assistant by long-pressing nav handle")
-        LAUNCHER_LAUNCH_ASSISTANT_SUCCESSFUL_NAV_HANDLE(1467),
-
-        @UiEvent(doc = "Failed to launch due to Contextual Search not available")
-        LAUNCHER_LAUNCH_OMNI_FAILED_NOT_AVAILABLE(1471),
-
-        @UiEvent(doc = "Failed to launch due to Contextual Search setting disabled")
-        LAUNCHER_LAUNCH_OMNI_FAILED_SETTING_DISABLED(1632),
-
-        @UiEvent(doc = "User launched Contextual Search by long-pressing home in 3-button mode")
-        LAUNCHER_LAUNCH_OMNI_SUCCESSFUL_HOME(1481),
-
-        @UiEvent(doc = "User launched Contextual Search by using accessibility System Action")
-        LAUNCHER_LAUNCH_OMNI_SUCCESSFUL_SYSTEM_ACTION(1492),
-
-        @UiEvent(doc = "User launched Contextual Search by long pressing the meta key")
-        LAUNCHER_LAUNCH_OMNI_SUCCESSFUL_META(1606),
-
-        @UiEvent(doc = "Contextual Search invocation was attempted over the notification shade")
-        LAUNCHER_LAUNCH_OMNI_ATTEMPTED_OVER_NOTIFICATION_SHADE(1485),
-
-        @UiEvent(doc = "The Contextual Search all entrypoints toggle value in Settings")
-        LAUNCHER_SETTINGS_OMNI_ALL_ENTRYPOINTS_TOGGLE_VALUE(1633),
-
-        @UiEvent(doc = "Contextual Search invocation was attempted over the keyguard")
-        LAUNCHER_LAUNCH_OMNI_ATTEMPTED_OVER_KEYGUARD(1501),
-
-        @UiEvent(doc = "Contextual Search invocation was attempted while splitscreen is active")
-        LAUNCHER_LAUNCH_OMNI_ATTEMPTED_SPLITSCREEN(1505),
-
-        @UiEvent(doc = "User long press nav handle and a long press runnable was created.")
-        LAUNCHER_OMNI_GET_LONG_PRESS_RUNNABLE(1545),
-
-        @UiEvent(doc = "User tapped on \"change aspect ratio\" system shortcut.")
-        LAUNCHER_ASPECT_RATIO_SETTINGS_SYSTEM_SHORTCUT_TAP(2219),
-
-        // One Grid Flags
-        @UiEvent(doc = "User sets the device in Fixed Landscape")
-        FIXED_LANDSCAPE_TOGGLE_ENABLE(2014),
-
-        @UiEvent(doc = "User sets the device in Fixed Landscape")
-        FIXED_LANDSCAPE_TOGGLE_DISABLED(2020),
-
-        @UiEvent(doc = "Work utility view expand animation started")
-        LAUNCHER_WORK_UTILITY_VIEW_EXPAND_ANIMATION_BEGIN(2075),
-
-        @UiEvent(doc = "Work utility view expand animation ended")
-        LAUNCHER_WORK_UTILITY_VIEW_EXPAND_ANIMATION_END(2076),
-
-        @UiEvent(doc = "Work utility view shrink animation started")
-        LAUNCHER_WORK_UTILITY_VIEW_SHRINK_ANIMATION_BEGIN(2077),
-
-        @UiEvent(doc = "Work utility view shrink animation ended")
-        LAUNCHER_WORK_UTILITY_VIEW_SHRINK_ANIMATION_END(2078),
-
-        @UiEvent(doc = "Standard grid migration occurred")
-        LAUNCHER_STANDARD_GRID_MIGRATION(2200),
-
-        @UiEvent(doc = "Row shift grid migration occurred")
-        LAUNCHER_ROW_SHIFT_GRID_MIGRATION(2201),
-
-        @UiEvent(doc = "Do standard migration when upgrading to one grid")
-        LAUNCHER_STANDARD_ONE_GRID_MIGRATION(2205),
-
-        @UiEvent(doc = "Do row shift migration when upgrading to one grid")
-        LAUNCHER_ROW_SHIFT_ONE_GRID_MIGRATION(2206),
-
         // ADD MORE
         ;
 
@@ -929,14 +825,6 @@ public class StatsLogManager implements ResourceBasedOverride {
 
         @UiEvent(doc = "The duration of asynchronous loading workspace")
         LAUNCHER_LATENCY_STARTUP_WORKSPACE_LOADER_ASYNC(1367),
-
-        @UiEvent(doc = "Time passed between Contextual Search runnable creation and execution. This"
-                + " ensures that Recent animations have finished before Contextual Search starts.")
-        LAUNCHER_LATENCY_OMNI_RUNNABLE(1546),
-
-        @UiEvent(doc = "Time passed between nav handle touch down and cancellation without "
-                + "triggering Contextual Search")
-        LAUNCHER_LATENCY_CONTEXTUAL_SEARCH_LPNH_ABANDON(2171),
         ;
 
         private final int mId;

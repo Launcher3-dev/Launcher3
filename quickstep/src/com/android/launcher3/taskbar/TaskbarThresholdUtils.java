@@ -25,6 +25,7 @@ import androidx.core.content.res.ResourcesCompat;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
+import com.android.launcher3.config.FeatureFlags;
 
 /**
  * Utility class that contains the different taskbar thresholds logic.
@@ -38,6 +39,10 @@ public class TaskbarThresholdUtils {
 
     private static int getThreshold(Resources r, DeviceProfile dp, int thresholdDimen,
             int multiplierDimen) {
+        if (!FeatureFlags.ENABLE_DYNAMIC_TASKBAR_THRESHOLDS.get()) {
+            return r.getDimensionPixelSize(thresholdDimen);
+        }
+
         float landscapeScreenHeight = dp.isLandscape ? dp.heightPx : dp.widthPx;
         float screenPart = (landscapeScreenHeight * SCREEN_UNITS);
         float defaultDp = dpiFromPx(screenPart, DisplayMetrics.DENSITY_DEVICE_STABLE);

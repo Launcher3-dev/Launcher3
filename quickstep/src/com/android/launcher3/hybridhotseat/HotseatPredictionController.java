@@ -229,7 +229,9 @@ public class HotseatPredictionController implements DragController.DragListener,
                     (WorkspaceItemInfo) mPredictedItems.get(predictionIndex++);
             if (isPredictedIcon(child) && child.isEnabled()) {
                 PredictedAppIcon icon = (PredictedAppIcon) child;
-                if (icon.applyFromWorkspaceItemWithAnimation(predictedItem, numViewsAnimated)) {
+                boolean animateIconChange = icon.shouldAnimateIconChange(predictedItem);
+                icon.applyFromWorkspaceItem(predictedItem, animateIconChange, numViewsAnimated);
+                if (animateIconChange) {
                     numViewsAnimated++;
                 }
                 icon.finishBinding(mPredictionLongClickListener);
@@ -534,9 +536,6 @@ public class HotseatPredictionController implements DragController.DragListener,
         writer.println(prefix + "HotseatPredictionController");
         writer.println(prefix + "\tFlags: " + getStateString(mPauseFlags));
         writer.println(prefix + "\tmHotSeatItemsCount: " + mHotSeatItemsCount);
-        writer.println(prefix + "\tmPredictedItems: " + mPredictedItems.size());
-        for (ItemInfo info : mPredictedItems) {
-            writer.println(prefix + "\t\t" + info);
-        }
+        writer.println(prefix + "\tmPredictedItems: " + mPredictedItems);
     }
 }

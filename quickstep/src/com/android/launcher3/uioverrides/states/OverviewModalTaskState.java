@@ -15,14 +15,14 @@
  */
 package com.android.launcher3.uioverrides.states;
 
-import static com.android.launcher3.Flags.enableGridOnlyOverview;
 import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_OVERVIEW;
 
+import android.content.Context;
 import android.graphics.Rect;
 
+import com.android.launcher3.Flags;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
-import com.android.launcher3.views.ActivityContext;
 import com.android.quickstep.views.RecentsView;
 
 /**
@@ -39,20 +39,17 @@ public class OverviewModalTaskState extends OverviewState {
     }
 
     @Override
-    public int getTransitionDuration(ActivityContext launcher, boolean isToState) {
+    public int getTransitionDuration(Context launcher, boolean isToState) {
         return 300;
     }
 
     @Override
     public int getVisibleElements(Launcher launcher) {
-        return OVERVIEW_ACTIONS;
+        return OVERVIEW_ACTIONS | CLEAR_ALL_BUTTON;
     }
 
     @Override
     public float[] getOverviewScaleAndOffset(Launcher launcher) {
-        if (enableGridOnlyOverview()) {
-            return super.getOverviewScaleAndOffset(launcher);
-        }
         return getOverviewScaleAndOffsetForModalState(launcher.getOverviewPanel());
     }
 
@@ -68,7 +65,7 @@ public class OverviewModalTaskState extends OverviewState {
 
     @Override
     public boolean isTaskbarStashed(Launcher launcher) {
-        if (enableGridOnlyOverview()) {
+        if (Flags.enableGridOnlyOverview()) {
             return true;
         }
         return super.isTaskbarStashed(launcher);

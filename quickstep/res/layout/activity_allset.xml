@@ -29,6 +29,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:scaleType="centerCrop"
+        app:lottie_autoPlay="true"
         app:lottie_loop="true"
 
         app:layout_constraintTop_toTopOf="parent"
@@ -48,10 +49,11 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/content"
+            android:id="@+id/text_content_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/allset_page_padding_horizontal"
+            android:layout_marginStart="@dimen/allset_page_margin_horizontal"
+            android:layout_marginEnd="@dimen/allset_page_margin_horizontal"
             android:layoutDirection="locale"
             android:textDirection="locale"
             android:forceHasOverlappingRendering="false"
@@ -94,6 +96,7 @@
                 style="@style/TextAppearance.GestureTutorial.Feedback.Subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/allset_hint"
                 android:textSize="@dimen/allset_page_swipe_up_text_size"
                 android:gravity="center_horizontal"
 

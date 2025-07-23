@@ -23,6 +23,7 @@ import android.os.UserHandle;
 
 import androidx.annotation.NonNull;
 
+import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel.ModelUpdateTask;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
@@ -54,7 +55,8 @@ public class UserLockStateChangedTask implements ModelUpdateTask {
     @Override
     public void execute(@NonNull ModelTaskController taskController, @NonNull BgDataModel dataModel,
             @NonNull AllAppsList apps) {
-        Context context = taskController.getContext();
+        LauncherAppState app = taskController.getApp();
+        Context context = app.getContext();
 
         HashMap<ShortcutKey, ShortcutInfo> pinnedShortcuts = new HashMap<>();
         if (mIsUserUnlocked) {
@@ -90,7 +92,7 @@ public class UserLockStateChangedTask implements ModelUpdateTask {
                         }
                         si.runtimeStatusFlags &= ~FLAG_DISABLED_LOCKED_USER;
                         si.updateFromDeepShortcutInfo(shortcut, context);
-                        taskController.getIconCache().getShortcutIcon(si, shortcut);
+                        app.getIconCache().getShortcutIcon(si, shortcut);
                     } else {
                         si.runtimeStatusFlags |= FLAG_DISABLED_LOCKED_USER;
                     }

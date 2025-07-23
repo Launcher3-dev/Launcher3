@@ -25,7 +25,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.android.launcher3.Flags;
 import com.android.launcher3.LauncherSettings;
@@ -36,7 +35,6 @@ import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.shortcuts.ShortcutKey;
 import com.android.launcher3.util.ApiWrapper;
 import com.android.launcher3.util.ContentWriter;
-import com.android.wm.shell.shared.bubbles.BubbleAnythingFlagHelper;
 
 import java.util.Arrays;
 
@@ -99,8 +97,6 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
 
     public int options;
 
-    @Nullable
-    private ShortcutInfo mShortcutInfo = null;
 
     public WorkspaceItemInfo() {
         itemType = LauncherSettings.Favorites.ITEM_TYPE_APPLICATION;
@@ -143,7 +139,7 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
                 .put(Favorites.OPTIONS, options)
                 .put(Favorites.RESTORED, status);
 
-        if (!getMatchingLookupFlag().useLowRes()) {
+        if (!usingLowResIcon()) {
             writer.putIcon(bitmap, user);
         }
     }
@@ -179,9 +175,6 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
 
     public void updateFromDeepShortcutInfo(@NonNull final ShortcutInfo shortcutInfo,
             @NonNull final Context context) {
-        if (BubbleAnythingFlagHelper.enableCreateAnyBubble()) {
-            mShortcutInfo = shortcutInfo;
-        }
         // {@link ShortcutInfo#getActivity} can change during an update. Recreate the intent
         intent = ShortcutKey.makeIntent(shortcutInfo);
         title = shortcutInfo.getShortLabel();
@@ -190,13 +183,7 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
         if (TextUtils.isEmpty(label)) {
             label = shortcutInfo.getShortLabel();
         }
-        try {
-            contentDescription = context.getPackageManager().getUserBadgedLabel(label, user);
-        } catch (SecurityException e) {
-            contentDescription = null;
-            Log.e(TAG, "Failed to get content description", e);
-        }
-
+        contentDescription = context.getPackageManager().getUserBadgedLabel(label, user);
         if (shortcutInfo.isEnabled()) {
             runtimeStatusFlags &= ~FLAG_DISABLED_BY_PUBLISHER;
         } else {
@@ -215,11 +202,6 @@ public class WorkspaceItemInfo extends ItemInfoWithIcon {
         Person[] persons = ApiWrapper.INSTANCE.get(context).getPersons(shortcutInfo);
         personKeys = persons.length == 0 ? Utilities.EMPTY_STRING_ARRAY
             : Arrays.stream(persons).map(Person::getKey).sorted().toArray(String[]::new);
-    }
-
-    @Nullable
-    public ShortcutInfo getDeepShortcutInfo() {
-        return mShortcutInfo;
     }
 
     /**

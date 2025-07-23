@@ -15,6 +15,8 @@
  */
 package com.android.quickstep.interaction;
 
+import static com.android.launcher3.config.FeatureFlags.ENABLE_NEW_GESTURE_NAV_TUTORIAL;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
@@ -29,9 +31,9 @@ import android.view.ViewGroup.LayoutParams;
 
 import androidx.annotation.Nullable;
 
-import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.testing.shared.ResourceUtils;
+import com.android.launcher3.util.DisplayController;
 
 /**
  * Utility class to handle edge swipes for back gestures.
@@ -45,7 +47,6 @@ public class EdgeBackGestureHandler implements OnTouchListener {
             "gestures.back_timeout", 250);
 
     private final Context mContext;
-    private final DeviceProfile mDeviceProfile;
 
     private final Point mDisplaySize = new Point();
 
@@ -90,10 +91,9 @@ public class EdgeBackGestureHandler implements OnTouchListener {
                 }
             };
 
-    EdgeBackGestureHandler(Context context, DeviceProfile deviceProfile) {
+    EdgeBackGestureHandler(Context context) {
         final Resources res = context.getResources();
         mContext = context;
-        mDeviceProfile = deviceProfile;
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         mLongPressTimeout = Math.min(MAX_LONG_PRESS_TIMEOUT,
@@ -118,7 +118,8 @@ public class EdgeBackGestureHandler implements OnTouchListener {
             // Add a nav bar panel window.
             mEdgeBackPanel = new EdgeBackGesturePanel(mContext, parent, createLayoutParams());
             mEdgeBackPanel.setBackCallback(mBackCallback);
-            mDisplaySize.set(mDeviceProfile.widthPx, mDeviceProfile.heightPx);
+            Point currentSize = DisplayController.INSTANCE.get(mContext).getInfo().currentSize;
+            mDisplaySize.set(currentSize.x, currentSize.y);
             mEdgeBackPanel.setDisplaySize(mDisplaySize);
         }
     }
@@ -210,8 +211,10 @@ public class EdgeBackGestureHandler implements OnTouchListener {
                 }
             }
 
-            mGestureCallback.onBackGestureProgress(ev.getX() - mDownPoint.x,
-                    ev.getY() - mDownPoint.y, mEdgeBackPanel.getIsLeftPanel());
+            if (ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()) {
+                mGestureCallback.onBackGestureProgress(ev.getX() - mDownPoint.x,
+                        ev.getY() - mDownPoint.y, mEdgeBackPanel.getIsLeftPanel());
+            }
 
             // forward touch
             mEdgeBackPanel.onMotionEvent(ev);

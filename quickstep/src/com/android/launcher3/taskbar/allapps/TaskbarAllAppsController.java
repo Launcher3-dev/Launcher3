@@ -35,6 +35,7 @@ import com.android.launcher3.util.PackageUserKey;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 /**
  * Handles the all apps overlay window initialization, updates, and its data.
  * <p>
@@ -119,6 +120,13 @@ public final class TaskbarAllAppsController {
         mZeroStateSearchSuggestions = zeroStateSearchSuggestions;
     }
 
+    /** Updates the current notification dots. */
+    public void updateNotificationDots(Predicate<PackageUserKey> updatedDots) {
+        if (mAppsView != null) {
+            mAppsView.getAppsStore().updateNotificationDots(updatedDots);
+        }
+    }
+
     /** Toggles visibility of {@link TaskbarAllAppsContainerView} in the overlay window. */
     public void toggle() {
         toggle(false);
@@ -133,7 +141,6 @@ public final class TaskbarAllAppsController {
         if (isOpen()) {
             mSlideInView.close(true);
         } else {
-            mControllers.taskbarPopupController.maybeCloseMultiInstanceMenu();
             show(true, showKeyboard);
         }
     }
@@ -208,11 +215,6 @@ public final class TaskbarAllAppsController {
         }
         mSlideInView = null;
         mAppsView = null;
-    }
-
-    @Nullable
-    public TaskbarAllAppsContainerView getAppsView() {
-        return mAppsView;
     }
 
     @VisibleForTesting

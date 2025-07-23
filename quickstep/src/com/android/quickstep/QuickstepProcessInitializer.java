@@ -25,7 +25,6 @@ import android.view.ThreadedRenderer;
 
 import com.android.launcher3.BuildConfig;
 import com.android.launcher3.MainProcessInitializer;
-import com.android.quickstep.util.QuickstepProtoLogGroup;
 import com.android.systemui.shared.system.InteractionJankMonitorWrapper;
 
 @SuppressWarnings("unused")
@@ -67,10 +66,7 @@ public class QuickstepProcessInitializer extends MainProcessInitializer {
 
         if (BuildConfig.IS_STUDIO_BUILD) {
             BinderTracker.startTracking(call ->  Log.e("BinderCall",
-                    call.descriptor + " called on main thread under " + call.activeTrace
-                            + " stackTrace: " + call.stackTrace));
+                    call.descriptor + " called on mainthread under " + call.activeTrace));
         }
-
-        QuickstepProtoLogGroup.initProtoLog();
     }
 }

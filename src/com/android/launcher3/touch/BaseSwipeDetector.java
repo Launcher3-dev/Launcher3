@@ -17,8 +17,6 @@ package com.android.launcher3.touch;
 
 import static android.view.MotionEvent.INVALID_POINTER_ID;
 
-import static com.android.launcher3.MotionEventsUtils.isTrackpadMotionEvent;
-
 import android.content.Context;
 import android.graphics.PointF;
 import android.util.Log;
@@ -66,7 +64,6 @@ public abstract class BaseSwipeDetector {
     protected PointF mSubtractDisplacement = new PointF();
     @VisibleForTesting ScrollState mState = ScrollState.IDLE;
     private boolean mIsSettingState;
-    protected boolean mIsTrackpadGesture;
 
     protected boolean mIgnoreSlopWhenSettling;
     protected Context mContext;
@@ -125,10 +122,6 @@ public abstract class BaseSwipeDetector {
         return mState == ScrollState.DRAGGING || mState == ScrollState.SETTLING;
     }
 
-    public boolean isTrackpadGesture() {
-        return mIsTrackpadGesture;
-    }
-
     public void finishedScrolling() {
         setState(ScrollState.IDLE);
     }
@@ -154,7 +147,7 @@ public abstract class BaseSwipeDetector {
                 mLastPos.set(mDownPos);
                 mLastDisplacement.set(0, 0);
                 mDisplacement.set(0, 0);
-                mIsTrackpadGesture = isTrackpadMotionEvent(ev);
+
                 if (mState == ScrollState.SETTLING && mIgnoreSlopWhenSettling) {
                     setState(ScrollState.DRAGGING);
                 }

@@ -20,19 +20,16 @@ import static android.text.TextUtils.isEmpty;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 
-import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION;
-import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APP_PAIR;
-import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
 import static com.android.launcher3.logger.LauncherAtom.Attribute.EMPTY_LABEL;
 import static com.android.launcher3.logger.LauncherAtom.Attribute.MANUAL_LABEL;
 import static com.android.launcher3.logger.LauncherAtom.Attribute.SUGGESTED_LABEL;
-
-import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.Utilities;
+import com.android.launcher3.folder.Folder;
 import com.android.launcher3.folder.FolderNameInfos;
 import com.android.launcher3.logger.LauncherAtom;
 import com.android.launcher3.logger.LauncherAtom.Attribute;
@@ -43,6 +40,8 @@ import com.android.launcher3.model.ModelWriter;
 import com.android.launcher3.util.ContentWriter;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
@@ -50,6 +49,18 @@ import java.util.stream.IntStream;
  * Represents a folder containing shortcuts or apps.
  */
 public class FolderInfo extends CollectionInfo {
+
+    public static final int NO_FLAGS = 0x00000000;
+
+    /**
+     * The folder is locked in sorted mode
+     */
+    public static final int FLAG_ITEMS_SORTED = 0x00000001;
+
+    /**
+     * It is a work folder
+     */
+    public static final int FLAG_WORK_FOLDER = 0x00000002;
 
     /**
      * The multi-page animation has run for this folder
@@ -82,6 +93,8 @@ public class FolderInfo extends CollectionInfo {
         }
     }
 
+    public static final String EXTRA_FOLDER_SUGGESTIONS = "suggest";
+
     public int options;
 
     public FolderNameInfos suggestedFolderNames;
@@ -91,20 +104,65 @@ public class FolderInfo extends CollectionInfo {
      */
     private final ArrayList<ItemInfo> contents = new ArrayList<>();
 
+    private ArrayList<FolderListener> mListeners = new ArrayList<>();
+
     public FolderInfo() {
         itemType = LauncherSettings.Favorites.ITEM_TYPE_FOLDER;
     }
 
+    /** Adds a app or shortcut to the contents ArrayList without animation. */
     @Override
     public void add(@NonNull ItemInfo item) {
-        if (!willAcceptItemType(item.itemType)) {
-            throw new RuntimeException("tried to add an illegal type into a folder");
-        }
-        getContents().add(item);
+        add(item, false /* animate */);
     }
 
     /**
-     * Returns the folder's contents as an unsorted ArrayList of {@link ItemInfo}. Includes
+     * Add an app or shortcut
+     *
+     * @param item
+     */
+    public void add(ItemInfo item, boolean animate) {
+        add(item, getContents().size(), animate);
+    }
+
+    /**
+     * Add an app or shortcut for a specified rank.
+     */
+    public void add(ItemInfo item, int rank, boolean animate) {
+        if (!Folder.willAccept(item)) {
+            throw new RuntimeException("tried to add an illegal type into a folder");
+        }
+
+        rank = Utilities.boundToRange(rank, 0, getContents().size());
+        getContents().add(rank, item);
+        for (int i = 0; i < mListeners.size(); i++) {
+            mListeners.get(i).onAdd(item, rank);
+        }
+        itemsChanged(animate);
+    }
+
+    /**
+     * Remove an app or shortcut. Does not change the DB.
+     *
+     * @param item
+     */
+    public void remove(ItemInfo item, boolean animate) {
+        removeAll(Collections.singletonList(item), animate);
+    }
+
+    /**
+     * Remove all matching app or shortcut. Does not change the DB.
+     */
+    public void removeAll(List<ItemInfo> items, boolean animate) {
+        contents.removeAll(items);
+        for (int i = 0; i < mListeners.size(); i++) {
+            mListeners.get(i).onRemove(items);
+        }
+        itemsChanged(animate);
+    }
+
+    /**
+     * Returns the folder's contents as an ArrayList of {@link ItemInfo}. Includes
      * {@link WorkspaceItemInfo} and {@link AppPairInfo}s.
      */
     @NonNull
@@ -137,6 +195,28 @@ public class FolderInfo extends CollectionInfo {
         writer.put(LauncherSettings.Favorites.OPTIONS, options);
     }
 
+    public void addListener(FolderListener listener) {
+        mListeners.add(listener);
+    }
+
+    public void removeListener(FolderListener listener) {
+        mListeners.remove(listener);
+    }
+
+    public void itemsChanged(boolean animate) {
+        for (int i = 0; i < mListeners.size(); i++) {
+            mListeners.get(i).onItemsChanged(animate);
+        }
+    }
+
+    public interface FolderListener {
+        void onAdd(ItemInfo item, int rank);
+        void onRemove(List<ItemInfo> item);
+        void onItemsChanged(boolean animate);
+        void onTitleChanged(CharSequence title);
+
+    }
+
     public boolean hasOption(int optionFlag) {
         return (options & optionFlag) != 0;
     }
@@ -165,13 +245,13 @@ public class FolderInfo extends CollectionInfo {
 
     @NonNull
     @Override
-    public LauncherAtom.ItemInfo buildProto(@Nullable CollectionInfo cInfo, Context context) {
+    public LauncherAtom.ItemInfo buildProto(@Nullable CollectionInfo cInfo) {
         FolderIcon.Builder folderIcon = FolderIcon.newBuilder()
                 .setCardinality(getContents().size());
         if (LabelState.SUGGESTED.equals(getLabelState())) {
             folderIcon.setLabelInfo(title.toString());
         }
-        return getDefaultItemInfoBuilder(context)
+        return getDefaultItemInfoBuilder()
                 .setFolderIcon(folderIcon)
                 .setRank(rank)
                 .addItemAttributes(getLabelState().mLogAttribute)
@@ -179,6 +259,7 @@ public class FolderInfo extends CollectionInfo {
                 .build();
     }
 
+    @Override
     public void setTitle(@Nullable CharSequence title, ModelWriter modelWriter) {
         // Updating label from null to empty is considered as false touch.
         // Retaining null title(ie., UNLABELED state) allows auto-labeling when new items added.
@@ -205,6 +286,10 @@ public class FolderInfo extends CollectionInfo {
         }
         if (modelWriter != null) {
             modelWriter.updateItemInDatabase(this);
+        }
+
+        for (int i = 0; i < mListeners.size(); i++) {
+            mListeners.get(i).onTitleChanged(title);
         }
     }
 
@@ -313,14 +398,5 @@ public class FolderInfo extends CollectionInfo {
                 // fall through
         }
         return LauncherAtom.ToState.TO_STATE_UNSPECIFIED;
-    }
-
-    /**
-     * Checks if {@code itemType} is a type that can be placed in folders.
-     */
-    public static boolean willAcceptItemType(int itemType) {
-        return itemType == ITEM_TYPE_APPLICATION
-                || itemType == ITEM_TYPE_DEEP_SHORTCUT
-                || itemType == ITEM_TYPE_APP_PAIR;
     }
 }

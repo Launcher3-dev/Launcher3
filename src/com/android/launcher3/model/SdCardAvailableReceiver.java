@@ -22,8 +22,9 @@ import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.os.UserHandle;
 
+import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
-import com.android.launcher3.util.ApplicationInfoWrapper;
+import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.PackageUserKey;
 
 import java.util.ArrayList;
@@ -42,16 +43,16 @@ public class SdCardAvailableReceiver extends BroadcastReceiver {
     private final Context mContext;
     private final Set<PackageUserKey> mPackages;
 
-    public SdCardAvailableReceiver(
-            Context context, LauncherModel model, Set<PackageUserKey> packages) {
-        mContext = context;
-        mModel = model;
+    public SdCardAvailableReceiver(LauncherAppState app, Set<PackageUserKey> packages) {
+        mModel = app.getModel();
+        mContext = app.getContext();
         mPackages = packages;
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
         final LauncherApps launcherApps = context.getSystemService(LauncherApps.class);
+        final PackageManagerHelper pmHelper = PackageManagerHelper.INSTANCE.get(context);
         for (PackageUserKey puk : mPackages) {
             UserHandle user = puk.mUser;
 
@@ -59,7 +60,7 @@ public class SdCardAvailableReceiver extends BroadcastReceiver {
             final ArrayList<String> packagesUnavailable = new ArrayList<>();
 
             if (!launcherApps.isPackageEnabled(puk.mPackageName, user)) {
-                if (new ApplicationInfoWrapper(context, puk.mPackageName, user).isOnSdCard()) {
+                if (pmHelper.isAppOnSdcard(puk.mPackageName, user)) {
                     packagesUnavailable.add(puk.mPackageName);
                 } else {
                     packagesRemoved.add(puk.mPackageName);

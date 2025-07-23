@@ -48,8 +48,8 @@ public class ComponentKey {
 
     @Override
     public boolean equals(Object o) {
-        return (o instanceof ComponentKey other)
-                && other.componentName.equals(componentName) && other.user.equals(user);
+        ComponentKey other = (ComponentKey) o;
+        return other.componentName.equals(componentName) && other.user.equals(user);
     }
 
     /**

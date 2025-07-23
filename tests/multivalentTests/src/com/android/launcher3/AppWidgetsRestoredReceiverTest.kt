@@ -6,7 +6,7 @@ import android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS
 import android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_OLD_IDS
 import android.appwidget.AppWidgetManager.EXTRA_HOST_ID
 import android.content.Intent
-import android.platform.uiautomatorhelpers.DeviceHelpers
+import android.platform.uiautomator_helpers.DeviceHelpers
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.android.launcher3.LauncherPrefs.Companion.APP_WIDGET_IDS
@@ -29,7 +29,7 @@ class AppWidgetsRestoredReceiverTest {
 
     @Before
     fun setup() {
-        launcherPrefs = LauncherPrefs.get(DeviceHelpers.context)
+        launcherPrefs = LauncherPrefs(DeviceHelpers.context)
         receiverUnderTest = AppWidgetsRestoredReceiver()
     }
 

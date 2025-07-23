@@ -31,7 +31,7 @@
       android:layout_height="@dimen/system_shortcut_icon_size"
       android:layout_marginStart="@dimen/task_menu_option_start_margin"
       android:layout_gravity="center_horizontal"
-      android:backgroundTint="@color/materialColorOnSurface"/>
+      android:backgroundTint="@color/system_on_surface_dark_launcher"/>
 
     <TextView
         style="@style/BaseIcon"
@@ -40,7 +40,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/task_menu_option_text_start_margin"
         android:textSize="14sp"
-        android:textColor="@color/materialColorOnSurface"
+        android:textColor="@color/system_on_surface_dark_launcher"
         android:focusable="false"
         android:gravity="start"
         android:ellipsize="end" />

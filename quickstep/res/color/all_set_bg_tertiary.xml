@@ -15,5 +15,5 @@
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
-    <item android:color="@color/materialColorTertiary"/>
+    <item android:color="@*android:color/system_tertiary_light"/>
 </selector>

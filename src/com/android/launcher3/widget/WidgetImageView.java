@@ -24,8 +24,6 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.android.launcher3.icons.RoundDrawableWrapper;
-
 /**
  * View that draws a bitmap horizontally centered. If the image width is greater than the view
  * width, the image is scaled down appropriately.
@@ -86,11 +84,6 @@ public class WidgetImageView extends View {
         // avoid cropping the previews
         final float scale = bitmapAspectRatio > containerAspectRatio ? myWidth / bitmapWidth
                 : myHeight / bitmapHeight;
-
-        // When updating the scale, also update scale on drawable if it has rounding.
-        if (mDrawable instanceof RoundDrawableWrapper && scale <= 1) {
-            ((RoundDrawableWrapper) mDrawable).setCornerRadiusScale(scale);
-        }
 
         final float scaledWidth = bitmapWidth * scale;
         final float scaledHeight = bitmapHeight * scale;

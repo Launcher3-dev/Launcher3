@@ -18,9 +18,10 @@ package com.android.launcher3.util;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.launcher3.util.MainThreadInitializedObject.SandboxContext;
+
 import android.content.ContextWrapper;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -28,11 +29,9 @@ import com.android.launcher3.allapps.ActivityAllAppsContainerView;
 import com.android.launcher3.allapps.AllAppsStore;
 import com.android.launcher3.allapps.AlphabeticalAppsList;
 import com.android.launcher3.model.BgDataModel;
-import com.android.launcher3.model.WidgetsFilterDataProvider;
 import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.popup.PopupDataProvider;
-import com.android.launcher3.widget.picker.model.WidgetPickerDataProvider;
 
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -44,7 +43,7 @@ import java.util.concurrent.CountDownLatch;
  * There are 2 constructors in this class. The base context can be {@link SandboxContext} or
  * Instrumentation target context.
  * Using {@link SandboxContext} as base context allows custom implementations for
- * providing objects in Dagger components.
+ * MainThreadInitializedObject providers.
  */
 
 public class TestSandboxModelContextWrapper extends ActivityContextWrapper implements
@@ -57,14 +56,12 @@ public class TestSandboxModelContextWrapper extends ActivityContextWrapper imple
 
     protected ActivityAllAppsContainerView<ActivityContextWrapper> mAppsView;
 
-    private final PopupDataProvider mPopupDataProvider = new PopupDataProvider(this);
-    private final WidgetPickerDataProvider mWidgetPickerDataProvider =
-            new WidgetPickerDataProvider(new WidgetsFilterDataProvider());
+    private final PopupDataProvider mPopupDataProvider = new PopupDataProvider(i -> {});
     protected final UserCache mUserCache;
 
     public TestSandboxModelContextWrapper(SandboxContext base) {
         super(base);
-        mUserCache = UserCache.getInstance(base);
+        mUserCache = base.getObject(UserCache.INSTANCE);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
                 mAppsView = new ActivityAllAppsContainerView<>(this));
         mAppsList = mAppsView.getPersonalAppList();
@@ -79,17 +76,10 @@ public class TestSandboxModelContextWrapper extends ActivityContextWrapper imple
         mAppsList = mAppsView.getPersonalAppList();
         mAllAppsStore = mAppsView.getAppsStore();
     }
-
-    @NonNull
+    @Nullable
     @Override
     public PopupDataProvider getPopupDataProvider() {
         return mPopupDataProvider;
-    }
-
-    @Nullable
-    @Override
-    public WidgetPickerDataProvider getWidgetPickerDataProvider() {
-        return mWidgetPickerDataProvider;
     }
 
     @Override

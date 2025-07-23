@@ -36,8 +36,6 @@ class SlideInRemoteTransition(
     private val pageSpacing: Int,
     private val cornerRadius: Float,
     private val interpolator: TimeInterpolator,
-    private val onStartCallback: Runnable,
-    private val onFinishCallback: Runnable,
 ) : RemoteTransitionStub() {
     private val animationDurationMs = 500L
 
@@ -70,7 +68,6 @@ class SlideInRemoteTransition(
                 startT.setCrop(leash, chg.endAbsBounds).setCornerRadius(leash, cornerRadius)
             }
         }
-        onStartCallback.run()
         startT.apply()
 
         anim.addUpdateListener {
@@ -100,7 +97,6 @@ class SlideInRemoteTransition(
                     val t = Transaction()
                     try {
                         finishCB.onTransitionFinished(null, t)
-                        onFinishCallback.run()
                     } catch (e: RemoteException) {
                         // Ignore
                     }

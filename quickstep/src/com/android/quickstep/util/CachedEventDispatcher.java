@@ -63,11 +63,6 @@ public class CachedEventDispatcher {
         mLastEvent = null;
     }
 
-    /** Clear the consumer. */
-    public void clearConsumer() {
-        mConsumer = null;
-    }
-
     public boolean hasConsumer() {
         return mConsumer != null;
     }

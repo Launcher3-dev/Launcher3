@@ -15,9 +15,6 @@
  */
 package com.android.launcher3.secondarydisplay;
 
-import static com.android.launcher3.util.WallpaperThemeManager.setWallpaperDependentTheme;
-import static com.android.window.flags.Flags.enableTaskbarConnectedDisplays;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
@@ -29,11 +26,10 @@ import android.view.View.OnClickListener;
 import android.view.ViewAnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 
 import com.android.launcher3.AbstractFloatingView;
-import com.android.launcher3.BaseActivity;
+import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.DragSource;
 import com.android.launcher3.DropTarget;
@@ -58,6 +54,7 @@ import com.android.launcher3.popup.PopupContainerWithArrow;
 import com.android.launcher3.popup.PopupDataProvider;
 import com.android.launcher3.touch.ItemClickHandler.ItemClickProxy;
 import com.android.launcher3.util.ComponentKey;
+import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.Themes;
@@ -69,7 +66,7 @@ import java.util.Map;
 /**
  * Launcher activity for secondary displays
  */
-public class SecondaryDisplayLauncher extends BaseActivity
+public class SecondaryDisplayLauncher extends BaseDraggingActivity
         implements BgDataModel.Callbacks, DragController.DragListener {
 
     private LauncherModel mModel;
@@ -83,6 +80,7 @@ public class SecondaryDisplayLauncher extends BaseActivity
     private boolean mAppDrawerShown = false;
 
     private StringCache mStringCache;
+    private boolean mBindingItems = false;
     private SecondaryDisplayPredictions mSecondaryDisplayPredictions;
 
     private final int[] mTempXY = new int[2];
@@ -90,26 +88,49 @@ public class SecondaryDisplayLauncher extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setWallpaperDependentTheme(this);
         mModel = LauncherAppState.getInstance(this).getModel();
         mDragController = new SecondaryDragController(this);
         mSecondaryDisplayPredictions = SecondaryDisplayPredictions.newInstance(this);
+        if (getWindow().getDecorView().isAttachedToWindow()) {
+            initUi();
+        }
+    }
 
-        mDeviceProfile = InvariantDeviceProfile.INSTANCE.get(this)
-                .createDeviceProfileForSecondaryDisplay(this);
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        initUi();
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        this.getDragController().removeDragListener(this);
+    }
+
+    private void initUi() {
+        if (mDragLayer != null) {
+            return;
+        }
+        InvariantDeviceProfile currentDisplayIdp = new InvariantDeviceProfile(
+                this, getWindow().getDecorView().getDisplay());
+
+        // Disable transpose layout and use multi-window mode so that the icons are scaled properly
+        mDeviceProfile = currentDisplayIdp.getDeviceProfile(this)
+                .toBuilder(this)
+                .setMultiWindowMode(true)
+                .setTransposeLayoutWithOrientation(false)
+                .build();
         mDeviceProfile.autoResizeAllAppsCells();
 
         setContentView(R.layout.secondary_launcher);
         mDragLayer = findViewById(R.id.drag_layer);
         mAppsView = findViewById(R.id.apps_view);
         mAppsButton = findViewById(R.id.all_apps_button);
-        // TODO (b/391965805): Replace this flag with DesktopExperiences flag.
-        if (enableTaskbarConnectedDisplays()) {
-            mAppsButton.setVisibility(View.INVISIBLE);
-        }
 
         mDragController.addDragListener(this);
-        mPopupDataProvider = new PopupDataProvider(this);
+        mPopupDataProvider = new PopupDataProvider(
+                mAppsView.getAppsStore()::updateNotificationDots);
 
         mModel.addCallbacksAndLoad(this);
     }
@@ -179,6 +200,14 @@ public class SecondaryDisplayLauncher extends BaseActivity
     }
 
     @Override
+    public View getRootView() {
+        return mDragLayer;
+    }
+
+    @Override
+    protected void reapplyUi() { }
+
+    @Override
     public BaseDragLayer getDragLayer() {
         return mDragLayer;
     }
@@ -225,9 +254,7 @@ public class SecondaryDisplayLauncher extends BaseActivity
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     mAppsView.setVisibility(View.INVISIBLE);
-                    // TODO (b/391965805): Replace this flag with DesktopExperiences flag.
-                    mAppsButton.setVisibility(
-                            enableTaskbarConnectedDisplays() ? View.INVISIBLE : View.VISIBLE);
+                    mAppsButton.setVisibility(View.VISIBLE);
                     mAppsView.getSearchUiManager().resetSearch();
                 }
             });
@@ -237,7 +264,18 @@ public class SecondaryDisplayLauncher extends BaseActivity
 
     @Override
     public void startBinding() {
+        mBindingItems = true;
         mDragController.cancelDrag();
+    }
+
+    @Override
+    public boolean isBindingItems() {
+        return mBindingItems;
+    }
+
+    @Override
+    public void finishBindingItems(IntSet pagesBoundFirst) {
+        mBindingItems = false;
     }
 
     @Override
@@ -272,8 +310,6 @@ public class SecondaryDisplayLauncher extends BaseActivity
         mStringCache = cache;
     }
 
-    @Override
-    @NonNull
     public PopupDataProvider getPopupDataProvider() {
         return mPopupDataProvider;
     }

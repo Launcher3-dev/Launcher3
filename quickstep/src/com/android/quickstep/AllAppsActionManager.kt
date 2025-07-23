@@ -21,15 +21,9 @@ import android.app.PendingIntent
 import android.app.RemoteAction
 import android.content.Context
 import android.graphics.drawable.Icon
-import android.provider.Settings
-import android.provider.Settings.Secure.USER_SETUP_COMPLETE
 import android.view.accessibility.AccessibilityManager
 import com.android.launcher3.R
-import com.android.launcher3.util.SettingsCache
-import com.android.launcher3.util.SettingsCache.OnChangeListener
 import java.util.concurrent.Executor
-
-private val USER_SETUP_COMPLETE_URI = Settings.Secure.getUriFor(USER_SETUP_COMPLETE)
 
 /**
  * Registers a [RemoteAction] for toggling All Apps if needed.
@@ -43,12 +37,6 @@ class AllAppsActionManager(
     private val bgExecutor: Executor,
     private val createAllAppsPendingIntent: () -> PendingIntent,
 ) {
-
-    private val onSettingsChangeListener = OnChangeListener { v -> isUserSetupComplete = v }
-
-    init {
-        SettingsCache.INSTANCE[context].register(USER_SETUP_COMPLETE_URI, onSettingsChangeListener)
-    }
 
     /** `true` if home and overview are the same Activity. */
     var isHomeAndOverviewSame = false
@@ -64,27 +52,12 @@ class AllAppsActionManager(
             updateSystemAction()
         }
 
-    /** `true` if the setup UI is visible. */
-    var isSetupUiVisible = false
-        set(value) {
-            field = value
-            updateSystemAction()
-        }
-
-    private var isUserSetupComplete =
-        SettingsCache.INSTANCE[context].getValue(USER_SETUP_COMPLETE_URI, 0)
-        set(value) {
-            field = value
-            updateSystemAction()
-        }
-
     /** `true` if the action should be registered. */
     var isActionRegistered = false
         private set
 
     private fun updateSystemAction() {
-        val isInSetupFlow = isSetupUiVisible || !isUserSetupComplete
-        val shouldRegisterAction = (isHomeAndOverviewSame || isTaskbarPresent) && !isInSetupFlow
+        val shouldRegisterAction = isHomeAndOverviewSame || isTaskbarPresent
         if (isActionRegistered == shouldRegisterAction) return
         isActionRegistered = shouldRegisterAction
 
@@ -111,10 +84,8 @@ class AllAppsActionManager(
         isActionRegistered = false
         context
             .getSystemService(AccessibilityManager::class.java)
-            ?.unregisterSystemAction(GLOBAL_ACTION_ACCESSIBILITY_ALL_APPS)
-        SettingsCache.INSTANCE[context].unregister(
-            USER_SETUP_COMPLETE_URI,
-            onSettingsChangeListener,
-        )
+            ?.unregisterSystemAction(
+                GLOBAL_ACTION_ACCESSIBILITY_ALL_APPS,
+            )
     }
 }

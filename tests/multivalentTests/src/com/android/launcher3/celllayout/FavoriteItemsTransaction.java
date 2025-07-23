@@ -15,13 +15,13 @@
  */
 package com.android.launcher3.celllayout;
 
+import static com.android.launcher3.LauncherSettings.Favorites.TABLE_NAME;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 import static com.android.launcher3.util.TestUtil.runOnExecutorSync;
 
 import android.content.Context;
 
-import com.android.launcher3.Flags;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherSettings;
@@ -59,13 +59,7 @@ public class FavoriteItemsTransaction {
         runOnExecutorSync(MODEL_EXECUTOR, () -> {
             ModelDbController controller = model.getModelDbController();
             // Migrate any previous data so that the DB state is correct
-            if (Flags.gridMigrationRefactor()) {
-                controller.attemptMigrateDb(
-                        null /* restoreEventLogger */, model.getModelDelegate());
-            } else {
-                controller.tryMigrateDB(null /* restoreEventLogger */,
-                        model.getModelDelegate());
-            }
+            controller.tryMigrateDB(null /* restoreEventLogger */);
 
             // Create DB again to load fresh data
             controller.createEmptyDB();
@@ -88,7 +82,7 @@ public class FavoriteItemsTransaction {
 
                     item.onAddToDatabase(writer);
                     writer.put(LauncherSettings.Favorites._ID, i);
-                    controller.insert(writer.getValues(mContext));
+                    controller.insert(TABLE_NAME, writer.getValues(mContext));
                 }
 
                 for (int i = 0; i < containerItems.size(); i++) {
@@ -96,7 +90,7 @@ public class FavoriteItemsTransaction {
                     ItemInfo item = containerItems.get(i);
                     item.onAddToDatabase(writer);
                     writer.put(LauncherSettings.Favorites._ID, count + i);
-                    controller.insert(writer.getValues(mContext));
+                    controller.insert(TABLE_NAME, writer.getValues(mContext));
                 }
                 transaction.commit();
             }

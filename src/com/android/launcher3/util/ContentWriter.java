@@ -23,6 +23,7 @@ import android.os.UserHandle;
 
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.icons.BitmapInfo;
 import com.android.launcher3.icons.GraphicsUtils;
 import com.android.launcher3.model.ModelDbController;
@@ -106,7 +107,7 @@ public class ContentWriter {
     public int commit() {
         if (mCommitParams != null) {
             return mCommitParams.mDbController.update(
-                    getValues(mContext),
+                    Favorites.TABLE_NAME, getValues(mContext),
                     mCommitParams.mWhere, mCommitParams.mSelectionArgs);
         }
         return 0;

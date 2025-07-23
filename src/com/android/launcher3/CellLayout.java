@@ -47,7 +47,6 @@ import android.view.View;
 import android.view.ViewDebug;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
@@ -72,15 +71,12 @@ import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.LauncherAppWidgetInfo;
 import com.android.launcher3.util.CellAndSpan;
 import com.android.launcher3.util.GridOccupancy;
-import com.android.launcher3.util.MSDLPlayerWrapper;
 import com.android.launcher3.util.MultiTranslateDelegate;
 import com.android.launcher3.util.ParcelableSparseArray;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.util.Thunk;
 import com.android.launcher3.views.ActivityContext;
 import com.android.launcher3.widget.LauncherAppWidgetHostView;
-
-import com.google.android.msdl.data.model.MSDLToken;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -90,7 +86,7 @@ import java.util.Stack;
 
 public class CellLayout extends ViewGroup {
     private static final String TAG = "CellLayout";
-    private static final boolean LOGD = true;
+    private static final boolean LOGD = false;
 
     /** The color of the "leave-behind" shape when a folder is opened from Hotseat. */
     private static final int FOLDER_LEAVE_BEHIND_COLOR = Color.argb(160, 245, 245, 245);
@@ -170,8 +166,6 @@ public class CellLayout extends ViewGroup {
     private final int[] mDragCellSpan = new int[2];
 
     private boolean mDragging = false;
-    public boolean mHasOnLayoutBeenCalled = false;
-    private boolean mPlayDragHaptics = false;
 
     private final TimeInterpolator mEaseOutInterpolator;
     protected final ShortcutAndWidgetContainer mShortcutsAndWidgets;
@@ -209,8 +203,6 @@ public class CellLayout extends ViewGroup {
 
     private static final Paint sPaint = new Paint();
 
-    private final MSDLPlayerWrapper mMSDLPlayerWrapper;
-
     // Related to accessible drag and drop
     DragAndDropAccessibilityDelegate mTouchHelper;
 
@@ -243,8 +235,6 @@ public class CellLayout extends ViewGroup {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CellLayout, defStyle, 0);
         mContainerType = a.getInteger(R.styleable.CellLayout_containerType, WORKSPACE);
         a.recycle();
-
-        mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(context);
 
         // A ViewGroup usually does not draw, but CellLayout needs to draw a rectangle to show
         // the user where a dragged item will land when dropped.
@@ -531,11 +521,9 @@ public class CellLayout extends ViewGroup {
 
         for (int i = 0; i < mDelegatedCellDrawings.size(); i++) {
             DelegatedCellDrawing cellDrawing = mDelegatedCellDrawings.get(i);
+            cellToPoint(cellDrawing.mDelegateCellX, cellDrawing.mDelegateCellY, mTempLocation);
             canvas.save();
-            if (cellDrawing.mDelegateCellX >= 0 && cellDrawing.mDelegateCellY >= 0) {
-                cellToPoint(cellDrawing.mDelegateCellX, cellDrawing.mDelegateCellY, mTempLocation);
-                canvas.translate(mTempLocation[0], mTempLocation[1]);
-            }
+            canvas.translate(mTempLocation[0], mTempLocation[1]);
             cellDrawing.drawUnderItem(canvas);
             canvas.restore();
         }
@@ -664,11 +652,9 @@ public class CellLayout extends ViewGroup {
 
         for (int i = 0; i < mDelegatedCellDrawings.size(); i++) {
             DelegatedCellDrawing bg = mDelegatedCellDrawings.get(i);
+            cellToPoint(bg.mDelegateCellX, bg.mDelegateCellY, mTempLocation);
             canvas.save();
-            if (bg.mDelegateCellX >= 0 && bg.mDelegateCellY >= 0) {
-                cellToPoint(bg.mDelegateCellX, bg.mDelegateCellY, mTempLocation);
-                canvas.translate(mTempLocation[0], mTempLocation[1]);
-            }
+            canvas.translate(mTempLocation[0], mTempLocation[1]);
             bg.drawOverItem(canvas);
             canvas.restore();
         }
@@ -786,12 +772,6 @@ public class CellLayout extends ViewGroup {
                 Log.d(TAG, "Adding view to ShortcutsAndWidgetsContainer: " + child);
             }
             mShortcutsAndWidgets.addView(child, index, lp);
-
-            // Whenever an app is added, if Accessibility service is enabled, focus on that app.
-            if (mActivity instanceof Launcher) {
-                child.setTag(R.id.perform_a11y_action_on_launcher_state_normal_tag,
-                        AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-            }
 
             if (markCells) markCellsAsOccupiedForView(child);
 
@@ -1029,7 +1009,6 @@ public class CellLayout extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        mHasOnLayoutBeenCalled = true; // b/349929393 - is the required call to onLayout not done?
         int left = getPaddingLeft();
         left += (int) Math.ceil(getUnusedHorizontalSpace() / 2f);
         int right = r - l - getPaddingRight();
@@ -1172,10 +1151,6 @@ public class CellLayout extends ViewGroup {
             DropTarget.DragObject dragObject) {
         if (mDragCell[0] != cellX || mDragCell[1] != cellY || mDragCellSpan[0] != spanX
                 || mDragCellSpan[1] != spanY) {
-            determineIfDragHapticsPlay();
-            if (mPlayDragHaptics && Flags.msdlFeedback()) {
-                mMSDLPlayerWrapper.playToken(MSDLToken.DRAG_INDICATOR_DISCRETE);
-            }
             mDragCell[0] = cellX;
             mDragCell[1] = cellY;
             mDragCellSpan[0] = spanX;
@@ -1198,14 +1173,6 @@ public class CellLayout extends ViewGroup {
                 dragObject.stateAnnouncer.announce(getItemMoveDescription(cellX, cellY));
             }
 
-        }
-    }
-
-    private void determineIfDragHapticsPlay() {
-        if (mDragCell[0] != -1 || mDragCell[1] != -1
-                || mDragCellSpan[0] != -1 || mDragCellSpan[1] != -1) {
-            // The nearest cell is known and we can play haptics
-            mPlayDragHaptics = true;
         }
     }
 
@@ -1810,7 +1777,6 @@ public class CellLayout extends ViewGroup {
      * @param child The child that is being dropped
      */
     void onDropChild(View child) {
-        mPlayDragHaptics = false;
         if (child != null) {
             CellLayoutLayoutParams
                     lp = (CellLayoutLayoutParams) child.getLayoutParams();
@@ -1838,19 +1804,13 @@ public class CellLayout extends ViewGroup {
                 + (int) Math.ceil(getUnusedHorizontalSpace() / 2f);
         final int vStartPadding = getPaddingTop();
 
-        int x = hStartPadding + (cellX * mBorderSpace.x) + (cellX * cellWidth)
-                + getTranslationXForCell(cellX, cellY);
+        int x = hStartPadding + (cellX * mBorderSpace.x) + (cellX * cellWidth);
         int y = vStartPadding + (cellY * mBorderSpace.y) + (cellY * cellHeight);
 
         int width = cellHSpan * cellWidth + ((cellHSpan - 1) * mBorderSpace.x);
         int height = cellVSpan * cellHeight + ((cellVSpan - 1) * mBorderSpace.y);
 
         resultRect.set(x, y, x + width, y + height);
-    }
-
-    /** Enables successors to provide an X adjustment for the cell. */
-    protected int getTranslationXForCell(int cellX, int cellY) {
-        return 0;
     }
 
     public void markCellsAsOccupiedForView(View view) {

@@ -24,10 +24,11 @@ import android.content.Context;
 import android.graphics.PointF;
 import android.view.MotionEvent;
 
+import com.android.launcher3.BaseActivity;
+import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.logger.LauncherAtom;
 import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
-import com.android.launcher3.views.ActivityContext;
 import com.android.quickstep.GestureState;
 import com.android.quickstep.InputConsumer;
 import com.android.quickstep.RecentsAnimationDeviceState;
@@ -43,12 +44,9 @@ public class OverviewWithoutFocusInputConsumer implements InputConsumer,
     private final TriggerSwipeUpTouchTracker mTriggerSwipeUpTracker;
     private final GestureState mGestureState;
 
-    public OverviewWithoutFocusInputConsumer(
-            Context context,
-            RecentsAnimationDeviceState deviceState,
-            GestureState gestureState,
-            InputMonitorCompat inputMonitor,
-            boolean disableHorizontalSwipe) {
+    public OverviewWithoutFocusInputConsumer(Context context,
+            RecentsAnimationDeviceState deviceState, GestureState gestureState,
+            InputMonitorCompat inputMonitor, boolean disableHorizontalSwipe) {
         mContext = context;
         mGestureState = gestureState;
         mInputMonitor = inputMonitor;
@@ -59,11 +57,6 @@ public class OverviewWithoutFocusInputConsumer implements InputConsumer,
     @Override
     public int getType() {
         return TYPE_OVERVIEW_WITHOUT_FOCUS;
-    }
-
-    @Override
-    public int getDisplayId() {
-        return mGestureState.getDisplayId();
     }
 
     @Override
@@ -87,7 +80,7 @@ public class OverviewWithoutFocusInputConsumer implements InputConsumer,
     @Override
     public void onSwipeUp(boolean wasFling, PointF finalVelocity) {
         startHomeIntentSafely(mContext, mGestureState.getHomeIntent(), null, TAG);
-        ActivityContext activity = ActivityContext.lookupContext(mContext);
+        BaseActivity activity = BaseDraggingActivity.fromContext(mContext);
         int state = (mGestureState != null && mGestureState.getEndTarget() != null)
                 ? mGestureState.getEndTarget().containerType
                 : LAUNCHER_STATE_HOME;

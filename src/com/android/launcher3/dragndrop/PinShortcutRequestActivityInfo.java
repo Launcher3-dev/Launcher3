@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.content.pm.LauncherApps.PinItemRequest;
+import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -39,7 +40,7 @@ import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
-import com.android.launcher3.icons.cache.BaseIconCache;
+import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pm.PinRequestHelper;
 import com.android.launcher3.pm.ShortcutConfigActivityInfo;
@@ -68,8 +69,7 @@ public class PinShortcutRequestActivityInfo extends ShortcutConfigActivityInfo {
 
     public PinShortcutRequestActivityInfo(
             ShortcutInfo si, Supplier<PinItemRequest> requestSupplier, Context context) {
-        super(new ComponentName(si.getPackage(), STUB_COMPONENT_CLASS),
-                si.getUserHandle(), context);
+        super(new ComponentName(si.getPackage(), STUB_COMPONENT_CLASS), si.getUserHandle());
         mRequestSupplier = requestSupplier;
         mInfo = si;
         mContext = context;
@@ -81,12 +81,12 @@ public class PinShortcutRequestActivityInfo extends ShortcutConfigActivityInfo {
     }
 
     @Override
-    public CharSequence getLabel() {
+    public CharSequence getLabel(PackageManager pm) {
         return mInfo.getShortLabel();
     }
 
     @Override
-    public Drawable getFullResIcon(BaseIconCache cache) {
+    public Drawable getFullResIcon(IconCache cache) {
         Drawable d = mContext.getSystemService(LauncherApps.class)
                 .getShortcutIconDrawable(mInfo, LauncherAppState.getIDP(mContext).fillResIconDpi);
         if (d == null) {

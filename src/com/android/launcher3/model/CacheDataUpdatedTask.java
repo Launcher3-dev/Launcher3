@@ -15,9 +15,6 @@
  */
 package com.android.launcher3.model;
 
-import static com.android.launcher3.icons.cache.CacheLookupFlag.DEFAULT_LOOKUP_FLAG;
-import static com.android.launcher3.model.ModelUtils.WIDGET_FILTER;
-
 import android.content.ComponentName;
 import android.os.UserHandle;
 
@@ -26,8 +23,6 @@ import androidx.annotation.NonNull;
 import com.android.launcher3.LauncherModel.ModelUpdateTask;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.icons.IconCache;
-import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.model.data.LauncherAppWidgetInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 
 import java.util.ArrayList;
@@ -59,8 +54,8 @@ public class CacheDataUpdatedTask implements ModelUpdateTask {
     @Override
     public void execute(@NonNull ModelTaskController taskController, @NonNull BgDataModel dataModel,
             @NonNull AllAppsList apps) {
-        IconCache iconCache = taskController.getIconCache();
-        ArrayList<ItemInfo> updatedItems = new ArrayList<>();
+        IconCache iconCache = taskController.getApp().getIconCache();
+        ArrayList<WorkspaceItemInfo> updatedShortcuts = new ArrayList<>();
 
         synchronized (dataModel) {
             dataModel.forAllWorkspaceItemInfos(mUser, si -> {
@@ -68,26 +63,13 @@ public class CacheDataUpdatedTask implements ModelUpdateTask {
                 if (si.itemType == LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
                         && isValidShortcut(si) && cn != null
                         && mPackages.contains(cn.getPackageName())) {
-                    iconCache.getTitleAndIcon(si, si.getMatchingLookupFlag());
-                    updatedItems.add(si);
+                    iconCache.getTitleAndIcon(si, si.usingLowResIcon());
+                    updatedShortcuts.add(si);
                 }
             });
-
-            dataModel.itemsIdMap.stream()
-                    .filter(WIDGET_FILTER)
-                    .filter(item -> mUser.equals(item.user))
-                    .map(item -> (LauncherAppWidgetInfo) item)
-                    .filter(widget -> mPackages.contains(widget.providerName.getPackageName())
-                            && widget.pendingItemInfo != null)
-                    .forEach(widget -> {
-                        iconCache.getTitleAndIconForApp(
-                                widget.pendingItemInfo, DEFAULT_LOOKUP_FLAG);
-                        updatedItems.add(widget);
-                    });
-
             apps.updateIconsAndLabels(mPackages, mUser);
         }
-        taskController.bindUpdatedWorkspaceItems(updatedItems);
+        taskController.bindUpdatedWorkspaceItems(updatedShortcuts);
         taskController.bindApplicationsIfNeeded();
     }
 

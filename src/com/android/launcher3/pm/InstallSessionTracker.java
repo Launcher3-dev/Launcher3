@@ -25,7 +25,6 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionInfo;
 import android.os.Build;
 import android.os.UserHandle;
-import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
@@ -33,18 +32,15 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.android.launcher3.Flags;
+import com.android.launcher3.Utilities;
 import com.android.launcher3.util.PackageUserKey;
-import com.android.launcher3.util.SafeCloseable;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 @SuppressWarnings("NewApi")
 @WorkerThread
-public class InstallSessionTracker extends PackageInstaller.SessionCallback implements
-        SafeCloseable {
-
-    public static final String TAG = "InstallSessionTracker";
+public class InstallSessionTracker extends PackageInstaller.SessionCallback {
 
     // Lazily initialized
     private SparseArray<PackageUserKey> mActiveSessions = null;
@@ -80,11 +76,6 @@ public class InstallSessionTracker extends PackageInstaller.SessionCallback impl
         }
         SessionInfo sessionInfo = pushSessionDisplayToLauncher(sessionId, helper, callback);
         if (sessionInfo != null) {
-            Log.d(TAG, "onCreated: Install session created for"
-                    + " appPackageName=" + sessionInfo.getAppPackageName()
-                    + ", sessionId=" + sessionInfo.getSessionId()
-                    + ", appIcon=" + sessionInfo.getAppIcon()
-                    + ", appLabel=" + sessionInfo.getAppLabel());
             callback.onInstallSessionCreated(PackageInstallInfo.fromInstallingState(sessionInfo));
         }
 
@@ -112,10 +103,6 @@ public class InstallSessionTracker extends PackageInstaller.SessionCallback impl
         activeSessions.remove(sessionId);
 
         if (key != null && key.mPackageName != null) {
-            Log.d(TAG, "onFinished: active install session finished for"
-                    + " appPackageName=" + key.mPackageName
-                    + ", sessionId=" + sessionId
-                    + ", success=" + success);
             String packageName = key.mPackageName;
             PackageInstallInfo info = PackageInstallInfo.fromState(
                     success ? STATUS_INSTALLED : STATUS_FAILED,
@@ -155,11 +142,6 @@ public class InstallSessionTracker extends PackageInstaller.SessionCallback impl
         }
         SessionInfo sessionInfo = pushSessionDisplayToLauncher(sessionId, helper, callback);
         if (sessionInfo != null) {
-            Log.d(TAG, "onBadgingChanged: badging info changed for"
-                    + " appPackageName=" + sessionInfo.getAppPackageName()
-                    + ", sessionId=" + sessionInfo.getSessionId()
-                    + ", appIcon=" + sessionInfo.getAppIcon()
-                    + ", appLabel=" + sessionInfo.getAppLabel());
             helper.tryQueuePromiseAppIcon(sessionInfo);
         }
     }
@@ -198,8 +180,7 @@ public class InstallSessionTracker extends PackageInstaller.SessionCallback impl
         }
     }
 
-    @Override
-    public void close() {
+    public void unregister() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             mInstaller.unregisterSessionCallback(this);
         } else {

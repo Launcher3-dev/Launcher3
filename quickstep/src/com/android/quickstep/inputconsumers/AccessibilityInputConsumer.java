@@ -29,9 +29,9 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 
 import com.android.launcher3.R;
+import com.android.quickstep.GestureState;
 import com.android.quickstep.InputConsumer;
 import com.android.quickstep.RecentsAnimationDeviceState;
-import com.android.quickstep.RotationTouchHelper;
 import com.android.quickstep.SystemUiProxy;
 import com.android.quickstep.util.MotionPauseDetector;
 import com.android.systemui.shared.system.InputMonitorCompat;
@@ -47,7 +47,7 @@ public class AccessibilityInputConsumer extends DelegateInputConsumer {
     private final VelocityTracker mVelocityTracker;
     private final MotionPauseDetector mMotionPauseDetector;
     private final RecentsAnimationDeviceState mDeviceState;
-    private final RotationTouchHelper mRotationHelper;
+    private final GestureState mGestureState;
 
     private final float mMinGestureDistance;
     private final float mMinFlingVelocity;
@@ -56,20 +56,16 @@ public class AccessibilityInputConsumer extends DelegateInputConsumer {
     private float mDownY;
     private float mTotalY;
 
-    public AccessibilityInputConsumer(
-            Context context,
-            int displayId,
-            RecentsAnimationDeviceState deviceState,
-            InputConsumer delegate,
-            InputMonitorCompat inputMonitor) {
-        super(displayId, delegate, inputMonitor);
+    public AccessibilityInputConsumer(Context context, RecentsAnimationDeviceState deviceState,
+            GestureState gestureState, InputConsumer delegate, InputMonitorCompat inputMonitor) {
+        super(delegate, inputMonitor);
         mContext = context;
         mVelocityTracker = VelocityTracker.obtain();
         mMinGestureDistance = context.getResources()
                 .getDimension(R.dimen.accessibility_gesture_min_swipe_distance);
         mMinFlingVelocity = ViewConfiguration.get(context).getScaledMinimumFlingVelocity();
         mDeviceState = deviceState;
-        mRotationHelper = RotationTouchHelper.INSTANCE.get(context);
+        mGestureState = gestureState;
 
         mMotionPauseDetector = new MotionPauseDetector(context);
     }
@@ -106,8 +102,8 @@ public class AccessibilityInputConsumer extends DelegateInputConsumer {
             case ACTION_POINTER_DOWN: {
                 if (mState == STATE_INACTIVE) {
                     int pointerIndex = ev.getActionIndex();
-                    if (mRotationHelper.isInSwipeUpTouchRegion(ev, pointerIndex)
-                            && mDelegate.allowInterceptByParent()) {
+                    if (mDeviceState.getRotationTouchHelper().isInSwipeUpTouchRegion(ev,
+                            pointerIndex) && mDelegate.allowInterceptByParent()) {
                         setActive(ev);
 
                         mActivePointerId = ev.getPointerId(pointerIndex);

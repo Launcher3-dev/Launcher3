@@ -52,11 +52,7 @@ class DeviceConfigWrapper private constructor(propReader: PropReader) {
         )
 
     val lpnhTimeoutMs =
-        propReader.get(
-            "LPNH_TIMEOUT_MS",
-            DEFAULT_LPNH_TIMEOUT_MS,
-            "Controls lpnh timeout in milliseconds"
-        )
+        propReader.get("LPNH_TIMEOUT_MS", 450, "Controls lpnh timeout in milliseconds")
 
     val lpnhSlopPercentage =
         propReader.get("LPNH_SLOP_PERCENTAGE", 100, "Controls touch slop percentage for lpnh")
@@ -68,19 +64,11 @@ class DeviceConfigWrapper private constructor(propReader: PropReader) {
             "Enable two stage for LPNH duration and touch slop"
         )
 
-    val twoStageDurationPercentage =
+    val twoStageMultiplier =
         propReader.get(
-            "TWO_STAGE_DURATION_PERCENTAGE",
-            200,
-            "Extends the duration to trigger a long press after a fraction of the gesture " +
-                "slop is passed, expressed as a percentage (i.e. 200 = 2x)."
-        )
-
-    val twoStageSlopPercentage =
-        propReader.get(
-            "TWO_STAGE_SLOP_PERCENTAGE",
-            50,
-            "Percentage of gesture slop region to trigger the extended long press duration."
+            "TWO_STAGE_MULTIPLIER",
+            2,
+            "Extends the duration and touch slop if the initial slop is passed"
         )
 
     val animateLpnh = propReader.get("ANIMATE_LPNH", false, "Animates navbar when long pressing")
@@ -142,6 +130,13 @@ class DeviceConfigWrapper private constructor(propReader: PropReader) {
             "Controls extra dp on the nav bar sides to trigger LPNH. Can be negative for a smaller touch region."
         )
 
+    val allAppsOverviewThreshold =
+        propReader.get(
+            "ALL_APPS_OVERVIEW_THRESHOLD",
+            180,
+            "Threshold to open All Apps from Overview"
+        )
+
     /** Dump config values. */
     fun dump(prefix: String, writer: PrintWriter) {
         writer.println("$prefix DeviceConfigWrapper:")
@@ -152,9 +147,6 @@ class DeviceConfigWrapper private constructor(propReader: PropReader) {
         writer.println("$prefix\tanimateLpnh=$animateLpnh")
         writer.println("$prefix\tshrinkNavHandleOnPress=$shrinkNavHandleOnPress")
         writer.println("$prefix\tlpnhTimeoutMs=$lpnhTimeoutMs")
-        writer.println("$prefix\tenableLpnhTwoStages=$enableLpnhTwoStages")
-        writer.println("$prefix\ttwoStageDurationPercentage=$twoStageDurationPercentage")
-        writer.println("$prefix\ttwoStageSlopPercentage=$twoStageSlopPercentage")
         writer.println("$prefix\tenableLongPressNavHandle=$enableLongPressNavHandle")
         writer.println("$prefix\tenableSearchHapticHint=$enableSearchHapticHint")
         writer.println("$prefix\tenableSearchHapticCommit=$enableSearchHapticCommit")
@@ -165,13 +157,12 @@ class DeviceConfigWrapper private constructor(propReader: PropReader) {
         writer.println("$prefix\tenableLpnhDeepPress=$enableLpnhDeepPress")
         writer.println("$prefix\tlpnhHapticHintDelay=$lpnhHapticHintDelay")
         writer.println("$prefix\tlpnhExtraTouchWidthDp=$lpnhExtraTouchWidthDp")
+        writer.println("$prefix\tallAppsOverviewThreshold=$allAppsOverviewThreshold")
     }
 
     companion object {
         @JvmStatic val configHelper by lazy { DeviceConfigHelper(::DeviceConfigWrapper) }
 
         @JvmStatic fun get() = configHelper.config
-
-        const val DEFAULT_LPNH_TIMEOUT_MS = 450
     }
 }

@@ -55,9 +55,7 @@ public class AbstractTaplTestsTaskbar extends AbstractQuickStepTest {
                 "com.android.launcher3.testcomponent.BaseTestingActivity");
         mLauncherLayout = TestUtil.setLauncherDefaultLayout(mTargetContext, layoutBuilder);
         AbstractLauncherUiTest.initialize(this);
-        if (startCalendarAppDuringSetup()) {
-            startAppFast(CALCULATOR_APP_PACKAGE);
-        }
+        startAppFast(CALCULATOR_APP_PACKAGE);
         mLauncher.enableBlockTimeout(true);
         mLauncher.showTaskbarIfHidden();
     }
@@ -74,20 +72,8 @@ public class AbstractTaplTestsTaskbar extends AbstractQuickStepTest {
         return DisplayController.isTransientTaskbar(context);
     }
 
-    protected boolean startCalendarAppDuringSetup() {
-        return true;
-    }
-
-    protected boolean expectTaskbarIconsMatchHotseat() {
-        return true;
-    }
-
     protected Taskbar getTaskbar() {
         Taskbar taskbar = mLauncher.getLaunchedAppState().getTaskbar();
-        if (!expectTaskbarIconsMatchHotseat()) {
-            return taskbar;
-        }
-
         List<String> taskbarIconNames = taskbar.getIconNames();
         List<String> hotseatIconNames = mLauncher.getHotseatIconNames();
 

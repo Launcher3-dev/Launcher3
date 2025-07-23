@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * Contains the logic of a reorder.
@@ -144,14 +143,12 @@ public class ReorderAlgorithm {
         // and not by the views hash which is "random".
         // The views are sorted twice, once for the X position and a second time for the Y position
         // to ensure same order everytime.
-        Comparator<View> comparator = Comparator.comparing(
-                (View view) -> ((CellLayoutLayoutParams) view.getLayoutParams()).getCellX()
+        Comparator comparator = Comparator.comparing(
+                view -> ((CellLayoutLayoutParams) ((View) view).getLayoutParams()).getCellX()
         ).thenComparing(
-                (View view) -> ((CellLayoutLayoutParams) view.getLayoutParams()).getCellY()
+                view -> ((CellLayoutLayoutParams) ((View) view).getLayoutParams()).getCellY()
         );
-        List<View> views = solution.map.keySet().stream()
-                .sorted(comparator)
-                .collect(Collectors.toList());
+        List<View> views = solution.map.keySet().stream().sorted(comparator).toList();
         for (View child : views) {
             if (child == ignoreView) continue;
             CellAndSpan c = solution.map.get(child);

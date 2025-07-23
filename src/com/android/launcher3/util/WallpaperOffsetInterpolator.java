@@ -31,7 +31,8 @@ public class WallpaperOffsetInterpolator {
     // Don't use all the wallpaper for parallax until you have at least this many pages
     private static final int MIN_PARALLAX_PAGE_SPAN = 4;
 
-    private final SimpleBroadcastReceiver mWallpaperChangeReceiver;
+    private final SimpleBroadcastReceiver mWallpaperChangeReceiver =
+            new SimpleBroadcastReceiver(i -> onWallpaperChanged());
     private final Workspace<?> mWorkspace;
     private final boolean mIsRtl;
     private final Handler mHandler;
@@ -45,8 +46,6 @@ public class WallpaperOffsetInterpolator {
 
     public WallpaperOffsetInterpolator(Workspace<?> workspace) {
         mWorkspace = workspace;
-        mWallpaperChangeReceiver = new SimpleBroadcastReceiver(
-                workspace.getContext(), UI_HELPER_EXECUTOR, i -> onWallpaperChanged());
         mIsRtl = Utilities.isRtl(workspace.getResources());
         mHandler = new OffsetHandler(workspace.getContext());
     }
@@ -199,10 +198,10 @@ public class WallpaperOffsetInterpolator {
     public void setWindowToken(IBinder token) {
         mWindowToken = token;
         if (mWindowToken == null && mRegistered) {
-            mWallpaperChangeReceiver.unregisterReceiverSafely();
+            mWallpaperChangeReceiver.unregisterReceiverSafely(mWorkspace.getContext());
             mRegistered = false;
         } else if (mWindowToken != null && !mRegistered) {
-            mWallpaperChangeReceiver.register(ACTION_WALLPAPER_CHANGED);
+            mWallpaperChangeReceiver.register(mWorkspace.getContext(), ACTION_WALLPAPER_CHANGED);
             onWallpaperChanged();
             mRegistered = true;
         }

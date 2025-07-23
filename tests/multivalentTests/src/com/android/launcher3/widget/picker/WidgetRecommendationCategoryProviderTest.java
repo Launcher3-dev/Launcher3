@@ -25,17 +25,19 @@ import static android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED;
 import static android.content.pm.ApplicationInfo.CATEGORY_VIDEO;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
 import android.os.Process;
@@ -49,14 +51,12 @@ import com.android.launcher3.R;
 import com.android.launcher3.icons.IconCache;
 import com.android.launcher3.model.WidgetItem;
 import com.android.launcher3.util.Executors;
-import com.android.launcher3.util.SandboxApplication;
 import com.android.launcher3.util.WidgetUtils;
 import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
 
 import com.google.common.collect.ImmutableMap;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -90,22 +90,27 @@ public class WidgetRecommendationCategoryProviderTest {
 
     private final ApplicationInfo mTestAppInfo = ApplicationInfoBuilder.newBuilder().setPackageName(
             TEST_PACKAGE).setName(TEST_APP_NAME).build();
-
-    @Rule public SandboxApplication mContext = new SandboxApplication();
+    private Context mContext;
     @Mock
     private IconCache mIconCache;
 
     private WidgetItem mTestWidgetItem;
-
+    @Mock
     private LauncherApps mLauncherApps;
     private InvariantDeviceProfile mTestProfile;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        mLauncherApps = mContext.spyService(LauncherApps.class);
+        mContext = new ContextWrapper(getInstrumentation().getTargetContext()) {
+            @Override
+            public Object getSystemService(String name) {
+                return LAUNCHER_APPS_SERVICE.equals(name) ? mLauncherApps : super.getSystemService(
+                        name);
+            }
+        };
         mTestAppInfo.flags = FLAG_INSTALLED;
-        mTestProfile = InvariantDeviceProfile.INSTANCE.get(mContext);
+        mTestProfile = new InvariantDeviceProfile();
         mTestProfile.numRows = 5;
         mTestProfile.numColumns = 5;
         createTestWidgetItem();
@@ -126,10 +131,10 @@ public class WidgetRecommendationCategoryProviderTest {
                 testCategories.entrySet()) {
 
             mTestAppInfo.category = testCategory.getKey();
-            doReturn(mTestAppInfo).when(mLauncherApps).getApplicationInfo(
-                    /*packageName=*/ eq(TEST_PACKAGE),
-                    /*flags=*/ anyInt(),
-                    /*user=*/ eq(Process.myUserHandle()));
+            when(mLauncherApps.getApplicationInfo(/*packageName=*/ eq(TEST_PACKAGE),
+                    /*flags=*/ eq(0),
+                    /*user=*/ eq(Process.myUserHandle())))
+                    .thenReturn(mTestAppInfo);
 
             WidgetRecommendationCategory category = Executors.MODEL_EXECUTOR.submit(() ->
                     new WidgetRecommendationCategoryProvider().getWidgetRecommendationCategory(
@@ -146,12 +151,11 @@ public class WidgetRecommendationCategoryProviderTest {
 
         doAnswer(invocation -> widgetLabel).when(mIconCache).getTitleNoCache(any());
 
-        AppWidgetProviderInfo providerInfo = WidgetUtils.createAppWidgetProviderInfo(
-                ComponentName.createRelative(TEST_PACKAGE, widgetClassName));
+        AppWidgetProviderInfo providerInfo = WidgetUtils.createAppWidgetProviderInfo(ComponentName
+                .createRelative(TEST_PACKAGE, widgetClassName));
 
         LauncherAppWidgetProviderInfo launcherAppWidgetProviderInfo =
-                spy(LauncherAppWidgetProviderInfo.fromProviderInfo(mContext, providerInfo));
-        doReturn(Process.myUserHandle()).when(launcherAppWidgetProviderInfo).getProfile();
+                LauncherAppWidgetProviderInfo.fromProviderInfo(mContext, providerInfo);
         launcherAppWidgetProviderInfo.spanX = 2;
         launcherAppWidgetProviderInfo.spanY = 2;
         launcherAppWidgetProviderInfo.label = widgetLabel;

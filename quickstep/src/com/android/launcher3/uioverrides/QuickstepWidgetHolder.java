@@ -16,40 +16,43 @@
 package com.android.launcher3.uioverrides;
 
 import static com.android.launcher3.BuildConfig.WIDGETS_ENABLED;
-import static com.android.launcher3.uioverrides.QuickstepAppWidgetHostProvider.getStaticQuickstepHost;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
-import static com.android.launcher3.widget.ListenableAppWidgetHost.getWidgetHolderExecutor;
+import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
 
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
+import android.util.Log;
 import android.util.SparseArray;
 import android.widget.RemoteViews;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
 
+import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.widget.LauncherAppWidgetHostView;
 import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
 import com.android.launcher3.widget.LauncherWidgetHolder;
 
-import dagger.assisted.Assisted;
-import dagger.assisted.AssistedFactory;
-import dagger.assisted.AssistedInject;
-
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.IntConsumer;
 
 /**
  * {@link LauncherWidgetHolder} that puts the app widget host in the background
  */
 public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
+
+    private static final String TAG = "QuickstepWidgetHolder";
 
     private static final UpdateKey<AppWidgetProviderInfo> KEY_PROVIDER_UPDATE =
             AppWidgetHostView::onUpdateProviderInfo;
@@ -58,17 +61,51 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
     private static final UpdateKey<Integer> KEY_VIEW_DATA_CHANGED =
             AppWidgetHostView::onViewDataChanged;
 
+    private static final List<QuickstepWidgetHolder> sHolders = new ArrayList<>();
     private static final SparseArray<QuickstepWidgetHolderListener> sListeners =
             new SparseArray<>();
 
+    private static AppWidgetHost sWidgetHost = null;
+
     private final UpdateHandler mUpdateHandler = this::onWidgetUpdate;
+    private final @Nullable RemoteViews.InteractionHandler mInteractionHandler;
+
+    private final @NonNull IntConsumer mAppWidgetRemovedCallback;
 
     // Map to all pending updated keyed with appWidgetId;
     private final SparseArray<PendingUpdate> mPendingUpdateMap = new SparseArray<>();
 
-    @AssistedInject
-    public QuickstepWidgetHolder(@Assisted("UI_CONTEXT") @NonNull Context context) {
-        super(context, getStaticQuickstepHost());
+    private QuickstepWidgetHolder(@NonNull Context context,
+            @Nullable IntConsumer appWidgetRemovedCallback,
+            @Nullable RemoteViews.InteractionHandler interactionHandler) {
+        super(context, appWidgetRemovedCallback);
+        mAppWidgetRemovedCallback = appWidgetRemovedCallback != null ? appWidgetRemovedCallback
+                : i -> {};
+        mInteractionHandler = interactionHandler;
+        MAIN_EXECUTOR.execute(() -> sHolders.add(this));
+    }
+
+    @Override
+    @NonNull
+    protected AppWidgetHost createHost(@NonNull Context context,
+            @Nullable IntConsumer appWidgetRemovedCallback) {
+        if (sWidgetHost == null) {
+            sWidgetHost = new QuickstepAppWidgetHost(context.getApplicationContext(),
+                    i -> MAIN_EXECUTOR.execute(() ->
+                            sHolders.forEach(h -> h.mAppWidgetRemovedCallback.accept(i))),
+                    () -> MAIN_EXECUTOR.execute(() ->
+                            sHolders.forEach(h ->
+                                    // Listeners might remove themselves from the list during the
+                                    // iteration. Creating a copy of the list to avoid exceptions
+                                    // for concurrent modification.
+                                    new ArrayList<>(h.mProviderChangedListeners).forEach(
+                                    ProviderChangedListener::notifyWidgetProvidersChanged))),
+                    UI_HELPER_EXECUTOR.getLooper());
+            if (WIDGETS_ENABLED) {
+                sWidgetHost.startListening();
+            }
+        }
+        return sWidgetHost;
     }
 
     @Override
@@ -132,6 +169,21 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
         sListeners.remove(appWidgetId);
     }
 
+    /**
+     * Called when the launcher is destroyed
+     */
+    @Override
+    public void destroy() {
+        try {
+            MAIN_EXECUTOR.submit(() -> {
+                clearViews();
+                sHolders.remove(this);
+            }).get();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to remove self from holder list", e);
+        }
+    }
+
     @Override
     protected boolean shouldListen(int flags) {
         return (flags & (FLAG_STATE_IS_NORMAL | FLAG_ACTIVITY_STARTED))
@@ -147,10 +199,8 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
             return;
         }
 
-        getWidgetHolderExecutor().execute(() -> {
-            mWidgetHost.setAppWidgetHidden();
-            setListeningFlag(false);
-        });
+        sWidgetHost.setAppWidgetHidden();
+        setListeningFlag(false);
     }
 
     @Override
@@ -166,7 +216,7 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
         };
         QuickstepWidgetHolderListener holderListener = getHolderListener(appWidgetId);
         holderListener.addHolder(handler);
-        return () -> holderListener.removeHolder(handler);
+        return () -> holderListener.mListeningHolders.remove(handler);
     }
 
     /**
@@ -188,6 +238,7 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
     protected LauncherAppWidgetHostView createViewInternal(
             int appWidgetId, @NonNull LauncherAppWidgetProviderInfo appWidget) {
         LauncherAppWidgetHostView widgetView = new LauncherAppWidgetHostView(mContext);
+        widgetView.setInteractionHandler(mInteractionHandler);
         widgetView.setAppWidget(appWidgetId, appWidget);
         widgetView.updateAppWidget(getHolderListener(appWidgetId).addHolder(mUpdateHandler));
         return widgetView;
@@ -197,7 +248,7 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
         QuickstepWidgetHolderListener listener = sListeners.get(appWidgetId);
         if (listener == null) {
             listener = new QuickstepWidgetHolderListener(appWidgetId);
-            getStaticQuickstepHost().setListener(appWidgetId, listener);
+            sWidgetHost.setListener(appWidgetId, listener);
             sListeners.put(appWidgetId, listener);
         }
         return listener;
@@ -210,7 +261,7 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
     public void clearViews() {
         mViews.clear();
         for (int i = sListeners.size() - 1; i >= 0; i--) {
-            sListeners.valueAt(i).removeHolder(mUpdateHandler);
+            sListeners.valueAt(i).mListeningHolders.remove(mUpdateHandler);
         }
     }
 
@@ -237,13 +288,11 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
             mWidgetId = widgetId;
         }
 
+        @UiThread
+        @Nullable
         public RemoteViews addHolder(@NonNull UpdateHandler holder) {
-            MAIN_EXECUTOR.execute(() -> mListeningHolders.add(holder));
+            mListeningHolders.add(holder);
             return mRemoteViews;
-        }
-
-        public void removeHolder(@NonNull UpdateHandler holder) {
-            MAIN_EXECUTOR.execute(() -> mListeningHolders.remove(holder));
         }
 
         @Override
@@ -272,13 +321,44 @@ public final class QuickstepWidgetHolder extends LauncherWidgetHolder {
         }
     }
 
+    /**
+     * {@code HolderFactory} subclass that takes an interaction handler as one of the parameters
+     * when creating a new instance.
+     */
+    public static class QuickstepHolderFactory extends HolderFactory {
 
-    /** A factory that generates new instances of {@code LauncherWidgetHolder} */
-    @AssistedFactory
-    public interface QuickstepWidgetHolderFactory extends WidgetHolderFactory {
+        @SuppressWarnings("unused")
+        public QuickstepHolderFactory(Context context) { }
 
         @Override
-        QuickstepWidgetHolder newInstance(@Assisted("UI_CONTEXT") @NonNull Context context);
+        public LauncherWidgetHolder newInstance(@NonNull Context context,
+                @Nullable IntConsumer appWidgetRemovedCallback) {
+            return newInstance(context, appWidgetRemovedCallback, null);
+        }
+
+        /**
+         * @param context The context of the caller
+         * @param appWidgetRemovedCallback The callback that is called when widgets are removed
+         * @param interactionHandler The interaction handler when the widgets are clicked
+         * @return A new {@link LauncherWidgetHolder} instance
+         */
+        public LauncherWidgetHolder newInstance(@NonNull Context context,
+                @Nullable IntConsumer appWidgetRemovedCallback,
+                @Nullable RemoteViews.InteractionHandler interactionHandler) {
+
+            if (!FeatureFlags.ENABLE_WIDGET_HOST_IN_BACKGROUND.get()) {
+                return new LauncherWidgetHolder(context, appWidgetRemovedCallback) {
+                    @Override
+                    protected AppWidgetHost createHost(Context context,
+                            @Nullable IntConsumer appWidgetRemovedCallback) {
+                        AppWidgetHost host = super.createHost(context, appWidgetRemovedCallback);
+                        host.setInteractionHandler(interactionHandler);
+                        return host;
+                    }
+                };
+            }
+            return new QuickstepWidgetHolder(context, appWidgetRemovedCallback, interactionHandler);
+        }
     }
 
     private interface UpdateKey<T> extends BiConsumer<AppWidgetHostView, T> { }

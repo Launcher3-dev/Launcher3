@@ -65,7 +65,7 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
     @Override
     public void recreateControllers() {
         mControllers = new TouchController[]{new CloseAllAppsTouchController(),
-                mContainer.getDragController()};
+                mActivity.getDragController()};
     }
 
     /**
@@ -79,10 +79,10 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
         mAppsView = findViewById(R.id.apps_view);
         // Setup workspace
         mWorkspace = findViewById(R.id.workspace_grid);
-        mPinnedAppsAdapter = new PinnedAppsAdapter(mContainer, mAppsView.getAppsStore(),
+        mPinnedAppsAdapter = new PinnedAppsAdapter(mActivity, mAppsView.getAppsStore(),
                 this::onIconLongClicked);
         mWorkspace.setAdapter(mPinnedAppsAdapter);
-        mWorkspace.setNumColumns(mContainer.getDeviceProfile().inv.numColumns);
+        mWorkspace.setNumColumns(mActivity.getDeviceProfile().inv.numColumns);
     }
 
     /**
@@ -112,7 +112,7 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
         int height = MeasureSpec.getSize(heightMeasureSpec);
         setMeasuredDimension(width, height);
 
-        DeviceProfile grid = mContainer.getDeviceProfile();
+        DeviceProfile grid = mActivity.getDeviceProfile();
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
             final View child = getChildAt(i);
@@ -153,17 +153,17 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
 
         @Override
         public boolean onControllerInterceptTouchEvent(MotionEvent ev) {
-            if (!mContainer.isAppDrawerShown()) {
+            if (!mActivity.isAppDrawerShown()) {
                 return false;
             }
 
-            if (AbstractFloatingView.getTopOpenView(mContainer) != null) {
+            if (AbstractFloatingView.getTopOpenView(mActivity) != null) {
                 return false;
             }
 
             if (ev.getAction() == MotionEvent.ACTION_DOWN
-                    && !isEventOverView(mContainer.getAppsView(), ev)) {
-                mContainer.showAppDrawer(false);
+                    && !isEventOverView(mActivity.getAppsView(), ev)) {
+                mActivity.showAppDrawer(false);
                 return true;
             }
             return false;
@@ -178,7 +178,7 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
         if (!(v instanceof BubbleTextView)) {
             return false;
         }
-        if (PopupContainerWithArrow.getOpen(mContainer) != null) {
+        if (PopupContainerWithArrow.getOpen(mActivity) != null) {
             // There is already an items container open, so don't open this one.
             v.clearFocus();
             return false;
@@ -187,32 +187,32 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
         if (!ShortcutUtil.supportsShortcuts(item)) {
             return false;
         }
-        PopupDataProvider popupDataProvider = mContainer.getPopupDataProvider();
+        PopupDataProvider popupDataProvider = mActivity.getPopupDataProvider();
         if (popupDataProvider == null) {
             return false;
         }
 
         // order of this list will reflect in the popup
         List<SystemShortcut> systemShortcuts = new ArrayList<>();
-        systemShortcuts.add(APP_INFO.getShortcut(mContainer, item, v));
+        systemShortcuts.add(APP_INFO.getShortcut(mActivity, item, v));
         // Hide redundant pin shortcut for app drawer icons if drag-n-drop is enabled.
-        if (!FeatureFlags.SECONDARY_DRAG_N_DROP_TO_PIN.get() || !mContainer.isAppDrawerShown()) {
+        if (!FeatureFlags.SECONDARY_DRAG_N_DROP_TO_PIN.get() || !mActivity.isAppDrawerShown()) {
             systemShortcuts.add(mPinnedAppsAdapter.getSystemShortcut(item, v));
         }
         int deepShortcutCount = popupDataProvider.getShortcutCountForItem(item);
         final PopupContainerWithArrow<SecondaryDisplayLauncher> container;
-        container = (PopupContainerWithArrow) mContainer.getLayoutInflater().inflate(
-                R.layout.popup_container, mContainer.getDragLayer(), false);
+        container = (PopupContainerWithArrow) mActivity.getLayoutInflater().inflate(
+                R.layout.popup_container, mActivity.getDragLayer(), false);
         container.populateAndShowRows((BubbleTextView) v, deepShortcutCount,
                 systemShortcuts);
         container.requestFocus();
 
-        if (!FeatureFlags.SECONDARY_DRAG_N_DROP_TO_PIN.get() || !mContainer.isAppDrawerShown()) {
+        if (!FeatureFlags.SECONDARY_DRAG_N_DROP_TO_PIN.get() || !mActivity.isAppDrawerShown()) {
             return true;
         }
 
         DragOptions options = new DragOptions();
-        DeviceProfile grid = mContainer.getDeviceProfile();
+        DeviceProfile grid = mActivity.getDeviceProfile();
         options.intrinsicIconScaleFactor = (float) grid.allAppsIconSizePx / grid.iconSizePx;
         options.preDragCondition = container.createPreDragCondition(false);
         if (options.preDragCondition == null) {
@@ -229,7 +229,7 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
                     mDragView = dragObject.dragView;
                     if (!shouldStartDrag(0)) {
                         mDragView.setOnScaleAnimEndCallback(() ->
-                                mContainer.beginDragShared(v, mContainer.getAppsView(), options));
+                                mActivity.beginDragShared(v, mActivity.getAppsView(), options));
                     }
                 }
 
@@ -239,7 +239,7 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
                 }
             };
         }
-        mContainer.beginDragShared(v, mContainer.getAppsView(), options);
+        mActivity.beginDragShared(v, mActivity.getAppsView(), options);
         return true;
     }
 }

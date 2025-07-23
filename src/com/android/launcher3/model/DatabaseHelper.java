@@ -56,7 +56,6 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
@@ -80,8 +79,8 @@ public class DatabaseHelper extends NoLocaleSQLiteHelper implements
     private final Context mContext;
     private final ToLongFunction<UserHandle> mUserSerialProvider;
     private final Runnable mOnEmptyDbCreateCallback;
-    private final AtomicInteger mMaxItemId = new AtomicInteger(-1);
 
+    private int mMaxItemId = -1;
     public boolean mHotseatRestoreTableExists;
 
     /**
@@ -98,19 +97,21 @@ public class DatabaseHelper extends NoLocaleSQLiteHelper implements
     protected void initIds() {
         // In the case where neither onCreate nor onUpgrade gets called, we read the maxId from
         // the DB here
-        mMaxItemId.compareAndSet(-1, initializeMaxItemId(getWritableDatabase()));
+        if (mMaxItemId == -1) {
+            mMaxItemId = initializeMaxItemId(getWritableDatabase());
+        }
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
         if (LOGD) Log.d(TAG, "creating new launcher database");
 
-        mMaxItemId.set(1);
+        mMaxItemId = 1;
 
         addTableToDb(db, getDefaultUserSerial(), false /* optional */);
 
         // Fresh and clean launcher DB.
-        mMaxItemId.set(initializeMaxItemId(db));
+        mMaxItemId = initializeMaxItemId(db);
         mOnEmptyDbCreateCallback.run();
     }
 
@@ -450,10 +451,11 @@ public class DatabaseHelper extends NoLocaleSQLiteHelper implements
     // after that point
     @Override
     public int generateNewItemId() {
-        if (mMaxItemId.get() < 0) {
+        if (mMaxItemId < 0) {
             throw new RuntimeException("Error: max item id was not initialized");
         }
-        return mMaxItemId.incrementAndGet();
+        mMaxItemId += 1;
+        return mMaxItemId;
     }
 
     /**
@@ -482,7 +484,7 @@ public class DatabaseHelper extends NoLocaleSQLiteHelper implements
 
     public void checkId(ContentValues values) {
         int id = values.getAsInteger(Favorites._ID);
-        mMaxItemId.accumulateAndGet(id, Math::max);
+        mMaxItemId = Math.max(id, mMaxItemId);
     }
 
     private int initializeMaxItemId(SQLiteDatabase db) {
@@ -506,7 +508,7 @@ public class DatabaseHelper extends NoLocaleSQLiteHelper implements
         int count = loader.loadLayout(db);
 
         // Ensure that the max ids are initialized
-        mMaxItemId.set(initializeMaxItemId(db));
+        mMaxItemId = initializeMaxItemId(db);
         return count;
     }
 

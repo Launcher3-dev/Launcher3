@@ -41,10 +41,7 @@ import com.android.launcher3.dragndrop.DragLayer;
 import com.android.launcher3.dragndrop.DragOptions;
 import com.android.launcher3.dragndrop.DragView;
 import com.android.launcher3.model.data.ItemInfo;
-import com.android.launcher3.util.MSDLPlayerWrapper;
 import com.android.launcher3.views.ActivityContext;
-
-import com.google.android.msdl.data.model.MSDLToken;
 
 /**
  * Implements a DropTarget.
@@ -65,7 +62,6 @@ public abstract class ButtonDropTarget extends TextView
     protected final ActivityContext mActivityContext;
     protected final DropTargetHandler mDropTargetHandler;
     protected DropTargetBar mDropTargetBar;
-    private MSDLPlayerWrapper mMSDLPlayerWrapper;
 
     /** Whether this drop target is active for the current drag */
     protected boolean mActive;
@@ -98,7 +94,6 @@ public abstract class ButtonDropTarget extends TextView
         super(context, attrs, defStyle);
         mActivityContext = ActivityContext.lookupContext(context);
         mDropTargetHandler = mActivityContext.getDropTargetHandler();
-        mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(context);
 
         Resources resources = getResources();
         mDragDistanceThreshold = resources.getDimensionPixelSize(R.dimen.drag_distanceThreshold);
@@ -147,10 +142,6 @@ public abstract class ButtonDropTarget extends TextView
 
     @Override
     public final void onDragEnter(DragObject d) {
-        // Perform Haptic feedback
-        if (Flags.msdlFeedback()) {
-            mMSDLPlayerWrapper.playToken(MSDLToken.SWIPE_THRESHOLD_INDICATOR);
-        }
         if (!mAccessibleDrag && !mTextVisible) {
             // Show tooltip
             hideTooltip();
@@ -436,11 +427,6 @@ public abstract class ButtonDropTarget extends TextView
         int textHeight = lineCount * (fontMetricsInt.bottom - fontMetricsInt.top);
 
         return textHeight + getPaddingTop() + getPaddingBottom() >= availableHeight;
-    }
-
-    @VisibleForTesting
-    public void setMSDLPlayerWrapper(MSDLPlayerWrapper wrapper) {
-        mMSDLPlayerWrapper = wrapper;
     }
 
     /**

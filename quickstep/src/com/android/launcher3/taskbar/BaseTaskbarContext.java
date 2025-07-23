@@ -16,66 +16,27 @@
 package com.android.launcher3.taskbar;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ShortcutInfo;
-import android.os.UserHandle;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 
-import com.android.launcher3.popup.SystemShortcut;
-import com.android.launcher3.util.BaseContext;
-import com.android.launcher3.util.NavigationMode;
+import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
 import com.android.launcher3.util.Themes;
-import com.android.quickstep.SystemUiProxy;
+import com.android.launcher3.views.ActivityContext;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // TODO(b/218912746): Share more behavior to avoid all apps context depending directly on taskbar.
 /** Base for common behavior between taskbar window contexts. */
-public abstract class BaseTaskbarContext extends BaseContext
-        implements SystemShortcut.BubbleActivityStarter {
+public abstract class BaseTaskbarContext extends ContextThemeWrapper implements ActivityContext {
 
     protected final LayoutInflater mLayoutInflater;
+    private final List<OnDeviceProfileChangeListener> mDPChangeListeners = new ArrayList<>();
 
-    public BaseTaskbarContext(Context windowContext, boolean isPrimaryDisplay) {
+    public BaseTaskbarContext(Context windowContext) {
         super(windowContext, Themes.getActivityThemeRes(windowContext));
         mLayoutInflater = LayoutInflater.from(this).cloneInContext(this);
     }
-
-    /**
-     * Returns whether taskbar is transient or persistent. External displays will be persistent.
-     *
-     * @return {@code true} if transient, {@code false} if persistent.
-     */
-    public abstract boolean isTransientTaskbar();
-
-    /**
-     * Returns whether the taskbar is pinned in gesture navigation mode.
-     */
-    public abstract boolean isPinnedTaskbar();
-
-    /**
-     * Returns the current navigation mode. External displays will be in THREE_BUTTONS mode.
-     */
-    public abstract NavigationMode getNavigationMode();
-
-    /**
-     * Returns whether the taskbar is in desktop mode.
-     */
-    public abstract boolean isInDesktopMode();
-
-    /**
-     * Returns whether the taskbar is forced to be pinned when home is visible.
-     */
-    public abstract  boolean showLockedTaskbarOnHome();
-
-    /**
-     * Returns whether desktop taskbar (pinned taskbar that shows desktop tasks) is to be used on
-     * the display because the display is a freeform display.
-     */
-    public abstract  boolean showDesktopTaskbarForFreeformDisplay();
-
-    /**
-     * Returns whether the taskbar is displayed on primary or external display.
-     */
-    public abstract boolean isPrimaryDisplay();
 
     @Override
     public final LayoutInflater getLayoutInflater() {
@@ -83,15 +44,8 @@ public abstract class BaseTaskbarContext extends BaseContext
     }
 
     @Override
-    public void showShortcutBubble(ShortcutInfo info) {
-        if (info == null) return;
-        SystemUiProxy.INSTANCE.get(this).showShortcutBubble(info);
-    }
-
-    @Override
-    public void showAppBubble(Intent intent, UserHandle user) {
-        if (intent == null || intent.getPackage() == null) return;
-        SystemUiProxy.INSTANCE.get(this).showAppBubble(intent, user);
+    public final List<OnDeviceProfileChangeListener> getOnDeviceProfileChangeListeners() {
+        return mDPChangeListeners;
     }
 
     /** Callback invoked when a drag is initiated within this context. */

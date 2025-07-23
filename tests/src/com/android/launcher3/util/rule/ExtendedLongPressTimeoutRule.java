@@ -16,9 +16,6 @@
 
 package com.android.launcher3.util.rule;
 
-import static com.android.launcher3.util.TestUtil.grantWriteSecurePermission;
-
-import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.provider.Settings;
 import android.util.Log;
@@ -54,7 +51,6 @@ public class ExtendedLongPressTimeoutRule implements TestRule {
                 try {
                     Log.d(TAG, "In try-block: Setting long press timeout from "
                             + prevLongPressTimeout + "ms to " + newLongPressTimeout + "ms");
-                    grantWriteSecurePermission();
                     Settings.Secure.putInt(
                             contentResolver,
                             Settings.Secure.LONG_PRESS_TIMEOUT,
@@ -67,7 +63,6 @@ public class ExtendedLongPressTimeoutRule implements TestRule {
                 } finally {
                     Log.d(TAG, "In finally-block: resetting long press timeout to "
                             + prevLongPressTimeout + "ms");
-                    grantWriteSecurePermission();
                     Settings.Secure.putInt(
                             contentResolver,
                             Settings.Secure.LONG_PRESS_TIMEOUT,

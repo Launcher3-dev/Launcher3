@@ -16,7 +16,7 @@
 
 package com.android.quickstep;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.quickstep.NavigationModeSwitchRule.Mode.ALL;
 import static com.android.quickstep.NavigationModeSwitchRule.Mode.THREE_BUTTON;
@@ -26,7 +26,6 @@ import static com.android.systemui.shared.system.QuickStepContract.NAV_BAR_MODE_
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Process;
 import android.util.Log;
 
 import androidx.test.uiautomator.UiDevice;
@@ -57,6 +56,8 @@ import java.util.concurrent.TimeUnit;
 public class NavigationModeSwitchRule implements TestRule {
 
     static final String TAG = "QuickStepOnOffRule";
+
+    public static final int WAIT_TIME_MS = 10000;
 
     public enum Mode {
         THREE_BUTTON, ZERO_BUTTON, ALL
@@ -154,9 +155,7 @@ public class NavigationModeSwitchRule implements TestRule {
 
         Log.d(TAG, "setActiveOverlay: " + overlayPackage + "...");
         UiDevice.getInstance(getInstrumentation()).executeShellCommand(
-                String.format("cmd overlay enable-exclusive --user %d --category %s",
-                        Process.myUserHandle().getIdentifier(),
-                        overlayPackage));
+                "cmd overlay enable-exclusive --category " + overlayPackage);
 
         if (currentSysUiNavigationMode() != expectedMode) {
             final CountDownLatch latch = new CountDownLatch(1);
@@ -180,13 +179,12 @@ public class NavigationModeSwitchRule implements TestRule {
         }
 
         Wait.atMost("Couldn't switch to " + overlayPackage,
-                () -> launcher.getNavigationModel() == expectedMode,
-                launcher);
+                () -> launcher.getNavigationModel() == expectedMode, WAIT_TIME_MS, launcher);
 
         Wait.atMost(() -> "Switching nav mode: "
                         + launcher.getNavigationModeMismatchError(false),
                 () -> launcher.getNavigationModeMismatchError(false) == null,
-                launcher);
+                WAIT_TIME_MS, launcher);
         AbstractLauncherUiTest.checkDetectedLeaks(launcher, false);
         return true;
     }

@@ -15,6 +15,8 @@
  */
 package com.android.quickstep.interaction;
 
+import static com.android.launcher3.config.FeatureFlags.ENABLE_NEW_GESTURE_NAV_TUTORIAL;
+
 import android.graphics.PointF;
 
 import com.android.launcher3.R;
@@ -32,34 +34,47 @@ final class HomeGestureTutorialController extends SwipeUpGestureTutorialControll
         super(fragment, tutorialType);
 
         // Set the Lottie animation colors specifically for the Home gesture
-        LottieAnimationColorUtils.updateToArgbColors(
-                mAnimatedGestureDemonstration,
-                Map.of(".onSurfaceHome", fragment.mRootView.mColorOnSurfaceHome,
-                        ".surfaceHome", fragment.mRootView.mColorSurfaceHome,
-                        ".secondaryHome", fragment.mRootView.mColorSecondaryHome));
+        if (ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()) {
+            LottieAnimationColorUtils.updateToArgbColors(
+                    mAnimatedGestureDemonstration,
+                    Map.of(".onSurfaceHome", fragment.mRootView.mColorOnSurfaceHome,
+                            ".surfaceHome", fragment.mRootView.mColorSurfaceHome,
+                            ".secondaryHome", fragment.mRootView.mColorSecondaryHome));
 
-        LottieAnimationColorUtils.updateToArgbColors(
-                mCheckmarkAnimation,
-                Map.of(".checkmark",
-                        Utilities.isDarkTheme(mContext)
-                                ? fragment.mRootView.mColorOnSurfaceHome
-                                : fragment.mRootView.mColorSecondaryHome,
-                        ".checkmarkBackground", fragment.mRootView.mColorSurfaceHome));
+            LottieAnimationColorUtils.updateToArgbColors(
+                    mCheckmarkAnimation,
+                    Map.of(".checkmark",
+                            Utilities.isDarkTheme(mContext)
+                                    ? fragment.mRootView.mColorOnSurfaceHome
+                                    : fragment.mRootView.mColorSecondaryHome,
+                            ".checkmarkBackground", fragment.mRootView.mColorSurfaceHome));
+        }
     }
 
     @Override
     public int getIntroductionTitle() {
-        return R.string.home_gesture_tutorial_title;
+        return ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()
+                ? R.string.home_gesture_tutorial_title
+                : R.string.home_gesture_intro_title;
     }
 
     @Override
     public int getIntroductionSubtitle() {
-        return R.string.home_gesture_tutorial_subtitle;
+        return ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()
+                ? R.string.home_gesture_tutorial_subtitle
+                : R.string.home_gesture_intro_subtitle;
+    }
+
+    @Override
+    public int getSpokenIntroductionSubtitle() {
+        return R.string.home_gesture_spoken_intro_subtitle;
     }
 
     @Override
     public int getSuccessFeedbackTitle() {
-        return R.string.home_gesture_tutorial_success;
+        return ENABLE_NEW_GESTURE_NAV_TUTORIAL.get()
+                ? R.string.home_gesture_tutorial_success
+                : R.string.gesture_tutorial_nice;
     }
 
     @Override

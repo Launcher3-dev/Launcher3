@@ -58,11 +58,6 @@ public final class WidgetsListContentEntry extends WidgetsListBaseEntry {
     }
 
     @Override
-    public WidgetsListBaseEntry copy() {
-        return new WidgetsListContentEntry(mPkgItem, mTitleSectionName, mWidgets, mMaxSpanSize);
-    }
-
-    @Override
     public String toString() {
         return "Content:" + mPkgItem.packageName + ":" + mWidgets.size() + " maxSpanSize: "
                 + mMaxSpanSize;

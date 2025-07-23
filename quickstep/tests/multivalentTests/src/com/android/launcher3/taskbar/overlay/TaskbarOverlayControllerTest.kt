@@ -18,19 +18,19 @@ package com.android.launcher3.taskbar.overlay
 
 import android.app.ActivityManager.RunningTaskInfo
 import android.view.MotionEvent
+import androidx.test.annotation.UiThreadTest
+import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import com.android.launcher3.AbstractFloatingView
 import com.android.launcher3.AbstractFloatingView.TYPE_OPTIONS_POPUP
 import com.android.launcher3.AbstractFloatingView.TYPE_TASKBAR_ALL_APPS
 import com.android.launcher3.AbstractFloatingView.TYPE_TASKBAR_OVERLAY_PROXY
 import com.android.launcher3.AbstractFloatingView.hasOpenView
 import com.android.launcher3.taskbar.TaskbarActivityContext
-import com.android.launcher3.taskbar.TaskbarControllerTestUtil.runOnMainSync
-import com.android.launcher3.taskbar.rules.TaskbarUnitTestRule
-import com.android.launcher3.taskbar.rules.TaskbarUnitTestRule.InjectController
-import com.android.launcher3.taskbar.rules.TaskbarWindowSandboxContext
+import com.android.launcher3.taskbar.TaskbarUnitTestRule
+import com.android.launcher3.taskbar.TaskbarUnitTestRule.InjectController
 import com.android.launcher3.util.LauncherMultivalentJUnit
 import com.android.launcher3.util.LauncherMultivalentJUnit.EmulatedDevices
-import com.android.launcher3.util.TestUtil.getOnUiThread
+import com.android.launcher3.views.BaseDragLayer
 import com.android.systemui.shared.system.TaskStackChangeListeners
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -41,185 +41,193 @@ import org.junit.runner.RunWith
 @EmulatedDevices(["pixelFoldable2023"])
 class TaskbarOverlayControllerTest {
 
-    @get:Rule(order = 0) val context = TaskbarWindowSandboxContext.create()
-    @get:Rule(order = 1) val taskbarUnitTestRule = TaskbarUnitTestRule(this, context)
+    @get:Rule val taskbarUnitTestRule = TaskbarUnitTestRule()
     @InjectController lateinit var overlayController: TaskbarOverlayController
 
     private val taskbarContext: TaskbarActivityContext
         get() = taskbarUnitTestRule.activityContext
 
     @Test
+    @UiThreadTest
     fun testRequestWindow_twice_reusesWindow() {
-        val (context1, context2) =
-            getOnUiThread {
-                Pair(overlayController.requestWindow(), overlayController.requestWindow())
-            }
+        val context1 = overlayController.requestWindow()
+        val context2 = overlayController.requestWindow()
         assertThat(context1).isSameInstanceAs(context2)
     }
 
     @Test
+    @UiThreadTest
     fun testRequestWindow_afterHidingExistingWindow_createsNewWindow() {
-        val context1 = getOnUiThread { overlayController.requestWindow() }
-        runOnMainSync { overlayController.hideWindow() }
+        val context1 = overlayController.requestWindow()
+        overlayController.hideWindow()
 
-        val context2 = getOnUiThread { overlayController.requestWindow() }
+        val context2 = overlayController.requestWindow()
         assertThat(context1).isNotSameInstanceAs(context2)
     }
 
     @Test
+    @UiThreadTest
     fun testRequestWindow_afterHidingOverlay_createsNewWindow() {
-        val context1 = getOnUiThread { overlayController.requestWindow() }
-        runOnMainSync {
-            TestOverlayView.show(context1)
-            overlayController.hideWindow()
-        }
+        val context1 = overlayController.requestWindow()
+        TestOverlayView.show(context1)
+        overlayController.hideWindow()
 
-        val context2 = getOnUiThread { overlayController.requestWindow() }
+        val context2 = overlayController.requestWindow()
         assertThat(context1).isNotSameInstanceAs(context2)
     }
 
     @Test
+    @UiThreadTest
     fun testRequestWindow_addsProxyView() {
-        runOnMainSync { TestOverlayView.show(overlayController.requestWindow()) }
+        TestOverlayView.show(overlayController.requestWindow())
         assertThat(hasOpenView(taskbarContext, TYPE_TASKBAR_OVERLAY_PROXY)).isTrue()
     }
 
     @Test
+    @UiThreadTest
     fun testRequestWindow_closeProxyView_closesOverlay() {
-        val overlay = getOnUiThread { TestOverlayView.show(overlayController.requestWindow()) }
-        runOnMainSync {
-            AbstractFloatingView.closeOpenContainer(taskbarContext, TYPE_TASKBAR_OVERLAY_PROXY)
-        }
+        val overlay = TestOverlayView.show(overlayController.requestWindow())
+        AbstractFloatingView.closeOpenContainer(taskbarContext, TYPE_TASKBAR_OVERLAY_PROXY)
         assertThat(overlay.isOpen).isFalse()
     }
 
     @Test
     fun testRequestWindow_attachesDragLayer() {
-        val dragLayer = getOnUiThread { overlayController.requestWindow().dragLayer }
+        lateinit var dragLayer: BaseDragLayer<*>
+        getInstrumentation().runOnMainSync {
+            dragLayer = overlayController.requestWindow().dragLayer
+        }
+
         // Allow drag layer to attach before checking.
-        runOnMainSync { assertThat(dragLayer.isAttachedToWindow).isTrue() }
+        getInstrumentation().runOnMainSync { assertThat(dragLayer.isAttachedToWindow).isTrue() }
     }
 
     @Test
+    @UiThreadTest
     fun testHideWindow_closesOverlay() {
-        val overlay = getOnUiThread { TestOverlayView.show(overlayController.requestWindow()) }
-        runOnMainSync { overlayController.hideWindow() }
+        val overlay = TestOverlayView.show(overlayController.requestWindow())
+        overlayController.hideWindow()
         assertThat(overlay.isOpen).isFalse()
     }
 
     @Test
     fun testHideWindow_detachesDragLayer() {
-        val dragLayer = getOnUiThread { overlayController.requestWindow().dragLayer }
+        lateinit var dragLayer: BaseDragLayer<*>
+        getInstrumentation().runOnMainSync {
+            dragLayer = overlayController.requestWindow().dragLayer
+        }
 
         // Wait for drag layer to be attached to window before hiding.
-        runOnMainSync {
+        getInstrumentation().runOnMainSync {
             overlayController.hideWindow()
             assertThat(dragLayer.isAttachedToWindow).isFalse()
         }
     }
 
     @Test
+    @UiThreadTest
     fun testTwoOverlays_closeOne_windowStaysOpen() {
-        val (overlay1, overlay2) =
-            getOnUiThread {
-                val context = overlayController.requestWindow()
-                Pair(TestOverlayView.show(context), TestOverlayView.show(context))
-            }
+        val context = overlayController.requestWindow()
+        val overlay1 = TestOverlayView.show(context)
+        val overlay2 = TestOverlayView.show(context)
 
-        runOnMainSync { overlay1.close(false) }
+        overlay1.close(false)
         assertThat(overlay2.isOpen).isTrue()
         assertThat(hasOpenView(taskbarContext, TYPE_TASKBAR_OVERLAY_PROXY)).isTrue()
     }
 
     @Test
+    @UiThreadTest
     fun testTwoOverlays_closeAll_closesWindow() {
-        val (overlay1, overlay2) =
-            getOnUiThread {
-                val context = overlayController.requestWindow()
-                Pair(TestOverlayView.show(context), TestOverlayView.show(context))
-            }
+        val context = overlayController.requestWindow()
+        val overlay1 = TestOverlayView.show(context)
+        val overlay2 = TestOverlayView.show(context)
 
-        runOnMainSync {
-            overlay1.close(false)
-            overlay2.close(false)
-        }
+        overlay1.close(false)
+        overlay2.close(false)
         assertThat(hasOpenView(taskbarContext, TYPE_TASKBAR_OVERLAY_PROXY)).isFalse()
     }
 
     @Test
+    @UiThreadTest
     fun testRecreateTaskbar_closesWindow() {
-        runOnMainSync { TestOverlayView.show(overlayController.requestWindow()) }
+        TestOverlayView.show(overlayController.requestWindow())
         taskbarUnitTestRule.recreateTaskbar()
         assertThat(hasOpenView(taskbarContext, TYPE_TASKBAR_OVERLAY_PROXY)).isFalse()
     }
 
     @Test
     fun testTaskMovedToFront_closesOverlay() {
-        val overlay = getOnUiThread { TestOverlayView.show(overlayController.requestWindow()) }
+        lateinit var overlay: TestOverlayView
+        getInstrumentation().runOnMainSync {
+            overlay = TestOverlayView.show(overlayController.requestWindow())
+        }
+
         TaskStackChangeListeners.getInstance().listenerImpl.onTaskMovedToFront(RunningTaskInfo())
         // Make sure TaskStackChangeListeners' Handler posts the callback before checking state.
-        runOnMainSync { assertThat(overlay.isOpen).isFalse() }
+        getInstrumentation().runOnMainSync { assertThat(overlay.isOpen).isFalse() }
     }
 
     @Test
     fun testTaskStackChanged_allAppsClosed_overlayStaysOpen() {
-        val overlay = getOnUiThread { TestOverlayView.show(overlayController.requestWindow()) }
-        runOnMainSync { taskbarContext.controllers.sharedState?.allAppsVisible = false }
+        lateinit var overlay: TestOverlayView
+        getInstrumentation().runOnMainSync {
+            overlay = TestOverlayView.show(overlayController.requestWindow())
+            taskbarContext.controllers.sharedState?.allAppsVisible = false
+        }
 
         TaskStackChangeListeners.getInstance().listenerImpl.onTaskStackChanged()
-        runOnMainSync { assertThat(overlay.isOpen).isTrue() }
+        getInstrumentation().runOnMainSync { assertThat(overlay.isOpen).isTrue() }
     }
 
     @Test
     fun testTaskStackChanged_allAppsOpen_closesOverlay() {
-        val overlay = getOnUiThread { TestOverlayView.show(overlayController.requestWindow()) }
-        runOnMainSync { taskbarContext.controllers.sharedState?.allAppsVisible = true }
+        lateinit var overlay: TestOverlayView
+        getInstrumentation().runOnMainSync {
+            overlay = TestOverlayView.show(overlayController.requestWindow())
+            taskbarContext.controllers.sharedState?.allAppsVisible = true
+        }
 
         TaskStackChangeListeners.getInstance().listenerImpl.onTaskStackChanged()
-        runOnMainSync { assertThat(overlay.isOpen).isFalse() }
+        getInstrumentation().runOnMainSync { assertThat(overlay.isOpen).isFalse() }
     }
 
     @Test
+    @UiThreadTest
     fun testUpdateLauncherDeviceProfile_overlayNotRebindSafe_closesOverlay() {
-        val context = getOnUiThread { overlayController.requestWindow() }
-        val overlay = getOnUiThread {
-            TestOverlayView.show(context).apply { type = TYPE_OPTIONS_POPUP }
-        }
+        val overlayContext = overlayController.requestWindow()
+        val overlay = TestOverlayView.show(overlayContext).apply { type = TYPE_OPTIONS_POPUP }
 
-        runOnMainSync {
-            overlayController.updateLauncherDeviceProfile(
-                overlayController.launcherDeviceProfile
-                    .toBuilder(context)
-                    .setGestureMode(false)
-                    .build()
-            )
-        }
+        overlayController.updateLauncherDeviceProfile(
+            overlayController.launcherDeviceProfile
+                .toBuilder(overlayContext)
+                .setGestureMode(false)
+                .build()
+        )
 
         assertThat(overlay.isOpen).isFalse()
     }
 
     @Test
+    @UiThreadTest
     fun testUpdateLauncherDeviceProfile_overlayRebindSafe_overlayStaysOpen() {
-        val context = getOnUiThread { overlayController.requestWindow() }
-        val overlay = getOnUiThread {
-            TestOverlayView.show(context).apply { type = TYPE_TASKBAR_ALL_APPS }
-        }
+        val overlayContext = overlayController.requestWindow()
+        val overlay = TestOverlayView.show(overlayContext).apply { type = TYPE_TASKBAR_ALL_APPS }
 
-        runOnMainSync {
-            overlayController.updateLauncherDeviceProfile(
-                overlayController.launcherDeviceProfile
-                    .toBuilder(context)
-                    .setGestureMode(false)
-                    .build()
-            )
-        }
+        overlayController.updateLauncherDeviceProfile(
+            overlayController.launcherDeviceProfile
+                .toBuilder(overlayContext)
+                .setGestureMode(false)
+                .build()
+        )
 
         assertThat(overlay.isOpen).isTrue()
     }
 
     private class TestOverlayView
-    private constructor(private val overlayContext: TaskbarOverlayContext) :
-        AbstractFloatingView(overlayContext, null) {
+    private constructor(
+        private val overlayContext: TaskbarOverlayContext,
+    ) : AbstractFloatingView(overlayContext, null) {
 
         var type = TYPE_OPTIONS_POPUP
 

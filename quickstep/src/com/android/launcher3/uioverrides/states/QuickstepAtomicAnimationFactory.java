@@ -95,7 +95,6 @@ public class QuickstepAtomicAnimationFactory extends
     public void prepareForAtomicAnimation(LauncherState fromState, LauncherState toState,
             StateAnimationConfig config) {
         RecentsView overview = mContainer.getOverviewPanel();
-        boolean isPinnedTaskbar = DisplayController.isPinnedTaskbar(mContainer);
         if ((fromState == OVERVIEW || fromState == OVERVIEW_SPLIT_SELECT) && toState == NORMAL) {
             overview.switchToScreenshot(() ->
                     overview.finishRecentsAnimation(true /* toRecents */, null));
@@ -109,13 +108,8 @@ public class QuickstepAtomicAnimationFactory extends
 
             // We sync the scrim fade with the taskbar animation duration to avoid any flickers for
             // taskbar icons disappearing before hotseat icons show up.
-            boolean isPinnedTaskbarAndNotInDesktopMode =
-                    isPinnedTaskbar && !DisplayController.isInDesktopMode(mContainer);
             float scrimUpperBoundFromSplit =
-                    QuickstepTransitionManager.getTaskbarToHomeDuration(
-                            isPinnedTaskbarAndNotInDesktopMode)
-                            / (float) config.duration;
-            scrimUpperBoundFromSplit = Math.min(scrimUpperBoundFromSplit, 1f);
+                    QuickstepTransitionManager.getTaskbarToHomeDuration() / (float) config.duration;
             config.setInterpolator(ANIM_OVERVIEW_ACTIONS_FADE, clampToProgress(LINEAR, 0, 0.25f));
             config.setInterpolator(ANIM_SCRIM_FADE,
                     fromState == OVERVIEW_SPLIT_SELECT
@@ -125,7 +119,7 @@ public class QuickstepAtomicAnimationFactory extends
             config.setInterpolator(ANIM_WORKSPACE_FADE, ACCELERATE);
 
             if (DisplayController.getNavigationMode(mContainer).hasGestures
-                    && overview.hasTaskViews()) {
+                    && overview.getTaskViewCount() > 0) {
                 // Overview is going offscreen, so keep it at its current scale and opacity.
                 config.setInterpolator(ANIM_OVERVIEW_SCALE, FINAL_FRAME);
                 config.setInterpolator(ANIM_OVERVIEW_FADE, FINAL_FRAME);
@@ -144,9 +138,7 @@ public class QuickstepAtomicAnimationFactory extends
                 // Sync scroll so that it ends before or at the same time as the taskbar animation.
                 if (mContainer.getDeviceProfile().isTaskbarPresent) {
                     config.duration = Math.min(
-                            config.duration,
-                            QuickstepTransitionManager.getTaskbarToHomeDuration(
-                                    isPinnedTaskbarAndNotInDesktopMode));
+                            config.duration, QuickstepTransitionManager.getTaskbarToHomeDuration());
                 }
                 overview.snapToPage(DEFAULT_PAGE, Math.toIntExact(config.duration));
             } else {
@@ -182,7 +174,7 @@ public class QuickstepAtomicAnimationFactory extends
                 config.setInterpolator(ANIM_WORKSPACE_TRANSLATE, ACCELERATE);
 
                 // Scrolling in tasks, so show straight away
-                if (overview.hasTaskViews()) {
+                if (overview.getTaskViewCount() > 0) {
                     config.setInterpolator(ANIM_OVERVIEW_FADE, INSTANT);
                 } else {
                     config.setInterpolator(ANIM_OVERVIEW_FADE, OVERSHOOT_1_2);

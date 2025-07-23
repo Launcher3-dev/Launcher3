@@ -12,7 +12,7 @@ import androidx.test.uiautomator.UiDevice;
 
 import com.android.app.viewcapture.data.ExportedData;
 import com.android.launcher3.tapl.LauncherInstrumentation;
-import com.android.launcher3.ui.BaseLauncherTaplTest;
+import com.android.launcher3.ui.AbstractLauncherUiTest;
 
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -57,7 +57,7 @@ public class FailureWatcher extends TestWatcher {
     @Override
     protected void succeeded(Description description) {
         super.succeeded(description);
-        BaseLauncherTaplTest.checkDetectedLeaks(mLauncher);
+        AbstractLauncherUiTest.checkDetectedLeaks(mLauncher);
     }
 
     @Override

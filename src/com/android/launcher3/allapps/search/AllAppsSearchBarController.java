@@ -22,6 +22,8 @@ import android.text.TextWatcher;
 import android.text.style.SuggestionSpan;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
+import android.view.View.OnFocusChangeListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
@@ -29,6 +31,7 @@ import android.widget.TextView.OnEditorActionListener;
 import com.android.launcher3.ExtendedEditText;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
+import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.search.SearchAlgorithm;
 import com.android.launcher3.search.SearchCallback;
 import com.android.launcher3.views.ActivityContext;
@@ -37,7 +40,8 @@ import com.android.launcher3.views.ActivityContext;
  * An interface to a search box that AllApps can command.
  */
 public class AllAppsSearchBarController
-        implements TextWatcher, OnEditorActionListener, ExtendedEditText.OnBackKeyListener {
+        implements TextWatcher, OnEditorActionListener, ExtendedEditText.OnBackKeyListener,
+        OnFocusChangeListener {
 
     private static final String TAG = "AllAppsSearchBarController";
     protected ActivityContext mLauncher;
@@ -65,6 +69,7 @@ public class AllAppsSearchBarController
         mInput.addTextChangedListener(this);
         mInput.setOnEditorActionListener(this);
         mInput.setOnBackKeyListener(this);
+        mInput.addOnFocusChangeListener(this);
         mSearchAlgorithm = searchAlgorithm;
     }
 
@@ -118,14 +123,8 @@ public class AllAppsSearchBarController
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
-        if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_GO || (
-                actionId == EditorInfo.IME_NULL && event != null
-                        && event.getAction() == KeyEvent.ACTION_DOWN)) {
-            if (actionId == EditorInfo.IME_NULL) {
-                Log.i(TAG, "User pressed ENTER key");
-            } else {
-                Log.i(TAG, "User tapped ime search button");
-            }
+        if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_GO) {
+            Log.i(TAG, "User tapped ime search button");
             // selectFocusedView should return SearchTargetEvent that is passed onto onClick
             return mLauncher.getAppsView().getMainAdapterProvider().launchHighlightedItem();
         }
@@ -143,6 +142,13 @@ public class AllAppsSearchBarController
         return false;
     }
 
+    @Override
+    public void onFocusChange(View view, boolean hasFocus) {
+        if (!hasFocus && !FeatureFlags.ENABLE_DEVICE_SEARCH.get()) {
+            mInput.hideKeyboard();
+        }
+    }
+
     /**
      * Resets the search bar state.
      */
@@ -150,8 +156,8 @@ public class AllAppsSearchBarController
         mCallback.clearSearchResult();
         mInput.reset();
         mInput.clearFocus();
-        mInput.hideKeyboard();
         mQuery = null;
+        mInput.removeOnFocusChangeListener(this);
     }
 
     /**

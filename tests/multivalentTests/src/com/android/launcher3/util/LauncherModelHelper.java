@@ -21,7 +21,6 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
-import static com.android.launcher3.util.TestUtil.grantWriteSecurePermission;
 import static com.android.launcher3.util.TestUtil.runOnExecutorSync;
 
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -31,7 +30,6 @@ import static org.mockito.Mockito.spy;
 
 import android.content.ContentProvider;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
@@ -47,24 +45,21 @@ import android.test.mock.MockContentResolver;
 import android.util.ArrayMap;
 
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherModel;
-import com.android.launcher3.dagger.LauncherBaseAppComponent;
 import com.android.launcher3.model.BgDataModel;
 import com.android.launcher3.model.BgDataModel.Callbacks;
-import com.android.launcher3.model.ModelDbController;
 import com.android.launcher3.testing.TestInformationProvider;
+import com.android.launcher3.util.MainThreadInitializedObject.SandboxContext;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -89,23 +84,6 @@ public class LauncherModelHelper {
     public static final String TEST_ACTIVITY12 = "com.android.launcher3.tests.Activity13";
     public static final String TEST_ACTIVITY13 = "com.android.launcher3.tests.Activity14";
     public static final String TEST_ACTIVITY14 = "com.android.launcher3.tests.Activity15";
-
-    public static final List<String> ACTIVITY_LIST = Arrays.asList(
-            TEST_ACTIVITY,
-            TEST_ACTIVITY2,
-            TEST_ACTIVITY3,
-            TEST_ACTIVITY4,
-            TEST_ACTIVITY5,
-            TEST_ACTIVITY6,
-            TEST_ACTIVITY7,
-            TEST_ACTIVITY8,
-            TEST_ACTIVITY9,
-            TEST_ACTIVITY10,
-            TEST_ACTIVITY11,
-            TEST_ACTIVITY12,
-            TEST_ACTIVITY13,
-            TEST_ACTIVITY14
-    );
 
     // Authority for providing a test default-workspace-layout data.
     private static final String TEST_PROVIDER_AUTHORITY =
@@ -150,9 +128,7 @@ public class LauncherModelHelper {
         icon.eraseColor(Color.RED);
         sp.setAppIcon(icon);
         sp.setAppLabel(pkg);
-        sp.setInstallerPackageName(ApplicationProvider.getApplicationContext().getPackageName());
-        PackageInstaller pi = ApplicationProvider.getApplicationContext().getPackageManager()
-                .getPackageInstaller();
+        PackageInstaller pi = sandboxContext.getPackageManager().getPackageInstaller();
         int sessionId = pi.createSession(sp);
         mDestroyTask.add(() -> pi.abandonSession(sessionId));
         return sessionId;
@@ -187,22 +163,12 @@ public class LauncherModelHelper {
      */
     public LauncherModelHelper setupDefaultLayoutProvider(LauncherLayoutBuilder builder)
             throws Exception {
-        grantWriteSecurePermission();
-
         InvariantDeviceProfile idp = InvariantDeviceProfile.INSTANCE.get(sandboxContext);
-        if (idp.numRows == 0 && idp.numColumns == 0) {
-            idp.numRows = idp.numColumns = idp.numDatabaseHotseatIcons = DEFAULT_GRID_SIZE;
-        }
-        if (idp.iconBitmapSize == 0) {
-            idp.iconBitmapSize = DEFAULT_BITMAP_SIZE;
-        }
+        idp.numRows = idp.numColumns = idp.numDatabaseHotseatIcons = DEFAULT_GRID_SIZE;
+        idp.iconBitmapSize = DEFAULT_BITMAP_SIZE;
 
-        Settings.Secure.putString(sandboxContext.getContentResolver(), "launcher3.layout.provider",
-                TEST_PROVIDER_AUTHORITY);
-
-        // TODO: use a wrapper class to differentiate the behavior
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        builder.build(new OutputStreamWriter(bos));
+        UiDevice.getInstance(getInstrumentation()).executeShellCommand(
+                "settings put secure launcher3.layout.provider " + TEST_PROVIDER_AUTHORITY);
         ContentProvider cp = new TestInformationProvider() {
 
             @Override
@@ -211,6 +177,8 @@ public class LauncherModelHelper {
                 try {
                     ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
                     AutoCloseOutputStream outputStream = new AutoCloseOutputStream(pipe[1]);
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    builder.build(new OutputStreamWriter(bos));
                     outputStream.write(bos.toByteArray());
                     outputStream.flush();
                     outputStream.close();
@@ -221,13 +189,9 @@ public class LauncherModelHelper {
             }
         };
         setupProvider(TEST_PROVIDER_AUTHORITY, cp);
-        RoboApiWrapper.INSTANCE.registerInputStream(sandboxContext.getContentResolver(),
-                ModelDbController.getLayoutUri(TEST_PROVIDER_AUTHORITY, sandboxContext),
-                ()-> new ByteArrayInputStream(bos.toByteArray()));
-
         mDestroyTask.add(() -> runOnExecutorSync(MODEL_EXECUTOR, () ->
-                Settings.Secure.putString(sandboxContext.getContentResolver(),
-                        "launcher3.layout.provider", "")));
+                UiDevice.getInstance(getInstrumentation()).executeShellCommand(
+                        "settings delete secure launcher3.layout.provider")));
         return this;
     }
 
@@ -239,7 +203,7 @@ public class LauncherModelHelper {
         MAIN_EXECUTOR.submit(() -> getModel().addCallbacksAndLoad(mockCb)).get();
 
         Executors.MODEL_EXECUTOR.submit(() -> { }).get();
-        getInstrumentation().waitForIdleSync();
+        MAIN_EXECUTOR.submit(() -> { }).get();
         MAIN_EXECUTOR.submit(() -> getModel().removeCallbacks(mockCb)).get();
     }
 
@@ -251,19 +215,26 @@ public class LauncherModelHelper {
         private final File mDbDir;
 
         public SandboxModelContext() {
-            this(ApplicationProvider.getApplicationContext());
-        }
-
-        public SandboxModelContext(Context context) {
-            super(context);
+            super(ApplicationProvider.getApplicationContext());
 
             // System settings cache content provider. Ensure that they are statically initialized
-            Settings.Secure.getString(context.getContentResolver(), "test");
-            Settings.System.getString(context.getContentResolver(), "test");
-            Settings.Global.getString(context.getContentResolver(), "test");
+            Settings.Secure.getString(
+                    ApplicationProvider.getApplicationContext().getContentResolver(), "test");
+            Settings.System.getString(
+                    ApplicationProvider.getApplicationContext().getContentResolver(), "test");
+            Settings.Global.getString(
+                    ApplicationProvider.getApplicationContext().getContentResolver(), "test");
 
             mPm = spy(getBaseContext().getPackageManager());
             mDbDir = new File(getCacheDir(), UUID.randomUUID().toString());
+        }
+
+        @Override
+        public <T extends SafeCloseable> T createObject(MainThreadInitializedObject<T> object) {
+            if (object == LauncherAppState.INSTANCE) {
+                return (T) new LauncherAppState(this, null /* iconCacheFileName */);
+            }
+            return super.createObject(object);
         }
 
         @Override
@@ -280,11 +251,11 @@ public class LauncherModelHelper {
         }
 
         @Override
-        protected void cleanUpObjects() {
+        public void onDestroy() {
             if (deleteContents(mDbDir)) {
                 mDbDir.delete();
             }
-            super.cleanUpObjects();
+            super.onDestroy();
         }
 
         @Override
@@ -333,11 +304,6 @@ public class LauncherModelHelper {
                 }
             }
             return success;
-        }
-
-        @Override
-        public void initDaggerComponent(LauncherBaseAppComponent.Builder componentBuilder) {
-            super.initDaggerComponent(componentBuilder.iconsDbName(null));
         }
     }
 }

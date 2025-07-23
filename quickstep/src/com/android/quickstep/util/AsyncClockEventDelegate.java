@@ -32,34 +32,27 @@ import android.widget.TextClock.ClockEventDelegate;
 
 import androidx.annotation.WorkerThread;
 
-import com.android.launcher3.dagger.ApplicationContext;
-import com.android.launcher3.dagger.LauncherAppSingleton;
-import com.android.launcher3.util.DaggerSingletonObject;
-import com.android.launcher3.util.DaggerSingletonTracker;
+import com.android.launcher3.util.MainThreadInitializedObject;
 import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.util.SettingsCache;
 import com.android.launcher3.util.SettingsCache.OnChangeListener;
 import com.android.launcher3.util.SimpleBroadcastReceiver;
-import com.android.quickstep.dagger.QuickstepBaseAppComponent;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
 /**
  * Extension of {@link ClockEventDelegate} to support async event registration
  */
-@LauncherAppSingleton
 public class AsyncClockEventDelegate extends ClockEventDelegate
         implements OnChangeListener, SafeCloseable {
 
-    public static final DaggerSingletonObject<AsyncClockEventDelegate> INSTANCE =
-            new DaggerSingletonObject<>(QuickstepBaseAppComponent::getAsyncClockEventDelegate);
+    public static final MainThreadInitializedObject<AsyncClockEventDelegate> INSTANCE =
+            new MainThreadInitializedObject<>(AsyncClockEventDelegate::new);
 
     private final Context mContext;
-    private final SettingsCache mSettingsCache;
-    private final SimpleBroadcastReceiver mReceiver;
+    private final SimpleBroadcastReceiver mReceiver =
+            new SimpleBroadcastReceiver(this::onClockEventReceived);
 
     private final ArrayMap<BroadcastReceiver, Handler> mTimeEventReceivers = new ArrayMap<>();
     private final List<ContentObserver> mFormatObservers = new ArrayList<>();
@@ -68,17 +61,12 @@ public class AsyncClockEventDelegate extends ClockEventDelegate
     private boolean mFormatRegistered = false;
     private boolean mDestroyed = false;
 
-    @Inject
-    AsyncClockEventDelegate(@ApplicationContext Context context,
-            DaggerSingletonTracker tracker,
-            SettingsCache settingsCache) {
+    private AsyncClockEventDelegate(Context context) {
         super(context);
         mContext = context;
-        mSettingsCache = settingsCache;
-        mReceiver = new SimpleBroadcastReceiver(
-                context, UI_HELPER_EXECUTOR, this::onClockEventReceived);
-        mReceiver.register(ACTION_TIME_CHANGED, ACTION_TIMEZONE_CHANGED);
-        tracker.addCloseable(this);
+
+        UI_HELPER_EXECUTOR.execute(() ->
+                mReceiver.register(mContext, ACTION_TIME_CHANGED, ACTION_TIMEZONE_CHANGED));
     }
 
     @Override
@@ -102,7 +90,7 @@ public class AsyncClockEventDelegate extends ClockEventDelegate
         }
         synchronized (mFormatObservers) {
             if (!mFormatRegistered && !mDestroyed) {
-                mSettingsCache.register(mFormatUri, this);
+                SettingsCache.INSTANCE.get(mContext).register(mFormatUri, this);
                 mFormatRegistered = true;
             }
             mFormatObservers.add(observer);
@@ -138,7 +126,7 @@ public class AsyncClockEventDelegate extends ClockEventDelegate
     @Override
     public void close() {
         mDestroyed = true;
-        mSettingsCache.unregister(mFormatUri, this);
-        mReceiver.unregisterReceiverSafely();
+        SettingsCache.INSTANCE.get(mContext).unregister(mFormatUri, this);
+        UI_HELPER_EXECUTOR.execute(() -> mReceiver.unregisterReceiverSafely(mContext));
     }
 }

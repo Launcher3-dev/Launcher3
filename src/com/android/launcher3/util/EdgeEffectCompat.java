@@ -19,6 +19,8 @@ import android.content.Context;
 import android.view.MotionEvent;
 import android.widget.EdgeEffect;
 
+import com.android.launcher3.Utilities;
+
 /**
  * Extension of {@link EdgeEffect} to allow backwards compatibility
  */
@@ -26,6 +28,21 @@ public class EdgeEffectCompat extends EdgeEffect {
 
     public EdgeEffectCompat(Context context) {
         super(context);
+    }
+
+    @Override
+    public float getDistance() {
+        return Utilities.ATLEAST_S ? super.getDistance() : 0;
+    }
+
+    @Override
+    public float onPullDistance(float deltaDistance, float displacement) {
+        if (Utilities.ATLEAST_S) {
+            return super.onPullDistance(deltaDistance, displacement);
+        } else {
+            onPull(deltaDistance, displacement);
+            return deltaDistance;
+        }
     }
 
     public float onPullDistance(float deltaDistance, float displacement, MotionEvent ev) {

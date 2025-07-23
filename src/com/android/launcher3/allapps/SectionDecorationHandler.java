@@ -25,8 +25,10 @@ import android.graphics.drawable.InsetDrawable;
 import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import com.android.launcher3.R;
+import com.android.launcher3.util.Themes;
 
 public class SectionDecorationHandler {
 
@@ -59,8 +61,10 @@ public class SectionDecorationHandler {
 
         mContext = context;
         mFillAlpha = fillAlpha;
-        mFocusColor = context.getColor(R.color.materialColorSurfaceBright); // UX recommended
-        mFillColor = context.getColor(R.color.materialColorSurfaceContainerHigh); // UX recommended
+        mFocusColor = ContextCompat.getColor(context,
+                R.color.material_color_surface_bright); // UX recommended
+        mFillColor = ContextCompat.getColor(context,
+                R.color.material_color_surface_container_high); // UX recommended
 
         mIsTopLeftRound = isTopLeftRound;
         mIsTopRightRound = isTopRightRound;

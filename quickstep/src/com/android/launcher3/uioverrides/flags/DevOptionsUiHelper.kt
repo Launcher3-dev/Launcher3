@@ -17,6 +17,8 @@
 package com.android.launcher3.uioverrides.flags
 
 import android.app.PendingIntent
+import android.app.blob.BlobHandle.createWithSha256
+import android.app.blob.BlobStoreManager
 import android.content.Context
 import android.content.IIntentReceiver
 import android.content.IIntentSender.Stub
@@ -27,10 +29,15 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
+import android.os.ParcelFileDescriptor.AutoCloseOutputStream
 import android.provider.DeviceConfig
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+import android.provider.Settings.Secure
 import android.text.Html
 import android.util.AttributeSet
+import android.util.Base64
+import android.util.Base64.NO_PADDING
+import android.util.Base64.NO_WRAP
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import android.widget.Toast
@@ -40,31 +47,48 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceGroup
 import androidx.preference.PreferenceViewHolder
 import androidx.preference.SwitchPreference
+import com.android.launcher3.AutoInstallsLayout
 import com.android.launcher3.ExtendedEditText
 import com.android.launcher3.LauncherAppState
 import com.android.launcher3.LauncherPrefs
+import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP
+import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT
+import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
+import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPWIDGET
+import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT
+import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_FOLDER
+import com.android.launcher3.LauncherSettings.Settings.LAYOUT_DIGEST_KEY
+import com.android.launcher3.LauncherSettings.Settings.LAYOUT_DIGEST_LABEL
+import com.android.launcher3.LauncherSettings.Settings.LAYOUT_DIGEST_TAG
 import com.android.launcher3.R
+import com.android.launcher3.model.data.FolderInfo
+import com.android.launcher3.model.data.ItemInfo
+import com.android.launcher3.model.data.LauncherAppWidgetInfo
+import com.android.launcher3.pm.UserCache
 import com.android.launcher3.proxy.ProxyActivityStarter
 import com.android.launcher3.secondarydisplay.SecondaryDisplayLauncher
+import com.android.launcher3.shortcuts.ShortcutKey
 import com.android.launcher3.uioverrides.plugins.PluginManagerWrapperImpl
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
+import com.android.launcher3.util.Executors.MODEL_EXECUTOR
 import com.android.launcher3.util.Executors.ORDERED_BG_EXECUTOR
-import com.android.launcher3.util.LayoutImportExportHelper
+import com.android.launcher3.util.LauncherLayoutBuilder
 import com.android.launcher3.util.OnboardingPrefs.ALL_APPS_VISITED_COUNT
 import com.android.launcher3.util.OnboardingPrefs.HOME_BOUNCE_COUNT
 import com.android.launcher3.util.OnboardingPrefs.HOME_BOUNCE_SEEN
 import com.android.launcher3.util.OnboardingPrefs.HOTSEAT_DISCOVERY_TIP_COUNT
 import com.android.launcher3.util.OnboardingPrefs.HOTSEAT_LONGPRESS_TIP_SEEN
 import com.android.launcher3.util.OnboardingPrefs.TASKBAR_EDU_TOOLTIP_STEP
-import com.android.launcher3.util.OnboardingPrefs.TASKBAR_SEARCH_EDU_SEEN
 import com.android.launcher3.util.PluginManagerWrapper
 import com.android.launcher3.util.StartActivityParams
+import com.android.launcher3.util.UserIconInfo
 import com.android.quickstep.util.DeviceConfigHelper
 import com.android.quickstep.util.DeviceConfigHelper.Companion.NAMESPACE_LAUNCHER
 import com.android.quickstep.util.DeviceConfigHelper.DebugInfo
 import com.android.systemui.shared.plugins.PluginEnabler
 import com.android.systemui.shared.plugins.PluginPrefs
-import java.nio.charset.StandardCharsets
+import java.io.OutputStreamWriter
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.Executor
 
@@ -216,7 +240,7 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
     private fun DebugInfo<Boolean>.getBoolValue() =
         DeviceConfigHelper.prefs.getBoolean(
             this.key,
-            DeviceConfig.getBoolean(NAMESPACE_LAUNCHER, this.key, this.valueInCode),
+            DeviceConfig.getBoolean(NAMESPACE_LAUNCHER, this.key, this.valueInCode)
         )
 
     private fun DebugInfo<Int>.getIntValueAsString() =
@@ -240,7 +264,7 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
         val pluginPermissionApps =
             pm.getPackagesHoldingPermissions(
                     arrayOf(PLUGIN_PERMISSION),
-                    PackageManager.MATCH_DISABLED_COMPONENTS,
+                    PackageManager.MATCH_DISABLED_COMPONENTS
                 )
                 .map { it.packageName }
 
@@ -249,7 +273,7 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
                 pm.queryIntentServices(
                         Intent(action),
                         PackageManager.MATCH_DISABLED_COMPONENTS or
-                            PackageManager.GET_RESOLVED_FILTER,
+                            PackageManager.GET_RESOLVED_FILTER
                     )
                     .filter { pluginPermissionApps.contains(it.serviceInfo.packageName) }
             }
@@ -291,7 +315,7 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
                             infoList.forEach {
                                 manager.pluginEnabler.setDisabled(
                                     it.serviceInfo.componentName,
-                                    disabledState,
+                                    disabledState
                                 )
                             }
                             manager.notifyChange(Intent(Intent.ACTION_PACKAGE_CHANGED, pluginUri))
@@ -313,12 +337,6 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
                 Preference(context).apply {
                     title = "Launch Gesture Tutorial Steps menu"
                     intent = Intent(launchSandboxIntent).putExtra("use_tutorial_menu", true)
-                }
-            )
-            addPreference(
-                Preference(context).apply {
-                    title = "Launch Full Gesture Tutorial"
-                    intent = Intent(launchSandboxIntent).putExtra("use_tutorial_menu", false)
                 }
             )
             addPreference(
@@ -368,15 +386,14 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
             addOnboardPref(
                 "All Apps Bounce",
                 HOME_BOUNCE_SEEN.sharedPrefKey,
-                HOME_BOUNCE_COUNT.sharedPrefKey,
+                HOME_BOUNCE_COUNT.sharedPrefKey
             )
             addOnboardPref(
                 "Hybrid Hotseat Education",
                 HOTSEAT_DISCOVERY_TIP_COUNT.sharedPrefKey,
-                HOTSEAT_LONGPRESS_TIP_SEEN.sharedPrefKey,
+                HOTSEAT_LONGPRESS_TIP_SEEN.sharedPrefKey
             )
             addOnboardPref("Taskbar Education", TASKBAR_EDU_TOOLTIP_STEP.sharedPrefKey)
-            addOnboardPref("Taskbar Search Education", TASKBAR_SEARCH_EDU_SEEN.sharedPrefKey)
             addOnboardPref("All Apps Visited Count", ALL_APPS_VISITED_COUNT.sharedPrefKey)
         }
     }
@@ -404,12 +421,26 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
             title = "Export"
             intent =
                 createUriPickerIntent(ACTION_CREATE_DOCUMENT, MAIN_EXECUTOR) { uri ->
-                    LayoutImportExportHelper.exportModelDbAsXml(context) { layoutXml ->
-                        context.contentResolver.openOutputStream(uri).use { os ->
-                            val bytes: ByteArray =
-                                layoutXml.toByteArray(StandardCharsets.UTF_8) // Encode to UTF-8
-                            os?.write(bytes)
+                    model.enqueueModelUpdateTask { _, dataModel, _ ->
+                        val builder = LauncherLayoutBuilder()
+                        dataModel.workspaceItems.forEach { info ->
+                            val loc =
+                                when (info.container) {
+                                    CONTAINER_DESKTOP ->
+                                        builder.atWorkspace(info.cellX, info.cellY, info.screenId)
+                                    CONTAINER_HOTSEAT -> builder.atHotseat(info.screenId)
+                                    else -> return@forEach
+                                }
+                            loc.addItem(info)
                         }
+                        dataModel.appWidgets.forEach { info ->
+                            builder.atWorkspace(info.cellX, info.cellY, info.screenId).addItem(info)
+                        }
+
+                        context.contentResolver.openOutputStream(uri).use { os ->
+                            builder.build(OutputStreamWriter(os))
+                        }
+
                         MAIN_EXECUTOR.execute {
                             Toast.makeText(context, "File saved", Toast.LENGTH_LONG).show()
                         }
@@ -427,16 +458,67 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
                         resolver.openInputStream(uri).use { stream ->
                             stream?.readAllBytes() ?: return@createUriPickerIntent
                         }
-                    LayoutImportExportHelper.importModelFromXml(context, data)
+
+                    val digest = MessageDigest.getInstance("SHA-256").digest(data)
+                    val handle = createWithSha256(digest, LAYOUT_DIGEST_LABEL, 0, LAYOUT_DIGEST_TAG)
+                    val blobManager = context.getSystemService(BlobStoreManager::class.java)!!
+
+                    blobManager.openSession(blobManager.createSession(handle)).use { session ->
+                        AutoCloseOutputStream(session.openWrite(0, -1)).use { it.write(data) }
+                        session.allowPublicAccess()
+
+                        session.commit(ORDERED_BG_EXECUTOR) {
+                            val key = Base64.encodeToString(digest, NO_WRAP or NO_PADDING)
+                            Secure.putString(resolver, LAYOUT_DIGEST_KEY, key)
+
+                            MODEL_EXECUTOR.submit { model.modelDbController.createEmptyDB() }.get()
+                            MAIN_EXECUTOR.submit { model.forceReload() }.get()
+                            MODEL_EXECUTOR.submit {}.get()
+                            Secure.putString(resolver, LAYOUT_DIGEST_KEY, null)
+                        }
+                    }
                 }
             category.addPreference(this)
+        }
+    }
+
+    private fun LauncherLayoutBuilder.ItemTarget.addItem(info: ItemInfo) {
+        val userType: String? =
+            when (UserCache.INSTANCE.get(context).getUserInfo(info.user).type) {
+                UserIconInfo.TYPE_WORK -> AutoInstallsLayout.USER_TYPE_WORK
+                UserIconInfo.TYPE_CLONED -> AutoInstallsLayout.USER_TYPE_CLONED
+                else -> null
+            }
+        when (info.itemType) {
+            ITEM_TYPE_APPLICATION ->
+                info.targetComponent?.let { c -> putApp(c.packageName, c.className, userType) }
+            ITEM_TYPE_DEEP_SHORTCUT ->
+                ShortcutKey.fromItemInfo(info).let { key ->
+                    putShortcut(key.packageName, key.id, userType)
+                }
+            ITEM_TYPE_FOLDER ->
+                (info as FolderInfo).let { folderInfo ->
+                    putFolder(folderInfo.title?.toString() ?: "").also { folderBuilder ->
+                        folderInfo.getContents().forEach { folderContent ->
+                            folderBuilder.addItem(folderContent)
+                        }
+                    }
+                }
+            ITEM_TYPE_APPWIDGET ->
+                putWidget(
+                    (info as LauncherAppWidgetInfo).providerName.packageName,
+                    info.providerName.className,
+                    info.spanX,
+                    info.spanY,
+                    userType
+                )
         }
     }
 
     private fun createUriPickerIntent(
         action: String,
         executor: Executor,
-        callback: (uri: Uri) -> Unit,
+        callback: (uri: Uri) -> Unit
     ): Intent {
         val pendingIntent =
             PendingIntent(
@@ -448,7 +530,7 @@ class DevOptionsUiHelper(c: Context, attr: AttributeSet?) : PreferenceGroup(c, a
                         allowlistToken: IBinder?,
                         finishedReceiver: IIntentReceiver?,
                         requiredPermission: String?,
-                        options: Bundle?,
+                        options: Bundle?
                     ) {
                         intent.data?.let { uri -> executor.execute { callback(uri) } }
                     }

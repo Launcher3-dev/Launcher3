@@ -18,12 +18,10 @@ package com.android.launcher3.model.data
 
 import android.content.Context
 import com.android.launcher3.LauncherSettings
-import com.android.launcher3.LauncherSettings.Favorites.DESKTOP_ICON_FLAG
 import com.android.launcher3.R
 import com.android.launcher3.icons.IconCache
 import com.android.launcher3.logger.LauncherAtom
 import com.android.launcher3.views.ActivityContext
-import java.util.stream.Collectors
 
 /** A type of app collection that launches multiple apps into split screen. */
 class AppPairInfo() : CollectionInfo() {
@@ -34,8 +32,9 @@ class AppPairInfo() : CollectionInfo() {
     }
 
     /** Convenience constructor, calls primary constructor and init block */
-    constructor(apps: List<WorkspaceItemInfo>) : this() {
-        apps.forEach(this::add)
+    constructor(app1: WorkspaceItemInfo, app2: WorkspaceItemInfo) : this() {
+        add(app1)
+        add(app2)
     }
 
     /** Creates a new AppPairInfo that is a copy of the provided one. */
@@ -55,7 +54,7 @@ class AppPairInfo() : CollectionInfo() {
 
     /** Returns the app pair's member apps as an ArrayList of [ItemInfo]. */
     override fun getContents(): ArrayList<ItemInfo> =
-        ArrayList(contents.stream().map { it as ItemInfo }.collect(Collectors.toList()))
+        ArrayList(contents.stream().map { it as ItemInfo }.toList())
 
     /** Returns the app pair's member apps as an ArrayList of [WorkspaceItemInfo]. */
     override fun getAppContents(): ArrayList<WorkspaceItemInfo> = contents
@@ -74,17 +73,16 @@ class AppPairInfo() : CollectionInfo() {
         val isTablet =
             (ActivityContext.lookupContext(context) as ActivityContext).getDeviceProfile().isTablet
         return Pair(
-            isTablet || !getFirstApp().isNonResizeable,
-            isTablet || !getSecondApp().isNonResizeable,
+            isTablet || !getFirstApp().isNonResizeable(),
+            isTablet || !getSecondApp().isNonResizeable()
         )
     }
 
     /** Fetches high-res icons for member apps if needed. */
     fun fetchHiResIconsIfNeeded(iconCache: IconCache) {
-        getAppContents()
-            .stream()
-            .filter { it.matchingLookupFlag.isVisuallyLessThan(DESKTOP_ICON_FLAG) }
-            .forEach { member -> iconCache.getTitleAndIcon(member, DESKTOP_ICON_FLAG) }
+        getAppContents().stream().filter(ItemInfoWithIcon::usingLowResIcon).forEach { member ->
+            iconCache.getTitleAndIcon(member, false)
+        }
     }
 
     /**
@@ -107,10 +105,10 @@ class AppPairInfo() : CollectionInfo() {
     }
 
     /** Generates an ItemInfo for logging. */
-    override fun buildProto(cInfo: CollectionInfo?, context: Context): LauncherAtom.ItemInfo {
+    override fun buildProto(cInfo: CollectionInfo?): LauncherAtom.ItemInfo {
         val appPairIcon = LauncherAtom.FolderIcon.newBuilder().setCardinality(contents.size)
         appPairIcon.setLabelInfo(title.toString())
-        return getDefaultItemInfoBuilder(context)
+        return getDefaultItemInfoBuilder()
             .setFolderIcon(appPairIcon)
             .setRank(rank)
             .setContainerInfo(getContainerInfo())

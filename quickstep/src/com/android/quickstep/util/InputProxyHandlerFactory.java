@@ -35,8 +35,8 @@ public class InputProxyHandlerFactory implements Supplier<InputConsumer> {
     private final GestureState mGestureState;
 
     @UiThread
-    public InputProxyHandlerFactory(
-            BaseContainerInterface activityInterface, GestureState gestureState) {
+    public InputProxyHandlerFactory(BaseContainerInterface activityInterface,
+            GestureState gestureState) {
         mContainerInterface = activityInterface;
         mGestureState = gestureState;
     }
@@ -47,8 +47,7 @@ public class InputProxyHandlerFactory implements Supplier<InputConsumer> {
     @Override
     public InputConsumer get() {
         RecentsViewContainer container = mContainerInterface.getCreatedContainer();
-        return container == null
-                ? InputConsumer.createNoOpInputConsumer(mGestureState.getDisplayId())
+        return container == null ? InputConsumer.NO_OP
                 : new OverviewInputConsumer(mGestureState, container, null, true);
     }
 }

@@ -29,9 +29,9 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.customview.widget.ExploreByTouchHelper;
 
 import com.android.launcher3.CellLayout;
+import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
-import com.android.launcher3.views.ActivityContext;
-import com.android.launcher3.views.BaseDragLayer;
+import com.android.launcher3.dragndrop.DragLayer;
 
 import java.util.List;
 
@@ -47,17 +47,16 @@ public abstract class DragAndDropAccessibilityDelegate extends ExploreByTouchHel
 
     protected final CellLayout mView;
     protected final Context mContext;
-    protected final ActivityContext mActivityContext;
     protected final LauncherAccessibilityDelegate mDelegate;
-    protected final BaseDragLayer<?> mDragLayer;
+    protected final DragLayer mDragLayer;
 
     public DragAndDropAccessibilityDelegate(CellLayout forView) {
         super(forView);
         mView = forView;
         mContext = mView.getContext();
-        mActivityContext = ActivityContext.lookupContext(mContext);
-        mDelegate = (LauncherAccessibilityDelegate) mActivityContext.getAccessibilityDelegate();
-        mDragLayer = mActivityContext.getDragLayer();
+        Launcher launcher = Launcher.getLauncher(mContext);
+        mDelegate = launcher.getAccessibilityDelegate();
+        mDragLayer = launcher.getDragLayer();
     }
 
     @Override

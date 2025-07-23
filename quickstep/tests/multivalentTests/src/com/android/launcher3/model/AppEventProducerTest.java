@@ -35,13 +35,10 @@ import android.os.UserHandle;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
-import com.android.launcher3.dagger.LauncherAppComponent;
-import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.logger.LauncherAtom;
 import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.pm.UserCache;
-import com.android.launcher3.util.AllModulesForTest;
-import com.android.launcher3.util.SandboxContext;
+import com.android.launcher3.util.MainThreadInitializedObject.SandboxContext;
 import com.android.launcher3.util.UserIconInfo;
 import com.android.systemui.shared.system.SysUiStatsLog;
 
@@ -53,9 +50,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
-
-import dagger.BindsInstance;
-import dagger.Component;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -78,9 +72,7 @@ public class AppEventProducerTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         mContext = new SandboxContext(getApplicationContext());
-        mContext.initDaggerComponent(
-                DaggerAppEventProducerTest_TestComponent.builder().bindUserCache(mUserCache)
-        );
+        mContext.putObject(UserCache.INSTANCE, mUserCache);
         mAppEventProducer = new AppEventProducer(mContext, null);
     }
 
@@ -136,16 +128,5 @@ public class AppEventProducerTest {
                 .setAllAppsContainer(LauncherAtom.AllAppsContainer.getDefaultInstance())
                 .build());
         return itemBuilder.build();
-    }
-
-    @LauncherAppSingleton
-    @Component(modules = { AllModulesForTest.class })
-    interface TestComponent extends LauncherAppComponent {
-        @Component.Builder
-        interface Builder extends LauncherAppComponent.Builder {
-            @BindsInstance
-            AppEventProducerTest.TestComponent.Builder bindUserCache(UserCache userCache);
-            @Override LauncherAppComponent build();
-        }
     }
 }

@@ -26,11 +26,9 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
 
-import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
@@ -43,11 +41,11 @@ import android.os.IBinder;
 import android.os.Process;
 import android.os.UserHandle;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
-import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
@@ -56,13 +54,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.savedstate.SavedStateRegistryOwner;
 
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
 import com.android.launcher3.DropTargetHandler;
-import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
@@ -80,15 +76,11 @@ import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.popup.PopupDataProvider;
 import com.android.launcher3.util.ActivityOptionsWrapper;
-import com.android.launcher3.util.ApplicationInfoWrapper;
-import com.android.launcher3.util.LauncherBindableItemsContainer;
+import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.util.SplitConfigurationOptions;
-import com.android.launcher3.util.SystemUiController;
 import com.android.launcher3.util.ViewCache;
-import com.android.launcher3.util.WeakCleanupSet;
-import com.android.launcher3.widget.picker.model.WidgetPickerDataProvider;
 
 import java.util.List;
 
@@ -96,13 +88,24 @@ import java.util.List;
  * An interface to be used along with a context for various activities in Launcher. This allows a
  * generic class to depend on Context subclass instead of an Activity.
  */
-public interface ActivityContext extends SavedStateRegistryOwner {
+public interface ActivityContext {
 
     String TAG = "ActivityContext";
 
     default boolean finishAutoCancelActionMode() {
         return false;
     }
+
+    default DotInfo getDotInfoForItem(ItemInfo info) {
+        return null;
+    }
+
+    /**
+     * For items with tree hierarchy, notifies the activity to invalidate the parent when a root
+     * is invalidated
+     * @param info info associated with a root node.
+     */
+    default void invalidateParent(ItemInfo info) { }
 
     default AccessibilityDelegate getAccessibilityDelegate() {
         return null;
@@ -165,40 +168,10 @@ public interface ActivityContext extends SavedStateRegistryOwner {
         return false;
     }
 
-    /** Returns the RootView */
-    default View getRootView() {
-        return getDragLayer();
-    }
-
     /**
      * The root view to support drag-and-drop and popup support.
      */
     BaseDragLayer getDragLayer();
-
-    /**
-     * @see Activity#getWindow()
-     * @return Window
-     */
-    @Nullable
-    default Window getWindow() {
-        return null;
-    }
-
-    /**
-     * @see Activity#getComponentName()
-     * @return ComponentName
-     */
-    default ComponentName getComponentName() {
-        return null;
-    }
-
-    /**
-     * Returns the primary content of this context
-     */
-    @NonNull
-    default LauncherBindableItemsContainer getContent() {
-        return op -> null;
-    }
 
     /**
      * The all apps container, if it exists in this context.
@@ -231,17 +204,14 @@ public interface ActivityContext extends SavedStateRegistryOwner {
         getOnDeviceProfileChangeListeners().remove(listener);
     }
 
-    ViewCache getViewCache();
+    default ViewCache getViewCache() {
+        return new ViewCache();
+    }
 
     /**
      * Controller for supporting item drag-and-drop
      */
     default <T extends DragController> T getDragController() {
-        return null;
-    }
-
-    @Nullable
-    default SystemUiController getSystemUiController() {
         return null;
     }
 
@@ -275,6 +245,11 @@ public interface ActivityContext extends SavedStateRegistryOwner {
      */
     default void applyOverwritesToLogItem(LauncherAtom.ItemInfo.Builder itemInfoBuilder) { }
 
+    /** Returns {@code true} if items are currently being bound within this context. */
+    default boolean isBindingItems() {
+        return false;
+    }
+
     default View.OnClickListener getItemOnClickListener() {
         return v -> {
             // No op.
@@ -286,20 +261,8 @@ public interface ActivityContext extends SavedStateRegistryOwner {
         return v -> false;
     }
 
-    @NonNull
-    default PopupDataProvider getPopupDataProvider() {
-        return new PopupDataProvider(this);
-    }
-
-    default DotInfo getDotInfoForItem(ItemInfo info) {
-        return getPopupDataProvider().getDotInfoForItem(info);
-    }
-
-    /**
-     * Returns the {@link WidgetPickerDataProvider} that can be used to read widgets for display.
-     */
     @Nullable
-    default WidgetPickerDataProvider getWidgetPickerDataProvider() {
+    default PopupDataProvider getPopupDataProvider() {
         return null;
     }
 
@@ -419,8 +382,7 @@ public interface ActivityContext extends SavedStateRegistryOwner {
             View v, Intent intent, @Nullable ItemInfo item) {
         Preconditions.assertUIThread();
         Context context = (Context) this;
-        if (LauncherAppState.getInstance(context).isSafeModeEnabled()
-                && !new ApplicationInfoWrapper(context, intent).isSystem()) {
+        if (isAppBlockedForSafeMode() && !PackageManagerHelper.isSystemApp(context, intent)) {
             Toast.makeText(context, R.string.safemode_shortcut_error, Toast.LENGTH_SHORT).show();
             return null;
         }
@@ -466,6 +428,11 @@ public interface ActivityContext extends SavedStateRegistryOwner {
         return null;
     }
 
+    /** Returns {@code true} if an app launch is blocked due to safe mode. */
+    default boolean isAppBlockedForSafeMode() {
+        return false;
+    }
+
     /**
      * Creates and logs a new app launch event.
      */
@@ -481,7 +448,6 @@ public interface ActivityContext extends SavedStateRegistryOwner {
      * @param v View initiating a launch.
      * @param item Item associated with the view.
      */
-    @NonNull
     default ActivityOptionsWrapper getActivityLaunchOptions(View v, @Nullable ItemInfo item) {
         int left = 0, top = 0;
         int width = v.getMeasuredWidth(), height = v.getMeasuredHeight();
@@ -521,9 +487,6 @@ public interface ActivityContext extends SavedStateRegistryOwner {
         return new CellPosMapper(dp.isVerticalBarLayout(), dp.numShownHotseatIcons);
     }
 
-    /** Set to manage objects that can be cleaned up along with the context */
-    WeakCleanupSet getOwnerCleanupSet();
-
     /** Whether bubbles are enabled. */
     default boolean isBubbleBarEnabled() {
         return false;
@@ -532,11 +495,6 @@ public interface ActivityContext extends SavedStateRegistryOwner {
     /** Whether the bubble bar has bubbles. */
     default boolean hasBubbles() {
         return false;
-    }
-
-    /** Returns the current ActivityContext as context */
-    default Context asContext() {
-        return (Context) this;
     }
 
     /**
@@ -558,10 +516,21 @@ public interface ActivityContext extends SavedStateRegistryOwner {
     static <T extends Context & ActivityContext> T lookupContextNoThrow(Context context) {
         if (context instanceof ActivityContext) {
             return (T) context;
-        } else if (context instanceof ContextWrapper cw) {
-            return lookupContextNoThrow(cw.getBaseContext());
+        } else if (context instanceof ActivityContextDelegate acd) {
+            return (T) acd.mDelegate;
+        } else if (context instanceof ContextWrapper) {
+            return lookupContextNoThrow(((ContextWrapper) context).getBaseContext());
         } else {
             return null;
+        }
+    }
+
+    class ActivityContextDelegate extends ContextThemeWrapper {
+        public final ActivityContext mDelegate;
+
+        public ActivityContextDelegate(Context base, int themeResId, ActivityContext delegate) {
+            super(base, themeResId);
+            mDelegate = delegate;
         }
     }
 }

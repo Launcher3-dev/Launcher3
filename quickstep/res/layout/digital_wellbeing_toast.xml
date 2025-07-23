@@ -14,7 +14,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<com.android.quickstep.views.DigitalWellBeingToast
+<TextView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     style="@style/TextTitle"
@@ -24,8 +24,7 @@
     android:forceHasOverlappingRendering="false"
     android:gravity="center"
     android:importantForAccessibility="noHideDescendants"
-    android:textColor="@color/materialColorOnSecondaryFixed"
+    android:textColor="@color/system_on_secondary_fixed_launcher"
     android:textSize="14sp"
     android:autoSizeTextType="uniform"
-    android:autoSizeMaxTextSize="14sp"
-    android:visibility="gone"/>
+    android:autoSizeMaxTextSize="14sp"/>

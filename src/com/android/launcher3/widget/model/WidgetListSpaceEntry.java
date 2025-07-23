@@ -33,9 +33,4 @@ public class WidgetListSpaceEntry extends WidgetsListBaseEntry {
                 Collections.EMPTY_LIST);
         mPkgItem.title = "";
     }
-
-    @Override
-    public WidgetsListBaseEntry copy() {
-        return new WidgetListSpaceEntry();
-    }
 }

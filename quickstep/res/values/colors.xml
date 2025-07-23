@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
+<resources xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
 
     <color name="chip_hint_foreground_color">#fff</color>
     <color name="chip_scrim_start_color">#39000000</color>
@@ -31,6 +31,7 @@
     <color name="taskbar_nav_icon_dark_color_on_home">#99000000</color>
     <color name="taskbar_stashed_handle_light_color">#EBffffff</color>
     <color name="taskbar_stashed_handle_dark_color">#99000000</color>
+    <color name="taskbar_running_app_indicator_color">#646464</color>
 
     <!-- Floating rotation button -->
     <color name="floating_rotation_button_light_color">#ffffff</color>
@@ -75,7 +76,7 @@
     <color name="mock_webpage_top_bar_item">#80868b</color>
     <color name="mock_webpage_page_text">#bdc1c6</color>
 
-    <color name="all_set_page_background">@android:color/system_neutral1_50</color>
+    <color name="all_set_page_background">#FFFFFFFF</color>
 
     <!-- Recents overview -->
     <color name="recents_filter_icon">#333333</color>
@@ -93,5 +94,21 @@
     <color name="lottie_yellow600">#f9ab00</color>
 
     <!-- Turn on work apps button -->
-    <color name="work_turn_on_stroke">@color/materialColorPrimary</color>
+    <color name="work_turn_on_stroke">#7A90C8</color>
+    <color name="work_fab_bg_color">#455B8F</color>
+    <color name="work_fab_icon_color">#FFFFFF</color>
+    <color name="system_surface_container_lowest_dark_launcher">#0D0E13</color>
+    <color name="system_on_surface_dark_launcher">#E3E2E9</color>
+    <color name="system_primary_fixed_launcher">#DAE2FF</color>
+    <color name="system_primary_fixed_dim_launcher">#B2C5FF</color>
+    <color name="system_tertiary_fixed_launcher">#FED6F9</color>
+    <color name="system_on_tertiary_fixed_launcher">#2B122B</color>
+    <color name="system_on_tertiary_fixed_variant_launcher">#5A3D59</color>
+    <color name="system_on_primary_fixed_launcher">#001849</color>
+    <color name="system_tertiary_fixed_dim_launcher">#E1BBDC</color>
+    <color name="system_on_secondary_fixed_variant_launcher">#414659</color>
+    <color name="system_on_secondary_fixed_launcher">#151B2C</color>
+    <color name="system_on_primary_light_launcher">#FFFFFF</color>
+    <!-- Yellow 600, used for highlighting "important" conversations in settings & notifications -->
+    <color name="important_conversation">#f9ab00</color>
 </resources>

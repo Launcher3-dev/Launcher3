@@ -15,7 +15,6 @@
  */
 package com.android.quickstep.util;
 
-import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import android.content.Context;
@@ -27,33 +26,22 @@ import android.view.WindowManager;
 import android.view.WindowMetrics;
 
 import com.android.internal.policy.SystemBarUtils;
-import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.statehandlers.DesktopVisibilityController;
 import com.android.launcher3.util.WindowBounds;
 import com.android.launcher3.util.window.CachedDisplayInfo;
 import com.android.launcher3.util.window.WindowManagerProxy;
-import com.android.quickstep.SystemUiProxy;
-import com.android.window.flags.Flags;
-import com.android.wm.shell.shared.desktopmode.DesktopModeStatus;
+import com.android.quickstep.LauncherActivityInterface;
 
 import java.util.List;
 import java.util.Set;
 
-import javax.inject.Inject;
-
 /**
  * Extension of {@link WindowManagerProxy} with some assumption for the default system Launcher
  */
-@LauncherAppSingleton
 public class SystemWindowManagerProxy extends WindowManagerProxy {
 
-    private final DesktopVisibilityController mDesktopVisibilityController;
-
-
-    @Inject
-    public SystemWindowManagerProxy(DesktopVisibilityController desktopVisibilityController) {
+    public SystemWindowManagerProxy(Context context) {
         super(true);
-        mDesktopVisibilityController = desktopVisibilityController;
     }
 
     @Override
@@ -63,55 +51,10 @@ public class SystemWindowManagerProxy extends WindowManagerProxy {
     }
 
     @Override
-    public void registerDesktopVisibilityListener(DesktopVisibilityListener listener) {
-        mDesktopVisibilityController.registerDesktopVisibilityListener(listener);
-    }
-
-    @Override
-    public void unregisterDesktopVisibilityListener(DesktopVisibilityListener listener) {
-        mDesktopVisibilityController.unregisterDesktopVisibilityListener(listener);
-    }
-
-    @Override
-    public boolean isInDesktopMode(int displayId) {
-        return mDesktopVisibilityController.isInDesktopMode(displayId);
-    }
-
-    @Override
-    public boolean showLockedTaskbarOnHome(Context displayInfoContext) {
-        if (!DesktopModeStatus.canEnterDesktopMode(displayInfoContext)) {
-            return false;
-        }
-        if (!DesktopModeStatus.enterDesktopByDefaultOnFreeformDisplay(displayInfoContext)) {
-            return false;
-        }
-        final boolean isFreeformDisplay = displayInfoContext.getResources().getConfiguration()
-                .windowConfiguration.getWindowingMode() == WINDOWING_MODE_FREEFORM;
-        return isFreeformDisplay;
-    }
-
-    @Override
-    public boolean showDesktopTaskbarForFreeformDisplay(Context displayInfoContext) {
-        if (!DesktopModeStatus.canEnterDesktopMode(displayInfoContext)) {
-            return false;
-        }
-
-        if (!DesktopModeStatus.enterDesktopByDefaultOnFreeformDisplay(displayInfoContext)) {
-            return false;
-        }
-
-        if (!Flags.enableDesktopTaskbarOnFreeformDisplays()) {
-            return false;
-        }
-
-        final boolean isFreeformDisplay = displayInfoContext.getResources().getConfiguration()
-                .windowConfiguration.getWindowingMode() == WINDOWING_MODE_FREEFORM;
-        return isFreeformDisplay;
-    }
-
-    @Override
-    public boolean isHomeVisible(Context context) {
-        return SystemUiProxy.INSTANCE.get(context).getHomeVisibilityState().isHomeVisible();
+    public boolean isInDesktopMode() {
+        DesktopVisibilityController desktopController =
+                LauncherActivityInterface.INSTANCE.getDesktopVisibilityController();
+        return desktopController != null && desktopController.areDesktopTasksVisible();
     }
 
     @Override

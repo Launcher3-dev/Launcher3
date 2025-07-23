@@ -15,8 +15,6 @@
  */
 package com.android.quickstep.util;
 
-import androidx.annotation.Nullable;
-
 import com.android.systemui.shared.recents.model.Task;
 
 import java.util.function.Predicate;
@@ -46,7 +44,6 @@ public interface TaskKeyCache<V> {
     /**
      * Gets the entry if it is still valid.
      */
-    @Nullable
     V getAndInvalidateIfModified(Task.TaskKey key);
 
     /**

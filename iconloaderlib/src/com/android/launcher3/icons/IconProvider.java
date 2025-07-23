@@ -28,9 +28,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.ComponentInfo;
-import android.content.pm.PackageItemInfo;
+import android.content.pm.ActivityInfo;
+import android.content.pm.LauncherActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
@@ -41,25 +40,30 @@ import android.graphics.drawable.InsetDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PatternMatcher;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.os.BuildCompat;
 
 import com.android.launcher3.util.SafeCloseable;
 
 import java.util.Calendar;
-import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Class to handle icon loading from different packages
  */
+@SuppressWarnings("deprecation")
 public class IconProvider {
+
+    private final String ACTION_OVERLAY_CHANGED = "android.intent.action.OVERLAY_CHANGED";
+    static final int CONFIG_ICON_MASK_RES_ID = Resources.getSystem().getIdentifier(
+            "config_icon_mask", "string", "android");
 
     private static final String TAG = "IconProvider";
     private static final boolean DEBUG = false;
@@ -73,9 +77,6 @@ public class IconProvider {
     private final ComponentName mCalendar;
     private final ComponentName mClock;
 
-    @NonNull
-    protected String mSystemState = "";
-
     public IconProvider(Context context) {
         mContext = context;
         mCalendar = parseComponentOrNull(context, R.string.calendar_component_name);
@@ -83,73 +84,53 @@ public class IconProvider {
     }
 
     /**
-     * Returns a string representing the current state of the app icon. It can be used as a
-     * identifier to invalidate any resources loaded from the app.
-     * It also incorporated ay system state, that can affect the loaded resource
-     *
-     * @see #updateSystemState()
+     * Adds any modification to the provided systemState for dynamic icons. This system state
+     * is used by caches to check for icon invalidation.
      */
-    public String getStateForApp(@Nullable ApplicationInfo appInfo) {
-        if (appInfo == null) {
-            return mSystemState;
-        }
-
-        if (mCalendar != null && mCalendar.getPackageName().equals(appInfo.packageName)) {
-            return mSystemState + SYSTEM_STATE_SEPARATOR + getDay() + SYSTEM_STATE_SEPARATOR
-                    + getApplicationInfoHash(appInfo);
+    public String getSystemStateForPackage(String systemState, String packageName) {
+        if (mCalendar != null && mCalendar.getPackageName().equals(packageName)) {
+            return systemState + SYSTEM_STATE_SEPARATOR + getDay();
         } else {
-            return mSystemState + SYSTEM_STATE_SEPARATOR + getApplicationInfoHash(appInfo);
+            return systemState;
         }
     }
 
     /**
-     * Returns a hash to uniquely identify a particular version of appInfo
+     * Loads the icon for the provided LauncherActivityInfo
      */
-    protected String getApplicationInfoHash(@NonNull ApplicationInfo appInfo) {
-        // The hashString in source dir changes with every install
-        return appInfo.sourceDir;
+    public Drawable getIcon(LauncherActivityInfo info, int iconDpi) {
+        return getIconWithOverrides(info.getApplicationInfo().packageName, iconDpi,
+                () -> info.getIcon(iconDpi));
     }
 
     /**
      * Loads the icon for the provided activity info
      */
-    public Drawable getIcon(ComponentInfo info) {
+    public Drawable getIcon(ActivityInfo info) {
         return getIcon(info, mContext.getResources().getConfiguration().densityDpi);
     }
 
     /**
-     * Loads the icon for the provided component info
+     * Loads the icon for the provided activity info
      */
-    public Drawable getIcon(ComponentInfo info, int iconDpi) {
-        return getIcon(info, info.applicationInfo, iconDpi);
+    public Drawable getIcon(ActivityInfo info, int iconDpi) {
+        return getIconWithOverrides(info.applicationInfo.packageName, iconDpi,
+                () -> loadActivityInfoIcon(info, iconDpi));
     }
 
-    /**
-     * Loads the icon for the provided application info
-     */
-    public Drawable getIcon(ApplicationInfo info) {
-        return getIcon(info, mContext.getResources().getConfiguration().densityDpi);
-    }
-
-    /**
-     * Loads the icon for the provided application info
-     */
-    public Drawable getIcon(ApplicationInfo info, int iconDpi) {
-        return getIcon(info, info, iconDpi);
-    }
-
-    private Drawable getIcon(PackageItemInfo info, ApplicationInfo appInfo, int iconDpi) {
-        String packageName = info.packageName;
+    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    private Drawable getIconWithOverrides(String packageName, int iconDpi,
+            Supplier<Drawable> fallback) {
         ThemeData td = getThemeDataForPackage(packageName);
 
         Drawable icon = null;
         if (mCalendar != null && mCalendar.getPackageName().equals(packageName)) {
             icon = loadCalendarDrawable(iconDpi, td);
         } else if (mClock != null && mClock.getPackageName().equals(packageName)) {
-            icon = ClockDrawableWrapper.forPackage(mContext, mClock.getPackageName(), iconDpi);
+            icon = ClockDrawableWrapper.forPackage(mContext, mClock.getPackageName(), iconDpi, td);
         }
         if (icon == null) {
-            icon = loadPackageIcon(info, appInfo, iconDpi);
+            icon = fallback.get();
             if (ATLEAST_T && icon instanceof AdaptiveIconDrawable && td != null) {
                 AdaptiveIconDrawable aid = (AdaptiveIconDrawable) icon;
                 if  (aid.getMonochrome() == null) {
@@ -165,40 +146,27 @@ public class IconProvider {
         return null;
     }
 
-    private Drawable loadPackageIcon(PackageItemInfo info, ApplicationInfo appInfo, int density) {
+    @SuppressWarnings("deprecation")
+    private Drawable loadActivityInfoIcon(ActivityInfo ai, int density) {
+        final int iconRes = ai.getIconResource();
         Drawable icon = null;
-        if (BuildCompat.isAtLeastV() && info.isArchived) {
-            // Icons for archived apps com from system service, let the default impl handle that
-            icon = info.loadIcon(mContext.getPackageManager());
-        }
-        if (icon == null && density != 0 && (info.icon != 0 || appInfo.icon != 0)) {
+        // Get the preferred density icon from the app's resources
+        if (density != 0 && iconRes != 0) {
             try {
                 final Resources resources = mContext.getPackageManager()
-                        .getResourcesForApplication(appInfo);
-                // Try to load the package item icon first
-                if (info != appInfo && info.icon != 0) {
-                    try {
-                        icon = resources.getDrawableForDensity(info.icon, density);
-                    } catch (Resources.NotFoundException exc) { }
-                }
-                if (icon == null && appInfo.icon != 0) {
-                    // Load the fallback app icon
-                    icon = loadAppInfoIcon(appInfo, resources, density);
-                }
+                        .getResourcesForApplication(ai.applicationInfo);
+                icon = resources.getDrawableForDensity(iconRes, density);
             } catch (NameNotFoundException | Resources.NotFoundException exc) { }
         }
-        return icon != null ? icon : getFullResDefaultActivityIcon(density);
-    }
-
-    @Nullable
-    protected Drawable loadAppInfoIcon(ApplicationInfo info, Resources resources, int density) {
-        try {
-            return resources.getDrawableForDensity(info.icon, density);
-        } catch (Resources.NotFoundException exc) { }
-        return null;
+        // Get the default density icon
+        if (icon == null) {
+            icon = ai.loadIcon(mContext.getPackageManager());
+        }
+        return icon;
     }
 
     @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    @SuppressWarnings("deprecation")
     private Drawable loadCalendarDrawable(int iconDpi, @Nullable ThemeData td) {
         PackageManager pm = mContext.getPackageManager();
         try {
@@ -237,15 +205,6 @@ public class IconProvider {
     }
 
     /**
-     * Returns the default activity icon
-     */
-    @NonNull
-    public Drawable getFullResDefaultActivityIcon(final int iconDpi) {
-        return Objects.requireNonNull(Resources.getSystem().getDrawableForDensity(
-                android.R.drawable.sym_def_app_icon, iconDpi));
-    }
-
-    /**
      * @param metadata metadata of the default activity of Calendar
      * @param resources from the Calendar package
      * @return the resource id for today's Calendar icon; 0 if resources cannot be found.
@@ -270,16 +229,6 @@ public class IconProvider {
     }
 
     /**
-     * Refreshes the system state definition used to check the validity of an app icon. It
-     * incorporates all the properties that can affect the app icon like the list of enabled locale
-     * and system-version.
-     */
-    public void updateSystemState() {
-        mSystemState = mContext.getResources().getConfiguration().getLocales().toLanguageTags()
-                + "," + Build.VERSION.SDK_INT;
-    }
-
-    /**
      * @return Today's day of the month, zero-indexed.
      */
     private static int getDay() {
@@ -289,6 +238,14 @@ public class IconProvider {
     private static ComponentName parseComponentOrNull(Context context, int resId) {
         String cn = context.getString(resId);
         return TextUtils.isEmpty(cn) ? null : ComponentName.unflattenFromString(cn);
+    }
+
+    /**
+     * Returns a string representation of the current system icon state
+     */
+    public String getSystemIconState() {
+        return (CONFIG_ICON_MASK_RES_ID == ID_NULL
+                ? "" : mContext.getResources().getString(CONFIG_ICON_MASK_RES_ID));
     }
 
     /**
@@ -308,6 +265,7 @@ public class IconProvider {
             mResID = resID;
         }
 
+        @SuppressWarnings("deprecation")
         Drawable loadPaddedDrawable() {
             if (!"drawable".equals(mResources.getResourceTypeName(mResID))) {
                 return null;
@@ -323,9 +281,18 @@ public class IconProvider {
     private class IconChangeReceiver extends BroadcastReceiver implements SafeCloseable {
 
         private final IconChangeListener mCallback;
+        private String mIconState;
 
         IconChangeReceiver(IconChangeListener callback, Handler handler) {
             mCallback = callback;
+            mIconState = getSystemIconState();
+
+
+            IntentFilter packageFilter = new IntentFilter(ACTION_OVERLAY_CHANGED);
+            packageFilter.addDataScheme("package");
+            packageFilter.addDataSchemeSpecificPart("android", PatternMatcher.PATTERN_LITERAL);
+            mContext.registerReceiver(this, packageFilter, null, handler);
+
             if (mCalendar != null || mClock != null) {
                 final IntentFilter filter = new IntentFilter(ACTION_TIMEZONE_CHANGED);
                 if (mCalendar != null) {
@@ -353,14 +320,20 @@ public class IconProvider {
                         }
                     }
                     break;
+                case ACTION_OVERLAY_CHANGED: {
+                    String newState = getSystemIconState();
+                    if (!mIconState.equals(newState)) {
+                        mIconState = newState;
+                        mCallback.onSystemIconStateChanged(mIconState);
+                    }
+                    break;
+                }
             }
         }
 
         @Override
         public void close() {
-            try {
-                mContext.unregisterReceiver(this);
-            } catch (Exception ignored) { }
+            mContext.unregisterReceiver(this);
         }
     }
 
@@ -373,5 +346,10 @@ public class IconProvider {
          * Called when the icon for a particular app changes
          */
         void onAppIconChanged(String packageName, UserHandle user);
+
+        /**
+         * Called when the global icon state changed, which can typically affect all icons
+         */
+        void onSystemIconStateChanged(String iconState);
     }
 }

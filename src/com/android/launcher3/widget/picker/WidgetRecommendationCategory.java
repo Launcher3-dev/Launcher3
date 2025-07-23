@@ -19,8 +19,6 @@ package com.android.launcher3.widget.picker;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
-import com.android.launcher3.R;
-
 import java.util.Objects;
 
 /**
@@ -28,10 +26,6 @@ import java.util.Objects;
  * option in the pop-up opened on long press of launcher workspace).
  */
 public class WidgetRecommendationCategory implements Comparable<WidgetRecommendationCategory> {
-    public static WidgetRecommendationCategory DEFAULT_WIDGET_RECOMMENDATION_CATEGORY =
-            new WidgetRecommendationCategory(
-                    R.string.others_widget_recommendation_category_label, /*order=*/0);
-
     /** Resource id that holds the user friendly label for the category. */
     @StringRes
     public final int categoryTitleRes;

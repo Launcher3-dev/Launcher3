@@ -64,7 +64,6 @@ import android.animation.ValueAnimator;
 import android.graphics.PointF;
 import android.view.MotionEvent;
 import android.view.animation.Interpolator;
-import android.window.DesktopModeFlags;
 
 import com.android.internal.jank.Cuj;
 import com.android.launcher3.LauncherState;
@@ -87,7 +86,6 @@ import com.android.quickstep.util.MotionPauseDetector;
 import com.android.quickstep.util.WorkspaceRevealAnim;
 import com.android.quickstep.views.RecentsView;
 import com.android.systemui.shared.system.InteractionJankMonitorWrapper;
-import com.android.wm.shell.shared.desktopmode.DesktopModeStatus;
 
 /**
  * Handles quick switching to a recent task from the home screen. To give as much flexibility to
@@ -123,7 +121,6 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
     private AnimatorPlaybackController mNonOverviewAnim;
     private AnimatorPlaybackController mXOverviewAnim;
     private AnimatedFloat mYOverviewAnim;
-    private boolean mIsTrackpadSwipe;
 
     public NoButtonQuickSwitchTouchController(QuickstepLauncher launcher) {
         mLauncher = launcher;
@@ -131,10 +128,7 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
         mRecentsView = mLauncher.getOverviewPanel();
         mXRange = mLauncher.getDeviceProfile().widthPx / 2f;
         mYRange = LayoutUtils.getShelfTrackingDistance(
-                mLauncher,
-                mLauncher.getDeviceProfile(),
-                mRecentsView.getPagedOrientationHandler(),
-                mRecentsView.getSizeStrategy());
+            mLauncher, mLauncher.getDeviceProfile(), mRecentsView.getPagedOrientationHandler());
         mMaxYProgress = mLauncher.getDeviceProfile().heightPx / mYRange;
         mMotionPauseDetector = new MotionPauseDetector(mLauncher);
         mMotionPauseMinDisplacement = mLauncher.getResources().getDimension(
@@ -183,14 +177,7 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
             return false;
         }
         if (isTrackpadMultiFingerSwipe(ev)) {
-            mIsTrackpadSwipe = isTrackpadFourFingerSwipe(ev);
-            return mIsTrackpadSwipe;
-        }
-        if (DesktopModeStatus.canEnterDesktopMode(mLauncher)
-                //TODO(b/345296916): replace with dev option once in teamfood
-                && DesktopModeFlags.ENABLE_QUICKSWITCH_DESKTOP_SPLIT_BUGFIX.isTrue()
-                && mRecentsView.getNonDesktopTaskViewCount() < 1) {
-            return false;
+            return isTrackpadFourFingerSwipe(ev);
         }
         return true;
     }
@@ -198,7 +185,6 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
     @Override
     public void onDragStart(boolean start) {
         mMotionPauseDetector.clear();
-        mMotionPauseDetector.setIsTrackpadGesture(mIsTrackpadSwipe);
         if (start) {
             InteractionJankMonitorWrapper.begin(mRecentsView, Cuj.CUJ_LAUNCHER_QUICK_SWITCH);
             InteractionJankMonitorWrapper.begin(mRecentsView, Cuj.CUJ_LAUNCHER_APP_SWIPE_TO_RECENTS,
@@ -231,7 +217,7 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
         updateNonOverviewAnim(QUICK_SWITCH_FROM_HOME, nonOverviewBuilder);
         mNonOverviewAnim.dispatchOnStart();
 
-        if (!mRecentsView.hasTaskViews()) {
+        if (mRecentsView.getTaskViewCount() == 0) {
             mRecentsView.setOnEmptyMessageUpdatedListener(isEmpty -> {
                 if (!isEmpty && mSwipeDetector.isDraggingState()) {
                     // We have loaded tasks, update the animators to start at the correct scale etc.
@@ -264,7 +250,7 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
         mRecentsView.setFullscreenProgress(fromState.getOverviewFullscreenProgress());
         mLauncher.getActionsView().getVisibilityAlpha().updateValue(
                 (fromState.getVisibleElements(mLauncher) & OVERVIEW_ACTIONS) != 0 ? 1f : 0f);
-        mRecentsView.setTaskIconVisible(false);
+        mRecentsView.setTaskIconScaledDown(true);
 
         float[] scaleAndOffset = toState.getOverviewScaleAndOffset(mLauncher);
         // As we drag right, animate the following properties:
@@ -277,7 +263,7 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
         // since we need to take potential taskbar into account.
         xAnim.setViewBackgroundColor(mLauncher.getScrimView(),
                 QUICK_SWITCH_FROM_HOME.getWorkspaceScrimColor(mLauncher), LINEAR);
-        if (!mRecentsView.hasTaskViews()) {
+        if (mRecentsView.getTaskViewCount() == 0) {
             xAnim.addFloat(mRecentsView, CONTENT_ALPHA, 0f, 1f, LINEAR);
         }
         mXOverviewAnim = xAnim.createPlaybackController();
@@ -348,7 +334,7 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
                 public void onAnimationEnd(Animator animation) {
                     onAnimationToStateCompleted(OVERVIEW);
                     // Animate the icon after onAnimationToStateCompleted() so it doesn't clobber.
-                    mRecentsView.startIconFadeInOnGestureComplete();
+                    mRecentsView.animateUpTaskIconScale();
                 }
             });
             overviewAnim.start();

@@ -95,7 +95,7 @@ public class AssistantInputConsumer extends DelegateInputConsumer {
             InputMonitorCompat inputMonitor,
             RecentsAnimationDeviceState deviceState,
             MotionEvent startEvent) {
-        super(gestureState.getDisplayId(), delegate, inputMonitor);
+        super(delegate, inputMonitor);
         final Resources res = context.getResources();
         mContext = context;
         mDragDistThreshold = res.getDimension(R.dimen.gestures_assistant_drag_threshold);

@@ -26,7 +26,6 @@ import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
 import android.view.RemoteAnimationTarget;
 
 import androidx.annotation.NonNull;
@@ -58,7 +57,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 public abstract class SwipeUpAnimationLogic implements
-        RecentsAnimationCallbacks.RecentsAnimationListener {
+        RecentsAnimationCallbacks.RecentsAnimationListener{
 
     protected static final Rect TEMP_RECT = new Rect();
     protected final RemoteTargetGluer mTargetGluer;
@@ -66,6 +65,7 @@ public abstract class SwipeUpAnimationLogic implements
     protected DeviceProfile mDp;
 
     protected final Context mContext;
+    protected final RecentsAnimationDeviceState mDeviceState;
     protected final GestureState mGestureState;
 
     protected RemoteTargetHandle[] mRemoteTargetHandles;
@@ -84,19 +84,20 @@ public abstract class SwipeUpAnimationLogic implements
 
     protected boolean mIsSwipeForSplit;
 
-    public SwipeUpAnimationLogic(Context context, GestureState gestureState) {
+    public SwipeUpAnimationLogic(Context context, RecentsAnimationDeviceState deviceState,
+            GestureState gestureState) {
         mContext = context;
+        mDeviceState = deviceState;
         mGestureState = gestureState;
         updateIsGestureForSplit(TopTaskTracker.INSTANCE.get(context)
                 .getRunningSplitTaskIds().length);
 
         mTargetGluer = new RemoteTargetGluer(mContext, mGestureState.getContainerInterface());
         mRemoteTargetHandles = mTargetGluer.getRemoteTargetHandles();
-        RotationTouchHelper rotationTouchHelper = RotationTouchHelper.INSTANCE.get(context);
         runActionOnRemoteHandles(remoteTargetHandle ->
                 remoteTargetHandle.getTaskViewSimulator().getOrientationState().update(
-                        rotationTouchHelper.getCurrentActiveRotation(),
-                        rotationTouchHelper.getDisplayRotation()
+                        mDeviceState.getRotationTouchHelper().getCurrentActiveRotation(),
+                        mDeviceState.getRotationTouchHelper().getDisplayRotation()
                 ));
     }
 
@@ -112,7 +113,7 @@ public abstract class SwipeUpAnimationLogic implements
             PendingAnimation pendingAnimation = new PendingAnimation(mTransitionDragLength * 2);
             TaskViewSimulator taskViewSimulator = remoteHandle.getTaskViewSimulator();
             taskViewSimulator.setDp(dp);
-            taskViewSimulator.addAppToCarouselAnim(pendingAnimation, LINEAR);
+            taskViewSimulator.addAppToOverviewAnim(pendingAnimation, LINEAR);
             AnimatorPlaybackController playbackController =
                     pendingAnimation.createPlaybackController();
 
@@ -380,8 +381,6 @@ public abstract class SwipeUpAnimationLogic implements
     protected class SpringAnimationRunner extends AnimationSuccessListener
             implements RectFSpringAnim.OnUpdateListener, BuilderProxy {
 
-        private static final String TAG = "SpringAnimationRunner";
-
         final Rect mCropRect = new Rect();
         final Matrix mMatrix = new Matrix();
 
@@ -482,31 +481,10 @@ public abstract class SwipeUpAnimationLogic implements
                 return;
             }
             mTargetTaskView.setAlpha(mAnimationFactory.isAnimatingIntoIcon() ? 1f : alpha);
-            float startWidth = mThumbnailStartBounds.width();
-            float startHeight =  mThumbnailStartBounds.height();
-            float currentWidth = currentRect.width();
-            float currentHeight = currentRect.height();
-            float scale;
-
-            boolean isStartWidthValid = Float.compare(startWidth, 0f) > 0;
-            boolean isStartHeightValid = Float.compare(startHeight, 0f) > 0;
-            if (isStartWidthValid && isStartHeightValid) {
-                scale = Math.min(currentWidth, currentHeight) / Math.min(startWidth, startHeight);
-            } else {
-                Log.e(TAG, "TaskView starting bounds are invalid: " + mThumbnailStartBounds);
-                if (isStartWidthValid) {
-                    scale = currentWidth / startWidth;
-                } else if (isStartHeightValid) {
-                    scale = currentHeight / startHeight;
-                } else {
-                    scale = 1f;
-                }
-            }
-
-            if (Float.isNaN(scale)) {
-                Log.e(TAG, "Scale is NaN: starting dimensions=[" + startWidth + ", " + startHeight
-                        + "], current dimensions=[" + currentWidth + ", " + currentHeight + "]");
-            }
+            float width = mThumbnailStartBounds.width();
+            float height =  mThumbnailStartBounds.height();
+            float scale = Math.min(currentRect.width(), currentRect.height())
+                    / Math.min(width, height);
 
             mTargetTaskView.setScaleX(scale);
             mTargetTaskView.setScaleY(scale);

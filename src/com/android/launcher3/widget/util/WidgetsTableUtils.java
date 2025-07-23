@@ -69,21 +69,6 @@ public final class WidgetsTableUtils {
             });
 
     /**
-     * Comparator that enables displaying rows with more number of items at the top, and then
-     * rest of widgets shown in increasing order of their size (totalW * H).
-     */
-    public static final Comparator<ArrayList<WidgetItem>> WIDGETS_TABLE_ROW_COUNT_COMPARATOR =
-            Comparator.comparingInt(row -> {
-                if (row.size() > 1) {
-                    return -row.size();
-                } else {
-                    int rowWidth = row.stream().mapToInt(w -> w.spanX).sum();
-                    int rowHeight = row.get(0).spanY;
-                    return (rowWidth * rowHeight);
-                }
-            });
-
-    /**
      * Groups {@code widgetItems} items into a 2D array which matches their appearance in a UI
      * table. This takes liberty to rearrange widgets to make the table visually appealing.
      */
@@ -95,7 +80,7 @@ public final class WidgetsTableUtils {
         List<ArrayList<WidgetItem>> rows = groupWidgetItemsUsingRowPxWithoutReordering(
                 sortedWidgetItems, context, dp, rowPx,
                 cellPadding);
-        return rows.stream().sorted(WIDGETS_TABLE_ROW_SIZE_COMPARATOR).collect(Collectors.toList());
+        return rows.stream().sorted(WIDGETS_TABLE_ROW_SIZE_COMPARATOR).toList();
     }
 
     /**

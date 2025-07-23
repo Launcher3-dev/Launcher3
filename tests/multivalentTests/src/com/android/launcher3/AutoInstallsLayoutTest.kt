@@ -41,11 +41,8 @@ import com.android.launcher3.LauncherSettings.Favorites.PROFILE_ID
 import com.android.launcher3.LauncherSettings.Favorites.SPANX
 import com.android.launcher3.LauncherSettings.Favorites.SPANY
 import com.android.launcher3.LauncherSettings.Favorites._ID
-import com.android.launcher3.dagger.LauncherAppComponent
-import com.android.launcher3.dagger.LauncherAppSingleton
 import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.pm.UserCache
-import com.android.launcher3.util.AllModulesMinusApiWrapper
 import com.android.launcher3.util.ApiWrapper
 import com.android.launcher3.util.Executors
 import com.android.launcher3.util.LauncherLayoutBuilder
@@ -57,8 +54,6 @@ import com.android.launcher3.util.UserIconInfo.TYPE_MAIN
 import com.android.launcher3.util.UserIconInfo.TYPE_WORK
 import com.android.launcher3.widget.LauncherWidgetHolder
 import com.google.common.truth.Truth.assertThat
-import dagger.BindsInstance
-import dagger.Component
 import java.io.StringReader
 import org.junit.After
 import org.junit.Before
@@ -67,7 +62,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.mock
+import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 
 /** Tests for [AutoInstallsLayout] */
@@ -166,12 +161,8 @@ class AutoInstallsLayoutTest {
 
     @Test
     fun work_item_added_to_home() {
-        val original = ApiWrapper.INSTANCE[targetContext]
-        val apiWrapperMock =
-            mock<MyApiWrapper>(defaultAnswer = { it.method.invoke(original, *it.arguments) })
-        targetContext.initDaggerComponent(
-            DaggerAutoInstallsLayoutTestComponent.builder().bindApiWrapper(apiWrapperMock)
-        )
+        val apiWrapperMock = spy(ApiWrapper.INSTANCE[targetContext])
+        targetContext.putObject(ApiWrapper.INSTANCE, apiWrapperMock)
         doReturn(
                 mapOf(
                     myUserHandle() to UserIconInfo(myUserHandle(), TYPE_MAIN, 0),
@@ -207,7 +198,7 @@ class AutoInstallsLayoutTest {
             callback,
             SourceResources.wrap(targetContext.resources),
             { Xml.newPullParser().also { it.setInput(StringReader(build())) } },
-            TAG_WORKSPACE,
+            TAG_WORKSPACE
         )
 
     class MyCallback : LayoutParserCallback {
@@ -221,19 +212,5 @@ class AutoInstallsLayoutTest {
             items.add(ContentValues(values))
             return if (id is Int) id else 0
         }
-    }
-}
-
-class MyApiWrapper : ApiWrapper(null)
-
-@LauncherAppSingleton
-@Component(modules = [AllModulesMinusApiWrapper::class])
-interface AutoInstallsLayoutTestComponent : LauncherAppComponent {
-
-    @Component.Builder
-    interface Builder : LauncherAppComponent.Builder {
-        @BindsInstance fun bindApiWrapper(wrapper: ApiWrapper): Builder
-
-        override fun build(): AutoInstallsLayoutTestComponent
     }
 }

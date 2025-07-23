@@ -15,20 +15,18 @@
  */
 package com.android.quickstep;
 
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.view.RemoteAnimationTarget.MODE_CLOSING;
-import static android.view.RemoteAnimationTarget.MODE_OPENING;
 import static android.view.WindowManager.LayoutParams.TYPE_DOCK_DIVIDER;
 
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
-import static com.android.wm.shell.shared.TransitionUtil.TYPE_SPLIT_SCREEN_DIM_LAYER;
+import static com.android.quickstep.util.ActiveGestureErrorDetector.GestureEvent.ON_CANCEL_RECENTS_ANIMATION;
+import static com.android.quickstep.util.ActiveGestureErrorDetector.GestureEvent.ON_FINISH_RECENTS_ANIMATION;
+import static com.android.quickstep.util.ActiveGestureErrorDetector.GestureEvent.ON_START_RECENTS_ANIMATION;
 
-import android.annotation.Nullable;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.ArraySet;
 import android.view.RemoteAnimationTarget;
-import android.window.TransitionInfo;
 
 import androidx.annotation.BinderThread;
 import androidx.annotation.NonNull;
@@ -36,8 +34,8 @@ import androidx.annotation.UiThread;
 
 import com.android.launcher3.Utilities;
 import com.android.launcher3.util.Preconditions;
-import com.android.quickstep.fallback.window.RecentsWindowFlags;
-import com.android.quickstep.util.ActiveGestureProtoLogProxy;
+import com.android.quickstep.util.ActiveGestureErrorDetector;
+import com.android.quickstep.util.ActiveGestureLog;
 import com.android.systemui.shared.recents.model.ThumbnailData;
 import com.android.systemui.shared.system.RecentsAnimationControllerCompat;
 
@@ -56,14 +54,17 @@ public class RecentsAnimationCallbacks implements
 
     private final Set<RecentsAnimationListener> mListeners = new ArraySet<>();
     private final SystemUiProxy mSystemUiProxy;
+    private final boolean mAllowMinimizeSplitScreen;
 
     // TODO(141886704): Remove these references when they are no longer needed
     private RecentsAnimationController mController;
 
     private boolean mCancelled;
 
-    public RecentsAnimationCallbacks(SystemUiProxy systemUiProxy) {
+    public RecentsAnimationCallbacks(SystemUiProxy systemUiProxy,
+            boolean allowMinimizeSplitScreen) {
         mSystemUiProxy = systemUiProxy;
+        mAllowMinimizeSplitScreen = allowMinimizeSplitScreen;
     }
 
     @UiThread
@@ -96,7 +97,7 @@ public class RecentsAnimationCallbacks implements
             RemoteAnimationTarget[] appTargets, Rect homeContentInsets,
             Rect minimizedHomeBounds, Bundle extras) {
         onAnimationStart(controller, appTargets, new RemoteAnimationTarget[0],
-                homeContentInsets, minimizedHomeBounds, extras, /* transitionInfo= */ null);
+                homeContentInsets, minimizedHomeBounds, extras);
     }
 
     // Called only in R+ platform
@@ -104,19 +105,16 @@ public class RecentsAnimationCallbacks implements
     public final void onAnimationStart(RecentsAnimationControllerCompat animationController,
             RemoteAnimationTarget[] appTargets,
             RemoteAnimationTarget[] wallpaperTargets,
-            Rect homeContentInsets, Rect minimizedHomeBounds, Bundle extras,
-            @Nullable TransitionInfo transitionInfo) {
+            Rect homeContentInsets, Rect minimizedHomeBounds, Bundle extras) {
         long appCount = Arrays.stream(appTargets)
                 .filter(app -> app.mode == MODE_CLOSING)
                 .count();
-
-        boolean isOpeningHome = Arrays.stream(appTargets).filter(app -> app.mode == MODE_OPENING
-                        && app.windowConfiguration.getActivityType() == ACTIVITY_TYPE_HOME)
-                .count() > 0;
-        if (appCount == 0 && (!RecentsWindowFlags.Companion.getEnableOverviewInWindow()
-                || isOpeningHome)) {
-            ActiveGestureProtoLogProxy.logOnRecentsAnimationStartCancelled();
+        if (appCount == 0) {
             // Edge case, if there are no closing app targets, then Launcher has nothing to handle
+            ActiveGestureLog.INSTANCE.addLog(
+                    /* event= */ "RecentsAnimationCallbacks.onAnimationStart (canceled)",
+                    /* extras= */ 0,
+                    /* gestureEvent= */ ON_START_RECENTS_ANIMATION);
             notifyAnimationCanceled();
             animationController.finish(false /* toHome */, false /* sendUserLeaveHint */,
                     null /* finishCb */);
@@ -124,17 +122,21 @@ public class RecentsAnimationCallbacks implements
         }
 
         mController = new RecentsAnimationController(animationController,
-                this::onAnimationFinished);
+                mAllowMinimizeSplitScreen, this::onAnimationFinished);
         if (mCancelled) {
             Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(),
                     mController::finishAnimationToApp);
         } else {
             RemoteAnimationTarget[] nonAppTargets;
-            final ArrayList<RemoteAnimationTarget> apps = new ArrayList<>();
-            final ArrayList<RemoteAnimationTarget> nonApps = new ArrayList<>();
-            classifyTargets(appTargets, apps, nonApps);
-            appTargets = apps.toArray(new RemoteAnimationTarget[apps.size()]);
-            nonAppTargets = nonApps.toArray(new RemoteAnimationTarget[nonApps.size()]);
+            if (!TaskAnimationManager.ENABLE_SHELL_TRANSITIONS) {
+                nonAppTargets = mSystemUiProxy.onGoingToRecentsLegacy(appTargets);
+            } else {
+                final ArrayList<RemoteAnimationTarget> apps = new ArrayList<>();
+                final ArrayList<RemoteAnimationTarget> nonApps = new ArrayList<>();
+                classifyTargets(appTargets, apps, nonApps);
+                appTargets = apps.toArray(new RemoteAnimationTarget[apps.size()]);
+                nonAppTargets = nonApps.toArray(new RemoteAnimationTarget[nonApps.size()]);
+            }
             if (nonAppTargets == null) {
                 nonAppTargets = new RemoteAnimationTarget[0];
             }
@@ -143,9 +145,12 @@ public class RecentsAnimationCallbacks implements
                     extras);
 
             Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(), () -> {
-                ActiveGestureProtoLogProxy.logOnRecentsAnimationStart(targets.apps.length);
+                ActiveGestureLog.INSTANCE.addLog(
+                        /* event= */ "RecentsAnimationCallbacks.onAnimationStart",
+                        /* extras= */ targets.apps.length,
+                        /* gestureEvent= */ ON_START_RECENTS_ANIMATION);
                 for (RecentsAnimationListener listener : getListeners()) {
-                    listener.onRecentsAnimationStart(mController, targets, transitionInfo);
+                    listener.onRecentsAnimationStart(mController, targets);
                 }
             });
         }
@@ -155,7 +160,9 @@ public class RecentsAnimationCallbacks implements
     @Override
     public final void onAnimationCanceled(HashMap<Integer, ThumbnailData> thumbnailDatas) {
         Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(), () -> {
-            ActiveGestureProtoLogProxy.logRecentsAnimationCallbacksOnAnimationCancelled();
+            ActiveGestureLog.INSTANCE.addLog(
+                    /* event= */ "RecentsAnimationCallbacks.onAnimationCanceled",
+                    /* gestureEvent= */ ON_CANCEL_RECENTS_ANIMATION);
             for (RecentsAnimationListener listener : getListeners()) {
                 listener.onRecentsAnimationCanceled(thumbnailDatas);
             }
@@ -164,19 +171,33 @@ public class RecentsAnimationCallbacks implements
 
     @BinderThread
     @Override
-    public void onTasksAppeared(
-            RemoteAnimationTarget[] apps, @Nullable TransitionInfo transitionInfo) {
+    public void onTasksAppeared(RemoteAnimationTarget[] apps) {
         Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(), () -> {
-            ActiveGestureProtoLogProxy.logRecentsAnimationCallbacksOnTasksAppeared();
+            ActiveGestureLog.INSTANCE.addLog("RecentsAnimationCallbacks.onTasksAppeared",
+                    ActiveGestureErrorDetector.GestureEvent.TASK_APPEARED);
             for (RecentsAnimationListener listener : getListeners()) {
-                listener.onTasksAppeared(apps, transitionInfo);
+                listener.onTasksAppeared(apps);
             }
         });
     }
 
-    private void onAnimationFinished(RecentsAnimationController controller) {
+    @BinderThread
+    @Override
+    public boolean onSwitchToScreenshot(Runnable onFinished) {
         Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(), () -> {
-            ActiveGestureProtoLogProxy.logAbsSwipeUpHandlerOnRecentsAnimationFinished();
+            for (RecentsAnimationListener listener : getListeners()) {
+                if (listener.onSwitchToScreenshot(onFinished)) return;
+            }
+            onFinished.run();
+        });
+        return true;
+    }
+
+    private final void onAnimationFinished(RecentsAnimationController controller) {
+        Utilities.postAsyncCallback(MAIN_EXECUTOR.getHandler(), () -> {
+            ActiveGestureLog.INSTANCE.addLog(
+                    /* event= */ "RecentsAnimationCallbacks.onAnimationFinished",
+                    ON_FINISH_RECENTS_ANIMATION);
             for (RecentsAnimationListener listener : getListeners()) {
                 listener.onRecentsAnimationFinished(controller);
             }
@@ -191,8 +212,7 @@ public class RecentsAnimationCallbacks implements
             ArrayList<RemoteAnimationTarget> apps, ArrayList<RemoteAnimationTarget> nonApps) {
         for (int i = 0; i < appTargets.length; i++) {
             RemoteAnimationTarget target = appTargets[i];
-            if (target.windowType == TYPE_DOCK_DIVIDER
-                    || target.windowType == TYPE_SPLIT_SCREEN_DIM_LAYER) {
+            if (target.windowType == TYPE_DOCK_DIVIDER) {
                 nonApps.add(target);
             } else {
                 apps.add(target);
@@ -203,6 +223,7 @@ public class RecentsAnimationCallbacks implements
     public void dump(String prefix, PrintWriter pw) {
         pw.println(prefix + "RecentsAnimationCallbacks:");
 
+        pw.println(prefix + "\tmAllowMinimizeSplitScreen=" + mAllowMinimizeSplitScreen);
         pw.println(prefix + "\tmCancelled=" + mCancelled);
     }
 
@@ -211,7 +232,7 @@ public class RecentsAnimationCallbacks implements
      */
     public interface RecentsAnimationListener {
         default void onRecentsAnimationStart(RecentsAnimationController controller,
-                RecentsAnimationTargets targets, @Nullable TransitionInfo transitionInfo) {}
+                RecentsAnimationTargets targets) {}
 
         /**
          * Callback from the system when the recents animation is canceled. {@param thumbnailData}
@@ -228,7 +249,13 @@ public class RecentsAnimationCallbacks implements
         /**
          * Callback made when a task started from the recents is ready for an app transition.
          */
-        default void onTasksAppeared(@NonNull RemoteAnimationTarget[] appearedTaskTarget,
-                @Nullable TransitionInfo transitionInfo) {}
+        default void onTasksAppeared(@NonNull RemoteAnimationTarget[] appearedTaskTarget) {}
+
+        /**
+         * @return whether this will call onFinished or not (onFinished should only be called once).
+         */
+        default boolean onSwitchToScreenshot(Runnable onFinished) {
+            return false;
+        }
     }
 }

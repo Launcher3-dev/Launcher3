@@ -17,14 +17,13 @@
 package com.android.quickstep;
 
 import static com.android.quickstep.util.SplitScreenUtils.convertShellSplitBoundsToLauncher;
-import static com.android.wm.shell.shared.split.SplitBounds.KEY_EXTRA_SPLIT_BOUNDS;
+import static com.android.wm.shell.util.SplitBounds.KEY_EXTRA_SPLIT_BOUNDS;
 
 import android.app.WindowConfiguration;
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.RemoteAnimationTarget;
-import android.window.TransitionInfo;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,7 +33,7 @@ import com.android.launcher3.util.SplitConfigurationOptions;
 import com.android.quickstep.util.AnimatorControllerWithResistance;
 import com.android.quickstep.util.TaskViewSimulator;
 import com.android.quickstep.util.TransformParams;
-import com.android.wm.shell.shared.split.SplitBounds;
+import com.android.wm.shell.util.SplitBounds;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,15 +67,16 @@ public class RemoteTargetGluer {
      * running tasks
      */
     public RemoteTargetGluer(Context context, BaseContainerInterface sizingStrategy) {
-        // TODO: b/403344864 Make sure init with correct number of RemoteTargetHandle with
-        //  multi-desks feature enabled as well.
-        int visibleTasksCount = DesktopVisibilityController.INSTANCE.get(context)
-                .getVisibleDesktopTasksCountDeprecated();
-        if (visibleTasksCount > 0) {
-            // Allocate +1 to account for a new task added to the desktop mode
-            int numHandles = visibleTasksCount + 1;
-            init(context, sizingStrategy, numHandles, true /* forDesktop */);
-            return;
+        DesktopVisibilityController desktopVisibilityController =
+                LauncherActivityInterface.INSTANCE.getDesktopVisibilityController();
+        if (desktopVisibilityController != null) {
+            int visibleTasksCount = desktopVisibilityController.getVisibleDesktopTasksCount();
+            if (visibleTasksCount > 0) {
+                // Allocate +1 to account for a new task added to the desktop mode
+                int numHandles = visibleTasksCount + 1;
+                init(context, sizingStrategy, numHandles, true /* forDesktop */);
+                return;
+            }
         }
 
         // Assume 2 handles needed for split, scale down as needed later on when we actually
@@ -93,7 +93,8 @@ public class RemoteTargetGluer {
             BaseContainerInterface sizingStrategy, int numHandles, boolean forDesktop) {
         RemoteTargetHandle[] handles = new RemoteTargetHandle[numHandles];
         for (int i = 0; i < numHandles; i++) {
-            TaskViewSimulator tvs = new TaskViewSimulator(context, sizingStrategy, forDesktop , i);
+            TaskViewSimulator tvs = new TaskViewSimulator(context, sizingStrategy);
+            tvs.setIsDesktopTask(forDesktop);
             TransformParams transformParams = new TransformParams();
             handles[i] = new RemoteTargetHandle(tvs, transformParams);
         }
@@ -144,9 +145,7 @@ public class RemoteTargetGluer {
         if (mSplitBounds == null) {
             SplitBounds shellSplitBounds = targets.extras.getParcelable(KEY_EXTRA_SPLIT_BOUNDS,
                     SplitBounds.class);
-            if (shellSplitBounds != null) {
-                mSplitBounds = convertShellSplitBoundsToLauncher(shellSplitBounds);
-            }
+            mSplitBounds = convertShellSplitBoundsToLauncher(shellSplitBounds);
         }
 
         boolean containsSplitTargets = mSplitBounds != null;
@@ -218,8 +217,7 @@ public class RemoteTargetGluer {
      * Similar to {@link #assignTargets(RemoteAnimationTargets)}, except this creates distinct
      * transform params per app in {@code targets.apps} list.
      */
-    public RemoteTargetHandle[] assignTargetsForDesktop(
-            RemoteAnimationTargets targets, @Nullable TransitionInfo transitionInfo) {
+    public RemoteTargetHandle[] assignTargetsForDesktop(RemoteAnimationTargets targets) {
         resizeRemoteTargetHandles(targets);
 
         for (int i = 0; i < mRemoteTargetHandles.length; i++) {
@@ -228,7 +226,6 @@ public class RemoteTargetGluer {
                     .filter(target -> target.taskId != primaryTaskTarget.taskId).toList();
             mRemoteTargetHandles[i].mTransformParams.setTargetSet(
                     createRemoteAnimationTargetsForTarget(targets, excludeTargets));
-            mRemoteTargetHandles[i].mTransformParams.setTransitionInfo(transitionInfo);
             mRemoteTargetHandles[i].mTaskViewSimulator.setPreview(primaryTaskTarget, null);
         }
         return mRemoteTargetHandles;

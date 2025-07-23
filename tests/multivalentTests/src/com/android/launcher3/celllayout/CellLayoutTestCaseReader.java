@@ -54,7 +54,7 @@ public class CellLayoutTestCaseReader {
     }
 
     public static class Arguments extends TestSection {
-        public String[] arguments;
+        String[] arguments;
 
         public Arguments(String[] arguments) {
             super(State.ARGUMENTS);

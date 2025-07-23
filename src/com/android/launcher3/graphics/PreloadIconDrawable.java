@@ -24,6 +24,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -32,15 +33,14 @@ import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.util.Property;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.core.graphics.ColorUtils;
 
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.anim.AnimatedFloat;
 import com.android.launcher3.anim.AnimatorListeners;
-import com.android.launcher3.icons.BitmapInfo;
 import com.android.launcher3.icons.FastBitmapDrawable;
+import com.android.launcher3.icons.GraphicsUtils;
 import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.util.Themes;
 
@@ -64,6 +64,8 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
 
     private static final int DEFAULT_PATH_SIZE = 100;
     private static final int MAX_PAINT_ALPHA = 255;
+    private static final int TRACK_ALPHA = (int) (0.27f * MAX_PAINT_ALPHA);
+    private static final int DISABLED_ICON_ALPHA = (int) (0.6f * MAX_PAINT_ALPHA);
 
     private static final long DURATION_SCALE = 500;
     private static final long SCALE_AND_ALPHA_ANIM_DURATION = 500;
@@ -119,8 +121,7 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
                 IconPalette.getPreloadProgressColor(context, info.bitmap.color),
                 getPreloadColors(context),
                 Utilities.isDarkTheme(context),
-                ThemeManager.INSTANCE.get(context).getIconShape().getPath(DEFAULT_PATH_SIZE)
-        );
+                GraphicsUtils.getShapePath(context, DEFAULT_PATH_SIZE));
     }
 
     public PreloadIconDrawable(
@@ -283,23 +284,18 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
                     (long) ((finalProgress - mInternalStateProgress) * DURATION_SCALE));
             mCurrentAnim.setInterpolator(LINEAR);
             if (isFinish) {
+                if (onFinishCallback != null) {
+                    mCurrentAnim.addListener(AnimatorListeners.forEndCallback(onFinishCallback));
+                }
                 mCurrentAnim.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mRanFinishAnimation = true;
                     }
                 });
-                if (onFinishCallback != null) {
-                    mCurrentAnim.addListener(AnimatorListeners.forEndCallback(onFinishCallback));
-                }
             }
             mCurrentAnim.start();
         }
-    }
-
-    @VisibleForTesting
-    public ObjectAnimator getActiveAnimation() {
-        return mCurrentAnim;
     }
 
     /**
@@ -362,7 +358,8 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
     @Override
     public FastBitmapConstantState newConstantState() {
         return new PreloadIconConstantState(
-                mBitmapInfo,
+                mBitmap,
+                mIconColor,
                 mItem,
                 mIndicatorColor,
                 new int[] {mSystemAccentColor, mSystemBackgroundColor},
@@ -380,13 +377,14 @@ public class PreloadIconDrawable extends FastBitmapDrawable {
         private final Path mShapePath;
 
         public PreloadIconConstantState(
-                BitmapInfo bitmapInfo,
+                Bitmap bitmap,
+                int iconColor,
                 ItemInfoWithIcon info,
                 int indicatorColor,
                 int[] preloadColors,
                 boolean isDarkMode,
                 Path shapePath) {
-            super(bitmapInfo);
+            super(bitmap, iconColor);
             mInfo = info;
             mIndicatorColor = indicatorColor;
             mPreloadColors = preloadColors;

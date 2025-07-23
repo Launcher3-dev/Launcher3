@@ -16,25 +16,22 @@
 
 package com.android.launcher3.taskbar.allapps
 
-import android.animation.AnimatorTestRule
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Process
+import androidx.test.annotation.UiThreadTest
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import com.android.launcher3.BubbleTextView
 import com.android.launcher3.appprediction.PredictionRowView
 import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.model.data.WorkspaceItemInfo
 import com.android.launcher3.notification.NotificationKeyData
-import com.android.launcher3.taskbar.TaskbarControllerTestUtil.runOnMainSync
+import com.android.launcher3.taskbar.TaskbarUnitTestRule
+import com.android.launcher3.taskbar.TaskbarUnitTestRule.InjectController
 import com.android.launcher3.taskbar.overlay.TaskbarOverlayController
-import com.android.launcher3.taskbar.rules.TaskbarUnitTestRule
-import com.android.launcher3.taskbar.rules.TaskbarUnitTestRule.InjectController
-import com.android.launcher3.taskbar.rules.TaskbarWindowSandboxContext
 import com.android.launcher3.util.LauncherMultivalentJUnit
 import com.android.launcher3.util.LauncherMultivalentJUnit.EmulatedDevices
 import com.android.launcher3.util.PackageUserKey
-import com.android.launcher3.util.TestUtil
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -44,98 +41,89 @@ import org.junit.runner.RunWith
 @EmulatedDevices(["pixelFoldable2023", "pixelTablet2023"])
 class TaskbarAllAppsControllerTest {
 
-    @get:Rule(order = 0) val context = TaskbarWindowSandboxContext.create()
-    @get:Rule(order = 1) val taskbarUnitTestRule = TaskbarUnitTestRule(this, context)
-    @get:Rule(order = 2) val animatorTestRule = AnimatorTestRule(this)
+    @get:Rule val taskbarUnitTestRule = TaskbarUnitTestRule()
 
     @InjectController lateinit var allAppsController: TaskbarAllAppsController
     @InjectController lateinit var overlayController: TaskbarOverlayController
 
     @Test
+    @UiThreadTest
     fun testToggle_once_showsAllApps() {
-        runOnMainSync { allAppsController.toggle() }
+        allAppsController.toggle()
         assertThat(allAppsController.isOpen).isTrue()
     }
 
     @Test
+    @UiThreadTest
     fun testToggle_twice_closesAllApps() {
-        runOnMainSync {
-            allAppsController.toggle()
-            allAppsController.toggle()
-        }
+        allAppsController.toggle()
+        allAppsController.toggle()
         assertThat(allAppsController.isOpen).isFalse()
     }
 
     @Test
+    @UiThreadTest
     fun testToggle_taskbarRecreated_allAppsReopened() {
-        runOnMainSync { allAppsController.toggle() }
+        allAppsController.toggle()
         taskbarUnitTestRule.recreateTaskbar()
         assertThat(allAppsController.isOpen).isTrue()
     }
 
     @Test
+    @UiThreadTest
     fun testSetApps_beforeOpened_cachesInfo() {
-        val overlayContext =
-            TestUtil.getOnUiThread {
-                allAppsController.setApps(TEST_APPS, 0, emptyMap())
-                allAppsController.toggle()
-                overlayController.requestWindow()
-            }
+        allAppsController.setApps(TEST_APPS, 0, emptyMap())
+        allAppsController.toggle()
 
+        val overlayContext = overlayController.requestWindow()
         assertThat(overlayContext.appsView.appsStore.apps).isEqualTo(TEST_APPS)
     }
 
     @Test
+    @UiThreadTest
     fun testSetApps_afterOpened_updatesStore() {
-        val overlayContext =
-            TestUtil.getOnUiThread {
-                allAppsController.toggle()
-                allAppsController.setApps(TEST_APPS, 0, emptyMap())
-                overlayController.requestWindow()
-            }
+        allAppsController.toggle()
+        allAppsController.setApps(TEST_APPS, 0, emptyMap())
 
+        val overlayContext = overlayController.requestWindow()
         assertThat(overlayContext.appsView.appsStore.apps).isEqualTo(TEST_APPS)
     }
 
     @Test
+    @UiThreadTest
     fun testSetPredictedApps_beforeOpened_cachesInfo() {
+        allAppsController.setPredictedApps(TEST_PREDICTED_APPS)
+        allAppsController.toggle()
+
         val predictedApps =
-            TestUtil.getOnUiThread {
-                allAppsController.setPredictedApps(TEST_PREDICTED_APPS)
-                allAppsController.toggle()
-
-                overlayController
-                    .requestWindow()
-                    .appsView
-                    .floatingHeaderView
-                    .findFixedRowByType(PredictionRowView::class.java)
-                    .predictedApps
-            }
-
+            overlayController
+                .requestWindow()
+                .appsView
+                .floatingHeaderView
+                .findFixedRowByType(PredictionRowView::class.java)
+                .predictedApps
         assertThat(predictedApps).isEqualTo(TEST_PREDICTED_APPS)
     }
 
     @Test
+    @UiThreadTest
     fun testSetPredictedApps_afterOpened_cachesInfo() {
+        allAppsController.toggle()
+        allAppsController.setPredictedApps(TEST_PREDICTED_APPS)
+
         val predictedApps =
-            TestUtil.getOnUiThread {
-                allAppsController.toggle()
-                allAppsController.setPredictedApps(TEST_PREDICTED_APPS)
-
-                overlayController
-                    .requestWindow()
-                    .appsView
-                    .floatingHeaderView
-                    .findFixedRowByType(PredictionRowView::class.java)
-                    .predictedApps
-            }
-
+            overlayController
+                .requestWindow()
+                .appsView
+                .floatingHeaderView
+                .findFixedRowByType(PredictionRowView::class.java)
+                .predictedApps
         assertThat(predictedApps).isEqualTo(TEST_PREDICTED_APPS)
     }
 
     @Test
     fun testUpdateNotificationDots_appInfo_hasDot() {
-        runOnMainSync {
+        getInstrumentation().runOnMainSync {
             allAppsController.setApps(TEST_APPS, 0, emptyMap())
             allAppsController.toggle()
             taskbarUnitTestRule.activityContext.popupDataProvider.onNotificationPosted(
@@ -145,58 +133,41 @@ class TaskbarAllAppsControllerTest {
         }
 
         // Ensure the recycler view fully inflates before trying to grab an icon.
-        val btv =
-            TestUtil.getOnUiThread {
+        getInstrumentation().runOnMainSync {
+            val btv =
                 overlayController
                     .requestWindow()
                     .appsView
                     .activeRecyclerView
                     .findViewHolderForAdapterPosition(0)
                     ?.itemView as? BubbleTextView
-            }
-        assertThat(btv?.hasDot()).isTrue()
+            assertThat(btv?.hasDot()).isTrue()
+        }
     }
 
     @Test
+    @UiThreadTest
     fun testUpdateNotificationDots_predictedApp_hasDot() {
-        runOnMainSync {
-            allAppsController.setPredictedApps(TEST_PREDICTED_APPS)
-            allAppsController.toggle()
-            taskbarUnitTestRule.activityContext.popupDataProvider.onNotificationPosted(
-                PackageUserKey.fromItemInfo(TEST_PREDICTED_APPS[0]),
-                NotificationKeyData("key"),
-            )
-        }
+        allAppsController.setPredictedApps(TEST_PREDICTED_APPS)
+        allAppsController.toggle()
 
-        val btv =
-            TestUtil.getOnUiThread {
-                overlayController
-                    .requestWindow()
-                    .appsView
-                    .floatingHeaderView
-                    .findFixedRowByType(PredictionRowView::class.java)
-                    .getChildAt(0) as BubbleTextView
-            }
+        taskbarUnitTestRule.activityContext.popupDataProvider.onNotificationPosted(
+            PackageUserKey.fromItemInfo(TEST_PREDICTED_APPS[0]),
+            NotificationKeyData("key"),
+        )
+
+        val predictionRowView =
+            overlayController
+                .requestWindow()
+                .appsView
+                .floatingHeaderView
+                .findFixedRowByType(PredictionRowView::class.java)
+        val btv = predictionRowView.getChildAt(0) as BubbleTextView
         assertThat(btv.hasDot()).isTrue()
     }
 
-    @Test
-    fun testToggleSearch_searchEditTextFocused() {
-        runOnMainSync { allAppsController.toggleSearch() }
-        runOnMainSync {
-            // All Apps is now attached to window. Open animation is posted but not started.
-        }
-
-        runOnMainSync {
-            // Animation has started. Advance to end of animation.
-            animatorTestRule.advanceTimeBy(overlayController.openDuration.toLong())
-        }
-        val editText = overlayController.requestWindow().appsView.searchUiManager.editText
-        assertThat(editText?.hasFocus()).isTrue()
-    }
-
-    companion object {
-        val TEST_APPS =
+    private companion object {
+        private val TEST_APPS =
             Array(16) {
                 AppInfo(
                     ComponentName(
@@ -209,6 +180,6 @@ class TaskbarAllAppsControllerTest {
                 )
             }
 
-        val TEST_PREDICTED_APPS = TEST_APPS.take(4).map { WorkspaceItemInfo(it) }
+        private val TEST_PREDICTED_APPS = TEST_APPS.take(4).map { WorkspaceItemInfo(it) }
     }
 }

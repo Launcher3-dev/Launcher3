@@ -33,7 +33,6 @@ import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
-import androidx.annotation.NonNull;
 import androidx.test.uiautomator.Condition;
 import androidx.test.uiautomator.UiDevice;
 
@@ -74,20 +73,6 @@ public final class LaunchedAppState extends Background {
     @Override
     public boolean isHomeState() {
         return false;
-    }
-
-    @NonNull
-    @Override
-    public BaseOverview switchToOverview() {
-        try (LauncherInstrumentation.Closable ignored = mLauncher.eventsCheck();
-             LauncherInstrumentation.Closable ignored1 = mLauncher.addContextLayer(
-                     "want to switch from background to overview")) {
-            verifyActiveContainer();
-            goToOverviewUnchecked();
-            return mLauncher.is3PLauncher()
-                    ? new BaseOverview(mLauncher, /*launchedFromApp=*/true)
-                    : new Overview(mLauncher, /*launchedFromApp=*/true);
-        }
     }
 
     /**

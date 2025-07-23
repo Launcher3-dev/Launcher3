@@ -21,8 +21,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.VisibleForTesting;
-
 import com.android.launcher3.R;
 
 /**
@@ -69,8 +67,7 @@ public class ViewCache {
         }
     }
 
-    @VisibleForTesting
-    static class CacheEntry {
+    private static class CacheEntry {
 
         final int mMaxSize;
         final View[] mViews;

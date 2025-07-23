@@ -26,14 +26,11 @@ import android.os.RemoteException;
 import android.os.Trace;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.util.TraceHelper;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -46,9 +43,6 @@ import kotlin.random.Random;
 public class BinderTracker {
 
     private static final String TAG = "BinderTracker";
-    private static final Boolean DEBUG_STACKTRACE = false;
-
-    private static final String[] sActionablePackageKeywords = {"launcher3", "systemui"};
 
     // Common IPCs that are ok to block the main thread.
     private static final Set<String> sAllowedFrameworkClasses = Set.of(
@@ -151,30 +145,11 @@ public class BinderTracker {
 
             if (ipcBypass == null) {
                 mUnexpectedTransactionCallback.accept(new BinderCallSite(
-                        mMainThreadTraceStack.peekLast(), descriptor, transactionCode,
-                        getActionableStacktrace()));
+                        mMainThreadTraceStack.peekLast(), descriptor, transactionCode));
             } else {
                 Log.d(TAG, "MainThread-IPC " + descriptor + " ignored due to " + ipcBypass);
             }
             return null;
-        }
-
-        @NonNull
-        private static String getActionableStacktrace() {
-            if (!DEBUG_STACKTRACE) {
-                return "DEBUG_STACKTRACE not turned on.";
-            }
-            final StringWriter sw = new StringWriter();
-            new Throwable().printStackTrace(new PrintWriter(sw));
-            final String stackTrace = sw.toString();
-
-            for (String actionablePackageKeyword : sActionablePackageKeywords) {
-                if (stackTrace.contains(actionablePackageKeyword)) {
-                    return stackTrace;
-                }
-            }
-
-            return "Not actionable to launcher";
         }
 
         @Override
@@ -202,14 +177,11 @@ public class BinderTracker {
         public final String activeTrace;
         public final String descriptor;
         public final int transactionCode;
-        public final String stackTrace;
 
-        BinderCallSite(
-                String activeTrace, String descriptor, int transactionCode, String stackTrace) {
+        BinderCallSite(String activeTrace, String descriptor, int transactionCode) {
             this.activeTrace = activeTrace;
             this.descriptor = descriptor;
             this.transactionCode = transactionCode;
-            this.stackTrace = stackTrace;
         }
     }
 }

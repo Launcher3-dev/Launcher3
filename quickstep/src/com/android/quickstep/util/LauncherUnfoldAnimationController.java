@@ -31,6 +31,7 @@ import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
 import com.android.launcher3.Hotseat;
 import com.android.launcher3.Workspace;
+import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
 import com.android.launcher3.util.HorizontalInsettableView;
 import com.android.quickstep.SystemUiProxy;
@@ -79,12 +80,17 @@ public class LauncherUnfoldAnimationController implements OnDeviceProfileChangeL
             @UnfoldMain RotationChangeProvider rotationChangeProvider) {
         mLauncher = launcher;
 
-        mPreemptiveProgressProvider = new PreemptiveUnfoldTransitionProgressProvider(
-                unfoldTransitionProgressProvider, launcher.getMainThreadHandler());
-        mPreemptiveProgressProvider.init();
+        if (FeatureFlags.PREEMPTIVE_UNFOLD_ANIMATION_START.get()) {
+            mPreemptiveProgressProvider = new PreemptiveUnfoldTransitionProgressProvider(
+                    unfoldTransitionProgressProvider, launcher.getMainThreadHandler());
+            mPreemptiveProgressProvider.init();
 
-        mProgressProvider = new ScopedUnfoldTransitionProgressProvider(
-                mPreemptiveProgressProvider);
+            mProgressProvider = new ScopedUnfoldTransitionProgressProvider(
+                    mPreemptiveProgressProvider);
+        } else {
+            mProgressProvider = new ScopedUnfoldTransitionProgressProvider(
+                    unfoldTransitionProgressProvider);
+        }
 
         unfoldTransitionProgressProvider.addCallback(mExternalTransitionStatusProvider);
         unfoldTransitionProgressProvider.addCallback(
@@ -163,6 +169,10 @@ public class LauncherUnfoldAnimationController implements OnDeviceProfileChangeL
 
     @Override
     public void onDeviceProfileChanged(DeviceProfile dp) {
+        if (!FeatureFlags.PREEMPTIVE_UNFOLD_ANIMATION_START.get()) {
+            return;
+        }
+
         if (mIsTablet != null && dp.isTablet != mIsTablet) {
             // We should preemptively start the animation only if:
             // - We changed to the unfolded screen

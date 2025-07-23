@@ -26,7 +26,6 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 
-import com.android.launcher3.Utilities;
 import com.android.launcher3.icons.FastBitmapDrawable;
 
 /**
@@ -129,18 +128,6 @@ public class AppPairIconDrawable extends Drawable {
                 height - (mP.getStandardIconPadding() + mP.getOuterPadding())
         );
 
-        // Scale each background from its center edge closest to the center channel.
-        Utilities.scaleRectFAboutPivot(
-                leftSide,
-                leftSide.left + leftSide.width(),
-                leftSide.top + leftSide.centerY(),
-                mP.getHoverScale());
-        Utilities.scaleRectFAboutPivot(
-                rightSide,
-                rightSide.left,
-                rightSide.top + rightSide.centerY(),
-                mP.getHoverScale());
-
         drawCustomRoundedRect(canvas, leftSide, new float[]{
                 mP.getBigRadius(), mP.getBigRadius(),
                 mP.getSmallRadius(), mP.getSmallRadius(),
@@ -175,18 +162,6 @@ public class AppPairIconDrawable extends Drawable {
                 width - (mP.getStandardIconPadding() + mP.getOuterPadding()),
                 height - (mP.getStandardIconPadding() + mP.getOuterPadding())
         );
-
-        // Scale each background from its center edge closest to the center channel.
-        Utilities.scaleRectFAboutPivot(
-                topSide,
-                topSide.left + topSide.centerX(),
-                topSide.top + topSide.height(),
-                mP.getHoverScale());
-        Utilities.scaleRectFAboutPivot(
-                bottomSide,
-                bottomSide.left + bottomSide.centerX(),
-                bottomSide.top,
-                mP.getHoverScale());
 
         drawCustomRoundedRect(canvas, topSide, new float[]{
                 mP.getBigRadius(), mP.getBigRadius(),

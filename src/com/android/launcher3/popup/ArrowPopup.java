@@ -16,6 +16,8 @@
 
 package com.android.launcher3.popup;
 
+import static androidx.core.content.ContextCompat.getColorStateList;
+
 import static com.android.app.animation.Interpolators.EMPHASIZED_ACCELERATE;
 import static com.android.app.animation.Interpolators.EMPHASIZED_DECELERATE;
 import static com.android.app.animation.Interpolators.LINEAR;
@@ -53,6 +55,8 @@ import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 import com.android.launcher3.views.BaseDragLayer;
+
+import java.util.Arrays;
 
 /**
  * A container for shortcuts to deep links and notifications associated with an app.
@@ -126,7 +130,7 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
     // Tag for Views that have children that will need to be iterated to add styling.
     private final String mIterateChildrenTag;
 
-    protected final int[] mColors;
+    protected final int[] mColorIds;
 
     public ArrowPopup(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -138,7 +142,8 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
 
         // Initialize arrow view
         final Resources resources = getResources();
-        mArrowColor = getContext().getColor(R.color.materialColorSurfaceContainer);
+        mArrowColor = getColorStateList(getContext(), R.color.popup_color_background)
+                .getDefaultColor();
         mChildContainerMargin = resources.getDimensionPixelSize(R.dimen.popup_margin);
         mArrowWidth = resources.getDimensionPixelSize(R.dimen.popup_arrow_width);
         mArrowHeight = resources.getDimensionPixelSize(R.dimen.popup_arrow_height);
@@ -153,24 +158,21 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
         mRoundedTop = new GradientDrawable();
         int popupPrimaryColor = Themes.getAttrColor(context, R.attr.popupColorPrimary);
         mRoundedTop.setColor(popupPrimaryColor);
-        mRoundedTop.setCornerRadii(new float[]{mOutlineRadius, mOutlineRadius, mOutlineRadius,
+        mRoundedTop.setCornerRadii(new float[] { mOutlineRadius, mOutlineRadius, mOutlineRadius,
                 mOutlineRadius, smallerRadius, smallerRadius, smallerRadius, smallerRadius});
 
         mRoundedBottom = new GradientDrawable();
         mRoundedBottom.setColor(popupPrimaryColor);
-        mRoundedBottom.setCornerRadii(new float[]{smallerRadius, smallerRadius, smallerRadius,
+        mRoundedBottom.setCornerRadii(new float[] { smallerRadius, smallerRadius, smallerRadius,
                 smallerRadius, mOutlineRadius, mOutlineRadius, mOutlineRadius, mOutlineRadius});
 
         mIterateChildrenTag = getContext().getString(R.string.popup_container_iterate_children);
 
         if (mActivityContext.canUseMultipleShadesForPopup()) {
-            mColors = new int[]{
-                    getContext().getColor(R.color.popup_shade_first),
-                    getContext().getColor(R.color.popup_shade_second),
-                    getContext().getColor(R.color.popup_shade_third)
-            };
+            mColorIds = new int[]{R.color.popup_shade_first, R.color.popup_shade_second,
+                    R.color.popup_shade_third};
         } else {
-            mColors = new int[]{getContext().getColor(R.color.materialColorSurfaceContainer)};
+            mColorIds = new int[]{R.color.popup_color_background};
         }
     }
 
@@ -217,14 +219,15 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
     }
 
     /**
-     * @param backgroundColor When Color.TRANSPARENT, we get color from {@link #mColors}.
+     * @param backgroundColor When Color.TRANSPARENT, we get color from {@link #mColorIds}.
      *                        Otherwise, we will use this color for all child views.
      */
     protected void assignMarginsAndBackgrounds(ViewGroup viewGroup, int backgroundColor) {
         int[] colors = null;
         if (backgroundColor == Color.TRANSPARENT) {
             // Lazily get the colors so they match the current wallpaper colors.
-            colors = mColors;
+            colors = Arrays.stream(mColorIds).map(
+                    r -> getColorStateList(getContext(), r).getDefaultColor()).toArray();
         }
 
         int count = viewGroup.getChildCount();

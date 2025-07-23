@@ -125,12 +125,6 @@ public class AllAppsGridAdapter<T extends Context & ActivityContext> extends
         }
 
         @Override
-        public int getColumnCountForAccessibility(RecyclerView.Recycler recycler,
-                RecyclerView.State state) {
-            return mAppsPerRow;
-        }
-
-        @Override
         public void onInitializeAccessibilityNodeInfoForItem(RecyclerView.Recycler recycler,
                 RecyclerView.State state, View host, AccessibilityNodeInfoCompat info) {
             super.onInitializeAccessibilityNodeInfoForItem(recycler, state, host, info);

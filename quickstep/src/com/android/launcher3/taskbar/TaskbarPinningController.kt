@@ -30,11 +30,12 @@ import com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_TASK
 import com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_TASKBAR_UNPINNED
 import com.android.launcher3.taskbar.TaskbarDividerPopupView.Companion.createAndPopulate
 import java.io.PrintWriter
-import kotlin.jvm.optionals.getOrNull
 
 /** Controls taskbar pinning through a popup view. */
-class TaskbarPinningController(private val context: TaskbarActivityContext) :
-    TaskbarControllers.LoggableTaskbarController {
+class TaskbarPinningController(
+    private val context: TaskbarActivityContext,
+    private val isInDesktopModeProvider: () -> Boolean,
+) : TaskbarControllers.LoggableTaskbarController {
 
     private lateinit var controllers: TaskbarControllers
     private lateinit var taskbarSharedState: TaskbarSharedState
@@ -57,11 +58,7 @@ class TaskbarPinningController(private val context: TaskbarActivityContext) :
                     return
                 }
                 val shouldPinTaskbar =
-                    if (
-                        controllers.taskbarDesktopModeController.isInDesktopModeAndNotInOverview(
-                            context.displayId
-                        )
-                    ) {
+                    if (isInDesktopModeProvider()) {
                         !launcherPrefs.get(TASKBAR_PINNING_IN_DESKTOP_MODE)
                     } else {
                         !launcherPrefs.get(TASKBAR_PINNING)
@@ -81,10 +78,10 @@ class TaskbarPinningController(private val context: TaskbarActivityContext) :
             }
     }
 
-    fun showPinningView(view: View, horizontalPosition: Float = -1f) {
+    fun showPinningView(view: View) {
         context.isTaskbarWindowFullscreen = true
         view.post {
-            val popupView = getPopupView(view, horizontalPosition)
+            val popupView = getPopupView(view)
             popupView.requestFocus()
             popupView.onCloseCallback = onCloseCallback
             context.onPopupVisibilityChanged(true)
@@ -94,8 +91,8 @@ class TaskbarPinningController(private val context: TaskbarActivityContext) :
     }
 
     @VisibleForTesting
-    fun getPopupView(view: View, horizontalPosition: Float = -1f): TaskbarDividerPopupView<*> {
-        return createAndPopulate(view, context, horizontalPosition)
+    fun getPopupView(view: View): TaskbarDividerPopupView<*> {
+        return createAndPopulate(view, context)
     }
 
     @VisibleForTesting
@@ -122,13 +119,9 @@ class TaskbarPinningController(private val context: TaskbarActivityContext) :
             dragLayerController.taskbarBackgroundProgress.animateToValue(animateToValue),
             taskbarViewController.taskbarIconTranslationYForPinning.animateToValue(animateToValue),
             taskbarViewController.taskbarIconScaleForPinning.animateToValue(animateToValue),
-            taskbarViewController.taskbarIconTranslationXForPinning.animateToValue(animateToValue),
+            taskbarViewController.taskbarIconTranslationXForPinning.animateToValue(animateToValue)
         )
-        controllers.bubbleControllers.getOrNull()?.bubbleBarViewController?.let {
-            // if bubble bar is not visible no need to add it`s animations
-            if (!it.isBubbleBarVisible) return@let
-            animatorSet.playTogether(it.bubbleBarPinning.animateToValue(animateToValue))
-        }
+
         animatorSet.interpolator = Interpolators.EMPHASIZED
         return animatorSet
     }
@@ -141,14 +134,10 @@ class TaskbarPinningController(private val context: TaskbarActivityContext) :
     @VisibleForTesting
     fun recreateTaskbarAndUpdatePinningValue() {
         updateIsAnimatingTaskbarPinningAndNotifyTaskbarDragLayer(false)
-        if (
-            controllers.taskbarDesktopModeController.isInDesktopModeAndNotInOverview(
-                context.displayId
-            )
-        ) {
+        if (isInDesktopModeProvider()) {
             launcherPrefs.put(
                 TASKBAR_PINNING_IN_DESKTOP_MODE,
-                !launcherPrefs.get(TASKBAR_PINNING_IN_DESKTOP_MODE),
+                !launcherPrefs.get(TASKBAR_PINNING_IN_DESKTOP_MODE)
             )
         } else {
             launcherPrefs.put(TASKBAR_PINNING, !launcherPrefs.get(TASKBAR_PINNING))

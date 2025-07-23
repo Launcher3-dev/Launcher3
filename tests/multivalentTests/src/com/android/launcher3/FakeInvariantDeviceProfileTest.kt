@@ -15,6 +15,7 @@
  */
 package com.android.launcher3
 
+import android.content.Context
 import android.graphics.PointF
 import android.graphics.Rect
 import android.platform.test.rule.AllowedDevices
@@ -22,11 +23,10 @@ import android.platform.test.rule.DeviceProduct
 import android.platform.test.rule.IgnoreLimit
 import android.platform.test.rule.LimitDevicesRule
 import android.util.SparseArray
+import androidx.test.core.app.ApplicationProvider
 import com.android.launcher3.DeviceProfile.DEFAULT_DIMENSION_PROVIDER
 import com.android.launcher3.DeviceProfile.DEFAULT_PROVIDER
-import com.android.launcher3.testing.shared.ResourceUtils.INVALID_RESOURCE_HANDLE
 import com.android.launcher3.util.DisplayController.Info
-import com.android.launcher3.util.SandboxApplication
 import com.android.launcher3.util.WindowBounds
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -46,20 +46,21 @@ import org.mockito.kotlin.whenever
 @IgnoreLimit(ignoreLimit = BuildConfig.IS_STUDIO_BUILD)
 abstract class FakeInvariantDeviceProfileTest {
 
-    @get:Rule val context = SandboxApplication()
-
-    protected lateinit var inv: InvariantDeviceProfile
-    protected val info = mock<Info>()
-    protected lateinit var windowBounds: WindowBounds
-    private var transposeLayoutWithOrientation = false
-    private var useTwoPanels = false
-    private var isGestureMode = true
-    private var isTransientTaskbar = true
+    protected lateinit var context: Context
+    protected var inv: InvariantDeviceProfile? = null
+    protected val info: Info = mock()
+    protected var windowBounds: WindowBounds? = null
+    protected var isMultiWindowMode: Boolean = false
+    protected var transposeLayoutWithOrientation: Boolean = false
+    protected var useTwoPanels: Boolean = false
+    protected var isGestureMode: Boolean = true
+    protected var isTransientTaskbar: Boolean = true
 
     @Rule @JvmField val limitDevicesRule = LimitDevicesRule()
 
     @Before
-    open fun setUp() {
+    fun setUp() {
+        context = ApplicationProvider.getApplicationContext()
         // make sure to reset values
         useTwoPanels = false
         isGestureMode = true
@@ -70,11 +71,9 @@ abstract class FakeInvariantDeviceProfileTest {
             context,
             inv,
             info,
-            context.appComponent.wmProxy,
-            context.appComponent.themeManager,
             windowBounds,
             SparseArray(),
-            /*isMultiWindowMode=*/ false,
+            isMultiWindowMode,
             transposeLayoutWithOrientation,
             useTwoPanels,
             isGestureMode,
@@ -85,7 +84,7 @@ abstract class FakeInvariantDeviceProfileTest {
 
     protected fun initializeVarsForPhone(
         isGestureMode: Boolean = true,
-        isVerticalBar: Boolean = false,
+        isVerticalBar: Boolean = false
     ) {
         val (x, y) = if (isVerticalBar) Pair(2400, 1080) else Pair(1080, 2400)
 
@@ -96,8 +95,8 @@ abstract class FakeInvariantDeviceProfileTest {
                     if (isVerticalBar) 118 else 0,
                     if (isVerticalBar) 74 else 118,
                     if (!isGestureMode && isVerticalBar) 126 else 0,
-                    if (isGestureMode) 63 else if (isVerticalBar) 0 else 126,
-                ),
+                    if (isGestureMode) 63 else if (isVerticalBar) 0 else 126
+                )
             )
 
         whenever(info.isTablet(any())).thenReturn(false)
@@ -109,7 +108,7 @@ abstract class FakeInvariantDeviceProfileTest {
         transposeLayoutWithOrientation = true
 
         inv =
-            context.appComponent.idp.apply {
+            InvariantDeviceProfile().apply {
                 numRows = 5
                 numColumns = 4
                 numSearchContainerColumns = 4
@@ -123,7 +122,7 @@ abstract class FakeInvariantDeviceProfileTest {
                             PointF(80f, 104f),
                             PointF(80f, 104f),
                             PointF(80f, 104f),
-                            PointF(80f, 104f),
+                            PointF(80f, 104f)
                         )
                         .toTypedArray()
 
@@ -145,7 +144,7 @@ abstract class FakeInvariantDeviceProfileTest {
                             PointF(80f, 104f),
                             PointF(80f, 104f),
                             PointF(80f, 104f),
-                            PointF(80f, 104f),
+                            PointF(80f, 104f)
                         )
                         .toTypedArray()
                 allAppsIconSize = floatArrayOf(60f, 60f, 60f, 60f)
@@ -171,20 +170,12 @@ abstract class FakeInvariantDeviceProfileTest {
                 inlineQsb = BooleanArray(4) { false }
 
                 devicePaddingId = R.xml.paddings_handhelds
-
-                isFixedLandscape = false
-                workspaceSpecsId = INVALID_RESOURCE_HANDLE
-                allAppsSpecsId = INVALID_RESOURCE_HANDLE
-                folderSpecsId = INVALID_RESOURCE_HANDLE
-                hotseatSpecsId = INVALID_RESOURCE_HANDLE
-                workspaceCellSpecsId = INVALID_RESOURCE_HANDLE
-                allAppsCellSpecsId = INVALID_RESOURCE_HANDLE
             }
     }
 
     protected fun initializeVarsForTablet(
         isLandscape: Boolean = false,
-        isGestureMode: Boolean = true,
+        isGestureMode: Boolean = true
     ) {
         val (x, y) = if (isLandscape) Pair(2560, 1600) else Pair(1600, 2560)
 
@@ -199,7 +190,7 @@ abstract class FakeInvariantDeviceProfileTest {
         useTwoPanels = false
 
         inv =
-            context.appComponent.idp.apply {
+            InvariantDeviceProfile().apply {
                 numRows = 5
                 numColumns = 6
                 numSearchContainerColumns = 3
@@ -213,7 +204,7 @@ abstract class FakeInvariantDeviceProfileTest {
                             PointF(102f, 120f),
                             PointF(120f, 104f),
                             PointF(102f, 120f),
-                            PointF(102f, 120f),
+                            PointF(102f, 120f)
                         )
                         .toTypedArray()
 
@@ -235,7 +226,7 @@ abstract class FakeInvariantDeviceProfileTest {
                             PointF(96f, 142f),
                             PointF(126f, 126f),
                             PointF(96f, 142f),
-                            PointF(96f, 142f),
+                            PointF(96f, 142f)
                         )
                         .toTypedArray()
                 allAppsIconSize = FloatArray(4) { 60f }
@@ -262,14 +253,6 @@ abstract class FakeInvariantDeviceProfileTest {
                 inlineQsb = booleanArrayOf(false, true, false, false)
 
                 devicePaddingId = R.xml.paddings_handhelds
-
-                isFixedLandscape = false
-                workspaceSpecsId = INVALID_RESOURCE_HANDLE
-                allAppsSpecsId = INVALID_RESOURCE_HANDLE
-                folderSpecsId = INVALID_RESOURCE_HANDLE
-                hotseatSpecsId = INVALID_RESOURCE_HANDLE
-                workspaceCellSpecsId = INVALID_RESOURCE_HANDLE
-                allAppsCellSpecsId = INVALID_RESOURCE_HANDLE
             }
     }
 
@@ -292,7 +275,7 @@ abstract class FakeInvariantDeviceProfileTest {
         useTwoPanels = true
 
         inv =
-            context.appComponent.idp.apply {
+            InvariantDeviceProfile().apply {
                 numRows = rows
                 numColumns = cols
                 numSearchContainerColumns = cols
@@ -306,7 +289,7 @@ abstract class FakeInvariantDeviceProfileTest {
                             PointF(80f, 104f),
                             PointF(80f, 104f),
                             PointF(68f, 116f),
-                            PointF(80f, 102f),
+                            PointF(80f, 102f)
                         )
                         .toTypedArray()
 
@@ -350,14 +333,6 @@ abstract class FakeInvariantDeviceProfileTest {
                 inlineQsb = booleanArrayOf(false, false, false, false)
 
                 devicePaddingId = R.xml.paddings_handhelds
-
-                isFixedLandscape = false
-                workspaceSpecsId = INVALID_RESOURCE_HANDLE
-                allAppsSpecsId = INVALID_RESOURCE_HANDLE
-                folderSpecsId = INVALID_RESOURCE_HANDLE
-                hotseatSpecsId = INVALID_RESOURCE_HANDLE
-                workspaceCellSpecsId = INVALID_RESOURCE_HANDLE
-                allAppsCellSpecsId = INVALID_RESOURCE_HANDLE
             }
     }
 

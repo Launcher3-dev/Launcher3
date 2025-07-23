@@ -32,8 +32,7 @@ import android.os.SystemClock;
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.LauncherAppState;
-import com.android.launcher3.icons.CacheableShortcutCachingLogic;
-import com.android.launcher3.icons.CacheableShortcutInfo;
+import com.android.launcher3.icons.ShortcutCachingLogic;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 
 public class PinRequestHelper {
@@ -78,10 +77,8 @@ public class PinRequestHelper {
             WorkspaceItemInfo info = new WorkspaceItemInfo(si, context);
             // Apply the unbadged icon synchronously using the caching logic directly and
             // fetch the actual icon asynchronously.
-            LauncherAppState app = LauncherAppState.getInstance(context);
-            info.bitmap = CacheableShortcutCachingLogic.INSTANCE.loadIcon(
-                    context, app.getIconCache(), new CacheableShortcutInfo(si, context));
-            app.getModel().updateAndBindWorkspaceItem(info, si);
+            info.bitmap = new ShortcutCachingLogic().loadIcon(context, si);
+            LauncherAppState.getInstance(context).getModel().updateAndBindWorkspaceItem(info, si);
             return info;
         } else {
             return null;

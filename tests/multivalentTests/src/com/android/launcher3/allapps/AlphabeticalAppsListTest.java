@@ -65,7 +65,6 @@ public class AlphabeticalAppsListTest {
     private static final int PRIVATE_SPACE_HEADER_ITEM_COUNT = 1;
     private static final int MAIN_USER_APP_COUNT = 2;
     private static final int PRIVATE_USER_APP_COUNT = 2;
-    private static final int VIEW_AT_END_OF_APP_LIST = 1;
     private static final int NUM_APP_COLS = 4;
     private static final int NUM_APP_ROWS = 3;
     private static final int PRIVATE_SPACE_SYS_APP_SEPARATOR_ITEM_COUNT = 1;
@@ -108,8 +107,7 @@ public class AlphabeticalAppsListTest {
                 && info.user.equals(MAIN_HANDLE));
 
         assertEquals(MAIN_USER_APP_COUNT + PRIVATE_SPACE_HEADER_ITEM_COUNT
-                + PRIVATE_USER_APP_COUNT + VIEW_AT_END_OF_APP_LIST,
-                mAlphabeticalAppsList.getAdapterItems().size());
+                + PRIVATE_USER_APP_COUNT, mAlphabeticalAppsList.getAdapterItems().size());
         assertEquals(PRIVATE_SPACE_HEADER_ITEM_COUNT,
                 mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
                         item.viewType == VIEW_TYPE_PRIVATE_SPACE_HEADER).toList().size());
@@ -138,7 +136,7 @@ public class AlphabeticalAppsListTest {
                 && info.user.equals(MAIN_HANDLE));
 
         assertEquals(MAIN_USER_APP_COUNT + PRIVATE_SPACE_HEADER_ITEM_COUNT
-                + PRIVATE_SPACE_SYS_APP_SEPARATOR_ITEM_COUNT + VIEW_AT_END_OF_APP_LIST
+                + PRIVATE_SPACE_SYS_APP_SEPARATOR_ITEM_COUNT
                 + PRIVATE_USER_APP_COUNT, mAlphabeticalAppsList.getAdapterItems().size());
         assertEquals(PRIVATE_SPACE_HEADER_ITEM_COUNT,
                 mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
@@ -168,8 +166,7 @@ public class AlphabeticalAppsListTest {
         mAlphabeticalAppsList.updateItemFilter(info -> info != null
                 && info.user.equals(MAIN_HANDLE));
 
-        assertEquals(MAIN_USER_APP_COUNT + PRIVATE_SPACE_HEADER_ITEM_COUNT +
-                        VIEW_AT_END_OF_APP_LIST,
+        assertEquals(MAIN_USER_APP_COUNT + PRIVATE_SPACE_HEADER_ITEM_COUNT,
                 mAlphabeticalAppsList.getAdapterItems().size());
         assertEquals(PRIVATE_SPACE_HEADER_ITEM_COUNT, mAlphabeticalAppsList
                 .getAdapterItems().stream().filter(item ->
@@ -190,8 +187,8 @@ public class AlphabeticalAppsListTest {
         mAlphabeticalAppsList.updateItemFilter(info -> info != null
                 && info.user.equals(MAIN_HANDLE));
 
-        assertEquals(MAIN_USER_APP_COUNT + PRIVATE_SPACE_HEADER_ITEM_COUNT +
-                        VIEW_AT_END_OF_APP_LIST, mAlphabeticalAppsList.getAdapterItems().size());
+        assertEquals(MAIN_USER_APP_COUNT + PRIVATE_SPACE_HEADER_ITEM_COUNT,
+                mAlphabeticalAppsList.getAdapterItems().size());
         assertEquals(PRIVATE_SPACE_HEADER_ITEM_COUNT, mAlphabeticalAppsList
                 .getAdapterItems().stream().filter(item ->
                         item.viewType == VIEW_TYPE_PRIVATE_SPACE_HEADER).toList().size());
@@ -209,8 +206,7 @@ public class AlphabeticalAppsListTest {
         mAlphabeticalAppsList.updateItemFilter(info -> info != null
                 && info.user.equals(MAIN_HANDLE));
 
-        assertEquals(MAIN_USER_APP_COUNT + VIEW_AT_END_OF_APP_LIST,
-                mAlphabeticalAppsList.getAdapterItems().size());
+        assertEquals(MAIN_USER_APP_COUNT, mAlphabeticalAppsList.getAdapterItems().size());
         assertEquals(0, mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
                 item.viewType == VIEW_TYPE_PRIVATE_SPACE_HEADER).toList().size());
         assertEquals(0, mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
@@ -226,8 +222,7 @@ public class AlphabeticalAppsListTest {
         mAlphabeticalAppsList.updateItemFilter(info -> info != null
                 && info.user.equals(MAIN_HANDLE));
 
-        assertEquals(MAIN_USER_APP_COUNT + VIEW_AT_END_OF_APP_LIST,
-                mAlphabeticalAppsList.getAdapterItems().size());
+        assertEquals(2, mAlphabeticalAppsList.getAdapterItems().size());
         assertEquals(0, mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
                         item.itemInfo != null
                                 && item.itemInfo.itemType == VIEW_TYPE_PRIVATE_SPACE_HEADER)

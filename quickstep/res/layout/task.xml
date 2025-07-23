@@ -19,20 +19,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     xmlns:launcher="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/task_view_single"
+    android:id="@+id/task"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipChildren="false"
     android:defaultFocusHighlightEnabled="false"
     android:focusable="true"
-    launcher:focusBorderColor="@color/materialColorOutline"
-    launcher:hoverBorderColor="@color/materialColorPrimary">
+    launcher:focusBorderColor="@*android:color/system_outline_dark"
+    launcher:hoverBorderColor="@*android:color/system_primary_dark">
 
-    <ViewStub
-        android:id="@+id/snapshot"
-        android:inflatedId="@id/snapshot"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <include layout="@layout/task_thumbnail" />
 
     <!-- Filtering affects only alpha instead of the visibility since visibility can be altered
          separately through RecentsView#resetFromSplitSelectionState() -->
@@ -51,7 +47,4 @@
         android:inflatedId="@id/icon"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content" />
-
-    <include layout="@layout/digital_wellbeing_toast"
-        android:id="@+id/digital_wellbeing_toast"/>
 </com.android.quickstep.views.TaskView>

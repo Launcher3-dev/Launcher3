@@ -104,7 +104,7 @@ class HotseatReorderUnitTest {
         val cl = cellLayoutBuilder.createCellLayout(board.width, board.height, false)
         // The views have to be sorted or the result can vary
         board.icons
-            .map(IconPoint::coord)
+            .map(IconPoint::getCoord)
             .sortedWith(
                 Comparator.comparing { p: Any -> (p as Point).x }
                     .thenComparing { p: Any -> (p as Point).y }
@@ -120,7 +120,9 @@ class HotseatReorderUnitTest {
                 )
             }
         board.widgets
-            .sortedWith(Comparator.comparing(WidgetRect::cellX).thenComparing(WidgetRect::cellY))
+            .sortedWith(
+                Comparator.comparing(WidgetRect::getCellX).thenComparing(WidgetRect::getCellY)
+            )
             .forEach { widget ->
                 addViewInCellLayout(
                     cl,

@@ -1,0 +1,64 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+    id 'com.android.library'
+}
+
+final String ANDROID_TOP = "${rootDir}/"
+final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/libs/"
+
+android {
+    namespace = "com.android.launcher3.icons"
+    compileSdkVersion COMPILE_SDK
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 35
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src', 'src_full_lib']
+            manifest.srcFile 'AndroidManifest.xml'
+            res.srcDirs = ['res']
+        }
+    }
+    lint {
+        abortOnError false
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+
+    ext {
+        daggerVersion = '2.55'
+
+        addFrameworkJar = { String name ->
+            def frameworkJar = new File(FRAMEWORK_PREBUILTS_DIR, name)
+            if (!frameworkJar.exists()) {
+                throw new IllegalArgumentException("Framework jar path ${frameworkJar.path} doesn't exist")
+            }
+            gradle.projectsEvaluated {
+                tasks.withType(JavaCompile).configureEach {
+                    classpath = files(frameworkJar, classpath)
+                }
+                tasks.withType(KotlinCompile).configureEach {
+                    libraries.from(files(frameworkJar))
+                }
+            }
+            dependencies {
+                compileOnly files(frameworkJar)
+            }
+        }
+    }
+}
+addFrameworkJar('framework.jar')
+dependencies {
+    implementation "androidx.core:core:1.13.1"
+//    compileOnly files("${FRAMEWORK_PREBUILTS_DIR}/framework.jar")
+}

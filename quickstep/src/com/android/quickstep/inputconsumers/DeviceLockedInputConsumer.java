@@ -24,6 +24,7 @@ import static com.android.launcher3.util.VelocityUtils.PX_PER_MS;
 import static com.android.quickstep.AbsSwipeUpHandler.MIN_PROGRESS_FOR_OVERVIEW;
 import static com.android.quickstep.MultiStateCallback.DEBUG_STATES;
 import static com.android.quickstep.OverviewComponentObserver.startHomeIntentSafely;
+import static com.android.quickstep.TaskAnimationManager.ENABLE_SHELL_TRANSITIONS;
 import static com.android.quickstep.util.ActiveGestureLog.INTENT_EXTRA_LOG_TRACE_ID;
 
 import android.animation.Animator;
@@ -37,7 +38,6 @@ import android.graphics.PointF;
 import android.view.MotionEvent;
 import android.view.RemoteAnimationTarget;
 import android.view.VelocityTracker;
-import android.window.TransitionInfo;
 
 import com.android.app.animation.Interpolators;
 import com.android.launcher3.R;
@@ -53,12 +53,12 @@ import com.android.quickstep.RecentsAnimationController;
 import com.android.quickstep.RecentsAnimationDeviceState;
 import com.android.quickstep.RecentsAnimationTargets;
 import com.android.quickstep.RemoteAnimationTargets;
-import com.android.quickstep.RotationTouchHelper;
 import com.android.quickstep.TaskAnimationManager;
 import com.android.quickstep.util.SurfaceTransaction.SurfaceProperties;
 import com.android.quickstep.util.TransformParams;
 import com.android.quickstep.util.TransformParams.BuilderProxy;
 import com.android.systemui.shared.recents.model.ThumbnailData;
+import com.android.systemui.shared.system.ActivityManagerWrapper;
 import com.android.systemui.shared.system.InputMonitorCompat;
 
 import java.util.HashMap;
@@ -84,7 +84,7 @@ public class DeviceLockedInputConsumer implements InputConsumer,
             getFlagForIndex(1, "STATE_HANDLER_INVALIDATED");
 
     private final Context mContext;
-    private final RotationTouchHelper mRotationTouchHelper;
+    private final RecentsAnimationDeviceState mDeviceState;
     private final TaskAnimationManager mTaskAnimationManager;
     private final GestureState mGestureState;
     private final float mTouchSlopSquared;
@@ -108,21 +108,18 @@ public class DeviceLockedInputConsumer implements InputConsumer,
 
     private RecentsAnimationController mRecentsAnimationController;
 
-    public DeviceLockedInputConsumer(
-            Context context,
-            RecentsAnimationDeviceState deviceState,
-            TaskAnimationManager taskAnimationManager,
-            GestureState gestureState,
+    public DeviceLockedInputConsumer(Context context, RecentsAnimationDeviceState deviceState,
+            TaskAnimationManager taskAnimationManager, GestureState gestureState,
             InputMonitorCompat inputMonitorCompat) {
         mContext = context;
+        mDeviceState = deviceState;
         mTaskAnimationManager = taskAnimationManager;
         mGestureState = gestureState;
-        mTouchSlopSquared = deviceState.getSquaredTouchSlop();
+        mTouchSlopSquared = mDeviceState.getSquaredTouchSlop();
         mTransformParams = new TransformParams();
         mInputMonitorCompat = inputMonitorCompat;
         mMaxTranslationY = context.getResources().getDimensionPixelSize(
                 R.dimen.device_locked_y_offset);
-        mRotationTouchHelper = RotationTouchHelper.INSTANCE.get(mContext);
 
         // Do not use DeviceProfile as the user data might be locked
         mDisplaySize = DisplayController.INSTANCE.get(context).getInfo().currentSize;
@@ -138,11 +135,6 @@ public class DeviceLockedInputConsumer implements InputConsumer,
     @Override
     public int getType() {
         return TYPE_DEVICE_LOCKED;
-    }
-
-    @Override
-    public int getDisplayId() {
-        return mGestureState.getDisplayId();
     }
 
     @Override
@@ -162,7 +154,7 @@ public class DeviceLockedInputConsumer implements InputConsumer,
                 if (!mThresholdCrossed) {
                     // Cancel interaction in case of multi-touch interaction
                     int ptrIdx = ev.getActionIndex();
-                    if (!mRotationTouchHelper.isInSwipeUpTouchRegion(ev, ptrIdx)) {
+                    if (!mDeviceState.getRotationTouchHelper().isInSwipeUpTouchRegion(ev, ptrIdx)) {
                         int action = ev.getAction();
                         ev.setAction(ACTION_CANCEL);
                         finishTouchTracking(ev);
@@ -221,13 +213,15 @@ public class DeviceLockedInputConsumer implements InputConsumer,
                         // This will come back and cancel the interaction.
                         startHomeIntentSafely(mContext, mGestureState.getHomeIntent(), null, TAG);
                         mHomeLaunched = true;
-                    } else if (mTaskAnimationManager.getCurrentCallbacks() != null) {
-                        if (mRecentsAnimationController != null) {
-                            finishRecentsAnimationForShell(dismissTask);
-                        } else {
-                            // the transition of recents animation hasn't started, wait for it
-                            mCancelWhenRecentsStart = true;
-                            mDismissTask = dismissTask;
+                    } else if (ENABLE_SHELL_TRANSITIONS) {
+                        if (mTaskAnimationManager.getCurrentCallbacks() != null) {
+                            if (mRecentsAnimationController != null) {
+                                finishRecentsAnimationForShell(dismissTask);
+                            } else {
+                                // the transition of recents animation hasn't started, wait for it
+                                mCancelWhenRecentsStart = true;
+                                mDismissTask = dismissTask;
+                            }
                         }
                     }
                     mStateCallback.setState(STATE_HANDLER_INVALIDATED);
@@ -258,7 +252,7 @@ public class DeviceLockedInputConsumer implements InputConsumer,
 
     @Override
     public void onRecentsAnimationStart(RecentsAnimationController controller,
-            RecentsAnimationTargets targets, TransitionInfo transitionInfo) {
+            RecentsAnimationTargets targets) {
         mRecentsAnimationController = controller;
         mTransformParams.setTargetSet(targets);
         applyTransform();
@@ -284,7 +278,9 @@ public class DeviceLockedInputConsumer implements InputConsumer,
     }
 
     private void endRemoteAnimation() {
-        if (!mHomeLaunched && mRecentsAnimationController != null) {
+        if (mHomeLaunched) {
+            ActivityManagerWrapper.getInstance().cancelRecentsAnimation(false);
+        } else if (mRecentsAnimationController != null) {
             mRecentsAnimationController.finishController(
                     false /* toRecents */, null /* callback */, false /* sendUserLeaveHint */);
         }

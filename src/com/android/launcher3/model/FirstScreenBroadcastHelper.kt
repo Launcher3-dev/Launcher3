@@ -30,6 +30,7 @@ import com.android.launcher3.model.data.CollectionInfo
 import com.android.launcher3.model.data.ItemInfo
 import com.android.launcher3.model.data.LauncherAppWidgetInfo
 import com.android.launcher3.model.data.WorkspaceItemInfo
+import com.android.launcher3.pm.InstallSessionHelper
 import com.android.launcher3.util.Executors
 import com.android.launcher3.util.PackageManagerHelper
 import com.android.launcher3.util.PackageUserKey
@@ -79,22 +80,21 @@ object FirstScreenBroadcastHelper {
         packageManagerHelper: PackageManagerHelper,
         firstScreenItems: List<ItemInfo>,
         userKeyToSessionMap: Map<PackageUserKey, SessionInfo>,
-        allWidgets: List<ItemInfo>,
+        allWidgets: List<LauncherAppWidgetInfo>
     ): List<FirstScreenBroadcastModel> {
 
         // installers for installing items
-        val pendingItemInstallerMap: Map<String, Set<String>> =
+        val pendingItemInstallerMap: Map<String, MutableSet<String>> =
             createPendingItemsMap(userKeyToSessionMap)
-
         val installingPackages = pendingItemInstallerMap.values.flatten().toSet()
 
         // installers for installed items on first screen
-        val installedItemInstallerMap: Map<String, List<ItemInfo>> =
+        val installedItemInstallerMap: Map<String, MutableSet<ItemInfo>> =
             createInstalledItemsMap(firstScreenItems, installingPackages, packageManagerHelper)
 
         // installers for widgets on all screens
-        val allInstalledWidgetsMap: Map<String, List<ItemInfo>> =
-            createInstalledItemsMap(allWidgets, installingPackages, packageManagerHelper)
+        val allInstalledWidgetsMap: Map<String, MutableSet<LauncherAppWidgetInfo>> =
+            createAllInstalledWidgetsMap(allWidgets, installingPackages, packageManagerHelper)
 
         val allInstallers: Set<String> =
             pendingItemInstallerMap.keys +
@@ -131,39 +131,39 @@ object FirstScreenBroadcastHelper {
                             context,
                             0 /* requestCode */,
                             Intent(),
-                            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE,
-                        ),
+                            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+                        )
                     )
                     .putStringArrayListExtra(
                         PENDING_COLLECTION_ITEM_EXTRA,
-                        ArrayList(model.pendingCollectionItems),
+                        ArrayList(model.pendingCollectionItems)
                     )
                     .putStringArrayListExtra(
                         PENDING_WORKSPACE_ITEM_EXTRA,
-                        ArrayList(model.pendingWorkspaceItems),
+                        ArrayList(model.pendingWorkspaceItems)
                     )
                     .putStringArrayListExtra(
                         PENDING_HOTSEAT_ITEM_EXTRA,
-                        ArrayList(model.pendingHotseatItems),
+                        ArrayList(model.pendingHotseatItems)
                     )
                     .putStringArrayListExtra(
                         PENDING_WIDGET_ITEM_EXTRA,
-                        ArrayList(model.pendingWidgetItems),
+                        ArrayList(model.pendingWidgetItems)
                     )
                     .putStringArrayListExtra(
                         INSTALLED_WORKSPACE_ITEMS_EXTRA,
-                        ArrayList(model.installedWorkspaceItems),
+                        ArrayList(model.installedWorkspaceItems)
                     )
                     .putStringArrayListExtra(
                         INSTALLED_HOTSEAT_ITEMS_EXTRA,
-                        ArrayList(model.installedHotseatItems),
+                        ArrayList(model.installedHotseatItems)
                     )
                     .putStringArrayListExtra(
                         ALL_INSTALLED_WIDGETS_ITEM_EXTRA,
                         ArrayList(
                             model.firstScreenInstalledWidgets +
                                 model.secondaryScreenInstalledWidgets
-                        ),
+                        )
                     )
             context.sendBroadcast(intent)
         }
@@ -172,46 +172,66 @@ object FirstScreenBroadcastHelper {
     /** Maps Installer packages to Set of app packages from install sessions */
     private fun createPendingItemsMap(
         userKeyToSessionMap: Map<PackageUserKey, SessionInfo>
-    ): Map<String, Set<String>> {
+    ): Map<String, MutableSet<String>> {
         val myUser = Process.myUserHandle()
-        return userKeyToSessionMap.values
-            .filter {
-                it.user == myUser &&
-                    !it.installerPackageName.isNullOrEmpty() &&
-                    !it.appPackageName.isNullOrEmpty()
-            }
-            .groupBy(
-                keySelector = { it.installerPackageName },
-                valueTransform = { it.appPackageName },
-            )
-            .mapValues { it.value.filterNotNull().toSet() } as Map<String, Set<String>>
+        val result = mutableMapOf<String, MutableSet<String>>()
+        userKeyToSessionMap.forEach { entry ->
+            if (!myUser.equals(InstallSessionHelper.getUserHandle(entry.value))) return@forEach
+            val installer = entry.value.installerPackageName
+            val appPackage = entry.value.appPackageName
+            if (installer.isNullOrEmpty() || appPackage.isNullOrEmpty()) return@forEach
+            result.getOrPut(installer) { mutableSetOf() }.add(appPackage)
+        }
+        return result
     }
 
-    /** Maps Installer packages to Set of ItemInfos. Filter out installing packages. */
+    /**
+     * Maps Installer packages to Set of ItemInfo from first screen. Filter out installing packages.
+     */
     private fun createInstalledItemsMap(
-        allItems: Iterable<ItemInfo>,
+        firstScreenItems: List<ItemInfo>,
         installingPackages: Set<String>,
-        packageManagerHelper: PackageManagerHelper,
-    ): Map<String, List<ItemInfo>> =
-        allItems
-            .sortedBy { it.screenId }
-            .groupByTo(mutableMapOf()) {
-                getPackageName(it)?.let { pkg ->
-                    if (installingPackages.contains(pkg)) {
-                        null
-                    } else {
-                        packageManagerHelper.getAppInstallerPackage(pkg)
-                    }
-                }
+        packageManagerHelper: PackageManagerHelper
+    ): Map<String, MutableSet<ItemInfo>> {
+        val result = mutableMapOf<String, MutableSet<ItemInfo>>()
+        firstScreenItems.forEach { item ->
+            val appPackage = getPackageName(item) ?: return@forEach
+            if (installingPackages.contains(appPackage)) return@forEach
+            val installer = packageManagerHelper.getAppInstallerPackage(appPackage)
+            if (installer.isNullOrEmpty()) return@forEach
+            result.getOrPut(installer) { mutableSetOf() }.add(item)
+        }
+        return result
+    }
+
+    /**
+     * Maps Installer packages to Set of AppWidget packages installed on all screens. Filter out
+     * installing packages.
+     */
+    private fun createAllInstalledWidgetsMap(
+        allWidgets: List<LauncherAppWidgetInfo>,
+        installingPackages: Set<String>,
+        packageManagerHelper: PackageManagerHelper
+    ): Map<String, MutableSet<LauncherAppWidgetInfo>> {
+        val result = mutableMapOf<String, MutableSet<LauncherAppWidgetInfo>>()
+        allWidgets
+            .sortedBy { widget -> widget.screenId }
+            .forEach { widget ->
+                val appPackage = getPackageName(widget) ?: return@forEach
+                if (installingPackages.contains(appPackage)) return@forEach
+                val installer = packageManagerHelper.getAppInstallerPackage(appPackage)
+                if (installer.isNullOrEmpty()) return@forEach
+                result.getOrPut(installer) { mutableSetOf() }.add(widget)
             }
-            .apply { remove(null) } as Map<String, List<ItemInfo>>
+        return result
+    }
 
     /**
      * Add first screen Pending Items from Map to [FirstScreenBroadcastModel] for given installer
      */
     private fun FirstScreenBroadcastModel.addPendingItems(
         installingItems: Set<String>?,
-        firstScreenItems: List<ItemInfo>,
+        firstScreenItems: List<ItemInfo>
     ) {
         if (installingItems == null) return
         for (info in firstScreenItems) {
@@ -231,7 +251,7 @@ object FirstScreenBroadcastHelper {
      */
     private fun FirstScreenBroadcastModel.addInstalledItems(
         installer: String,
-        installedItemInstallerMap: Map<String, List<ItemInfo>>,
+        installedItemInstallerMap: Map<String, Set<ItemInfo>>,
     ) {
         installedItemInstallerMap[installer]?.forEach { info ->
             val packageName: String = getPackageName(info) ?: return@forEach
@@ -245,7 +265,7 @@ object FirstScreenBroadcastHelper {
     /** Add Widgets on every screen from Map to [FirstScreenBroadcastModel] for given installer */
     private fun FirstScreenBroadcastModel.addAllScreenWidgets(
         installer: String,
-        allInstalledWidgetsMap: Map<String, List<ItemInfo>>,
+        allInstalledWidgetsMap: Map<String, Set<LauncherAppWidgetInfo>>
     ) {
         allInstalledWidgetsMap[installer]?.forEach { widget ->
             val packageName: String = getPackageName(widget) ?: return@forEach
@@ -259,7 +279,7 @@ object FirstScreenBroadcastHelper {
 
     private fun FirstScreenBroadcastModel.addCollectionItems(
         info: ItemInfo,
-        installingPackages: Set<String>,
+        installingPackages: Set<String>
     ) {
         if (info !is CollectionInfo) return
         pendingCollectionItems.addAll(
@@ -316,7 +336,7 @@ object FirstScreenBroadcastHelper {
             Log.d(
                 TAG,
                 "Sending First Screen Broadcast for installer=$installerPackage" +
-                    ", total packages=${getTotalItemCount()}",
+                    ", total packages=${getTotalItemCount()}"
             )
             pendingCollectionItems.forEach {
                 Log.d(TAG, "$installerPackage:Pending Collection item:$it")
@@ -341,7 +361,15 @@ object FirstScreenBroadcastHelper {
         }
     }
 
-    private fun getPackageName(info: ItemInfo): String? = info.targetComponent?.packageName
+    private fun getPackageName(info: ItemInfo): String? {
+        var packageName: String? = null
+        if (info is LauncherAppWidgetInfo) {
+            info.providerName?.let { packageName = info.providerName.packageName }
+        } else if (info.targetComponent != null) {
+            packageName = info.targetComponent?.packageName
+        }
+        return packageName
+    }
 
     /**
      * Clone the provided list on UI thread. This is used for [FolderInfo.getContents] which is

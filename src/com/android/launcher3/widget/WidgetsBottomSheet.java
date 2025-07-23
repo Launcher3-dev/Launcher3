@@ -17,7 +17,6 @@
 package com.android.launcher3.widget;
 
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_BOTTOM_WIDGETS_TRAY;
-import static com.android.launcher3.widget.picker.model.data.WidgetPickerDataUtils.findAllWidgetsForPackageUser;
 
 import android.content.Context;
 import android.graphics.Rect;
@@ -41,7 +40,6 @@ import com.android.launcher3.anim.PendingAnimation;
 import com.android.launcher3.model.WidgetItem;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.util.PackageUserKey;
-import com.android.launcher3.widget.picker.model.data.WidgetPickerData;
 import com.android.launcher3.widget.util.WidgetsTableUtils;
 
 import java.util.List;
@@ -126,10 +124,10 @@ public class WidgetsBottomSheet extends BaseWidgetSheet {
 
     @Override
     public void onWidgetsBound() {
-        final WidgetPickerData data = mActivityContext.getWidgetPickerDataProvider().get();
-        final PackageUserKey packageUserKey = PackageUserKey.fromItemInfo(mOriginalItemInfo);
-        List<WidgetItem> widgets = packageUserKey != null ? findAllWidgetsForPackageUser(data,
-                packageUserKey) : List.of();
+        List<WidgetItem> widgets = mActivityContext.getPopupDataProvider().getWidgetsForPackageUser(
+                new PackageUserKey(
+                        mOriginalItemInfo.getTargetComponent().getPackageName(),
+                        mOriginalItemInfo.user));
 
         TableLayout widgetsTable = findViewById(R.id.widgets_table);
         widgetsTable.removeAllViews();
@@ -249,7 +247,4 @@ public class WidgetsBottomSheet extends BaseWidgetSheet {
             }
         }
     }
-
-    @Override
-    public void onRecommendedWidgetsBound() {} // no op
 }

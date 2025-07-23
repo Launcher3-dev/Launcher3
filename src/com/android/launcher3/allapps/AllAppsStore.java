@@ -15,12 +15,13 @@
  */
 package com.android.launcher3.allapps;
 
+import static com.android.launcher3.config.FeatureFlags.ENABLE_ALL_APPS_RV_PREINFLATION;
 import static com.android.launcher3.model.data.AppInfo.COMPONENT_KEY_COMPARATOR;
 import static com.android.launcher3.model.data.AppInfo.EMPTY_ARRAY;
+import static com.android.launcher3.model.data.ItemInfoWithIcon.FLAG_SHOW_DOWNLOAD_PROGRESS_MASK;
 
 import android.content.Context;
 import android.os.UserHandle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -41,7 +42,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -54,7 +54,6 @@ import java.util.function.Predicate;
  */
 public class AllAppsStore<T extends Context & ActivityContext> {
 
-    private static final String TAG = "AllAppsStore";
     // Defer updates flag used to defer all apps updates to the next draw.
     public static final int DEFER_UPDATES_NEXT_DRAW = 1 << 0;
     // Defer updates flag used to defer all apps updates by a test's request.
@@ -104,13 +103,12 @@ public class AllAppsStore<T extends Context & ActivityContext> {
     public void setApps(@Nullable AppInfo[] apps, int flags, Map<PackageUserKey, Integer> map,
             boolean shouldPreinflate) {
         mApps = apps == null ? EMPTY_ARRAY : apps;
-        Log.d(TAG, "setApps: apps.length=" + mApps.length);
         mModelFlags = flags;
         notifyUpdate();
         mPackageUserKeytoUidMap = map;
         // Preinflate all apps RV when apps has changed, which can happen after unlocking screen,
         // rotating screen, or downloading/upgrading apps.
-        if (shouldPreinflate) {
+        if (shouldPreinflate && ENABLE_ALL_APPS_RV_PREINFLATION.get()) {
             mAllAppsRecyclerViewPool.preInflateAllAppsViewHolders(mContext);
         }
     }
@@ -162,12 +160,10 @@ public class AllAppsStore<T extends Context & ActivityContext> {
 
     public void enableDeferUpdates(int flag) {
         mDeferUpdatesFlags |= flag;
-        Log.d(TAG, "enableDeferUpdates: " + flag + " mDeferUpdatesFlags=" + mDeferUpdatesFlags);
     }
 
     public void disableDeferUpdates(int flag) {
         mDeferUpdatesFlags &= ~flag;
-        Log.d(TAG, "disableDeferUpdates: " + flag + " mDeferUpdatesFlags=" + mDeferUpdatesFlags);
         if (mDeferUpdatesFlags == 0 && mUpdatePending) {
             notifyUpdate();
             mUpdatePending = false;
@@ -176,9 +172,6 @@ public class AllAppsStore<T extends Context & ActivityContext> {
 
     public void disableDeferUpdatesSilently(int flag) {
         mDeferUpdatesFlags &= ~flag;
-        Log.d(TAG, "disableDeferUpdatesSilently: " + flag
-                + " mDeferUpdatesFlags=" + mDeferUpdatesFlags);
-
     }
 
     public int getDeferUpdatesFlags() {
@@ -187,11 +180,9 @@ public class AllAppsStore<T extends Context & ActivityContext> {
 
     private void notifyUpdate() {
         if (mDeferUpdatesFlags != 0) {
-            Log.d(TAG, "notifyUpdate: deferring update");
             mUpdatePending = true;
             return;
         }
-        Log.d(TAG, "notifyUpdate: notifying listeners");
         for (OnUpdateListener listener : mUpdateListeners) {
             listener.onAppsUpdated();
         }
@@ -238,7 +229,11 @@ public class AllAppsStore<T extends Context & ActivityContext> {
     public void updateProgressBar(AppInfo app) {
         updateAllIcons((child) -> {
             if (child.getTag() == app) {
-                child.applyFromApplicationInfo(app);
+                if ((app.runtimeStatusFlags & FLAG_SHOW_DOWNLOAD_PROGRESS_MASK) == 0) {
+                    child.applyFromApplicationInfo(app);
+                } else {
+                    child.applyProgressLevel();
+                }
             }
         });
     }
@@ -265,15 +260,8 @@ public class AllAppsStore<T extends Context & ActivityContext> {
     public void dump(String prefix, PrintWriter writer) {
         writer.println(prefix + "\tAllAppsStore Apps[] size: " + mApps.length);
         for (int i = 0; i < mApps.length; i++) {
-            writer.println(String.format(Locale.getDefault(),
-                    "%s\tPackage index, name, class, description, bitmap flag: %d/%s:%s, %s, %s+%s",
-                    prefix,
-                    i,
-                    mApps[i].componentName.getPackageName(),
-                    mApps[i].componentName.getClassName(),
-                    mApps[i].contentDescription,
-                    Integer.toBinaryString(mApps[i].bitmap.flags),
-                    Integer.toBinaryString(mApps[i].bitmap.creationFlags)));
+            writer.println(String.format("%s\tPackage index and name: %d/%s", prefix, i,
+                    mApps[i].componentName.getPackageName()));
         }
     }
 }

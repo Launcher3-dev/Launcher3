@@ -60,8 +60,7 @@ public abstract class Home extends Background {
 
     @Override
     protected boolean zeroButtonToOverviewGestureStateTransitionWhileHolding() {
-        return !mLauncher.isRecentsWindowEnabled()
-                || super.zeroButtonToOverviewGestureStateTransitionWhileHolding();
+        return true;
     }
 
     @Override

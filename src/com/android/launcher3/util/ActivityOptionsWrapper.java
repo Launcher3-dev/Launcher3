@@ -25,7 +25,6 @@ import android.os.Bundle;
 public class ActivityOptionsWrapper {
 
     public final ActivityOptions options;
-    // Called when the app launch animation is complete
     public final RunnableList onEndCallback;
 
     public ActivityOptionsWrapper(ActivityOptions options, RunnableList onEndCallback) {

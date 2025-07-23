@@ -73,7 +73,7 @@ public class ArrowTipView extends AbstractFloatingView {
                 }
             };
 
-    protected final ActivityContext mActivityContext;
+    private final ActivityContext mActivityContext;
     private final Handler mHandler = new Handler();
     private boolean mIsPointingUp;
     private Runnable mOnClosed;
@@ -103,26 +103,16 @@ public class ArrowTipView extends AbstractFloatingView {
                 R.dimen.arrow_toast_arrow_width);
         mArrowMinOffset = context.getResources().getDimensionPixelSize(
                 R.dimen.dynamic_grid_cell_border_spacing);
-        Context localContext = context;
-        TypedArray ta = localContext.obtainStyledAttributes(R.styleable.ArrowTipView);
+        TypedArray ta = context.obtainStyledAttributes(R.styleable.ArrowTipView);
         // Set style to default to avoid inflation issues with missing attributes.
         if (!ta.hasValue(R.styleable.ArrowTipView_arrowTipBackground)
                 || !ta.hasValue(R.styleable.ArrowTipView_arrowTipTextColor)) {
-            localContext = new ContextThemeWrapper(localContext, R.style.ArrowTipStyle);
+            context = new ContextThemeWrapper(context, R.style.ArrowTipStyle);
         }
-        mArrowViewPaintColor = applyArrowPaintColor(ta, localContext);
-        init(localContext, layoutId);
-    }
-
-    protected int applyArrowPaintColor(TypedArray typedArray, Context context) {
-        int arrowPaintColor = typedArray.getColor(R.styleable.ArrowTipView_arrowTipBackground,
+        mArrowViewPaintColor = ta.getColor(R.styleable.ArrowTipView_arrowTipBackground,
                 context.getColor(R.color.arrow_tip_view_bg));
-        typedArray.recycle();
-        return arrowPaintColor;
-    }
-
-    protected int getArrowId() {
-        return R.id.arrow;
+        ta.recycle();
+        init(context, layoutId);
     }
 
     @Override
@@ -164,7 +154,7 @@ public class ArrowTipView extends AbstractFloatingView {
         inflate(context, layoutId, this);
         setOrientation(LinearLayout.VERTICAL);
 
-        mArrowView = findViewById(getArrowId());
+        mArrowView = findViewById(R.id.arrow);
         updateArrowTipInView(mIsPointingUp);
         setAlpha(0);
 
@@ -353,34 +343,6 @@ public class ArrowTipView extends AbstractFloatingView {
             parent.addView(this);
             requestLayout();
         }
-        return showAtLocation(arrowXCoord, yCoordDownPointingTip, yCoordUpPointingTip,
-                minViewMargin, parentViewWidth, parentViewHeight, shouldAutoClose);
-    }
-
-    /**
-     * Show the ArrowTipView (tooltip) custom aligned. The tooltip is vertically flipped if it
-     * cannot fit on screen in the requested orientation.
-     *
-     * @param arrowXCoord The X coordinate for the arrow on the tooltip. The arrow is usually in the
-     *                    center of tooltip unless the tooltip goes beyond screen margin.
-     * @param yCoordDownPointingTip The Y coordinate of the pointed tip end of the tooltip when the
-     *                              tooltip is placed pointing downwards.
-     * @param yCoordUpPointingTip The Y coordinate of the pointed tip end of the tooltip when the
-     *                            tooltip is placed pointing upwards.
-     * @param minViewMargin The view margin in pixels from the tip end to the y coordinate.
-     * @param parentViewWidth The width in pixels of the parent view.
-     * @param parentViewHeight The height in pixels of the parent view.
-     * @param shouldAutoClose If Tooltip should be auto close.
-     * @return The tool tip view. {@code null} if the tip can not be shown.
-     */
-    protected ArrowTipView showAtLocation(
-            @Px int arrowXCoord,
-            @Px int yCoordDownPointingTip,
-            @Px int yCoordUpPointingTip,
-            @Px int minViewMargin,
-            @Px int parentViewWidth,
-            @Px int parentViewHeight,
-            boolean shouldAutoClose) {
 
         post(() -> {
             // Adjust the tooltip horizontally.

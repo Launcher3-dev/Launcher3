@@ -1,14 +1,13 @@
 package com.android.quickstep;
 
-import static android.view.Display.DEFAULT_DISPLAY;
-
 import static com.android.launcher3.taskbar.TaskbarThresholdUtils.getFromNavThreshold;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Rect;
 import android.os.Bundle;
-import android.view.WindowInsets;
 
 import androidx.annotation.Nullable;
 
@@ -16,12 +15,11 @@ import com.android.launcher3.taskbar.TaskbarActivityContext;
 import com.android.launcher3.testing.TestInformationHandler;
 import com.android.launcher3.testing.shared.TestProtocol;
 import com.android.launcher3.util.DisplayController;
+import com.android.quickstep.orientation.RecentsPagedOrientationHandler;
 import com.android.quickstep.util.GroupTask;
 import com.android.quickstep.util.LayoutUtils;
 import com.android.quickstep.util.TISBindHelper;
 import com.android.quickstep.views.RecentsView;
-import com.android.quickstep.views.RecentsViewContainer;
-import com.android.systemui.shared.recents.model.Task;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -47,9 +45,11 @@ public class QuickstepTestInformationHandler extends TestInformationHandler {
                 CountDownLatch latch = new CountDownLatch(1);
                 RecentsModel.INSTANCE.get(mContext).getTasks((taskGroups) -> {
                     for (GroupTask group : taskGroups) {
-                        for (Task t : group.getTasks()) {
+                        taskBaseIntentComponents.add(
+                                group.task1.key.baseIntent.getComponent().flattenToString());
+                        if (group.task2 != null) {
                             taskBaseIntentComponents.add(
-                                    t.key.baseIntent.getComponent().flattenToString());
+                                    group.task2.key.baseIntent.getComponent().flattenToString());
                         }
                     }
                     latch.countDown();
@@ -77,20 +77,26 @@ public class QuickstepTestInformationHandler extends TestInformationHandler {
                 return response;
             }
 
-            case TestProtocol.REQUEST_GET_OVERVIEW_TASK_SIZE: {
-                return getUIProperty(Bundle::putParcelable,
-                        recentsViewContainer ->
-                                recentsViewContainer.<RecentsView<?, ?>>getOverviewPanel()
-                                        .getLastComputedTaskSize(),
-                        this::getRecentsViewContainer);
+            case TestProtocol.REQUEST_GET_FOCUSED_TASK_HEIGHT_FOR_TABLET: {
+                if (!mDeviceProfile.isTablet) {
+                    return null;
+                }
+                Rect focusedTaskRect = new Rect();
+                LauncherActivityInterface.INSTANCE.calculateTaskSize(mContext, mDeviceProfile,
+                        focusedTaskRect, RecentsPagedOrientationHandler.PORTRAIT);
+                response.putInt(TestProtocol.TEST_INFO_RESPONSE_FIELD, focusedTaskRect.height());
+                return response;
             }
 
-            case TestProtocol.REQUEST_GET_OVERVIEW_GRID_TASK_SIZE: {
-                return getUIProperty(Bundle::putParcelable,
-                        recentsViewContainer ->
-                                recentsViewContainer.<RecentsView<?, ?>>getOverviewPanel()
-                                        .getLastComputedGridTaskSize(),
-                        this::getRecentsViewContainer);
+            case TestProtocol.REQUEST_GET_GRID_TASK_SIZE_RECT_FOR_TABLET: {
+                if (!mDeviceProfile.isTablet) {
+                    return null;
+                }
+                Rect gridTaskRect = new Rect();
+                LauncherActivityInterface.INSTANCE.calculateGridTaskSize(mContext, mDeviceProfile,
+                        gridTaskRect, RecentsPagedOrientationHandler.PORTRAIT);
+                response.putParcelable(TestProtocol.TEST_INFO_RESPONSE_FIELD, gridTaskRect);
+                return response;
             }
 
             case TestProtocol.REQUEST_GET_OVERVIEW_PAGE_SPACING: {
@@ -179,7 +185,7 @@ public class QuickstepTestInformationHandler extends TestInformationHandler {
 
             case TestProtocol.REQUEST_RECREATE_TASKBAR:
                 // Allow null-pointer to catch illegal states.
-                runOnTISBinder(tisBinder -> tisBinder.getTaskbarManager().recreateTaskbars());
+                runOnTISBinder(tisBinder -> tisBinder.getTaskbarManager().recreateTaskbar());
                 return response;
             case TestProtocol.REQUEST_TASKBAR_IME_DOCKED:
                 return getTISBinderUIProperty(Bundle::putBoolean, tisBinder ->
@@ -204,22 +210,20 @@ public class QuickstepTestInformationHandler extends TestInformationHandler {
     }
 
     @Override
-    protected WindowInsets getWindowInsets() {
-        RecentsViewContainer container = getRecentsViewContainer();
-        WindowInsets insets = container == null
-                ? null : container.getRootView().getRootWindowInsets();
-        return insets == null ? super.getWindowInsets() : insets;
-    }
-
-    private RecentsViewContainer getRecentsViewContainer() {
-        // TODO (b/400647896): support per-display container in e2e tests
-        return OverviewComponentObserver.INSTANCE.get(mContext)
-                .getContainerInterface(DEFAULT_DISPLAY).getCreatedContainer();
+    protected Activity getCurrentActivity() {
+        RecentsAnimationDeviceState rads = new RecentsAnimationDeviceState(mContext);
+        OverviewComponentObserver observer = new OverviewComponentObserver(mContext, rads);
+        try {
+            return observer.getActivityInterface().getCreatedContainer();
+        } finally {
+            observer.onDestroy();
+            rads.destroy();
+        }
     }
 
     @Override
     protected boolean isLauncherInitialized() {
-        return super.isLauncherInitialized() && SystemUiProxy.INSTANCE.get(mContext).isActive();
+        return super.isLauncherInitialized() && TouchInteractionService.isInitialized();
     }
 
     private void enableBlockingTimeout(

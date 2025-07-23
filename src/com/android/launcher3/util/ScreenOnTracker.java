@@ -19,62 +19,38 @@ import static android.content.Intent.ACTION_SCREEN_OFF;
 import static android.content.Intent.ACTION_SCREEN_ON;
 import static android.content.Intent.ACTION_USER_PRESENT;
 
-import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
-
 import android.content.Context;
 import android.content.Intent;
 
-import androidx.annotation.VisibleForTesting;
-
-import com.android.launcher3.dagger.ApplicationContext;
-import com.android.launcher3.dagger.LauncherAppSingleton;
-import com.android.launcher3.dagger.LauncherBaseAppComponent;
-
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import javax.inject.Inject;
 
 /**
  * Utility class for tracking if the screen is currently on or off
  */
-@LauncherAppSingleton
 public class ScreenOnTracker implements SafeCloseable {
 
-    public static final DaggerSingletonObject<ScreenOnTracker> INSTANCE =
-            new DaggerSingletonObject<>(LauncherBaseAppComponent::getScreenOnTracker);
+    public static final MainThreadInitializedObject<ScreenOnTracker> INSTANCE =
+            new MainThreadInitializedObject<>(ScreenOnTracker::new);
 
-    private final SimpleBroadcastReceiver mReceiver;
+    private final SimpleBroadcastReceiver mReceiver = new SimpleBroadcastReceiver(this::onReceive);
     private final CopyOnWriteArrayList<ScreenOnListener> mListeners = new CopyOnWriteArrayList<>();
 
+    private final Context mContext;
     private boolean mIsScreenOn;
 
-    @Inject
-    ScreenOnTracker(@ApplicationContext Context context, DaggerSingletonTracker tracker) {
+    private ScreenOnTracker(Context context) {
         // Assume that the screen is on to begin with
-        mReceiver = new SimpleBroadcastReceiver(context, UI_HELPER_EXECUTOR, this::onReceive);
-        init(tracker);
-    }
-
-    @VisibleForTesting
-    ScreenOnTracker(@ApplicationContext Context context, SimpleBroadcastReceiver receiver,
-            DaggerSingletonTracker tracker) {
-        mReceiver = receiver;
-        init(tracker);
-    }
-
-    private void init(DaggerSingletonTracker tracker) {
+        mContext = context;
         mIsScreenOn = true;
-        mReceiver.register(ACTION_SCREEN_ON, ACTION_SCREEN_OFF, ACTION_USER_PRESENT);
-        tracker.addCloseable(this);
+        mReceiver.register(context, ACTION_SCREEN_ON, ACTION_SCREEN_OFF, ACTION_USER_PRESENT);
     }
 
     @Override
     public void close() {
-        mReceiver.unregisterReceiverSafely();
+        mReceiver.unregisterReceiverSafely(mContext);
     }
 
-    @VisibleForTesting
-    void onReceive(Intent intent) {
+    private void onReceive(Intent intent) {
         String action = intent.getAction();
         if (ACTION_SCREEN_ON.equals(action)) {
             mIsScreenOn = true;

@@ -18,7 +18,6 @@ package com.android.launcher3.model;
 
 import static android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID;
 
-import static com.android.launcher3.LauncherSettings.Favorites.DESKTOP_ICON_FLAG;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPWIDGET;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT;
@@ -46,18 +45,16 @@ import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherSettings.Favorites;
-import com.android.launcher3.dagger.ApplicationContext;
-import com.android.launcher3.dagger.LauncherAppSingleton;
-import com.android.launcher3.dagger.LauncherBaseAppComponent;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.LauncherAppWidgetInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.shortcuts.ShortcutKey;
 import com.android.launcher3.shortcuts.ShortcutRequest;
-import com.android.launcher3.util.DaggerSingletonObject;
+import com.android.launcher3.util.MainThreadInitializedObject;
 import com.android.launcher3.util.PersistedItemArray;
 import com.android.launcher3.util.Preconditions;
+import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
 
 import java.util.HashSet;
@@ -65,13 +62,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-
 /**
  * Class to maintain a queue of pending items to be added to the workspace.
  */
-@LauncherAppSingleton
-public class ItemInstallQueue {
+public class ItemInstallQueue implements SafeCloseable {
 
     private static final String LOG = "ItemInstallQueue";
 
@@ -87,8 +81,9 @@ public class ItemInstallQueue {
     public static final int NEW_SHORTCUT_BOUNCE_DURATION = 450;
     public static final int NEW_SHORTCUT_STAGGER_DELAY = 85;
 
-    public static DaggerSingletonObject<ItemInstallQueue> INSTANCE =
-            new DaggerSingletonObject<>(LauncherBaseAppComponent::getItemInstallQueue);
+    public static MainThreadInitializedObject<ItemInstallQueue> INSTANCE =
+            new MainThreadInitializedObject<>(ItemInstallQueue::new);
+
     private final PersistedItemArray<PendingInstallShortcutInfo> mStorage =
             new PersistedItemArray<>(APPS_PENDING_INSTALL);
     private final Context mContext;
@@ -100,10 +95,12 @@ public class ItemInstallQueue {
     // Only accessed on worker thread
     private List<PendingInstallShortcutInfo> mItems;
 
-    @Inject
-    public ItemInstallQueue(@ApplicationContext Context context) {
+    private ItemInstallQueue(Context context) {
         mContext = context;
     }
+
+    @Override
+    public void close() {}
 
     @WorkerThread
     private void ensureQueueLoaded() {
@@ -124,7 +121,7 @@ public class ItemInstallQueue {
 
     @WorkerThread
     private void flushQueueInBackground() {
-        Launcher launcher = Launcher.ACTIVITY_TRACKER.getCreatedContext();
+        Launcher launcher = Launcher.ACTIVITY_TRACKER.getCreatedActivity();
         if (launcher == null) {
             // Launcher not loaded
             return;
@@ -195,18 +192,22 @@ public class ItemInstallQueue {
     }
 
     private void queuePendingShortcutInfo(PendingInstallShortcutInfo info) {
+        final Exception stackTrace = new Exception();
 
         // Queue the item up for adding if launcher has not loaded properly yet
         MODEL_EXECUTOR.post(() -> {
             Pair<ItemInfo, Object> itemInfo = info.getItemInfo(mContext);
             if (itemInfo == null) {
                 FileLog.d(LOG,
-                        "Adding PendingInstallShortcutInfo with no attached info to queue.");
+                        "Adding PendingInstallShortcutInfo with no attached info to queue.",
+                        stackTrace);
             } else {
                 FileLog.d(LOG,
-                        "Adding PendingInstallShortcutInfo to queue."
-                                + " Attached info: " + itemInfo.first);
+                        "Adding PendingInstallShortcutInfo to queue. Attached info: "
+                                + itemInfo.first,
+                        stackTrace);
             }
+
             addToQueue(info);
         });
         flushInstallQueue();
@@ -309,8 +310,7 @@ public class ItemInstallQueue {
                         }
                     }
                     LauncherAppState.getInstance(context).getIconCache()
-                            .getTitleAndIcon(si, () -> lai,
-                                    DESKTOP_ICON_FLAG.withUsePackageIcon(usePackageIcon));
+                            .getTitleAndIcon(si, () -> lai, usePackageIcon, false);
                     return Pair.create(si, null);
                 }
                 case ITEM_TYPE_DEEP_SHORTCUT: {

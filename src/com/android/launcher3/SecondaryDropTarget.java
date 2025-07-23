@@ -7,6 +7,7 @@ import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.
 import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.INVALID;
 import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.RECONFIGURE;
 import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.UNINSTALL;
+import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_DISMISS_PREDICTION_UNDO;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ITEM_DROPPED_ON_DONT_SUGGEST;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ITEM_DROPPED_ON_UNINSTALL;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ITEM_UNINSTALL_CANCELLED;
@@ -22,6 +23,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
@@ -34,6 +36,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dragndrop.DragOptions;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.logging.InstanceId;
@@ -43,7 +46,7 @@ import com.android.launcher3.logging.StatsLogManager.StatsLogger;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.pm.UserCache;
-import com.android.launcher3.util.ApplicationInfoWrapper;
+import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
 
 import java.net.URISyntaxException;
@@ -239,7 +242,8 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
 
     @Override
     public void completeDrop(final DragObject d) {
-        ComponentName target = performDropAction(getViewUnderDrag(d.dragInfo), d.dragInfo);
+        ComponentName target = performDropAction(getViewUnderDrag(d.dragInfo), d.dragInfo,
+                d.logInstanceId);
         mDropTargetHandler.onSecondaryTargetCompleteDrop(target, d);
     }
 
@@ -271,7 +275,7 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
      * Performs the drop action and returns the target component for the dragObject or null if
      * the action was not performed.
      */
-    protected ComponentName performDropAction(View view, ItemInfo info) {
+    protected ComponentName performDropAction(View view, ItemInfo info, InstanceId instanceId) {
         if (mCurrentAccessibilityAction == RECONFIGURE) {
             int widgetId = getReconfigurableWidgetId(view);
             if (widgetId != INVALID_APPWIDGET_ID) {
@@ -279,6 +283,21 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
             }
             return null;
         }
+        if (mCurrentAccessibilityAction == DISMISS_PREDICTION) {
+            if (FeatureFlags.ENABLE_DISMISS_PREDICTION_UNDO.get()) {
+                CharSequence announcement = getContext().getString(R.string.item_removed);
+                mDropTargetHandler
+                        .dismissPrediction(announcement, () -> {
+                        }, () -> {
+                            mStatsLogManager.logger()
+                                    .withInstanceId(instanceId)
+                                    .withItemInfo(info)
+                                    .log(LAUNCHER_DISMISS_PREDICTION_UNDO);
+                        });
+            }
+            return null;
+        }
+
         return performUninstall(getContext(), getUninstallTarget(getContext(), info), info);
     }
 
@@ -303,19 +322,19 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
                     .setData(Uri.fromParts("package", cn.getPackageName(), cn.getClassName()))
                     .putExtra(Intent.EXTRA_USER, info.user);
             context.startActivity(i);
-            FileLog.d(TAG, "start uninstall activity from drop target " + cn.getPackageName());
+            FileLog.d(TAG, "start uninstall activity " + cn.getPackageName());
             return cn;
         } catch (URISyntaxException e) {
-            Log.e(TAG, "Failed to parse intent to start drop target uninstall activity for"
-                    + " item=" + info);
+            Log.e(TAG, "Failed to parse intent to start uninstall activity for item=" + info);
             return null;
         }
     }
 
     @Override
     public void onAccessibilityDrop(View view, ItemInfo item) {
-        doLog(new InstanceIdSequence().newInstanceId(), item);
-        performDropAction(view, item);
+        InstanceId instanceId = new InstanceIdSequence().newInstanceId();
+        doLog(instanceId, item);
+        performDropAction(view, item, instanceId);
     }
 
     /**
@@ -342,8 +361,9 @@ public class SecondaryDropTarget extends ButtonDropTarget implements OnAlarmList
         }
 
         public void onLauncherResume() {
-            if (new ApplicationInfoWrapper(mContext, mPackageName, mDragObject.dragInfo.user)
-                    .getInfo() == null) {
+            // We use MATCH_UNINSTALLED_PACKAGES as the app can be on SD card as well.
+            if (PackageManagerHelper.INSTANCE.get(mContext).getApplicationInfo(mPackageName,
+                    mDragObject.dragInfo.user, PackageManager.MATCH_UNINSTALLED_PACKAGES) == null) {
                 mDragObject.dragSource = mOriginal;
                 mOriginal.onDropCompleted(SecondaryDropTarget.this, mDragObject, true);
                 mStatsLogManager.logger().withInstanceId(mDragObject.logInstanceId)

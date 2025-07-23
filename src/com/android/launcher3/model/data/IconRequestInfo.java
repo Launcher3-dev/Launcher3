@@ -64,25 +64,23 @@ public class IconRequestInfo<T extends ItemInfoWithIcon> {
     }
 
     /**
-     * Loads this request's item info's title and icon from given iconBlob from Launcher.db.
-     * This method should only be used on {@link IconRequestInfo} for {@link WorkspaceItemInfo}
-     *  or {@link AppInfo}.
+     * Loads this request's item info's title. This method should only be used on IconRequestInfos
+     * for WorkspaceItemInfos.
      */
-    public boolean loadIconFromDbBlob(Context context) {
-        if (!(itemInfo instanceof WorkspaceItemInfo) && !(itemInfo instanceof AppInfo)) {
+    public boolean loadWorkspaceIcon(Context context) {
+        if (!(itemInfo instanceof WorkspaceItemInfo)) {
             throw new IllegalStateException(
-                    "loadIconFromDb should only be used for either WorkspaceItemInfo or AppInfo: "
-                            + itemInfo);
+                    "loadWorkspaceIcon should only be use for a WorkspaceItemInfos: " + itemInfo);
         }
 
         try (LauncherIcons li = LauncherIcons.obtain(context)) {
-            ItemInfoWithIcon info = itemInfo;
+            WorkspaceItemInfo info = (WorkspaceItemInfo) itemInfo;
+            // Failed to load from resource, try loading from DB.
             if (iconBlob == null) {
-                Log.d(TAG, "loadIconFromDb: icon blob null, returning. Component="
-                        + info.getTargetComponent());
                 return false;
             }
-            info.bitmap = li.createIconBitmap(decodeByteArray(iconBlob, 0, iconBlob.length));
+            info.bitmap = li.createIconBitmap(decodeByteArray(
+                    iconBlob, 0, iconBlob.length));
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Failed to decode byte array for info " + itemInfo, e);

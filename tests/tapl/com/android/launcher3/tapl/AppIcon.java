@@ -16,8 +16,9 @@
 
 package com.android.launcher3.tapl;
 
+import static com.android.launcher3.testing.shared.TestProtocol.TEST_DRAG_APP_ICON_TO_MULTIPLE_WORKSPACES_FAILURE;
 
-import android.graphics.Point;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -97,6 +98,8 @@ public abstract class AppIcon extends Launchable {
 
     @Override
     protected void waitForLongPressConfirmation() {
+        Log.d(TEST_DRAG_APP_ICON_TO_MULTIPLE_WORKSPACES_FAILURE,
+                "AppIcon.waitForLongPressConfirmation, resName: popupContainer");
         mLauncher.waitForLauncherObject("popup_container");
     }
 
@@ -123,14 +126,6 @@ public abstract class AppIcon extends Launchable {
     @NonNull
     String getAppName() {
         return getObject().getContentDescription();
-    }
-
-    /**
-     * @return the center coordinates of the icon
-     */
-    @NonNull
-    public Point getVisibleCenter() {
-        return getObject().getVisibleCenter();
     }
 
     /**

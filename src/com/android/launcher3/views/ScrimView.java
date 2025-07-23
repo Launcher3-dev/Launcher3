@@ -29,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Px;
 import androidx.core.graphics.ColorUtils;
 
+import com.android.launcher3.BaseActivity;
 import com.android.launcher3.Insettable;
 import com.android.launcher3.util.SystemUiController;
 
@@ -54,7 +55,8 @@ public class ScrimView extends View implements Insettable {
     }
 
     @Override
-    public void setInsets(Rect insets) {}
+    public void setInsets(Rect insets) {
+    }
 
     @Override
     public boolean hasOverlappingRendering() {
@@ -141,8 +143,7 @@ public class ScrimView extends View implements Insettable {
 
     private SystemUiController getSystemUiController() {
         if (mSystemUiController == null) {
-            mSystemUiController =
-                    ActivityContext.lookupContext(getContext()).getSystemUiController();
+            mSystemUiController = BaseActivity.fromContext(getContext()).getSystemUiController();
         }
         return mSystemUiController;
     }

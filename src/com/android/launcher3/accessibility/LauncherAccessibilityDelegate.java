@@ -24,8 +24,6 @@ import android.view.accessibility.AccessibilityEvent;
 
 import androidx.annotation.Nullable;
 
-import com.android.launcher3.AbstractFloatingView;
-import com.android.launcher3.AppWidgetResizeFrame;
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.ButtonDropTarget;
 import com.android.launcher3.CellLayout;
@@ -50,7 +48,6 @@ import com.android.launcher3.model.data.WorkspaceItemFactory;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.popup.ArrowPopup;
 import com.android.launcher3.popup.PopupContainerWithArrow;
-import com.android.launcher3.shortcuts.DeepShortcutView;
 import com.android.launcher3.touch.ItemLongClickListener;
 import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.IntSet;
@@ -83,7 +80,6 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
     protected static final int MOVE_TO_WORKSPACE = R.id.action_move_to_workspace;
     protected static final int RESIZE = R.id.action_resize;
     public static final int DEEP_SHORTCUTS = R.id.action_deep_shortcuts;
-    public static final int CLOSE = R.id.action_close;
 
     public LauncherAccessibilityDelegate(Launcher launcher) {
         super(launcher);
@@ -106,19 +102,13 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
                 RESIZE, R.string.action_resize, KeyEvent.KEYCODE_R));
         mActions.put(DEEP_SHORTCUTS, new LauncherAction(DEEP_SHORTCUTS,
                 R.string.action_deep_shortcut, KeyEvent.KEYCODE_S));
-        mActions.put(CLOSE, new LauncherAction(CLOSE,
-                R.string.action_close, KeyEvent.KEYCODE_X));
-    }
-
-    private static boolean isNotInShortcutMenu(@Nullable View view) {
-        return view == null || !(view.getParent() instanceof DeepShortcutView);
     }
 
     @Override
     protected void getSupportedActions(View host, ItemInfo item, List<LauncherAction> out) {
         // If the request came from keyboard, do not add custom shortcuts as that is already
         // exposed as a direct shortcut
-        if (isNotInShortcutMenu(host) && ShortcutUtil.supportsShortcuts(item)) {
+        if (ShortcutUtil.supportsShortcuts(item)) {
             out.add(mActions.get(DEEP_SHORTCUTS));
         }
 
@@ -139,10 +129,6 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
                     out.add(mActions.get(RESIZE));
                 }
             }
-        }
-
-        if (host instanceof AppWidgetResizeFrame) {
-            out.add(mActions.get(CLOSE));
         }
 
         if (supportAddToWorkSpace(item)) {
@@ -191,30 +177,22 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
             }
             return dragCondition != null;
         } else if (action == MOVE) {
-            final View itemView = (host instanceof AppWidgetResizeFrame)
-                    ? ((AppWidgetResizeFrame) host).getViewForAccessibility()
-                    : host;
-            return beginAccessibleDrag(itemView, item, fromKeyboard);
+            return beginAccessibleDrag(host, item, fromKeyboard);
         } else if (action == ADD_TO_WORKSPACE) {
             return addToWorkspace(item, true /*accessibility*/, null /*finishCallback*/);
         } else if (action == MOVE_TO_WORKSPACE) {
             return moveToWorkspace(item);
         } else if (action == RESIZE) {
-            final View itemView = (host instanceof AppWidgetResizeFrame)
-                    ? ((AppWidgetResizeFrame) host).getViewForAccessibility()
-                    : host;
             final LauncherAppWidgetInfo info = (LauncherAppWidgetInfo) item;
-            List<OptionItem> actions = getSupportedResizeActions(itemView, info);
+            List<OptionItem> actions = getSupportedResizeActions(host, info);
             Rect pos = new Rect();
-            mContext.getDragLayer().getDescendantRectRelativeToSelf(itemView, pos);
+            mContext.getDragLayer().getDescendantRectRelativeToSelf(host, pos);
             ArrowPopup popup = OptionsPopupView.show(mContext, new RectF(pos), actions, false);
             popup.requestFocus();
             popup.addOnCloseCallback(() -> {
-                itemView.requestFocus();
-                itemView.sendAccessibilityEvent(TYPE_VIEW_FOCUSED);
-                itemView.performAccessibilityAction(ACTION_ACCESSIBILITY_FOCUS, null);
-                AbstractFloatingView.closeOpenViews(mContext, /* animate= */ false,
-                        AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME);
+                host.requestFocus();
+                host.sendAccessibilityEvent(TYPE_VIEW_FOCUSED);
+                host.performAccessibilityAction(ACTION_ACCESSIBILITY_FOCUS, null);
             });
             return true;
         } else if (action == DEEP_SHORTCUTS) {
@@ -222,11 +200,6 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
                     : (host instanceof BubbleTextHolder
                             ? ((BubbleTextHolder) host).getBubbleText() : null);
             return btv != null && PopupContainerWithArrow.showForIcon(btv) != null;
-        } else if (action == CLOSE) {
-            if (host instanceof AppWidgetResizeFrame) {
-                AbstractFloatingView.closeOpenViews(mContext, /* animate= */ false,
-                        AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME);
-            }
         } else {
             for (ButtonDropTarget dropTarget : mContext.getDropTargetBar().getDropTargets()) {
                 if (dropTarget.supportsAccessibilityDrop(item, host)
@@ -241,10 +214,6 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
 
     private List<OptionItem> getSupportedResizeActions(View host, LauncherAppWidgetInfo info) {
         List<OptionItem> actions = new ArrayList<>();
-        if (host instanceof AppWidgetResizeFrame) {
-            return getSupportedResizeActions(
-                    ((AppWidgetResizeFrame) host).getViewForAccessibility(), info);
-        }
         AppWidgetProviderInfo providerInfo = ((LauncherAppWidgetHostView) host).getAppWidgetInfo();
         if (providerInfo == null) {
             return actions;
@@ -330,6 +299,7 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
                 info.spanX, info.spanY);
         host.requestLayout();
         mContext.getModelWriter().updateItemInDatabase(info);
+        announceConfirmation(mContext.getString(R.string.widget_resized, info.spanX, info.spanY));
         return true;
     }
 
@@ -429,11 +399,6 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
      */
     public boolean addToWorkspace(ItemInfo item, boolean accessibility,
             @Nullable Consumer<Boolean> finishCallback) {
-        // Dismiss widget resize frame if it is showing. The frame marks its cells as unoccupied
-        // while it is showing, so findSpaceOnWorkspace may try to use those cells.
-        AbstractFloatingView.closeOpenViews(mContext, /* animate= */ false,
-                AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME);
-
         final int[] coordinates = new int[2];
         final int screenId = findSpaceOnWorkspace(item, coordinates);
         if (screenId == -1) {
@@ -450,6 +415,7 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
                         screenId, coordinates[0], coordinates[1]);
 
                 bindItem(info, accessibility, finishCallback);
+                announceConfirmation(R.string.item_added_to_workspace);
             } else if (item instanceof PendingAddItemInfo) {
                 PendingAddItemInfo info = (PendingAddItemInfo) item;
                 if (info instanceof PendingAddWidgetInfo widgetInfo
@@ -519,7 +485,7 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
         Folder folder = Folder.getOpen(mContext);
         folder.close(true);
         WorkspaceItemInfo info = (WorkspaceItemInfo) item;
-        folder.removeFolderContent(false, info);
+        folder.getInfo().remove(info, false);
 
         final int[] coordinates = new int[2];
         final int screenId = findSpaceOnWorkspace(item, coordinates);

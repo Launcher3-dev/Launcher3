@@ -43,12 +43,12 @@ class LandscapePagedViewHandlerTest {
         if (isEnabled) {
             setFlagsRule.enableFlags(
                 Flags.FLAG_ENABLE_GRID_ONLY_OVERVIEW,
-                Flags.FLAG_ENABLE_OVERVIEW_ICON_MENU,
+                Flags.FLAG_ENABLE_OVERVIEW_ICON_MENU
             )
         } else {
             setFlagsRule.disableFlags(
                 Flags.FLAG_ENABLE_GRID_ONLY_OVERVIEW,
-                Flags.FLAG_ENABLE_OVERVIEW_ICON_MENU,
+                Flags.FLAG_ENABLE_OVERVIEW_ICON_MENU
             )
         }
     }
@@ -62,7 +62,6 @@ class LandscapePagedViewHandlerTest {
             isRTL,
             OVERVIEW_TASK_MARGIN_PX,
             DIVIDER_SIZE_PX,
-            oneIconHiddenDueToSmallWidth = false,
         )
     }
 
@@ -108,8 +107,14 @@ class LandscapePagedViewHandlerTest {
 
         val (topLeftY, bottomRightY) = getSplitIconsPosition(isRTL = true)
 
-        assertThat(topLeftY).isEqualTo(-316)
-        assertThat(bottomRightY).isEqualTo(0)
+        // TODO(b/326377497): When started in fake seascape and rotated to landscape,
+        //  the icon chips are in RTL and wrongly positioned at the right side of the snapshot.
+        //  Top-Left app chip should be placed at the top left of the first snapshot, but because
+        //  this issue, it's displayed at the top-right of the second snapshot.
+        //  The Bottom-Right app chip is displayed at the top-right of the first snapshot because
+        //  of this issue.
+        assertThat(topLeftY).isEqualTo(0)
+        assertThat(bottomRightY).isEqualTo(-316)
     }
 
     /** Test updateSplitIconsPosition */

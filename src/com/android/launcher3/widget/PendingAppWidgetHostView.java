@@ -21,7 +21,7 @@ import static android.graphics.Paint.DITHER_FLAG;
 import static android.graphics.Paint.FILTER_BITMAP_FLAG;
 
 import static com.android.launcher3.graphics.PreloadIconDrawable.newPendingIcon;
-import static com.android.launcher3.model.data.LauncherAppWidgetInfo.FLAG_PROVIDER_NOT_READY;
+import static com.android.launcher3.icons.FastBitmapDrawable.getDisabledColorFilter;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 
 import android.appwidget.AppWidgetProviderInfo;
@@ -37,9 +37,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -63,10 +60,8 @@ import com.android.launcher3.icons.IconCache.ItemInfoUpdateReceiver;
 import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.model.data.LauncherAppWidgetInfo;
 import com.android.launcher3.model.data.PackageItemInfo;
-import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.util.Themes;
-import com.android.launcher3.widget.ListenableAppWidgetHost.ProviderChangedListener;
 
 import java.util.List;
 
@@ -86,8 +81,6 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     private final Matrix mMatrix = new Matrix();
     private final RectF mPreviewBitmapRect = new RectF();
     private final RectF mCanvasRect = new RectF();
-    private final Handler mHandler = new Handler(Looper.getMainLooper());
-    private final RunnableList mOnDetachCleanup = new RunnableList();
 
     private final LauncherWidgetHolder mWidgetHolder;
     private final LauncherAppWidgetProviderInfo mAppwidget;
@@ -97,6 +90,7 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     private final CharSequence mLabel;
 
     private OnClickListener mClickListener;
+    private SafeCloseable mOnDetachCleanup;
 
     private int mDragFlags;
 
@@ -216,15 +210,16 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        mOnDetachCleanup.executeAllAndClear();
         if ((mAppwidget != null)
                 && !mInfo.hasRestoreFlag(LauncherAppWidgetInfo.FLAG_ID_NOT_VALID)
                 && mInfo.restoreStatus != LauncherAppWidgetInfo.RESTORE_COMPLETED) {
             // If the widget is not completely restored, but has a valid ID, then listen of
             // updates from provider app for potential restore complete.
-            SafeCloseable updateCleanup = mWidgetHolder.addOnUpdateListener(
+            if (mOnDetachCleanup != null) {
+                mOnDetachCleanup.close();
+            }
+            mOnDetachCleanup = mWidgetHolder.addOnUpdateListener(
                     mInfo.appWidgetId, mAppwidget, this::checkIfRestored);
-            mOnDetachCleanup.add(updateCleanup::close);
             checkIfRestored();
         }
     }
@@ -232,7 +227,10 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        mOnDetachCleanup.executeAllAndClear();
+        if (mOnDetachCleanup != null) {
+            mOnDetachCleanup.close();
+            mOnDetachCleanup = null;
+        }
     }
 
     /**
@@ -297,30 +295,43 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
             mCenterDrawable.setCallback(null);
             mCenterDrawable = null;
         }
-        mDragFlags = FLAG_DRAW_ICON;
+        mDragFlags = 0;
+        if (info.bitmap.icon != null) {
+            mDragFlags = FLAG_DRAW_ICON;
 
-        // The view displays three modes,
-        //   1) App icon in the center
-        //   2) Preload icon in the center
-        //   3) App icon in the center with a setup icon on the top left corner.
-        if (mDisabledForSafeMode) {
-            FastBitmapDrawable disabledIcon = info.newIcon(getContext());
-            disabledIcon.setIsDisabled(true);
-            mCenterDrawable = disabledIcon;
-            mSettingIconDrawable = null;
-        } else if (isReadyForClickSetup()) {
-            mCenterDrawable = info.newIcon(getContext());
-            mSettingIconDrawable = getResources().getDrawable(R.drawable.ic_setting).mutate();
-            updateSettingColor(info.bitmap.color);
+            Drawable widgetCategoryIcon = getWidgetCategoryIcon();
+            // The view displays three modes,
+            //   1) App icon in the center
+            //   2) Preload icon in the center
+            //   3) App icon in the center with a setup icon on the top left corner.
+            if (mDisabledForSafeMode) {
+                if (widgetCategoryIcon == null) {
+                    FastBitmapDrawable disabledIcon = info.newIcon(getContext());
+                    disabledIcon.setIsDisabled(true);
+                    mCenterDrawable = disabledIcon;
+                } else {
+                    widgetCategoryIcon.setColorFilter(getDisabledColorFilter());
+                    mCenterDrawable = widgetCategoryIcon;
+                }
+                mSettingIconDrawable = null;
+            } else if (isReadyForClickSetup()) {
+                mCenterDrawable = widgetCategoryIcon == null
+                        ? info.newIcon(getContext())
+                        : widgetCategoryIcon;
+                mSettingIconDrawable = getResources().getDrawable(R.drawable.ic_setting).mutate();
+                updateSettingColor(info.bitmap.color);
 
-            mDragFlags |= FLAG_DRAW_SETTINGS | FLAG_DRAW_LABEL;
-        } else {
-            mCenterDrawable = newPendingIcon(getContext(), info);
-            mSettingIconDrawable = null;
-            applyState();
+                mDragFlags |= FLAG_DRAW_SETTINGS | FLAG_DRAW_LABEL;
+            } else {
+                mCenterDrawable = widgetCategoryIcon == null
+                        ? newPendingIcon(getContext(), info)
+                        : widgetCategoryIcon;
+                mSettingIconDrawable = null;
+                applyState();
+            }
+            mCenterDrawable.setCallback(this);
+            mDrawableSizeChanged = true;
         }
-        mCenterDrawable.setCallback(this);
-        mDrawableSizeChanged = true;
         invalidate();
     }
 
@@ -339,11 +350,6 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     }
 
     public void applyState() {
-        if (mCenterDrawable instanceof FastBitmapDrawable fb
-                && mInfo.pendingItemInfo != null
-                && !fb.isSameInfo(mInfo.pendingItemInfo.bitmap)) {
-            reapplyItemInfo(mInfo.pendingItemInfo);
-        }
         if (mCenterDrawable != null) {
             mCenterDrawable.setLevel(Math.max(mInfo.installProgress, 0));
         }
@@ -480,72 +486,16 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     }
 
     /**
-     * Creates a runnable runnable which tries to refresh the widget if it is restored
-     */
-    public void postProviderAvailabilityCheck() {
-        if (!mInfo.hasRestoreFlag(FLAG_PROVIDER_NOT_READY) && getAppWidgetInfo() == null) {
-            // If the info state suggests that the provider is ready, but there is no
-            // provider info attached on this pending view, recreate when the provider is available
-            DeferredWidgetRefresh restoreRunnable = new DeferredWidgetRefresh();
-            mOnDetachCleanup.add(restoreRunnable::cleanup);
-            mHandler.post(restoreRunnable::notifyWidgetProvidersChanged);
-        }
-    }
-
-    /**
-     * Used as a workaround to ensure that the AppWidgetService receives the
-     * PACKAGE_ADDED broadcast before updating widgets.
+     * Returns the widget category icon for {@link #mInfo}.
      *
-     * This class will periodically check for the availability of the WidgetProvider as a result
-     * of providerChanged callback from the host. When the provider is available or a timeout of
-     * 10-sec is reached, it reinflates the pending-widget which in-turn goes through the process
-     * of re-evaluating the pending state of the widget,
+     * <p>If {@link #mInfo}'s category is {@code PackageItemInfo#NO_CATEGORY} or unknown, returns
+     * {@code null}.
      */
-    private class DeferredWidgetRefresh implements Runnable, ProviderChangedListener {
-        private boolean mRefreshPending = true;
-
-        DeferredWidgetRefresh() {
-            mWidgetHolder.addProviderChangeListener(this);
-            // Force refresh after 10 seconds, if we don't get the provider changed event.
-            // This could happen when the provider is no longer available in the app.
-            Message msg = Message.obtain(getHandler(), this);
-            msg.obj = DeferredWidgetRefresh.class;
-            mHandler.sendMessageDelayed(msg, 10000);
+    @Nullable
+    private Drawable getWidgetCategoryIcon() {
+        if (mInfo.pendingItemInfo.widgetCategory == WidgetSections.NO_CATEGORY) {
+            return null;
         }
-
-        /**
-         * Reinflate the widget if it is still attached.
-         */
-        @Override
-        public void run() {
-            cleanup();
-            if (mRefreshPending) {
-                reInflate();
-                mRefreshPending = false;
-            }
-        }
-
-        @Override
-        public void notifyWidgetProvidersChanged() {
-            final AppWidgetProviderInfo widgetInfo;
-            WidgetManagerHelper widgetHelper = new WidgetManagerHelper(getContext());
-            if (mInfo.hasRestoreFlag(LauncherAppWidgetInfo.FLAG_ID_NOT_VALID)) {
-                widgetInfo = widgetHelper.findProvider(mInfo.providerName, mInfo.user);
-            } else {
-                widgetInfo = widgetHelper.getLauncherAppWidgetInfo(mInfo.appWidgetId,
-                        mInfo.getTargetComponent());
-            }
-            if (widgetInfo != null) {
-                run();
-            }
-        }
-
-        /**
-         * Removes any scheduled callbacks and change listeners, no-op if nothing is scheduled
-         */
-        public void cleanup() {
-            mWidgetHolder.removeProviderChangeListener(this);
-            mHandler.removeCallbacks(this);
-        }
+        return mInfo.pendingItemInfo.newIcon(getContext());
     }
 }

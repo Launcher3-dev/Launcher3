@@ -23,13 +23,12 @@ import static com.android.launcher3.LauncherState.FLAG_NON_INTERACTIVE;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Trace;
 import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.annotation.CallSuper;
 
-import com.android.launcher3.BaseActivity;
+import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.LauncherRootView;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.statemanager.StateManager.StateHandler;
@@ -43,7 +42,7 @@ import java.util.List;
  * @param <STATE_TYPE> Type of state object
  */
 public abstract class StatefulActivity<STATE_TYPE extends BaseState<STATE_TYPE>>
-        extends BaseActivity implements StatefulContainer<STATE_TYPE> {
+        extends BaseDraggingActivity implements StatefulContainer<STATE_TYPE> {
 
     public final Handler mHandler = new Handler();
     private final Runnable mHandleDeferredResume = this::handleDeferredResume;
@@ -176,10 +175,8 @@ public abstract class StatefulActivity<STATE_TYPE extends BaseState<STATE_TYPE>>
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        Trace.beginSection("statefulActivity#onConfigurationChanged");
         handleConfigurationChanged(newConfig);
         super.onConfigurationChanged(newConfig);
-        Trace.endSection();
     }
 
     /**
@@ -204,4 +201,9 @@ public abstract class StatefulActivity<STATE_TYPE extends BaseState<STATE_TYPE>>
      */
     protected abstract void onHandleConfigurationChanged();
 
+    /**
+     * Enter staged split directly from the current running app.
+     * @param leftOrTop if the staged split will be positioned left or top.
+     */
+    public void enterStageSplitFromRunningApp(boolean leftOrTop) { }
 }

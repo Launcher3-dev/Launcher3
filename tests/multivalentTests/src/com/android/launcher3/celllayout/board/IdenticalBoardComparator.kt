@@ -26,11 +26,11 @@ class IdenticalBoardComparator : Comparator<CellLayoutBoard> {
 
     /** Converts a list of WidgetRect into a map of the count of different widget.bounds */
     private fun widgetsToBoundsMap(widgets: List<WidgetRect>) =
-        widgets.groupingBy { it.bounds }.eachCount()
+        widgets.groupingBy { it.mBounds }.eachCount()
 
     /** Converts a list of IconPoint into a map of the count of different icon.coord */
     private fun iconsToPosCountMap(widgets: List<IconPoint>) =
-        widgets.groupingBy { it.coord }.eachCount()
+        widgets.groupingBy { it.getCoord() }.eachCount()
 
     override fun compare(
         cellLayoutBoard: CellLayoutBoard,
@@ -47,7 +47,7 @@ class IdenticalBoardComparator : Comparator<CellLayoutBoard> {
             widgetsToBoundsMap(
                 otherCellLayoutBoard.widgets
                     .filter { !it.shouldIgnore() }
-                    .filter { !overlapsWithIgnored(ignoredRectangles, it.bounds) }
+                    .filter { !overlapsWithIgnored(ignoredRectangles, it.mBounds) }
             )
 
         if (widgetsMap != otherWidgetMap) {

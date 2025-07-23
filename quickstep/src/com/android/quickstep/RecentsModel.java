@@ -18,11 +18,9 @@ package com.android.quickstep;
 import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
 
 import static com.android.launcher3.Flags.enableGridOnlyOverview;
-import static com.android.launcher3.Flags.enableRefactorTaskThumbnail;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.quickstep.TaskUtils.checkCurrentOrManagedUserId;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
@@ -38,22 +36,12 @@ import android.os.UserHandle;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import com.android.launcher3.dagger.ApplicationContext;
-import com.android.launcher3.dagger.LauncherAppSingleton;
-import com.android.launcher3.graphics.ThemeManager;
-import com.android.launcher3.graphics.ThemeManager.ThemeChangeListener;
 import com.android.launcher3.icons.IconProvider;
-import com.android.launcher3.statehandlers.DesktopVisibilityController;
-import com.android.launcher3.util.DaggerSingletonObject;
-import com.android.launcher3.util.DaggerSingletonTracker;
-import com.android.launcher3.util.DisplayController;
+import com.android.launcher3.icons.IconProvider.IconChangeListener;
 import com.android.launcher3.util.Executors.SimpleThreadFactory;
-import com.android.launcher3.util.LockedUserState;
+import com.android.launcher3.util.MainThreadInitializedObject;
 import com.android.launcher3.util.SafeCloseable;
-import com.android.quickstep.dagger.QuickstepBaseAppComponent;
 import com.android.quickstep.recents.data.RecentTasksDataSource;
-import com.android.quickstep.recents.data.TaskVisualsChangeNotifier;
-import com.android.quickstep.util.DesktopTask;
 import com.android.quickstep.util.GroupTask;
 import com.android.quickstep.util.TaskVisualsChangeListener;
 import com.android.systemui.shared.recents.model.Task;
@@ -62,102 +50,65 @@ import com.android.systemui.shared.system.ActivityManagerWrapper;
 import com.android.systemui.shared.system.TaskStackChangeListener;
 import com.android.systemui.shared.system.TaskStackChangeListeners;
 
-import dagger.Lazy;
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import javax.inject.Inject;
-
 /**
  * Singleton class to load and manage recents model.
  */
 @TargetApi(Build.VERSION_CODES.O)
-@LauncherAppSingleton
-public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListener,
-        TaskVisualsChangeListener, TaskVisualsChangeNotifier,
-        ThemeChangeListener {
+public class RecentsModel implements RecentTasksDataSource, IconChangeListener,
+        TaskStackChangeListener, TaskVisualsChangeListener, SafeCloseable {
 
     // We do not need any synchronization for this variable as its only written on UI thread.
-    public static final DaggerSingletonObject<RecentsModel> INSTANCE =
-            new DaggerSingletonObject<>(QuickstepBaseAppComponent::getRecentsModel);
+    public static final MainThreadInitializedObject<RecentsModel> INSTANCE =
+            new MainThreadInitializedObject<>(RecentsModel::new);
 
     private static final Executor RECENTS_MODEL_EXECUTOR = Executors.newSingleThreadExecutor(
             new SimpleThreadFactory("TaskThumbnailIconCache-", THREAD_PRIORITY_BACKGROUND));
 
-    private final ConcurrentLinkedQueue<TaskVisualsChangeListener> mThumbnailChangeListeners =
-            new ConcurrentLinkedQueue<>();
+    private final List<TaskVisualsChangeListener> mThumbnailChangeListeners = new ArrayList<>();
     private final Context mContext;
+
     private final RecentTasksList mTaskList;
     private final TaskIconCache mIconCache;
     private final TaskThumbnailCache mThumbnailCache;
+    private final ComponentCallbacks mCallbacks;
 
-    @Inject
-     public RecentsModel(@ApplicationContext Context context,
-            SystemUiProxy systemUiProxy,
-            TopTaskTracker topTaskTracker,
-            DisplayController displayController,
-            LockedUserState lockedUserState,
-            Lazy<ThemeManager> themeManagerLazy,
-            DesktopVisibilityController desktopVisibilityController,
-            DaggerSingletonTracker tracker
-            ) {
-        // Lazily inject the ThemeManager and access themeManager once the device is
-        // unlocked. See b/393248495 for details.
-        this(context, new IconProvider(context), systemUiProxy, topTaskTracker,
-                displayController, lockedUserState, themeManagerLazy, desktopVisibilityController,
-                tracker);
+    private final TaskStackChangeListeners mTaskStackChangeListeners;
+
+    private RecentsModel(Context context) {
+        this(context, new IconProvider(context));
     }
 
-    @SuppressLint("VisibleForTests")
-    private RecentsModel(@ApplicationContext Context context,
-            IconProvider iconProvider,
-            SystemUiProxy systemUiProxy,
-            TopTaskTracker topTaskTracker,
-            DisplayController displayController,
-            LockedUserState lockedUserState,
-            Lazy<ThemeManager> themeManagerLazy,
-            DesktopVisibilityController desktopVisibilityController,
-            DaggerSingletonTracker tracker) {
+    private RecentsModel(Context context, IconProvider iconProvider) {
         this(context,
-                new RecentTasksList(
-                        context,
-                        MAIN_EXECUTOR,
+                new RecentTasksList(MAIN_EXECUTOR,
                         context.getSystemService(KeyguardManager.class),
-                        systemUiProxy,
-                        topTaskTracker, desktopVisibilityController, tracker),
-                new TaskIconCache(context, RECENTS_MODEL_EXECUTOR, iconProvider, displayController),
+                        SystemUiProxy.INSTANCE.get(context),
+                        TopTaskTracker.INSTANCE.get(context)),
+                new TaskIconCache(context, RECENTS_MODEL_EXECUTOR, iconProvider),
                 new TaskThumbnailCache(context, RECENTS_MODEL_EXECUTOR),
                 iconProvider,
-                TaskStackChangeListeners.getInstance(),
-                lockedUserState,
-                themeManagerLazy,
-                tracker);
+                TaskStackChangeListeners.getInstance());
     }
 
     @VisibleForTesting
-    RecentsModel(@ApplicationContext Context context,
-            RecentTasksList taskList,
-            TaskIconCache iconCache,
-            TaskThumbnailCache thumbnailCache,
-            IconProvider iconProvider,
-            TaskStackChangeListeners taskStackChangeListeners,
-            LockedUserState lockedUserState,
-            Lazy<ThemeManager> themeManagerLazy,
-            DaggerSingletonTracker tracker) {
+    RecentsModel(Context context, RecentTasksList taskList, TaskIconCache iconCache,
+            TaskThumbnailCache thumbnailCache, IconProvider iconProvider,
+            TaskStackChangeListeners taskStackChangeListeners) {
         mContext = context;
         mTaskList = taskList;
         mIconCache = iconCache;
         mIconCache.registerTaskVisualsChangeListener(this);
         mThumbnailCache = thumbnailCache;
-        if (isCachePreloadingEnabled()) {
-            ComponentCallbacks componentCallbacks = new ComponentCallbacks() {
+        if (enableGridOnlyOverview()) {
+            mCallbacks = new ComponentCallbacks() {
                 @Override
                 public void onConfigurationChanged(Configuration configuration) {
                     updateCacheSizeAndPreloadIfNeeded();
@@ -167,27 +118,14 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
                 public void onLowMemory() {
                 }
             };
-            context.registerComponentCallbacks(componentCallbacks);
-            tracker.addCloseable(() -> context.unregisterComponentCallbacks(componentCallbacks));
+            context.registerComponentCallbacks(mCallbacks);
+        } else {
+            mCallbacks = null;
         }
 
-        taskStackChangeListeners.registerTaskStackListener(this);
-        SafeCloseable iconChangeCloseable = iconProvider.registerIconChangeListener(
-                this::onAppIconChanged, MAIN_EXECUTOR.getHandler());
-
-        Runnable unlockCallback = () -> themeManagerLazy.get().addChangeListener(this);
-        lockedUserState.runOnUserUnlocked(unlockCallback);
-
-        tracker.addCloseable(() -> {
-            taskStackChangeListeners.unregisterTaskStackListener(this);
-            iconChangeCloseable.close();
-            mIconCache.removeTaskVisualsChangeListener();
-            if (lockedUserState.isUserUnlocked()) {
-                themeManagerLazy.get().removeChangeListener(this);
-            } else {
-                lockedUserState.removeOnUserUnlockedRunnable(unlockCallback);
-            }
-        });
+        mTaskStackChangeListeners = taskStackChangeListeners;
+        mTaskStackChangeListeners.registerTaskStackListener(this);
+        iconProvider.registerIconChangeListener(this, MAIN_EXECUTOR.getHandler());
     }
 
     public TaskIconCache getIconCache() {
@@ -200,7 +138,7 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
 
     /**
      * Fetches the list of recent tasks. Tasks are ordered by recency, with the latest active tasks
-     * at the end of the list. Filters out desktop tasks that contain no non-minimized tasks.
+     * at the end of the list.
      *
      * @param callback The callback to receive the task plan once its complete or null. This is
      *                always called on the UI thread.
@@ -209,7 +147,7 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
     @Override
     public int getTasks(@Nullable Consumer<List<GroupTask>> callback) {
         return mTaskList.getTasks(false /* loadKeysOnly */, callback,
-                RecentsFilterState.getDesktopTaskFilter());
+                RecentsFilterState.DEFAULT_FILTER);
     }
 
     /**
@@ -285,8 +223,8 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
                     // time the user next enters overview
                     continue;
                 }
-                group.getTasks().forEach(
-                        t -> mThumbnailCache.updateThumbnailInCache(t, /* lowResolution= */ true));
+                mThumbnailCache.updateThumbnailInCache(group.task1, /* lowResolution= */ true);
+                mThumbnailCache.updateThumbnailInCache(group.task2, /* lowResolution= */ true);
             }
         });
     }
@@ -295,8 +233,8 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
     public boolean onTaskSnapshotChanged(int taskId, ThumbnailData snapshot) {
         mThumbnailCache.updateTaskSnapShot(taskId, snapshot);
 
-        for (TaskVisualsChangeListener listener : mThumbnailChangeListeners) {
-            Task task = listener.onTaskThumbnailChanged(taskId, snapshot);
+        for (int i = mThumbnailChangeListeners.size() - 1; i >= 0; i--) {
+            Task task = mThumbnailChangeListeners.get(i).onTaskThumbnailChanged(taskId, snapshot);
             if (task != null) {
                 task.thumbnail = snapshot;
             }
@@ -322,10 +260,11 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
         }
     }
 
-    private void onAppIconChanged(String packageName, UserHandle user) {
+    @Override
+    public void onAppIconChanged(String packageName, UserHandle user) {
         mIconCache.invalidateCacheEntries(packageName, user);
-        for (TaskVisualsChangeListener listener : mThumbnailChangeListeners) {
-            listener.onTaskIconChanged(packageName, user);
+        for (int i = mThumbnailChangeListeners.size() - 1; i >= 0; i--) {
+            mThumbnailChangeListeners.get(i).onTaskIconChanged(packageName, user);
         }
     }
 
@@ -337,14 +276,13 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
     }
 
     @Override
-    public void onThemeChanged() {
+    public void onSystemIconStateChanged(String iconState) {
         mIconCache.clearCache();
     }
 
     /**
      * Adds a listener for visuals changes
      */
-    @Override
     public void addThumbnailChangeListener(TaskVisualsChangeListener listener) {
         mThumbnailChangeListeners.add(listener);
     }
@@ -352,7 +290,6 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
     /**
      * Removes a previously added listener
      */
-    @Override
     public void removeThumbnailChangeListener(TaskVisualsChangeListener listener) {
         mThumbnailChangeListeners.remove(listener);
     }
@@ -364,8 +301,6 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
 
     /**
      * Registers a listener for running tasks
-     * TODO(b/343292503): Should we remove RunningTasksListener entirely if it's not needed?
-     *  (Note that Desktop mode gets the running tasks by checking {@link DesktopTask#tasks}
      */
     public void registerRunningTasksListener(RunningTasksListener listener) {
         mTaskList.registerRunningTasksListener(listener);
@@ -376,20 +311,6 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
      */
     public void unregisterRunningTasksListener() {
         mTaskList.unregisterRunningTasksListener();
-    }
-
-    /**
-     * Registers a listener for recent tasks
-     */
-    public void registerRecentTasksChangedListener(RecentTasksChangedListener listener) {
-        mTaskList.registerRecentTasksChangedListener(listener);
-    }
-
-    /**
-     * Removes the previously registered running tasks listener
-     */
-    public void unregisterRecentTasksChangedListener() {
-        mTaskList.unregisterRecentTasksChangedListener();
     }
 
     /**
@@ -404,7 +325,7 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
      * highResLoadingState is enabled
      */
     public void preloadCacheIfNeeded() {
-        if (!isCachePreloadingEnabled()) {
+        if (!enableGridOnlyOverview()) {
             return;
         }
 
@@ -420,8 +341,8 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
 
         mTaskList.getTaskKeys(mThumbnailCache.getCacheSize(), taskGroups -> {
             for (GroupTask group : taskGroups) {
-                group.getTasks().forEach(
-                        t -> mThumbnailCache.updateThumbnailInCache(t, /* lowResolution= */ false));
+                mThumbnailCache.updateThumbnailInCache(group.task1, /* lowResolution= */ false);
+                mThumbnailCache.updateThumbnailInCache(group.task2, /* lowResolution= */ false);
             }
         });
     }
@@ -430,7 +351,7 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
      * Updates cache size and preloads more tasks if cache size increases
      */
     public void updateCacheSizeAndPreloadIfNeeded() {
-        if (!isCachePreloadingEnabled()) {
+        if (!enableGridOnlyOverview()) {
             return;
         }
 
@@ -440,8 +361,13 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
         }
     }
 
-    private boolean isCachePreloadingEnabled() {
-        return enableGridOnlyOverview() || enableRefactorTaskThumbnail();
+    @Override
+    public void close() {
+        if (mCallbacks != null) {
+            mContext.unregisterComponentCallbacks(mCallbacks);
+        }
+        mIconCache.removeTaskVisualsChangeListener();
+        mTaskStackChangeListeners.unregisterTaskStackListener(this);
     }
 
     /**
@@ -452,15 +378,5 @@ public class RecentsModel implements RecentTasksDataSource, TaskStackChangeListe
          * Called when there's a change to running tasks
          */
         void onRunningTasksChanged();
-    }
-
-    /**
-     * Listener for receiving recent tasks changes
-     */
-    public interface RecentTasksChangedListener {
-        /**
-         * Called when there's a change to recent tasks
-         */
-        void onRecentTasksChanged();
     }
 }

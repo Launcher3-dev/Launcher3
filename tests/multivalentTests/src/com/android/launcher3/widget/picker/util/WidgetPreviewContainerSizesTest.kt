@@ -25,7 +25,6 @@ import androidx.test.filters.SmallTest
 import com.android.launcher3.DeviceProfile
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.LauncherAppState
-import com.android.launcher3.dagger.LauncherComponentProvider.appComponent
 import com.android.launcher3.icons.IconCache
 import com.android.launcher3.model.WidgetItem
 import com.android.launcher3.util.ActivityContextWrapper
@@ -54,7 +53,7 @@ class WidgetPreviewContainerSizesTest {
         context = ActivityContextWrapper(ApplicationProvider.getApplicationContext())
         testInvariantProfile = LauncherAppState.getIDP(context)
         widgetItemInvariantProfile =
-            context.appComponent.idp.apply {
+            InvariantDeviceProfile().apply {
                 numRows = TEST_GRID_SIZE
                 numColumns = TEST_GRID_SIZE
             }
@@ -86,8 +85,7 @@ class WidgetPreviewContainerSizesTest {
                 Point(1, 1) to WidgetPreviewContainerSize(1, 1),
                 // 2x1
                 Point(2, 1) to WidgetPreviewContainerSize(2, 1),
-                // 3x1
-                Point(3, 1) to WidgetPreviewContainerSize(3, 1),
+                Point(3, 1) to WidgetPreviewContainerSize(2, 1),
                 // 4x1
                 Point(4, 1) to WidgetPreviewContainerSize(4, 1),
                 // 2x2
@@ -144,13 +142,13 @@ class WidgetPreviewContainerSizesTest {
             widgetSize: Point,
             context: Context,
             invariantDeviceProfile: InvariantDeviceProfile,
-            iconCache: IconCache,
+            iconCache: IconCache
         ): WidgetItem {
             val providerInfo =
                 createAppWidgetProviderInfo(
                     ComponentName.createRelative(
                         TEST_PACKAGE,
-                        /*cls=*/ ".WidgetProvider_" + widgetSize.x + "x" + widgetSize.y,
+                        /*cls=*/ ".WidgetProvider_" + widgetSize.x + "x" + widgetSize.y
                     )
                 )
             val widgetInfo =

@@ -16,7 +16,6 @@
 package com.android.launcher3.touch;
 
 import static com.android.app.animation.Interpolators.scrollInterpolatorForVelocity;
-import static com.android.launcher3.Flags.enableMouseInteractionChanges;
 import static com.android.launcher3.LauncherAnimUtils.SUCCESS_TRANSITION_PROGRESS;
 import static com.android.launcher3.LauncherAnimUtils.TABLET_BOTTOM_SHEET_SUCCESS_TRANSITION_PROGRESS;
 import static com.android.launcher3.LauncherAnimUtils.newCancelListener;
@@ -34,7 +33,6 @@ import static com.android.launcher3.util.window.RefreshRateTracker.getSingleFram
 
 import android.animation.Animator.AnimatorListener;
 import android.animation.ValueAnimator;
-import android.view.InputDevice;
 import android.view.MotionEvent;
 
 import com.android.launcher3.Launcher;
@@ -109,9 +107,7 @@ public abstract class AbstractStateChangeTouchController
                 ignoreSlopWhenSettling = true;
             } else {
                 directionsToDetectScroll = getSwipeDirection();
-                boolean ignoreMouseScroll = ev.getSource() == InputDevice.SOURCE_MOUSE
-                        && enableMouseInteractionChanges();
-                if (directionsToDetectScroll == 0 || ignoreMouseScroll) {
+                if (directionsToDetectScroll == 0) {
                     mNoIntercept = true;
                     return false;
                 }

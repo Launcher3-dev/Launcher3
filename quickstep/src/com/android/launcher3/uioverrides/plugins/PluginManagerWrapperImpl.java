@@ -27,8 +27,6 @@ import android.content.Intent;
 import android.content.pm.ResolveInfo;
 
 import com.android.launcher3.BuildConfig;
-import com.android.launcher3.dagger.ApplicationContext;
-import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.util.PluginManagerWrapper;
 import com.android.systemui.plugins.Plugin;
 import com.android.systemui.plugins.PluginListener;
@@ -36,6 +34,7 @@ import com.android.systemui.shared.plugins.PluginActionManager;
 import com.android.systemui.shared.plugins.PluginInstance;
 import com.android.systemui.shared.plugins.PluginManagerImpl;
 import com.android.systemui.shared.plugins.PluginPrefs;
+import com.android.systemui.shared.system.UncaughtExceptionPreHandlerManager;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -43,17 +42,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import javax.inject.Inject;
-
-@LauncherAppSingleton
 public class PluginManagerWrapperImpl extends PluginManagerWrapper {
+
+    private static final UncaughtExceptionPreHandlerManager UNCAUGHT_EXCEPTION_PRE_HANDLER_MANAGER =
+            new UncaughtExceptionPreHandlerManager();
 
     private final Context mContext;
     private final PluginManagerImpl mPluginManager;
     private final PluginEnablerImpl mPluginEnabler;
 
-    @Inject
-    public PluginManagerWrapperImpl(@ApplicationContext Context c) {
+    public PluginManagerWrapperImpl(Context c) {
         mContext = c;
         mPluginEnabler = new PluginEnablerImpl(c);
         List<String> privilegedPlugins = Collections.emptyList();
@@ -66,11 +64,9 @@ public class PluginManagerWrapperImpl extends PluginManagerWrapper {
                 c.getSystemService(NotificationManager.class), mPluginEnabler,
                 privilegedPlugins, instanceFactory);
 
-        // Use null preHandlerManager, as the handler is never unregistered which can cause leaks
-        // when using multiple dagger graphs.
         mPluginManager = new PluginManagerImpl(c, instanceManagerFactory,
                 BuildConfig.IS_DEBUG_DEVICE,
-                null /* preHandlerManager */, mPluginEnabler,
+                UNCAUGHT_EXCEPTION_PRE_HANDLER_MANAGER, mPluginEnabler,
                 new PluginPrefs(c), privilegedPlugins);
     }
 

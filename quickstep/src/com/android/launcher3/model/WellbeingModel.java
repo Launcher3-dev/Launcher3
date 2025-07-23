@@ -44,30 +44,23 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.android.launcher3.R;
-import com.android.launcher3.dagger.ApplicationContext;
-import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.popup.RemoteActionShortcut;
 import com.android.launcher3.popup.SystemShortcut;
-import com.android.launcher3.util.DaggerSingletonObject;
-import com.android.launcher3.util.DaggerSingletonTracker;
 import com.android.launcher3.util.Executors;
+import com.android.launcher3.util.MainThreadInitializedObject;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.SafeCloseable;
 import com.android.launcher3.util.SimpleBroadcastReceiver;
 import com.android.launcher3.views.ActivityContext;
-import com.android.quickstep.dagger.QuickstepBaseAppComponent;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.inject.Inject;
-
 /**
  * Data model for digital wellbeing status of apps.
  */
-@LauncherAppSingleton
 public final class WellbeingModel implements SafeCloseable {
     private static final String TAG = "WellbeingModel";
     private static final int[] RETRY_TIMES_MS = {5000, 15000, 30000};
@@ -82,16 +75,18 @@ public final class WellbeingModel implements SafeCloseable {
     private static final String EXTRA_PACKAGES = "packages";
     private static final String EXTRA_SUCCESS = "success";
 
-    public static final DaggerSingletonObject<WellbeingModel> INSTANCE =
-            new DaggerSingletonObject<>(QuickstepBaseAppComponent::getWellbeingModel);
+    public static final MainThreadInitializedObject<WellbeingModel> INSTANCE =
+            new MainThreadInitializedObject<>(WellbeingModel::new);
 
     private final Context mContext;
     private final String mWellbeingProviderPkg;
 
     private final Handler mWorkerHandler;
     private final ContentObserver mContentObserver;
-    private final SimpleBroadcastReceiver mWellbeingAppChangeReceiver;
-    private final SimpleBroadcastReceiver mAppAddRemoveReceiver;
+    private final SimpleBroadcastReceiver mWellbeingAppChangeReceiver =
+            new SimpleBroadcastReceiver(t -> restartObserver());
+    private final SimpleBroadcastReceiver mAppAddRemoveReceiver =
+            new SimpleBroadcastReceiver(this::onAppPackageChanged);
 
     private final Object mModelLock = new Object();
     // Maps the action Id to the corresponding RemoteAction
@@ -100,19 +95,12 @@ public final class WellbeingModel implements SafeCloseable {
 
     private boolean mIsInTest;
 
-    @Inject
-    WellbeingModel(@ApplicationContext final Context context,
-            DaggerSingletonTracker tracker) {
+    private WellbeingModel(final Context context) {
         mContext = context;
         mWellbeingProviderPkg = mContext.getString(R.string.wellbeing_provider_pkg);
         mWorkerHandler = new Handler(TextUtils.isEmpty(mWellbeingProviderPkg)
                 ? Executors.UI_HELPER_EXECUTOR.getLooper()
                 : Executors.getPackageExecutor(mWellbeingProviderPkg).getLooper());
-        mWellbeingAppChangeReceiver =
-                new SimpleBroadcastReceiver(context, mWorkerHandler, t -> restartObserver());
-        mAppAddRemoveReceiver =
-                new SimpleBroadcastReceiver(context, mWorkerHandler, this::onAppPackageChanged);
-
 
         mContentObserver = new ContentObserver(mWorkerHandler) {
             @Override
@@ -121,10 +109,8 @@ public final class WellbeingModel implements SafeCloseable {
             }
         };
         mWorkerHandler.post(this::initializeInBackground);
-        tracker.addCloseable(this);
     }
 
-    @WorkerThread
     private void initializeInBackground() {
         if (!TextUtils.isEmpty(mWellbeingProviderPkg)) {
             mContext.registerReceiver(
@@ -148,8 +134,8 @@ public final class WellbeingModel implements SafeCloseable {
     public void close() {
         if (!TextUtils.isEmpty(mWellbeingProviderPkg)) {
             mWorkerHandler.post(() -> {
-                mWellbeingAppChangeReceiver.unregisterReceiverSafely();
-                mAppAddRemoveReceiver.unregisterReceiverSafely();
+                mWellbeingAppChangeReceiver.unregisterReceiverSafely(mContext);
+                mAppAddRemoveReceiver.unregisterReceiverSafely(mContext);
                 mContext.getContentResolver().unregisterContentObserver(mContentObserver);
             });
         }

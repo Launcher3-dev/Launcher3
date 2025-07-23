@@ -58,7 +58,7 @@ public class WorkProfileManager extends UserProfileManager
         implements PersonalWorkSlidingTabStrip.OnActivePageChangedListener {
     private static final String TAG = "WorkProfileManager";
     private final ActivityAllAppsContainerView<?> mAllApps;
-    private WorkUtilityView mWorkUtilityView;
+    private WorkModeSwitch mWorkModeSwitch;
     private final Predicate<UserHandle> mWorkProfileMatcher;
 
     public WorkProfileManager(
@@ -74,20 +74,20 @@ public class WorkProfileManager extends UserProfileManager
      */
     public void setWorkProfileEnabled(boolean enabled) {
         updateCurrentState(STATE_TRANSITION);
-        setQuietMode(!enabled, mAllApps.mActivityContext);
+        setQuietMode(!enabled);
     }
 
     @Override
     public void onActivePageChanged(int page) {
-        updateWorkUtilityViews(page);
+        updateWorkFAB(page);
     }
 
-    private void updateWorkUtilityViews(int page) {
-        if (mWorkUtilityView != null) {
+    private void updateWorkFAB(int page) {
+        if (mWorkModeSwitch != null) {
             if (page == MAIN || page == SEARCH) {
-                mWorkUtilityView.animateVisibility(false);
+                mWorkModeSwitch.animateVisibility(false);
             } else if (page == WORK && getCurrentState() == STATE_ENABLED) {
-                mWorkUtilityView.animateVisibility(true);
+                mWorkModeSwitch.animateVisibility(true);
             }
         }
     }
@@ -104,10 +104,10 @@ public class WorkProfileManager extends UserProfileManager
         }
         boolean isEnabled = !mAllApps.getAppsStore().hasModelFlag(quietModeFlag);
         updateCurrentState(isEnabled ? STATE_ENABLED : STATE_DISABLED);
-        if (mWorkUtilityView != null) {
+        if (mWorkModeSwitch != null) {
             // reset the position of the button and clear IME insets.
-            mWorkUtilityView.getImeInsets().setEmpty();
-            mWorkUtilityView.updateTranslationY();
+            mWorkModeSwitch.getImeInsets().setEmpty();
+            mWorkModeSwitch.updateTranslationY();
         }
     }
 
@@ -116,54 +116,54 @@ public class WorkProfileManager extends UserProfileManager
         if (getAH() != null) {
             getAH().mAppsList.updateAdapterItems();
         }
-        if (mWorkUtilityView != null) {
-            updateWorkUtilityViews(mAllApps.getCurrentPage());
+        if (mWorkModeSwitch != null) {
+            updateWorkFAB(mAllApps.getCurrentPage());
         }
         if (getCurrentState() == STATE_ENABLED) {
-            attachWorkUtilityViews();
+            attachWorkModeSwitch();
         } else if (getCurrentState() == STATE_DISABLED) {
-            detachWorkUtilityViews();
+            detachWorkModeSwitch();
         }
     }
 
     /**
      * Creates and attaches for profile toggle button to {@link ActivityAllAppsContainerView}
      */
-    public boolean attachWorkUtilityViews() {
+    public boolean attachWorkModeSwitch() {
         if (!mAllApps.getAppsStore().hasModelFlag(
                 FLAG_HAS_SHORTCUT_PERMISSION | FLAG_QUIET_MODE_CHANGE_PERMISSION)) {
             Log.e(TAG, "unable to attach work mode switch; Missing required permissions");
             return false;
         }
-        if (mWorkUtilityView == null) {
-            mWorkUtilityView = (WorkUtilityView) mAllApps.getLayoutInflater().inflate(
-                    R.layout.work_mode_utility_view, mAllApps, false);
+        if (mWorkModeSwitch == null) {
+            mWorkModeSwitch = (WorkModeSwitch) mAllApps.getLayoutInflater().inflate(
+                    R.layout.work_mode_fab, mAllApps, false);
         }
-        if (mWorkUtilityView.getParent() == null) {
-            mAllApps.addView(mWorkUtilityView);
+        if (mWorkModeSwitch.getParent() == null) {
+            mAllApps.addView(mWorkModeSwitch);
         }
         if (mAllApps.getCurrentPage() != WORK) {
-            mWorkUtilityView.animateVisibility(false);
+            mWorkModeSwitch.animateVisibility(false);
         }
         if (getAH() != null) {
             getAH().applyPadding();
         }
-        mWorkUtilityView.getWorkFAB().setOnClickListener(this::onWorkFabClicked);
+        mWorkModeSwitch.setOnClickListener(this::onWorkFabClicked);
         return true;
     }
     /**
      * Removes work profile toggle button from {@link ActivityAllAppsContainerView}
      */
-    public void detachWorkUtilityViews() {
-        if (mWorkUtilityView != null && mWorkUtilityView.getParent() == mAllApps) {
-            mAllApps.removeView(mWorkUtilityView);
+    public void detachWorkModeSwitch() {
+        if (mWorkModeSwitch != null && mWorkModeSwitch.getParent() == mAllApps) {
+            mAllApps.removeView(mWorkModeSwitch);
         }
-        mWorkUtilityView = null;
+        mWorkModeSwitch = null;
     }
 
     @Nullable
-    public WorkUtilityView getWorkUtilityView() {
-        return mWorkUtilityView;
+    public WorkModeSwitch getWorkModeSwitch() {
+        return mWorkModeSwitch;
     }
 
     private ActivityAllAppsContainerView.AdapterHolder getAH() {
@@ -199,8 +199,7 @@ public class WorkProfileManager extends UserProfileManager
     }
 
     private void onWorkFabClicked(View view) {
-        if (getCurrentState() == STATE_ENABLED && mWorkUtilityView.isEnabled()) {
-            Log.d(TAG, "Work FAB clicked.");
+        if (getCurrentState() == STATE_ENABLED && mWorkModeSwitch.isEnabled()) {
             logEvents(LAUNCHER_TURN_OFF_WORK_APPS_TAP);
             setWorkProfileEnabled(false);
         }
@@ -217,7 +216,7 @@ public class WorkProfileManager extends UserProfileManager
             }
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                WorkUtilityView fab = getWorkUtilityView();
+                WorkModeSwitch fab = getWorkModeSwitch();
                 if (fab == null){
                     return;
                 }

@@ -19,7 +19,6 @@ package com.android.launcher3.config;
 import static com.android.launcher3.config.FeatureFlags.BooleanFlag.DISABLED;
 import static com.android.launcher3.config.FeatureFlags.BooleanFlag.ENABLED;
 import static com.android.wm.shell.Flags.enableTaskbarNavbarUnification;
-import static com.android.wm.shell.Flags.enableTaskbarOnPhones;
 
 import android.content.res.Resources;
 
@@ -62,7 +61,54 @@ public final class FeatureFlags {
      * and set a default value for the flag. This will be the default value on Debug builds.
      * <p>
      */
+    // TODO(Block 2): Clean up flags
+    public static final BooleanFlag ENABLE_MULTI_DISPLAY_PARTIAL_DEPTH = getDebugFlag(270395073,
+            "ENABLE_MULTI_DISPLAY_PARTIAL_DEPTH", DISABLED,
+            "Allow bottom sheet depth to be smaller than 1 for multi-display devices.");
+
+    // TODO(Block 3): Clean up flags
+    public static final BooleanFlag ENABLE_DISMISS_PREDICTION_UNDO = getDebugFlag(270394476,
+            "ENABLE_DISMISS_PREDICTION_UNDO", DISABLED,
+            "Show an 'Undo' snackbar when users dismiss a predicted hotseat item");
+    public static final BooleanFlag CONTINUOUS_VIEW_TREE_CAPTURE = getDebugFlag(270395171,
+            "CONTINUOUS_VIEW_TREE_CAPTURE", ENABLED, "Capture View tree every frame");
+
+    public static final BooleanFlag ENABLE_WORKSPACE_LOADING_OPTIMIZATION = getDebugFlag(251502424,
+            "ENABLE_WORKSPACE_LOADING_OPTIMIZATION", DISABLED,
+            "load the current workspace screen visible to the user before the rest rather than "
+                    + "loading all of them at once.");
+
+    public static final BooleanFlag CHANGE_MODEL_DELEGATE_LOADING_ORDER = getDebugFlag(251502424,
+            "CHANGE_MODEL_DELEGATE_LOADING_ORDER", DISABLED,
+            "changes the timing of the loading and binding of delegate items during "
+                    + "data preparation for loading the home screen");
+
+    // TODO(Block 4): Cleanup flags
+    public static final BooleanFlag ENABLE_ALL_APPS_FROM_OVERVIEW =
+            getDebugFlag(275132633, "ENABLE_ALL_APPS_FROM_OVERVIEW", DISABLED,
+                    "Allow entering All Apps from Overview (e.g. long swipe up from app)");
+
+    public static final BooleanFlag ENABLE_SHOW_KEYBOARD_OPTION_IN_ALL_APPS = getReleaseFlag(
+            270394468, "ENABLE_SHOW_KEYBOARD_OPTION_IN_ALL_APPS", ENABLED,
+            "Enable option to show keyboard when going to all-apps");
+
+    // TODO(Block 5): Clean up flags
+    public static final BooleanFlag ENABLE_TWOLINE_DEVICESEARCH = getDebugFlag(201388851,
+            "ENABLE_TWOLINE_DEVICESEARCH", DISABLED,
+            "Enable two line label for icons with labels on device search.");
+
+    public static final BooleanFlag ENABLE_ICON_IN_TEXT_HEADER = getDebugFlag(270395143,
+            "ENABLE_ICON_IN_TEXT_HEADER", DISABLED, "Show icon in textheader");
+
+    public static final BooleanFlag ENABLE_PREMIUM_HAPTICS_ALL_APPS = getDebugFlag(270396358,
+            "ENABLE_PREMIUM_HAPTICS_ALL_APPS", DISABLED,
+            "Enables haptics opening/closing All apps");
+
     // TODO(Block 6): Clean up flags
+    public static final BooleanFlag ENABLE_ALL_APPS_SEARCH_IN_TASKBAR = getDebugFlag(270393900,
+            "ENABLE_ALL_APPS_SEARCH_IN_TASKBAR", ENABLED,
+            "Enables Search box in Taskbar All Apps.");
+
     public static final BooleanFlag SECONDARY_DRAG_N_DROP_TO_PIN = getDebugFlag(270395140,
             "SECONDARY_DRAG_N_DROP_TO_PIN", DISABLED,
             "Enable dragging and dropping to pin apps within secondary display");
@@ -77,6 +123,10 @@ public final class FeatureFlags {
     // TODO(Block 11): Clean up flags
     public static final BooleanFlag FOLDABLE_SINGLE_PAGE = getDebugFlag(270395274,
             "FOLDABLE_SINGLE_PAGE", DISABLED, "Use a single page for the workspace");
+
+    public static final BooleanFlag ENABLE_PARAMETRIZE_REORDER = getDebugFlag(289420844,
+            "ENABLE_PARAMETRIZE_REORDER", DISABLED,
+            "Enables generating the reorder using a set of parameters");
 
     // TODO(Block 12): Clean up flags
     public static final BooleanFlag ENABLE_MULTI_INSTANCE = getDebugFlag(270396680,
@@ -93,7 +143,7 @@ public final class FeatureFlags {
             DISABLED, "Sends a notification whenever launcher encounters an uncaught exception.");
 
     public static final boolean ENABLE_TASKBAR_NAVBAR_UNIFICATION =
-            enableTaskbarNavbarUnification() && (!isPhone() || enableTaskbarOnPhones());
+            enableTaskbarNavbarUnification() && !isPhone();
 
     private static boolean isPhone() {
         final boolean isPhone;
@@ -124,10 +174,31 @@ public final class FeatureFlags {
     public static final BooleanFlag PROMISE_APPS_IN_ALL_APPS = getDebugFlag(270390012,
             "PROMISE_APPS_IN_ALL_APPS", DISABLED, "Add promise icon in all-apps");
 
+    public static final BooleanFlag KEYGUARD_ANIMATION = getDebugFlag(270390904,
+            "KEYGUARD_ANIMATION", DISABLED,
+            "Enable animation for keyguard going away on wallpaper");
+
+    public static final BooleanFlag ENABLE_DEVICE_SEARCH = getReleaseFlag(270390907,
+            "ENABLE_DEVICE_SEARCH", ENABLED, "Allows on device search in all apps");
+
+    public static final BooleanFlag ENABLE_HIDE_HEADER = getReleaseFlag(270390930,
+            "ENABLE_HIDE_HEADER", ENABLED, "Hide header on keyboard before typing in all apps");
+
     // Aconfig migration complete for ENABLE_EXPANDING_PAUSE_WORK_BUTTON.
     public static final BooleanFlag ENABLE_EXPANDING_PAUSE_WORK_BUTTON = getDebugFlag(270390779,
             "ENABLE_EXPANDING_PAUSE_WORK_BUTTON", DISABLED,
             "Expand and collapse pause work button while scrolling");
+
+    // Aconfig migration complete for ENABLE_TWOLINE_ALLAPPS.
+    public static final BooleanFlag ENABLE_TWOLINE_ALLAPPS = getDebugFlag(270390937,
+            "ENABLE_TWOLINE_ALLAPPS", DISABLED, "Enables two line label inside all apps.");
+
+    public static final BooleanFlag IME_STICKY_SNACKBAR_EDU = getDebugFlag(270391693,
+            "IME_STICKY_SNACKBAR_EDU", ENABLED, "Show sticky IME edu in AllApps");
+
+    public static final BooleanFlag FOLDER_NAME_MAJORITY_RANKING = getDebugFlag(270391638,
+            "FOLDER_NAME_MAJORITY_RANKING", ENABLED,
+            "Suggests folder names based on majority based ranking.");
 
     public static final BooleanFlag INJECT_FALLBACK_APP_CORPUS_RESULTS = getReleaseFlag(270391706,
             "INJECT_FALLBACK_APP_CORPUS_RESULTS", DISABLED,
@@ -144,7 +215,36 @@ public final class FeatureFlags {
         return ENABLE_TASKBAR_PINNING.get() || Flags.enableTaskbarPinning();
     }
 
+    // Aconfig migration complete for ENABLE_APP_PAIRS.
+    public static final BooleanFlag ENABLE_APP_PAIRS = getDebugFlag(274189428,
+            "ENABLE_APP_PAIRS", DISABLED,
+            "Enables the ability to create and save app pairs on the Home screen for easy"
+                    + " split screen launching.");
+    public static boolean enableAppPairs() {
+        return ENABLE_APP_PAIRS.get() || com.android.wm.shell.Flags.enableAppPairs();
+    }
+
+    // TODO(Block 19): Clean up flags
+    public static final BooleanFlag SCROLL_TOP_TO_RESET = getReleaseFlag(270395177,
+            "SCROLL_TOP_TO_RESET", ENABLED,
+            "Bring up IME and focus on input when scroll to top if 'Always show keyboard'"
+                    + " is enabled or in prefix state");
+
+    public static final BooleanFlag ENABLE_SEARCH_UNINSTALLED_APPS = getReleaseFlag(270395269,
+            "ENABLE_SEARCH_UNINSTALLED_APPS", ENABLED, "Search uninstalled app results.");
+
     // TODO(Block 20): Clean up flags
+    public static final BooleanFlag ENABLE_SCRIM_FOR_APP_LAUNCH = getDebugFlag(270393276,
+            "ENABLE_SCRIM_FOR_APP_LAUNCH", DISABLED, "Enables scrim during app launch animation.");
+
+    public static final BooleanFlag ENABLE_BACK_SWIPE_HOME_ANIMATION = getDebugFlag(270393426,
+            "ENABLE_BACK_SWIPE_HOME_ANIMATION", ENABLED,
+            "Enables home animation to icon when user swipes back.");
+
+    public static final BooleanFlag ENABLE_DYNAMIC_TASKBAR_THRESHOLDS = getDebugFlag(294252473,
+            "ENABLE_DYNAMIC_TASKBAR_THRESHOLDS", ENABLED,
+            "Enables taskbar thresholds that scale based on screen size.");
+
     // Aconfig migration complete for ENABLE_HOME_TRANSITION_LISTENER.
     public static final BooleanFlag ENABLE_HOME_TRANSITION_LISTENER = getDebugFlag(306053414,
             "ENABLE_HOME_TRANSITION_LISTENER", DISABLED,
@@ -162,6 +262,22 @@ public final class FeatureFlags {
     public static final BooleanFlag ENABLE_WIDGET_TRANSITION_FOR_RESIZING = getDebugFlag(268553314,
             "ENABLE_WIDGET_TRANSITION_FOR_RESIZING", DISABLED,
             "Enable widget transition animation when resizing the widgets");
+
+    public static final BooleanFlag PREEMPTIVE_UNFOLD_ANIMATION_START = getDebugFlag(270397209,
+            "PREEMPTIVE_UNFOLD_ANIMATION_START", ENABLED,
+            "Enables starting the unfold animation preemptively when unfolding, without"
+                    + "waiting for SystemUI and then merging the SystemUI progress whenever we "
+                    + "start receiving the events");
+
+    // TODO(Block 25): Clean up flags
+    public static final BooleanFlag ENABLE_NEW_GESTURE_NAV_TUTORIAL = getDebugFlag(270396257,
+            "ENABLE_NEW_GESTURE_NAV_TUTORIAL", ENABLED,
+            "Enable the redesigned gesture navigation tutorial");
+
+    // TODO(Block 26): Clean up flags
+    public static final BooleanFlag ENABLE_WIDGET_HOST_IN_BACKGROUND = getDebugFlag(270394384,
+            "ENABLE_WIDGET_HOST_IN_BACKGROUND", ENABLED,
+            "Enable background widget updates listening for widget holder");
 
     // TODO(Block 27): Clean up flags
     public static final BooleanFlag ENABLE_OVERLAY_CONNECTION_OPTIM = getDebugFlag(270392629,
@@ -183,19 +299,37 @@ public final class FeatureFlags {
             "SEPARATE_RECENTS_ACTIVITY", DISABLED,
             "Uses a separate recents activity instead of using the integrated recents+Launcher UI");
 
+    public static final BooleanFlag ENABLE_ENFORCED_ROUNDED_CORNERS = getReleaseFlag(270393258,
+            "ENABLE_ENFORCED_ROUNDED_CORNERS", ENABLED,
+            "Enforce rounded corners on all App Widgets");
+
     public static final BooleanFlag USE_LOCAL_ICON_OVERRIDES = getDebugFlag(270394973,
             "USE_LOCAL_ICON_OVERRIDES", ENABLED,
             "Use inbuilt monochrome icons if app doesn't provide one");
 
+    // Aconfig migration complete for ENABLE_SPLIT_FROM_WORKSPACE_TO_WORKSPACE.
+    public static final BooleanFlag ENABLE_SPLIT_FROM_WORKSPACE_TO_WORKSPACE = getDebugFlag(
+            270393453, "ENABLE_SPLIT_FROM_WORKSPACE_TO_WORKSPACE", DISABLED,
+            "Enable initiating split screen from workspace to workspace.");
+    public static boolean enableSplitContextually() {
+        return ENABLE_SPLIT_FROM_WORKSPACE_TO_WORKSPACE.get() ||
+                com.android.wm.shell.Flags.enableSplitContextual();
+    }
+
+    public static final BooleanFlag ENABLE_TRACKPAD_GESTURE = getDebugFlag(271010401,
+            "ENABLE_TRACKPAD_GESTURE", ENABLED, "Enables trackpad gesture.");
+
     // TODO(Block 29): Clean up flags
-    // Aconfig migration complete for ENABLE_ALL_APPS_BUTTON_IN_HOTSEAT.
     public static final BooleanFlag ENABLE_ALL_APPS_BUTTON_IN_HOTSEAT = getDebugFlag(270393897,
             "ENABLE_ALL_APPS_BUTTON_IN_HOTSEAT", DISABLED,
             "Enables displaying the all apps button in the hotseat.");
 
-    public static boolean enableAllAppsButtonInHotseat() {
-        return ENABLE_ALL_APPS_BUTTON_IN_HOTSEAT.get() || Flags.enableAllAppsButtonInHotseat();
-    }
+    public static final BooleanFlag ENABLE_KEYBOARD_QUICK_SWITCH = getDebugFlag(270396844,
+            "ENABLE_KEYBOARD_QUICK_SWITCH", ENABLED, "Enables keyboard quick switching");
+
+    public static final BooleanFlag ENABLE_KEYBOARD_TASKBAR_TOGGLE = getDebugFlag(281726846,
+            "ENABLE_KEYBOARD_TASKBAR_TOGGLE", ENABLED,
+            "Enables keyboard taskbar stash toggling");
 
     // TODO(Block 30): Clean up flags
     public static final BooleanFlag USE_SEARCH_REQUEST_TIMEOUT_OVERRIDES = getDebugFlag(270395010,
@@ -213,6 +347,14 @@ public final class FeatureFlags {
     public static boolean enableResponsiveWorkspace() {
         return ENABLE_RESPONSIVE_WORKSPACE.get() || Flags.enableResponsiveWorkspace();
     }
+
+    // TODO(Block 33): Clean up flags
+    public static final BooleanFlag ENABLE_ALL_APPS_RV_PREINFLATION = getDebugFlag(288161355,
+            "ENABLE_ALL_APPS_RV_PREINFLATION", ENABLED,
+            "Enables preinflating all apps icons to avoid scrolling jank.");
+    public static final BooleanFlag ALL_APPS_GONE_VISIBILITY = getDebugFlag(291651514,
+            "ALL_APPS_GONE_VISIBILITY", ENABLED,
+            "Set all apps container view's hidden visibility to GONE instead of INVISIBLE.");
 
     public static BooleanFlag getDebugFlag(
             int bugId, String key, BooleanFlag flagState, String description) {

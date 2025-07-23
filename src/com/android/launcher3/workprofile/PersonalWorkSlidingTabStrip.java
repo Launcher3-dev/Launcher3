@@ -26,11 +26,8 @@ import androidx.annotation.Nullable;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
-import com.android.launcher3.pageindicators.Direction;
 import com.android.launcher3.pageindicators.PageIndicator;
 import com.android.launcher3.views.ActivityContext;
-
-import java.util.function.Consumer;
 
 /**
  * Supports two indicator colors, dedicated for personal and work tabs.
@@ -78,11 +75,6 @@ public class PersonalWorkSlidingTabStrip extends LinearLayout implements PageInd
 
     @Override
     public void setMarkersCount(int numMarkers) {
-    }
-
-    @Override
-    public void setArrowClickListener(Consumer<Direction> listener) {
-        // No-Op. All Apps doesn't need accessibility arrows for single click navigation.
     }
 
     @Override

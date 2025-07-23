@@ -31,15 +31,15 @@ import static com.android.launcher3.logger.LauncherAtom.ContainerInfo.ContainerC
 import static com.android.launcher3.logger.LauncherAtomExtensions.ExtendedContainers.ContainerCase.DEVICE_SEARCH_RESULT_CONTAINER;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WORKSPACE_SNAPSHOT;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DISPLAY_ROTATION__ROTATION_0;
+import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DISPLAY_ROTATION__ROTATION_90;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DISPLAY_ROTATION__ROTATION_180;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DISPLAY_ROTATION__ROTATION_270;
-import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DISPLAY_ROTATION__ROTATION_90;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DST_STATE__ALLAPPS;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DST_STATE__BACKGROUND;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DST_STATE__HOME;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__DST_STATE__OVERVIEW;
-import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__RECENTS_ORIENTATION_HANDLER__LANDSCAPE;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__RECENTS_ORIENTATION_HANDLER__PORTRAIT;
+import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__RECENTS_ORIENTATION_HANDLER__LANDSCAPE;
 import static com.android.systemui.shared.system.SysUiStatsLog.LAUNCHER_UICHANGED__RECENTS_ORIENTATION_HANDLER__SEASCAPE;
 
 import android.content.Context;
@@ -69,7 +69,6 @@ import com.android.launcher3.logger.LauncherAtomExtensions.DeviceSearchResultCon
 import com.android.launcher3.logger.LauncherAtomExtensions.ExtendedContainers;
 import com.android.launcher3.logging.InstanceId;
 import com.android.launcher3.logging.StatsLogManager;
-import com.android.launcher3.model.data.CollectionInfo;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.Executors;
@@ -382,15 +381,17 @@ public class StatsLogCompatManager extends StatsLogManager {
                 return;
             }
 
-            // Item is inside a collection, fetch collection info in a BG thread
-            // and then write to StatsLog.
-            if (mItemInfo.container < 0) {
-                LauncherAppState.INSTANCE.get(mContext).getModel().enqueueModelUpdateTask(
-                        (taskController, dataModel, apps) -> write(event, applyOverwrites(
-                                mItemInfo.buildProto(
-                                        (CollectionInfo) dataModel.itemsIdMap
-                                                .get(mItemInfo.container),
-                                        mContext))));
+            if (mItemInfo.container < 0 || !LauncherAppState.INSTANCE.executeIfCreated(app -> {
+                // Item is inside a collection, fetch collection info in a BG thread
+                // and then write to StatsLog.
+                app.getModel().enqueueModelUpdateTask((taskController, dataModel, apps) ->
+                        write(event, applyOverwrites(mItemInfo.buildProto(
+                                dataModel.collections.get(mItemInfo.container)))));
+            })) {
+                // Write log on the model thread so that logs do not go out of order
+                // (for eg: drop comes after drag)
+                Executors.MODEL_EXECUTOR.execute(
+                        () -> write(event, applyOverwrites(mItemInfo.buildProto())));
             }
         }
 
@@ -421,22 +422,6 @@ public class StatsLogCompatManager extends StatsLogManager {
                     break;
                 case LAUNCHER_PRIVATE_SPACE_UNLOCK_ANIMATION_END:
                     InteractionJankMonitorWrapper.end(Cuj.CUJ_LAUNCHER_PRIVATE_SPACE_UNLOCK);
-                    break;
-                case LAUNCHER_WORK_UTILITY_VIEW_EXPAND_ANIMATION_BEGIN:
-                    InteractionJankMonitorWrapper.begin(
-                            view,
-                            Cuj.CUJ_LAUNCHER_WORK_UTILITY_VIEW_EXPAND);
-                    break;
-                case LAUNCHER_WORK_UTILITY_VIEW_EXPAND_ANIMATION_END:
-                    InteractionJankMonitorWrapper.end(Cuj.CUJ_LAUNCHER_WORK_UTILITY_VIEW_EXPAND);
-                    break;
-                case LAUNCHER_WORK_UTILITY_VIEW_SHRINK_ANIMATION_BEGIN:
-                    InteractionJankMonitorWrapper.begin(
-                            view,
-                            Cuj.CUJ_LAUNCHER_WORK_UTILITY_VIEW_SHRINK);
-                    break;
-                case LAUNCHER_WORK_UTILITY_VIEW_SHRINK_ANIMATION_END:
-                    InteractionJankMonitorWrapper.end(Cuj.CUJ_LAUNCHER_WORK_UTILITY_VIEW_SHRINK);
                     break;
                 default:
                     break;
@@ -748,40 +733,48 @@ public class StatsLogCompatManager extends StatsLogManager {
                             .getQueryLength() : -1;
                 }
             default:
-                return switch (info.getItemCase()) {
-                    case FOLDER_ICON -> info.getFolderIcon().getCardinality();
-                    case TASK_VIEW -> info.getTaskView().getCardinality();
-                    default -> 0;
-                };
+                return info.getFolderIcon().getCardinality();
         }
     }
 
     private static String getPackageName(LauncherAtom.ItemInfo info) {
-        return switch (info.getItemCase()) {
-            case APPLICATION -> info.getApplication().getPackageName();
-            case SHORTCUT -> info.getShortcut().getShortcutName();
-            case WIDGET -> info.getWidget().getPackageName();
-            case TASK -> info.getTask().getPackageName();
-            case SEARCH_ACTION_ITEM -> info.getSearchActionItem().getPackageName();
-            default -> null;
-        };
+        switch (info.getItemCase()) {
+            case APPLICATION:
+                return info.getApplication().getPackageName();
+            case SHORTCUT:
+                return info.getShortcut().getShortcutName();
+            case WIDGET:
+                return info.getWidget().getPackageName();
+            case TASK:
+                return info.getTask().getPackageName();
+            case SEARCH_ACTION_ITEM:
+                return info.getSearchActionItem().getPackageName();
+            default:
+                return null;
+        }
     }
 
     private static String getComponentName(LauncherAtom.ItemInfo info) {
-        return switch (info.getItemCase()) {
-            case APPLICATION -> info.getApplication().getComponentName();
-            case SHORTCUT -> info.getShortcut().getShortcutName();
-            case WIDGET -> info.getWidget().getComponentName();
-            case TASK -> info.getTask().getComponentName();
-            case TASK_VIEW -> info.getTaskView().getComponentName();
-            case SEARCH_ACTION_ITEM -> info.getSearchActionItem().getTitle();
-            case SLICE -> info.getSlice().getUri();
-            default -> null;
-        };
+        switch (info.getItemCase()) {
+            case APPLICATION:
+                return info.getApplication().getComponentName();
+            case SHORTCUT:
+                return info.getShortcut().getShortcutName();
+            case WIDGET:
+                return info.getWidget().getComponentName();
+            case TASK:
+                return info.getTask().getComponentName();
+            case SEARCH_ACTION_ITEM:
+                return info.getSearchActionItem().getTitle();
+            case SLICE:
+                return info.getSlice().getUri();
+            default:
+                return null;
+        }
     }
 
     private static int getGridX(LauncherAtom.ItemInfo info, boolean parent) {
-        ContainerInfo containerInfo = info.getContainerInfo();
+        LauncherAtom.ContainerInfo containerInfo = info.getContainerInfo();
         if (containerInfo.getContainerCase() == FOLDER) {
             if (parent) {
                 return containerInfo.getFolder().getWorkspace().getGridX();
@@ -809,38 +802,37 @@ public class StatsLogCompatManager extends StatsLogManager {
     }
 
     private static int getPageId(LauncherAtom.ItemInfo info) {
-        return switch (info.getItemCase()) {
-            case TASK -> info.getTask().getIndex();
-            case TASK_VIEW -> info.getTaskView().getIndex();
-            default -> getPageIdFromContainerInfo(info.getContainerInfo());
-        };
-    }
-
-    private static int getPageIdFromContainerInfo(LauncherAtom.ContainerInfo containerInfo) {
-        return switch (containerInfo.getContainerCase()) {
-            case FOLDER -> containerInfo.getFolder().getPageIndex();
-            case HOTSEAT -> containerInfo.getHotseat().getIndex();
-            case PREDICTED_HOTSEAT_CONTAINER ->
-                    containerInfo.getPredictedHotseatContainer().getIndex();
-            case TASK_BAR_CONTAINER -> containerInfo.getTaskBarContainer().getIndex();
-            default -> containerInfo.getWorkspace().getPageIndex();
-        };
+        if (info.hasTask()) {
+            return info.getTask().getIndex();
+        }
+        switch (info.getContainerInfo().getContainerCase()) {
+            case FOLDER:
+                return info.getContainerInfo().getFolder().getPageIndex();
+            case HOTSEAT:
+                return info.getContainerInfo().getHotseat().getIndex();
+            case PREDICTED_HOTSEAT_CONTAINER:
+                return info.getContainerInfo().getPredictedHotseatContainer().getIndex();
+            case TASK_BAR_CONTAINER:
+                return info.getContainerInfo().getTaskBarContainer().getIndex();
+            default:
+                return info.getContainerInfo().getWorkspace().getPageIndex();
+        }
     }
 
     private static int getParentPageId(LauncherAtom.ItemInfo info) {
-        return switch (info.getContainerInfo().getContainerCase()) {
-            case FOLDER -> {
+        switch (info.getContainerInfo().getContainerCase()) {
+            case FOLDER:
                 if (info.getContainerInfo().getFolder().getParentContainerCase()
                         == ParentContainerCase.HOTSEAT) {
-                    yield info.getContainerInfo().getFolder().getHotseat().getIndex();
+                    return info.getContainerInfo().getFolder().getHotseat().getIndex();
                 }
-                yield info.getContainerInfo().getFolder().getWorkspace().getPageIndex();
-            }
-            case SEARCH_RESULT_CONTAINER ->
-                    info.getContainerInfo().getSearchResultContainer().getWorkspace()
-                            .getPageIndex();
-            default -> info.getContainerInfo().getWorkspace().getPageIndex();
-        };
+                return info.getContainerInfo().getFolder().getWorkspace().getPageIndex();
+            case SEARCH_RESULT_CONTAINER:
+                return info.getContainerInfo().getSearchResultContainer().getWorkspace()
+                        .getPageIndex();
+            default:
+                return info.getContainerInfo().getWorkspace().getPageIndex();
+        }
     }
 
     private static int getHierarchy(LauncherAtom.ItemInfo info) {
@@ -865,21 +857,25 @@ public class StatsLogCompatManager extends StatsLogManager {
     }
 
     private static String getStateString(int state) {
-        return switch (state) {
-            case LAUNCHER_UICHANGED__DST_STATE__BACKGROUND -> "BACKGROUND";
-            case LAUNCHER_UICHANGED__DST_STATE__HOME -> "HOME";
-            case LAUNCHER_UICHANGED__DST_STATE__OVERVIEW -> "OVERVIEW";
-            case LAUNCHER_UICHANGED__DST_STATE__ALLAPPS -> "ALLAPPS";
-            default -> "INVALID";
-        };
+        switch (state) {
+            case LAUNCHER_UICHANGED__DST_STATE__BACKGROUND:
+                return "BACKGROUND";
+            case LAUNCHER_UICHANGED__DST_STATE__HOME:
+                return "HOME";
+            case LAUNCHER_UICHANGED__DST_STATE__OVERVIEW:
+                return "OVERVIEW";
+            case LAUNCHER_UICHANGED__DST_STATE__ALLAPPS:
+                return "ALLAPPS";
+            default:
+                return "INVALID";
+        }
     }
 
     private static int getFeatures(LauncherAtom.ItemInfo info) {
-        return switch (info.getItemCase()) {
-            case WIDGET -> info.getWidget().getWidgetFeatures();
-            case TASK_VIEW -> info.getTaskView().getType();
-            default -> 0;
-        };
+        if (info.getItemCase().equals(LauncherAtom.ItemInfo.ItemCase.WIDGET)) {
+            return info.getWidget().getWidgetFeatures();
+        }
+        return 0;
     }
 
     private static int getSearchAttributes(LauncherAtom.ItemInfo info) {

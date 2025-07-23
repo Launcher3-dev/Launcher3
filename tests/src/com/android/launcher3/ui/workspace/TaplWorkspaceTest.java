@@ -32,6 +32,7 @@ import com.android.launcher3.util.TestUtil;
 import com.android.launcher3.util.rule.ScreenRecordRule.ScreenRecord;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -47,6 +48,12 @@ public class TaplWorkspaceTest extends AbstractLauncherUiTest<Launcher> {
 
     private int getCurrentWorkspacePage(Launcher launcher) {
         return launcher.getWorkspace().getCurrentPage();
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        initialize(this);
     }
 
     @After
@@ -114,15 +121,8 @@ public class TaplWorkspaceTest extends AbstractLauncherUiTest<Launcher> {
      * Similar to {@link TaplWorkspaceTest#testWorkspace} but here we also make sure we can delete
      * the pages.
      */
-    @ScreenRecord // b/381918059
     @Test
-    public void testAddAndDeletePageAndFling() throws Exception {
-        // Set workspace  that includes the chrome Activity app icon on the hotseat.
-        LauncherLayoutBuilder builder = new LauncherLayoutBuilder()
-                .atHotseat(0).putApp("com.android.chrome", "com.google.android.apps.chrome.Main");
-        mLauncherLayout = TestUtil.setLauncherDefaultLayout(mTargetContext, builder);
-        reinitializeLauncherData();
-
+    public void testAddAndDeletePageAndFling() {
         Workspace workspace = mLauncher.getWorkspace();
         // Get the first app from the hotseat
         HomeAppIcon hotSeatIcon = workspace.getHotseatAppIcon(0);

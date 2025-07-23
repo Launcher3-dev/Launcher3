@@ -25,27 +25,20 @@ import androidx.annotation.Nullable;
 
 import com.android.launcher3.popup.SystemShortcut;
 import com.android.launcher3.statemanager.StateManager;
-import com.android.launcher3.statemanager.StatefulContainer;
-import com.android.quickstep.FallbackActivityInterface;
-import com.android.quickstep.GestureState;
-import com.android.quickstep.RecentsAnimationCallbacks;
+import com.android.quickstep.RecentsActivity;
 import com.android.quickstep.TopTaskTracker;
 import com.android.quickstep.fallback.RecentsState;
+import com.android.quickstep.util.TISBindHelper;
 import com.android.quickstep.views.RecentsView;
-import com.android.quickstep.views.RecentsViewContainer;
 
-import java.io.PrintWriter;
 import java.util.stream.Stream;
 
 /**
  * A data source which integrates with the fallback RecentsActivity instance (for 3P launchers).
- * @param <T> The type of the RecentsViewContainer that will handle Recents state changes.
  */
-public class FallbackTaskbarUIController
-        <T extends RecentsViewContainer & StatefulContainer<RecentsState>>
-        extends TaskbarUIController {
+public class FallbackTaskbarUIController extends TaskbarUIController {
 
-    private final T mRecentsContainer;
+    private final RecentsActivity mRecentsActivity;
 
     private final StateManager.StateListener<RecentsState> mStateListener =
             new StateManager.StateListener<RecentsState>() {
@@ -53,12 +46,8 @@ public class FallbackTaskbarUIController
                 public void onStateTransitionStart(RecentsState toState) {
                     animateToRecentsState(toState);
 
-                    RecentsView recentsView = getRecentsView();
-                    if (recentsView == null) {
-                        return;
-                    }
                     // Handle tapping on live tile.
-                    recentsView.setTaskLaunchListener(toState == RecentsState.DEFAULT
+                    getRecentsView().setTaskLaunchListener(toState == RecentsState.DEFAULT
                             ? (() -> animateToRecentsState(RecentsState.BACKGROUND_APP)) : null);
                 }
 
@@ -74,41 +63,30 @@ public class FallbackTaskbarUIController
                 }
             };
 
-    public FallbackTaskbarUIController(T recentsContainer) {
-        mRecentsContainer = recentsContainer;
+    public FallbackTaskbarUIController(RecentsActivity recentsActivity) {
+        mRecentsActivity = recentsActivity;
     }
 
     @Override
     protected void init(TaskbarControllers taskbarControllers) {
         super.init(taskbarControllers);
-        mRecentsContainer.setTaskbarUIController(this);
-        mRecentsContainer.getStateManager().addStateListener(mStateListener);
+
+        mRecentsActivity.setTaskbarUIController(this);
+        mRecentsActivity.getStateManager().addStateListener(mStateListener);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        RecentsView recentsView = getRecentsView();
-        if (recentsView != null) {
-            recentsView.setTaskLaunchListener(null);
-        }
-        mRecentsContainer.setTaskbarUIController(null);
-        mRecentsContainer.getStateManager().removeStateListener(mStateListener);
-    }
-
-    @Nullable
-    @Override
-    public Animator getParallelAnimationToGestureEndTarget(GestureState.GestureEndTarget endTarget,
-            long duration, RecentsAnimationCallbacks callbacks) {
-        return createAnimToRecentsState(
-                FallbackActivityInterface.INSTANCE.stateFromGestureEndTarget(endTarget), duration);
+        mRecentsActivity.setTaskbarUIController(null);
+        mRecentsActivity.getStateManager().removeStateListener(mStateListener);
     }
 
     /**
      * Creates an animation to animate the taskbar for the given state (but does not start it).
      * Currently this animation just force stashes the taskbar in Overview.
      */
-    private Animator createAnimToRecentsState(RecentsState toState, long duration) {
+    public Animator createAnimToRecentsState(RecentsState toState, long duration) {
         // Force stash taskbar (disallow unstashing) when:
         // - in a 3P launcher or overview task.
         // - not running in a test harness (unstash is needed for tests)
@@ -130,8 +108,8 @@ public class FallbackTaskbarUIController
     }
 
     @Override
-    public @Nullable RecentsView getRecentsView() {
-        return mRecentsContainer.getOverviewPanel();
+    public RecentsView getRecentsView() {
+        return mRecentsActivity.getOverviewPanel();
     }
 
     @Override
@@ -146,21 +124,18 @@ public class FallbackTaskbarUIController
 
     private boolean isIn3pHomeOrRecents() {
         TopTaskTracker.CachedTaskInfo topTask = TopTaskTracker.INSTANCE
-                .get(mControllers.taskbarActivityContext).getCachedTopTask(true,
-                        mRecentsContainer.asContext().getDisplayId());
+                .get(mControllers.taskbarActivityContext).getCachedTopTask(true);
         return topTask.isHomeTask() || topTask.isRecentsTask();
+    }
+
+    @Nullable
+    @Override
+    protected TISBindHelper getTISBindHelper() {
+        return mRecentsActivity.getTISBindHelper();
     }
 
     @Override
     protected String getTaskbarUIControllerName() {
-        return "FallbackTaskbarUIController<" + mRecentsContainer.getClass().getSimpleName() + ">";
-    }
-
-    @Override
-    protected void dumpLogs(String prefix, PrintWriter pw) {
-        super.dumpLogs(prefix, pw);
-
-        pw.println(String.format("%s\tRecentsState=%s", prefix,
-                mRecentsContainer.getStateManager().getState()));
+        return "FallbackTaskbarUIController";
     }
 }

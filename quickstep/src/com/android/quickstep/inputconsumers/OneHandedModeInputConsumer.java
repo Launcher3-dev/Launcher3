@@ -61,13 +61,9 @@ public class OneHandedModeInputConsumer extends DelegateInputConsumer {
     private boolean mPassedSlop;
     private boolean mIsStopGesture;
 
-    public OneHandedModeInputConsumer(
-            Context context,
-            int displayId,
-            RecentsAnimationDeviceState deviceState,
-            InputConsumer delegate,
-            InputMonitorCompat inputMonitor) {
-        super(displayId, delegate, inputMonitor);
+    public OneHandedModeInputConsumer(Context context, RecentsAnimationDeviceState deviceState,
+            InputConsumer delegate, InputMonitorCompat inputMonitor) {
+        super(delegate, inputMonitor);
         mContext = context;
         mDeviceState = deviceState;
         mDragDistThreshold = context.getResources().getDimensionPixelSize(

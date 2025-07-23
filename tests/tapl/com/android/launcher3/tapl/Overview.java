@@ -22,12 +22,9 @@ import com.android.launcher3.tapl.LauncherInstrumentation.ContainerType;
  * Overview pane.
  */
 public class Overview extends BaseOverview {
-    Overview(LauncherInstrumentation launcher) {
-        this(launcher, /*launchedFromApp=*/false);
-    }
 
-    Overview(LauncherInstrumentation launcher, boolean launchedFromApp) {
-        super(launcher, launchedFromApp);
+    Overview(LauncherInstrumentation launcher) {
+        super(launcher);
     }
 
     @Override

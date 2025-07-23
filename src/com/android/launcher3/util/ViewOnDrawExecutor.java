@@ -16,7 +16,6 @@
 
 package com.android.launcher3.util;
 
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
 import android.view.ViewTreeObserver.OnDrawListener;
@@ -33,7 +32,6 @@ import java.util.function.Consumer;
 public class ViewOnDrawExecutor implements OnDrawListener, Runnable,
         OnAttachStateChangeListener {
 
-    private static final String TAG = "ViewOnDrawExecutor";
     private final RunnableList mTasks;
     private final Consumer<ViewOnDrawExecutor> mOnClearCallback;
     private View mAttachedView;
@@ -90,10 +88,7 @@ public class ViewOnDrawExecutor implements OnDrawListener, Runnable,
      * Executes all tasks immediately
      */
     public void markCompleted() {
-        if (mCancelled) {
-            Log.d(TAG, "markCompleted ignored: cancelled");
-        } else {
-            Log.d(TAG, "markCompleted: executing tasks");
+        if (!mCancelled) {
             mTasks.executeAllAndDestroy();
         }
         mCompleted = true;
@@ -106,7 +101,6 @@ public class ViewOnDrawExecutor implements OnDrawListener, Runnable,
     }
 
     public void cancel() {
-        Log.d(TAG, "Cancelling tasks");
         mCancelled = true;
         markCompleted();
     }

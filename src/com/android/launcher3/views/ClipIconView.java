@@ -20,7 +20,6 @@ import static com.android.launcher3.Flags.enableAdditionalHomeAnimations;
 import static com.android.launcher3.Utilities.boundToRange;
 import static com.android.launcher3.Utilities.mapToRange;
 import static com.android.launcher3.anim.AnimatorListeners.forEndCallback;
-import static com.android.launcher3.icons.IconNormalizer.ICON_VISIBLE_AREA_FACTOR;
 import static com.android.launcher3.views.FloatingIconView.SHAPE_PROGRESS_DURATION;
 
 import static java.lang.Math.max;
@@ -45,11 +44,10 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 
 import com.android.launcher3.DeviceProfile;
-import com.android.launcher3.Flags;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.dragndrop.FolderAdaptiveIcon;
-import com.android.launcher3.graphics.ThemeManager;
+import com.android.launcher3.graphics.IconShape;
 
 /**
  * A view used to draw both layers of an {@link AdaptiveIconDrawable}.
@@ -69,7 +67,6 @@ public class ClipIconView extends View implements ClipPathView {
     private boolean mIsAdaptiveIcon = false;
 
     private ValueAnimator mRevealAnimator;
-    private float mIconScale;
 
     private final Rect mStartRevealRect = new Rect();
     private final Rect mEndRevealRect = new Rect();
@@ -175,12 +172,9 @@ public class ClipIconView extends View implements ClipPathView {
 
         mTaskCornerRadius = cornerRadius / scale;
         if (mIsAdaptiveIcon) {
-            final ThemeManager themeManager = ThemeManager.INSTANCE.get(getContext());
-            mIconScale = themeManager.getIconState().getIconScale();
-            if ((!isOpening || Flags.enableLauncherIconShapes())
-                    && progress >= shapeProgressStart) {
+            if (!isOpening && progress >= shapeProgressStart) {
                 if (mRevealAnimator == null) {
-                    mRevealAnimator = themeManager.getIconShape()
+                    mRevealAnimator = IconShape.INSTANCE.get(getContext()).getShape()
                             .createRevealAnimator(this, mStartRevealRect,
                                     mOutline, mTaskCornerRadius, !isOpening);
                     mRevealAnimator.addListener(forEndCallback(() -> mRevealAnimator = null));
@@ -264,7 +258,8 @@ public class ClipIconView extends View implements ClipPathView {
             mStartRevealRect.set(0, 0, originalWidth, originalHeight);
 
             if (!isFolderIcon) {
-                Utilities.scaleRectAboutCenter(mStartRevealRect, ICON_VISIBLE_AREA_FACTOR);
+                Utilities.scaleRectAboutCenter(mStartRevealRect,
+                        IconShape.INSTANCE.get(getContext()).getNormalizationScale());
             }
 
             if (dp.isLandscape) {
@@ -314,24 +309,17 @@ public class ClipIconView extends View implements ClipPathView {
 
     @Override
     public void draw(Canvas canvas) {
-        int count1 = canvas.save();
+        int count = canvas.save();
         if (mClipPath != null) {
             canvas.clipPath(mClipPath);
         }
-        int count2 = canvas.save();
-        float iconCenterX =
-                (mFinalDrawableBounds.right - mFinalDrawableBounds.left) / 2f * mIconScale;
-        float iconCenterY =
-                (mFinalDrawableBounds.bottom - mFinalDrawableBounds.top) / 2f * mIconScale;
-        canvas.scale(mIconScale, mIconScale, iconCenterX, iconCenterY);
+        super.draw(canvas);
         if (mBackground != null) {
             mBackground.draw(canvas);
         }
         if (mForeground != null) {
             mForeground.draw(canvas);
         }
-        canvas.restoreToCount(count2);
-        super.draw(canvas);
         if (mTaskViewArtist != null) {
             canvas.saveLayerAlpha(
                     0,
@@ -345,7 +333,7 @@ public class ClipIconView extends View implements ClipPathView {
             canvas.scale(drawScale, drawScale);
             mTaskViewArtist.taskViewDrawCallback.accept(canvas);
         }
-        canvas.restoreToCount(count1);
+        canvas.restoreToCount(count);
     }
 
     void recycle() {

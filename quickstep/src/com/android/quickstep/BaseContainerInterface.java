@@ -34,62 +34,48 @@ import android.view.RemoteAnimationTarget;
 import android.view.View;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Flags;
 import com.android.launcher3.R;
 import com.android.launcher3.statehandlers.DesktopVisibilityController;
 import com.android.launcher3.statemanager.BaseState;
-import com.android.launcher3.statemanager.StatefulContainer;
 import com.android.launcher3.taskbar.TaskbarUIController;
 import com.android.launcher3.util.DisplayController;
-import com.android.launcher3.util.WindowBounds;
 import com.android.launcher3.views.ScrimView;
 import com.android.quickstep.orientation.RecentsPagedOrientationHandler;
+import com.android.quickstep.util.ActivityInitListener;
 import com.android.quickstep.util.AnimatorControllerWithResistance;
-import com.android.quickstep.util.ContextInitListener;
 import com.android.quickstep.views.RecentsView;
 import com.android.quickstep.views.RecentsViewContainer;
 import com.android.systemui.shared.recents.model.ThumbnailData;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_TYPE>,
-        CONTAINER_TYPE extends RecentsViewContainer & StatefulContainer<STATE_TYPE>> {
+        CONTAINER_TYPE extends RecentsViewContainer> {
 
     public boolean rotationSupportedByActivity = false;
-    protected final STATE_TYPE mBackgroundState;
-
-    protected BaseContainerInterface(STATE_TYPE backgroundState) {
-        mBackgroundState = backgroundState;
-    }
-
-    @UiThread
-    @Nullable
-    public abstract <T extends RecentsView<?,?>> T getVisibleRecentsView();
-
-    @UiThread
-    public abstract boolean switchToRecentsIfVisible(Animator.AnimatorListener animatorListener);
 
     @Nullable
     public abstract CONTAINER_TYPE getCreatedContainer();
 
-    @Nullable
-    protected Runnable mOnInitBackgroundStateUICallback = null;
-
     public abstract boolean isInLiveTileMode();
 
     public abstract void onAssistantVisibilityChanged(float assistantVisibility);
+
+    public abstract boolean allowMinimizeSplitScreen();
 
     public abstract boolean isResumed();
 
     public abstract boolean isStarted();
     public abstract boolean deferStartingActivity(RecentsAnimationDeviceState deviceState,
             MotionEvent ev);
+
+    /** @return whether to allow going to All Apps from Overview. */
+    public abstract boolean allowAllAppsFromOverview();
 
     /**
      * Returns the color of the scrim behind overview when at rest in this state.
@@ -105,36 +91,11 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
     @Nullable
     public abstract TaskbarUIController getTaskbarController();
 
-    public interface AnimationFactory {
-
-        void createContainerInterface(long transitionLength);
-
-        /**
-         * @param attached Whether to show RecentsView alongside the app window. If false, recents
-         *                 will be hidden by some property we can animate, e.g. alpha.
-         * @param animate Whether to animate recents to/from its new attached state.
-         * @param updateRunningTaskAlpha Whether to update the running task's attached alpha
-         */
-        default void setRecentsAttachedToAppWindow(
-                boolean attached, boolean animate, boolean updateRunningTaskAlpha) { }
-
-        default boolean isRecentsAttachedToAppWindow() {
-            return false;
-        }
-
-        default boolean hasRecentsEverAttachedToAppWindow() {
-            return false;
-        }
-
-        /** Called when the gesture ends and we know what state it is going towards */
-        default void setEndTarget(GestureState.GestureEndTarget endTarget) { }
-    }
-
-    public abstract BaseContainerInterface.AnimationFactory prepareRecentsUI(
-            boolean activityVisible,
+    public abstract BaseActivityInterface.AnimationFactory prepareRecentsUI(
+            RecentsAnimationDeviceState deviceState, boolean activityVisible,
             Consumer<AnimatorControllerWithResistance> callback);
 
-    public abstract ContextInitListener createActivityInitListener(
+    public abstract ActivityInitListener createActivityInitListener(
             Predicate<Boolean> onInitListener);
     /**
      * Returns the expected STATE_TYPE from the provided GestureEndTarget.
@@ -151,10 +112,11 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
 
     public abstract void onLaunchTaskFailed();
 
-    public abstract void onExitOverview(Runnable exitRunnable);
+    public abstract void onExitOverview(RotationTouchHelper deviceState,
+            Runnable exitRunnable);
 
     /** Called when the animation to home has fully settled. */
-    public void onSwipeUpToHomeComplete() {}
+    public void onSwipeUpToHomeComplete(RecentsAnimationDeviceState deviceState) {}
 
     /**
      * Sets a callback to be run when an activity launch happens while launcher is not yet resumed.
@@ -167,22 +129,16 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
         return false;
     }
 
-    public void runOnInitBackgroundStateUI(Runnable callback) {
-        StatefulContainer container = getCreatedContainer();
-        if (container != null
-                && container.getStateManager().getState() == mBackgroundState) {
-            callback.run();
-            onInitBackgroundStateUI();
-            return;
-        }
-        mOnInitBackgroundStateUICallback = callback;
+    @Nullable
+    public DesktopVisibilityController getDesktopVisibilityController() {
+        return null;
     }
 
     /**
      * Called when the gesture ends and the animation starts towards the given target. Used to add
      * an optional additional animation with the same duration.
      */
-    public @Nullable Animator getParallelAnimationToGestureEndTarget(
+    public @Nullable Animator getParallelAnimationToLauncher(
             GestureState.GestureEndTarget endTarget, long duration,
             RecentsAnimationCallbacks callbacks) {
         if (endTarget == RECENTS) {
@@ -233,9 +189,8 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
         if (endTarget != null) {
             // We were on our way to this state when we got canceled, end there instead.
             startState = stateFromGestureEndTarget(endTarget);
-            final var context = recentsView.getContext();
-            if (DesktopVisibilityController.INSTANCE.get(context)
-                    .isInDesktopModeAndNotInOverview(context.getDisplayId())
+            DesktopVisibilityController controller = getDesktopVisibilityController();
+            if (controller != null && controller.areDesktopTasksVisible()
                     && endTarget == LAST_TASK) {
                 // When we are cancelling the transition and going back to last task, move to
                 // rest state instead when desktop tasks are visible.
@@ -253,7 +208,11 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
     public final void calculateTaskSize(Context context, DeviceProfile dp, Rect outRect,
             RecentsPagedOrientationHandler orientationHandler) {
         if (dp.isTablet) {
-            calculateLargeTileSize(context, dp, outRect);
+            if (Flags.enableGridOnlyOverview()) {
+                calculateGridTaskSize(context, dp, outRect, orientationHandler);
+            } else {
+                calculateFocusTaskSize(context, dp, outRect);
+            }
         } else {
             Resources res = context.getResources();
             float maxScale = res.getFloat(R.dimen.overview_max_scale);
@@ -274,7 +233,24 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
         }
     }
 
-    private void calculateLargeTileSize(Context context, DeviceProfile dp, Rect outRect) {
+    /**
+     * Calculates the taskView size for carousel during app to overview animation on tablets.
+     */
+    public final void calculateCarouselTaskSize(Context context, DeviceProfile dp, Rect outRect,
+            RecentsPagedOrientationHandler orientationHandler) {
+        if (dp.isTablet && dp.isGestureMode) {
+            Resources res = context.getResources();
+            float minScale = res.getFloat(R.dimen.overview_carousel_min_scale);
+            Rect gridRect = new Rect();
+            calculateGridSize(dp, context, gridRect);
+            calculateTaskSizeInternal(context, dp, gridRect, minScale, Gravity.CENTER | Gravity.TOP,
+                    outRect);
+        } else {
+            calculateTaskSize(context, dp, outRect, orientationHandler);
+        }
+    }
+
+    private void calculateFocusTaskSize(Context context, DeviceProfile dp, Rect outRect) {
         Resources res = context.getResources();
         float maxScale = res.getFloat(R.dimen.overview_max_scale);
         Rect gridRect = new Rect();
@@ -293,11 +269,8 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
         } else {
             Rect portraitInsets = dp.getInsets();
             DisplayController displayController = DisplayController.INSTANCE.get(context);
-            @Nullable List<WindowBounds> windowBounds =
-                    displayController.getInfo().getCurrentBounds();
-            Rect deviceRotationInsets = windowBounds != null
-                    ? windowBounds.get(orientationHandler.getRotation()).insets
-                    : new Rect();
+            Rect deviceRotationInsets = displayController.getInfo().getCurrentBounds().get(
+                    orientationHandler.getRotation()).insets;
             // Obtain the landscape/seascape insets, and rotate it to portrait perspective.
             orientationHandler.rotateInsets(deviceRotationInsets, outRect);
             // Then combine with portrait's insets to leave space for status bar/nav bar in
@@ -362,6 +335,12 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
         Rect insets = dp.getInsets();
         int topMargin = dp.overviewTaskThumbnailTopMarginPx;
         int bottomMargin = dp.getOverviewActionsClaimedSpace();
+        if (dp.isTaskbarPresent && Flags.enableGridOnlyOverview()) {
+            topMargin += context.getResources().getDimensionPixelSize(
+                    R.dimen.overview_top_margin_grid_only);
+            bottomMargin += context.getResources().getDimensionPixelSize(
+                    R.dimen.overview_bottom_margin_grid_only);
+        }
         int sideMargin = dp.overviewGridSideMargin;
 
         outRect.set(0, 0, dp.widthPx, dp.heightPx);
@@ -376,7 +355,11 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
             RecentsPagedOrientationHandler orientationHandler) {
         Resources res = context.getResources();
         Rect potentialTaskRect = new Rect();
-        calculateLargeTileSize(context, dp, potentialTaskRect);
+        if (Flags.enableGridOnlyOverview()) {
+            calculateGridSize(dp, context, potentialTaskRect);
+        } else {
+            calculateFocusTaskSize(context, dp, potentialTaskRect);
+        }
 
         float rowHeight = (potentialTaskRect.height() + dp.overviewTaskThumbnailTopMarginPx
                 - dp.overviewRowSpacing) / 2f;
@@ -417,12 +400,5 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
                 Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM,
                 outRect,
                 orientationHandler);
-    }
-
-    protected void onInitBackgroundStateUI() {
-        if (mOnInitBackgroundStateUICallback != null) {
-            mOnInitBackgroundStateUICallback.run();
-            mOnInitBackgroundStateUICallback = null;
-        }
     }
 }

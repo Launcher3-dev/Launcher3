@@ -15,13 +15,14 @@
      limitations under the License.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     android:autoMirrored="true">
     <gradient
         android:type="linear"
         android:angle="0"
         android:startColor="#00000000"
         android:centerX="0.25"
-        android:centerColor="@color/materialColorSurfaceBright"
-        android:endColor="@color/materialColorSurfaceBright" />
+        android:centerColor="@*android:color/system_surface_bright_light"
+        android:endColor="@*android:color/system_surface_bright_light" />
     <corners android:radius="@dimen/dialogCornerRadius" />
 </shape>

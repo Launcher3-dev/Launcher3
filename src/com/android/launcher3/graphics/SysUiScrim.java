@@ -18,6 +18,8 @@ package com.android.launcher3.graphics;
 import static android.graphics.Paint.DITHER_FLAG;
 import static android.graphics.Paint.FILTER_BITMAP_FLAG;
 
+import static com.android.launcher3.config.FeatureFlags.KEYGUARD_ANIMATION;
+
 import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -32,15 +34,14 @@ import android.view.View;
 import androidx.annotation.ColorInt;
 import androidx.annotation.VisibleForTesting;
 
+import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.AnimatedFloat;
-import com.android.launcher3.statemanager.StatefulContainer;
 import com.android.launcher3.testing.shared.ResourceUtils;
 import com.android.launcher3.util.ScreenOnTracker;
 import com.android.launcher3.util.ScreenOnTracker.ScreenOnListener;
 import com.android.launcher3.util.Themes;
-import com.android.launcher3.views.ActivityContext;
 
 /**
  * View scrim which draws behind hotseat and workspace
@@ -85,7 +86,7 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
     private final int mBottomMaskHeight;
 
     private final View mRoot;
-    private final StatefulContainer mContainer;
+    private final BaseDraggingActivity mActivity;
     private final boolean mHideSysUiScrim;
     private boolean mSkipScrimAnimationForTest = false;
 
@@ -95,8 +96,8 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
 
     public SysUiScrim(View view) {
         mRoot = view;
-        mContainer = ActivityContext.lookupContext(view.getContext());
-        DisplayMetrics dm = mContainer.asContext().getResources().getDisplayMetrics();
+        mActivity = BaseDraggingActivity.fromContext(view.getContext());
+        DisplayMetrics dm = mActivity.getResources().getDisplayMetrics();
 
         mTopMaskHeight = ResourceUtils.pxFromDp(TOP_MASK_HEIGHT_DP, dm);
         mBottomMaskHeight = ResourceUtils.pxFromDp(BOTTOM_MASK_HEIGHT_DP, dm);
@@ -110,7 +111,7 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
                 new int[]{0x00FFFFFF, 0x2FFFFFFF},
                 new float[]{0f, 1f});
 
-        if (!mHideSysUiScrim) {
+        if (!KEYGUARD_ANIMATION.get() && !mHideSysUiScrim) {
             view.addOnAttachStateChangeListener(this);
         }
     }
@@ -131,7 +132,7 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
 
                 ObjectAnimator oa = mSysUiAnimMultiplier.animateToValue(1);
                 oa.setDuration(600);
-                oa.setStartDelay(mContainer.getWindow().getTransitionBackgroundFadeDuration());
+                oa.setStartDelay(mActivity.getWindow().getTransitionBackgroundFadeDuration());
                 oa.start();
                 mAnimateScrimOnNextDraw = false;
             }
@@ -167,19 +168,19 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
      * horizontal
      */
     public void onInsetsChanged(Rect insets) {
-        DeviceProfile dp = mContainer.getDeviceProfile();
+        DeviceProfile dp = mActivity.getDeviceProfile();
         mDrawTopScrim = insets.top > 0;
         mDrawBottomScrim = !dp.isVerticalBarLayout() && !dp.isGestureMode && !dp.isTaskbarPresent;
     }
 
     @Override
     public void onViewAttachedToWindow(View view) {
-        ScreenOnTracker.INSTANCE.get(mContainer.asContext()).addListener(mScreenOnListener);
+        ScreenOnTracker.INSTANCE.get(mActivity).addListener(mScreenOnListener);
     }
 
     @Override
     public void onViewDetachedFromWindow(View view) {
-        ScreenOnTracker.INSTANCE.get(mContainer.asContext()).removeListener(mScreenOnListener);
+        ScreenOnTracker.INSTANCE.get(mActivity).removeListener(mScreenOnListener);
     }
 
     /**
@@ -214,7 +215,7 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
     }
 
     private Bitmap createDitheredAlphaMask(int height, @ColorInt int[] colors, float[] positions) {
-        DisplayMetrics dm = mContainer.asContext().getResources().getDisplayMetrics();
+        DisplayMetrics dm = mActivity.getResources().getDisplayMetrics();
         int width = ResourceUtils.pxFromDp(ALPHA_MASK_BITMAP_WIDTH_DP, dm);
         Bitmap dst = Bitmap.createBitmap(width, height, Bitmap.Config.ALPHA_8);
         Canvas c = new Canvas(dst);

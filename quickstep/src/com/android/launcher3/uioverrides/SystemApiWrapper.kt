@@ -23,12 +23,11 @@ import android.content.IIntentReceiver
 import android.content.IIntentSender
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
 import android.os.Bundle
-import android.os.Flags.allowPrivateProfile
+import com.android.wm.shell.Flags2.allowPrivateProfile
 import android.os.IBinder
 import android.os.UserHandle
 import android.os.UserManager
@@ -41,20 +40,15 @@ import com.android.launcher3.Flags.privateSpaceAppInstallerButton
 import com.android.launcher3.Flags.privateSpaceSysAppsSeparation
 import com.android.launcher3.R
 import com.android.launcher3.Utilities
-import com.android.launcher3.dagger.ApplicationContext
-import com.android.launcher3.dagger.LauncherAppSingleton
 import com.android.launcher3.proxy.ProxyActivityStarter
 import com.android.launcher3.util.ApiWrapper
 import com.android.launcher3.util.Executors
 import com.android.launcher3.util.StartActivityParams
 import com.android.launcher3.util.UserIconInfo
 import com.android.quickstep.util.FadeOutRemoteTransition
-import javax.inject.Inject
 
 /** A wrapper for the hidden API calls */
-@LauncherAppSingleton
-open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Context?) :
-    ApiWrapper(context) {
+open class SystemApiWrapper(context: Context?) : ApiWrapper(context) {
 
     override fun getPersons(si: ShortcutInfo) = si.persons ?: Utilities.EMPTY_PERSON_ARRAY
 
@@ -63,7 +57,7 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
 
     override fun createFadeOutAnimOptions(): ActivityOptions =
         ActivityOptions.makeBasic().apply {
-            remoteTransition = RemoteTransition(FadeOutRemoteTransition(), "FadeOut")
+            remoteTransition = RemoteTransition(FadeOutRemoteTransition())
         }
 
     override fun queryAllUsers(): Map<UserHandle, UserIconInfo> {
@@ -82,7 +76,7 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
                             UserManager.USER_TYPE_PROFILE_PRIVATE -> UserIconInfo.TYPE_PRIVATE
                             else -> UserIconInfo.TYPE_MAIN
                         },
-                        userSerialNumber.toLong(),
+                        userSerialNumber.toLong()
                     )
             }
         }
@@ -116,7 +110,7 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
                             )
                             .toBundle()
                     requireActivityResult = false
-                },
+                }
             )
         else super.getAppMarketActivityIntent(packageName, user)
 
@@ -137,20 +131,12 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
                             )
                             .toBundle()
                     requireActivityResult = false
-                },
+                }
             )
         else null
 
     override fun isNonResizeableActivity(lai: LauncherActivityInfo) =
         lai.activityInfo.resizeMode == ActivityInfo.RESIZE_MODE_UNRESIZEABLE
-
-    override fun supportsMultiInstance(lai: LauncherActivityInfo): Boolean {
-        return try {
-            super.supportsMultiInstance(lai) || lai.supportsMultiInstance()
-        } catch (e: Exception) {
-            false
-        }
-    }
 
     /**
      * Starts an Activity which can be used to set this Launcher as the HOME app, via a consent
@@ -174,7 +160,7 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
                             allowlistToken: IBinder?,
                             finishedReceiver: IIntentReceiver?,
                             requiredPermission: String?,
-                            options: Bundle?,
+                            options: Bundle?
                         ) {
                             if (code != -1) {
                                 Executors.MAIN_EXECUTOR.execute {
@@ -182,9 +168,9 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
                                             context,
                                             context.getString(
                                                 R.string.set_default_home_app,
-                                                context.getString(R.string.derived_app_name),
+                                                context.getString(R.string.derived_app_name)
                                             ),
-                                            Toast.LENGTH_LONG,
+                                            Toast.LENGTH_LONG
                                         )
                                         .show()
                                 }
@@ -197,12 +183,4 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
             context.startActivity(ProxyActivityStarter.getLaunchIntent(context, params))
         }
     }
-
-    override fun getApplicationInfoHash(appInfo: ApplicationInfo): String =
-        (appInfo.sourceDir?.hashCode() ?: 0).toString() + " " + appInfo.longVersionCode
-
-    override fun getRoundIconRes(appInfo: ApplicationInfo) = appInfo.roundIconRes
-
-    override fun isFileDrawable(shortcutInfo: ShortcutInfo) =
-        shortcutInfo.hasIconFile() || shortcutInfo.hasIconUri()
 }

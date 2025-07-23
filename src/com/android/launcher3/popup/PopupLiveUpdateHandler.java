@@ -19,8 +19,6 @@ import android.content.Context;
 import android.view.View;
 
 import com.android.launcher3.views.ActivityContext;
-import com.android.launcher3.widget.picker.model.WidgetPickerDataProvider;
-import com.android.launcher3.widget.picker.model.WidgetPickerDataProvider.WidgetPickerDataChangeListener;
 
 /**
  * Utility class to handle updates while the popup is visible (like widgets and
@@ -29,7 +27,7 @@ import com.android.launcher3.widget.picker.model.WidgetPickerDataProvider.Widget
  * @param <T> The activity on which the popup shows
  */
 public abstract class PopupLiveUpdateHandler<T extends Context & ActivityContext> implements
-        WidgetPickerDataChangeListener, View.OnAttachStateChangeListener {
+        PopupDataProvider.PopupDataChangeListener, View.OnAttachStateChangeListener {
 
     protected final T mContext;
     protected final PopupContainerWithArrow<T> mPopupContainerWithArrow;
@@ -42,25 +40,19 @@ public abstract class PopupLiveUpdateHandler<T extends Context & ActivityContext
 
     @Override
     public void onViewAttachedToWindow(View view) {
-        WidgetPickerDataProvider widgetsDataProvider = mContext.getWidgetPickerDataProvider();
+        PopupDataProvider popupDataProvider = mContext.getPopupDataProvider();
 
-        if (widgetsDataProvider != null) {
-            widgetsDataProvider.setChangeListener(this);
+        if (popupDataProvider != null) {
+            popupDataProvider.setChangeListener(this);
         }
     }
 
     @Override
     public void onViewDetachedFromWindow(View view) {
-        WidgetPickerDataProvider widgetsDataProvider = mContext.getWidgetPickerDataProvider();
+        PopupDataProvider popupDataProvider = mContext.getPopupDataProvider();
 
-        if (widgetsDataProvider != null) {
-            widgetsDataProvider.setChangeListener(null);
+        if (popupDataProvider != null) {
+            popupDataProvider.setChangeListener(null);
         }
     }
-
-    @Override
-    public void onWidgetsBound() {} // NO_OP
-
-    @Override
-    public void onRecommendedWidgetsBound() {} // NO_OP
 }

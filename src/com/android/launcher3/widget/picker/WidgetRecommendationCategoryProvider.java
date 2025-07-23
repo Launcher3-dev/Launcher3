@@ -24,7 +24,7 @@ import androidx.annotation.WorkerThread;
 
 import com.android.launcher3.R;
 import com.android.launcher3.model.WidgetItem;
-import com.android.launcher3.util.ApplicationInfoWrapper;
+import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.ResourceBasedOverride;
 
@@ -35,7 +35,19 @@ import com.android.launcher3.util.ResourceBasedOverride;
  * own implementation. Method {@code getWidgetRecommendationCategory} is called per widget to get
  * the category.</p>
  */
-public class WidgetRecommendationCategoryProvider {
+public class WidgetRecommendationCategoryProvider implements ResourceBasedOverride {
+    private static final String TAG = "WidgetRecommendationCategoryProvider";
+
+    /**
+     * Retrieve instance of this object that can be overridden in runtime based on the build
+     * variant of the application.
+     */
+    public static WidgetRecommendationCategoryProvider newInstance(Context context) {
+        Preconditions.assertWorkerThread();
+        return Overrides.getObject(
+                WidgetRecommendationCategoryProvider.class, context.getApplicationContext(),
+                R.string.widget_recommendation_category_provider_class);
+    }
 
     /**
      * Returns a {@link WidgetRecommendationCategory} for the provided widget item that can be used
@@ -50,14 +62,14 @@ public class WidgetRecommendationCategoryProvider {
         // via the overridden WidgetRecommendationCategoryProvider resource.
 
         Preconditions.assertWorkerThread();
-        if (item.widgetInfo != null && item.widgetInfo.getComponent() != null) {
-            ApplicationInfo applicationInfo = new ApplicationInfoWrapper(
-                    context,
-                    item.widgetInfo.getComponent().getPackageName(),
-                    item.widgetInfo.getUser())
-                    .getInfo();
-            if (applicationInfo != null) {
-                return getCategoryFromApplicationCategory(applicationInfo.category);
+        try (PackageManagerHelper pmHelper = new PackageManagerHelper(context)) {
+            if (item.widgetInfo != null && item.widgetInfo.getComponent() != null) {
+                ApplicationInfo applicationInfo = pmHelper.getApplicationInfo(
+                        item.widgetInfo.getComponent().getPackageName(), item.widgetInfo.getUser(),
+                        0 /* flags */);
+                if (applicationInfo != null) {
+                    return getCategoryFromApplicationCategory(applicationInfo.category);
+                }
             }
         }
         return null;

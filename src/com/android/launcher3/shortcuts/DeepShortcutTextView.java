@@ -16,12 +16,9 @@
 
 package com.android.launcher3.shortcuts;
 
-import static com.android.wm.shell.Flags.enableGsf;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -34,7 +31,6 @@ import com.android.launcher3.Utilities;
  * A {@link BubbleTextView} that has the shortcut icon on the left and drag handle on the right.
  */
 public class DeepShortcutTextView extends BubbleTextView {
-    public static final String GOOGLE_SANS_FLEX_LABEL_LARGE = "variable-label-large";
 
     private boolean mShowLoadingState;
     private Drawable mLoadingStatePlaceholder;
@@ -51,9 +47,6 @@ public class DeepShortcutTextView extends BubbleTextView {
     public DeepShortcutTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         showLoadingState(true);
-        if (enableGsf()) {
-            setTypeface(Typeface.create(GOOGLE_SANS_FLEX_LABEL_LARGE, Typeface.NORMAL));
-        }
     }
 
     @Override

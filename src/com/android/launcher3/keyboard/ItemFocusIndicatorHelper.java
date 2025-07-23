@@ -199,10 +199,6 @@ public abstract class ItemFocusIndicatorHelper<T> implements AnimatorUpdateListe
     }
 
     protected void changeFocus(T item, boolean hasFocus) {
-        if (mLastFocusedItem != item && !hasFocus) {
-            return;
-        }
-
         if (hasFocus) {
             endCurrentAnimation();
 

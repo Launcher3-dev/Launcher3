@@ -36,12 +36,13 @@ import com.android.launcher3.R;
 import com.android.launcher3.anim.AnimatedFloat;
 import com.android.launcher3.anim.RevealOutlineAnimation;
 import com.android.launcher3.anim.RoundedRectRevealOutlineProvider;
+import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.Executors;
 import com.android.launcher3.util.MultiPropertyFactory;
 import com.android.launcher3.util.MultiValueAlpha;
 import com.android.quickstep.NavHandle;
+import com.android.systemui.shared.navigationbar.RegionSamplingHelper;
 import com.android.systemui.shared.system.QuickStepContract.SystemUiStateFlags;
-import com.android.wm.shell.shared.handles.RegionSamplingHelper;
 
 import java.io.PrintWriter;
 
@@ -93,7 +94,6 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
     // States that affect whether region sampling is enabled or not
     private boolean mIsStashed;
     private boolean mIsLumaSamplingEnabled;
-    private boolean mIsAppTransitionPending;
     private boolean mTaskbarHidden;
 
     private float mTranslationYForSwipe;
@@ -118,8 +118,7 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
         mControllers = controllers;
         DeviceProfile deviceProfile = mActivity.getDeviceProfile();
         Resources resources = mActivity.getResources();
-        if (mActivity.isPhoneGestureNavMode() || mActivity.isTinyTaskbar()
-                || mActivity.isBubbleBarOnPhone()) {
+        if (mActivity.isPhoneGestureNavMode() || mActivity.isTinyTaskbar()) {
             mTaskbarSize = resources.getDimensionPixelSize(R.dimen.taskbar_phone_size);
             mStashedHandleWidth =
                     resources.getDimensionPixelSize(R.dimen.taskbar_stashed_small_screen);
@@ -192,9 +191,7 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
 
 
     public void onDestroy() {
-        if (mRegionSamplingHelper != null) {
-            mRegionSamplingHelper.stopAndDestroy();
-        }
+        mRegionSamplingHelper.stopAndDestroy();
         mRegionSamplingHelper = null;
     }
 
@@ -212,11 +209,10 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
      * morphs into the size of where the taskbar icons will be.
      */
     public Animator createRevealAnimToIsStashed(boolean isStashed) {
-        Rect visualBounds = mControllers.taskbarViewController
-                .getTransientTaskbarIconLayoutBounds();
+        Rect visualBounds = new Rect(mControllers.taskbarViewController.getIconLayoutBounds());
         float startRadius = mStashedHandleRadius;
 
-        if (mActivity.isTransientTaskbar()) {
+        if (DisplayController.isTransientTaskbar(mActivity)) {
             // Account for the full visual height of the transient taskbar.
             int heightDiff = (mTaskbarSize - visualBounds.height()) / 2;
             visualBounds.top -= heightDiff;
@@ -261,11 +257,6 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
         updateSamplingState();
     }
 
-    public void setIsAppTransitionPending(boolean pending) {
-        mIsAppTransitionPending = pending;
-        updateSamplingState();
-    }
-
     private void updateSamplingState() {
         updateRegionSamplingWindowVisibility();
         if (shouldSample()) {
@@ -277,7 +268,7 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
     }
 
     private boolean shouldSample() {
-        return mIsStashed && mIsLumaSamplingEnabled && !mIsAppTransitionPending;
+        return mIsStashed && mIsLumaSamplingEnabled;
     }
 
     protected void updateStashedHandleHintScale() {

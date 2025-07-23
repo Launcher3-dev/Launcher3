@@ -21,9 +21,7 @@ import static com.android.launcher3.LauncherState.NORMAL;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
-import android.os.Process;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -57,6 +55,8 @@ public class TaplPrivateSpaceTest extends AbstractQuickStepTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        initialize(this);
+
         createAndStartPrivateProfileUser();
 
         mDevice.pressHome();
@@ -75,9 +75,8 @@ public class TaplPrivateSpaceTest extends AbstractQuickStepTest {
     }
 
     private void createAndStartPrivateProfileUser() {
-        int myUserId = Process.myUserHandle().getIdentifier();
-        String createUserOutput = executeShellCommand("pm create-user --profileOf " + myUserId
-                + " --user-type android.os.usertype.profile.PRIVATE " + PRIVATE_PROFILE_NAME);
+        String createUserOutput = executeShellCommand("pm create-user --profileOf 0 --user-type "
+                + "android.os.usertype.profile.PRIVATE " + PRIVATE_PROFILE_NAME);
         updatePrivateProfileSetupSuccessful("pm create-user", createUserOutput);
         String[] tokens = createUserOutput.split("\\s+");
         mProfileUserId = Integer.parseInt(tokens[tokens.length - 1]);
@@ -118,6 +117,7 @@ public class TaplPrivateSpaceTest extends AbstractQuickStepTest {
     }
 
     @Test
+    @ScreenRecordRule.ScreenRecord // b/334946529
     public void testUserInstalledAppIsShownAboveDivider() throws IOException {
         // Ensure that the App is not installed in main user otherwise, it may not be found in
         // PS container.
@@ -142,6 +142,7 @@ public class TaplPrivateSpaceTest extends AbstractQuickStepTest {
     }
 
     @Test
+    @ScreenRecordRule.ScreenRecord // b/334946529
     public void testPrivateSpaceAppLongPressUninstallMenu() throws IOException {
         // Ensure that the App is not installed in main user otherwise, it may not be found in
         // PS container.
@@ -165,8 +166,8 @@ public class TaplPrivateSpaceTest extends AbstractQuickStepTest {
     }
 
     @Test
+    @ScreenRecordRule.ScreenRecord // b/334946529
     public void testPrivateSpaceLockingBehaviour() throws IOException {
-        assumeFalse(mLauncher.isTablet()); // b/367258373
         // Scroll to the bottom of All Apps
         executeOnLauncher(launcher -> launcher.getAppsView().resetAndScrollToPrivateSpaceHeader());
         HomeAllApps homeAllApps = mLauncher.getAllApps();

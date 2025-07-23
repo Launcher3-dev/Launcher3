@@ -57,7 +57,6 @@ open class FloatingAppPairBackground(
 
     private val container: RecentsViewContainer
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     // Animation interpolators
     protected val expandXInterpolator: Interpolator
@@ -106,15 +105,13 @@ open class FloatingAppPairBackground(
             )
 
         // Find device-specific measurements
-        val resources = context.resources
-        deviceCornerRadius = QuickStepContract.getWindowCornerRadius(context)
+        deviceCornerRadius = QuickStepContract.getWindowCornerRadius(container.asContext())
         deviceHalfDividerSize =
-                resources.getDimensionPixelSize(R.dimen.multi_window_task_divider_size) / 2f
+                container.asContext().resources.getDimensionPixelSize(R.dimen.multi_window_task_divider_size) / 2f
         val dividerCenterPos = dividerPos + deviceHalfDividerSize
         desiredSplitRatio =
             if (dp.isLeftRightSplit) dividerCenterPos / dp.widthPx
             else dividerCenterPos / dp.heightPx
-        dividerPaint.color = resources.getColor(R.color.taskbar_background_dark, null /*theme*/)
     }
 
     override fun draw(canvas: Canvas) {
@@ -156,12 +153,8 @@ open class FloatingAppPairBackground(
         val leftSide = RectF(0f, 0f, dividerCenterPos - changingDividerSize, height)
         // The right half of the background image
         val rightSide = RectF(dividerCenterPos + changingDividerSize, 0f, width, height)
-        // Middle part is for divider background
-        val middleRect = RectF(leftSide.right - deviceHalfDividerSize, 0f,
-                rightSide.left + deviceHalfDividerSize, height)
 
         // Draw background
-        canvas.drawRect(middleRect, dividerPaint)
         drawCustomRoundedRect(
             canvas,
             leftSide,
@@ -258,12 +251,8 @@ open class FloatingAppPairBackground(
         val topSide = RectF(0f, 0f, width, dividerCenterPos - changingDividerSize)
         // The bottom half of the background image
         val bottomSide = RectF(0f, dividerCenterPos + changingDividerSize, width, height)
-        // Middle part is for divider background
-        val middleRect = RectF(0f, topSide.bottom - deviceHalfDividerSize,
-                width, bottomSide.top + deviceHalfDividerSize)
 
         // Draw background
-        canvas.drawRect(middleRect, dividerPaint)
         drawCustomRoundedRect(
             canvas,
             topSide,

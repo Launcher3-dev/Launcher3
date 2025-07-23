@@ -131,11 +131,13 @@
             android:writePermission="${applicationId}.permission.WRITE_SETTINGS"
             android:readPermission="${applicationId}.permission.READ_SETTINGS" />
 
-        <!-- The content provider for exposing various launcher grid options. -->
+        <!--
+        The content provider for exposing various launcher grid options.
+        TODO: Add proper permissions
+        -->
         <provider
-            android:name="com.android.launcher3.graphics.LauncherCustomizationProvider"
+            android:name="com.android.launcher3.graphics.GridCustomizationsProvider"
             android:authorities="${applicationId}.grid_control"
-            android:permission="android.permission.BIND_WALLPAPER"
             android:exported="true" />
 
         <!--

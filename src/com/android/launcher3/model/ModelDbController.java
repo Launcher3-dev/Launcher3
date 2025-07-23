@@ -16,33 +16,48 @@
 package com.android.launcher3.model;
 
 import static android.provider.BaseColumns._ID;
+import static android.util.Base64.NO_PADDING;
+import static android.util.Base64.NO_WRAP;
 
-import static com.android.launcher3.LauncherPrefs.DB_FILE;
-import static com.android.launcher3.LauncherPrefs.NO_DB_FILES_RESTORED;
+import static com.android.launcher3.DefaultLayoutParser.RES_PARTNER_DEFAULT_LAYOUT;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE;
 import static com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APP_PAIR;
 import static com.android.launcher3.LauncherSettings.Favorites.TABLE_NAME;
 import static com.android.launcher3.LauncherSettings.Favorites.addTableToDb;
+import static com.android.launcher3.LauncherSettings.Settings.LAYOUT_DIGEST_KEY;
+import static com.android.launcher3.LauncherSettings.Settings.LAYOUT_DIGEST_LABEL;
+import static com.android.launcher3.LauncherSettings.Settings.LAYOUT_DIGEST_TAG;
 import static com.android.launcher3.provider.LauncherDbUtils.tableExists;
 
+import android.app.blob.BlobHandle;
+import android.app.blob.BlobStoreManager;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
+import android.util.Xml;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.android.launcher3.AutoInstallsLayout;
+import com.android.launcher3.AutoInstallsLayout.SourceResources;
 import com.android.launcher3.ConstantItem;
 import com.android.launcher3.DefaultLayoutParser;
 import com.android.launcher3.EncryptionType;
@@ -55,90 +70,56 @@ import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.backuprestore.LauncherRestoreEventLogger;
 import com.android.launcher3.backuprestore.LauncherRestoreEventLogger.RestoreError;
-import com.android.launcher3.dagger.ApplicationContext;
-import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.provider.LauncherDbUtils;
 import com.android.launcher3.provider.LauncherDbUtils.SQLiteTransaction;
 import com.android.launcher3.provider.RestoreDbTask;
+import com.android.launcher3.util.IOUtils;
 import com.android.launcher3.util.IntArray;
+import com.android.launcher3.util.MainThreadInitializedObject.SandboxContext;
+import com.android.launcher3.util.Partner;
 import com.android.launcher3.widget.LauncherWidgetHolder;
 
-import java.io.File;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.xmlpull.v1.XmlPullParser;
 
-import javax.inject.Inject;
+import java.io.InputStream;
+import java.io.StringReader;
 
 /**
  * Utility class which maintains an instance of Launcher database and provides utility methods
  * around it.
  */
-@LauncherAppSingleton
 public class ModelDbController {
-    private static final String TAG = "ModelDbController";
+    private static final String TAG = "LauncherProvider";
 
     private static final String EMPTY_DATABASE_CREATED = "EMPTY_DATABASE_CREATED";
     public static final String EXTRA_DB_NAME = "db_name";
-    public static final String DATA_TYPE_DB_FILE = "database_file";
 
     protected DatabaseHelper mOpenHelper;
 
     private final Context mContext;
-    private final InvariantDeviceProfile mIdp;
-    private final LauncherPrefs mPrefs;
-    private final UserCache mUserCache;
-    private final LayoutParserFactory mLayoutParserFactory;
 
-    @Inject
-    ModelDbController(
-            @ApplicationContext Context context,
-            InvariantDeviceProfile idp,
-            LauncherPrefs prefs,
-            UserCache userCache,
-            LayoutParserFactory layoutParserFactory) {
+    public ModelDbController(Context context) {
         mContext = context;
-        mIdp = idp;
-        mPrefs = prefs;
-        mUserCache = userCache;
-        mLayoutParserFactory = layoutParserFactory;
-    }
-
-    private void printDBs(String prefix) {
-        try {
-            File directory = new File(mContext.getDatabasePath(mIdp.dbFile).getParent());
-            if (directory.exists()) {
-                for (File file : directory.listFiles()) {
-                    Log.d("b/353505773", prefix + "Database file: " + file.getName());
-                }
-            } else {
-                Log.d("b/353505773", prefix + "No files found in the database directory");
-            }
-        } catch (Exception e) {
-            Log.e("b/353505773", prefix + e.getMessage());
-        }
     }
 
     private synchronized void createDbIfNotExists() {
         if (mOpenHelper == null) {
-            String dbFile = mPrefs.get(DB_FILE);
-            if (dbFile.isEmpty()) {
-                dbFile = mIdp.dbFile;
-            }
-            mOpenHelper = createDatabaseHelper(false /* forMigration */, dbFile);
-            printDBs("before: ");
+            mOpenHelper = createDatabaseHelper(false /* forMigration */);
             RestoreDbTask.restoreIfNeeded(mContext, this);
-            printDBs("after: ");
         }
     }
 
-    protected DatabaseHelper createDatabaseHelper(boolean forMigration, String dbFile) {
+    protected DatabaseHelper createDatabaseHelper(boolean forMigration) {
+        boolean isSandbox = mContext instanceof SandboxContext;
+        String dbName = isSandbox ? null : InvariantDeviceProfile.INSTANCE.get(mContext).dbFile;
+
         // Set the flag for empty DB
         Runnable onEmptyDbCreateCallback = forMigration ? () -> { }
-                : () -> mPrefs.putSync(getEmptyDbCreatedKey(dbFile).to(true));
+                : () -> LauncherPrefs.get(mContext).putSync(getEmptyDbCreatedKey(dbName).to(true));
 
-        DatabaseHelper databaseHelper = new DatabaseHelper(mContext, dbFile,
+        DatabaseHelper databaseHelper = new DatabaseHelper(mContext, dbName,
                 this::getSerialNumberForUser, onEmptyDbCreateCallback);
         // Table creation sometimes fails silently, which leads to a crash loop.
         // This way, we will try to create a table every time after crash, so the device
@@ -161,12 +142,12 @@ public class ModelDbController {
      * Refer {@link SQLiteDatabase#query}
      */
     @WorkerThread
-    public Cursor query(String[] projection, String selection,
+    public Cursor query(String table, String[] projection, String selection,
             String[] selectionArgs, String sortOrder) {
         createDbIfNotExists();
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         Cursor result = db.query(
-                TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                table, projection, selection, selectionArgs, null, null, sortOrder);
 
         final Bundle extra = new Bundle();
         extra.putString(EXTRA_DB_NAME, mOpenHelper.getDatabaseName());
@@ -178,12 +159,12 @@ public class ModelDbController {
      * Refer {@link SQLiteDatabase#insert(String, String, ContentValues)}
      */
     @WorkerThread
-    public int insert(ContentValues initialValues) {
+    public int insert(String table, ContentValues initialValues) {
         createDbIfNotExists();
 
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         addModifiedTime(initialValues);
-        int rowId = mOpenHelper.dbInsertAndCheck(db, TABLE_NAME, initialValues);
+        int rowId = mOpenHelper.dbInsertAndCheck(db, table, initialValues);
         if (rowId >= 0) {
             onAddOrDeleteOp(db);
         }
@@ -194,11 +175,11 @@ public class ModelDbController {
      * Refer {@link SQLiteDatabase#delete(String, String, String[])}
      */
     @WorkerThread
-    public int delete(String selection, String[] selectionArgs) {
+    public int delete(String table, String selection, String[] selectionArgs) {
         createDbIfNotExists();
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-        int count = db.delete(TABLE_NAME, selection, selectionArgs);
+        int count = db.delete(table, selection, selectionArgs);
         if (count > 0) {
             onAddOrDeleteOp(db);
         }
@@ -209,12 +190,14 @@ public class ModelDbController {
      * Refer {@link SQLiteDatabase#update(String, ContentValues, String, String[])}
      */
     @WorkerThread
-    public int update(ContentValues values, String selection, String[] selectionArgs) {
+    public int update(String table, ContentValues values,
+            String selection, String[] selectionArgs) {
         createDbIfNotExists();
 
         addModifiedTime(values);
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
-        return db.update(TABLE_NAME, values, selection, selectionArgs);
+        int count = db.update(table, values, selection, selectionArgs);
+        return count;
     }
 
     /**
@@ -251,7 +234,7 @@ public class ModelDbController {
     public void createEmptyDB() {
         createDbIfNotExists();
         mOpenHelper.createEmptyDB(mOpenHelper.getWritableDatabase());
-        mPrefs.putSync(getEmptyDbCreatedKey().to(true));
+        LauncherPrefs.get(mContext).putSync(getEmptyDbCreatedKey().to(true));
     }
 
     /**
@@ -282,130 +265,23 @@ public class ModelDbController {
                 mOpenHelper.getReadableDatabase(), Favorites.HYBRID_HOTSEAT_BACKUP_TABLE);
     }
 
-    /**
-     * Resets the launcher DB if we should reset it.
-     */
-    public void resetLauncherDb(@Nullable LauncherRestoreEventLogger restoreEventLogger) {
-        if (restoreEventLogger != null) {
-            sendMetricsForFailedMigration(restoreEventLogger, getDb());
-        }
-        FileLog.d(TAG, "resetLauncherDb: Migration failed: resetting launcher database");
-        createEmptyDB();
-        mPrefs.putSync(getEmptyDbCreatedKey(mOpenHelper.getDatabaseName()).to(true));
-
-        // Write the grid state to avoid another migration
-        new DeviceGridState(mIdp).writeToPrefs(mContext);
-    }
-
-    /**
-     * Determines if we should reset the DB.
-     */
-    private boolean shouldResetDb() {
-        if (isThereExistingDb()) {
-            return true;
-        }
-        if (!isGridMigrationNecessary()) {
-            return false;
-        }
-        if (isCurrentDbSameAsTarget()) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isThereExistingDb() {
-        if (mPrefs.get(getEmptyDbCreatedKey())) {
-            // If we already have a new DB, ignore migration
-            FileLog.d(TAG, "isThereExistingDb: new DB already created, skipping migration");
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isGridMigrationNecessary() {
-        if (GridSizeMigrationDBController.needsToMigrate(mContext, mIdp)) {
-            return true;
-        }
-        FileLog.d(TAG, "isGridMigrationNecessary: no grid migration needed");
-        return false;
-    }
-
-    private boolean isCurrentDbSameAsTarget() {
-        String targetDbName = new DeviceGridState(mIdp).getDbFile();
-        if (TextUtils.equals(targetDbName, mOpenHelper.getDatabaseName())) {
-            FileLog.e(TAG, "isCurrentDbSameAsTarget: target db is same as current"
-                    + " current db: " + mOpenHelper.getDatabaseName()
-                    + " target db: " + targetDbName);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Migrates the DB. If the migration failed, it clears the DB.
-     */
-    public void attemptMigrateDb(LauncherRestoreEventLogger restoreEventLogger,
-            ModelDelegate modelDelegate) throws Exception {
-        createDbIfNotExists();
-        if (shouldResetDb()) {
-            resetLauncherDb(restoreEventLogger);
-            return;
-        }
-
-        DatabaseHelper oldHelper = mOpenHelper;
-
-        // We save the existing db's before creating the destination db helper so we know what logic
-        // to run in grid migration based on if that grid already existed before migration or not.
-        List<String> existingDBs = LauncherFiles.GRID_DB_FILES.stream()
-                .filter(dbName -> mContext.getDatabasePath(dbName).exists())
-                .collect(Collectors.toList());
-
-        mOpenHelper = createDatabaseHelper(true, new DeviceGridState(mIdp).getDbFile());
-        try {
-            // This is the current grid we have, given by the mContext
-            DeviceGridState srcDeviceState = new DeviceGridState(mContext);
-            // This is the state we want to migrate to that is given by the idp
-            DeviceGridState destDeviceState = new DeviceGridState(mIdp);
-
-            boolean isDestNewDb = !existingDBs.contains(destDeviceState.getDbFile());
-            GridSizeMigrationLogic gridSizeMigrationLogic = new GridSizeMigrationLogic();
-            gridSizeMigrationLogic.migrateGrid(mContext, srcDeviceState, destDeviceState,
-                    mOpenHelper, oldHelper.getWritableDatabase(), isDestNewDb, modelDelegate);
-        } catch (Exception e) {
-            resetLauncherDb(restoreEventLogger);
-            throw new Exception("attemptMigrateDb: Failed to migrate grid", e);
-        } finally {
-            if (mOpenHelper != oldHelper) {
-                oldHelper.close();
-            }
-        }
-    }
 
     /**
      * Migrates the DB if needed. If the migration failed, it clears the DB.
      */
-    public void tryMigrateDB(@Nullable LauncherRestoreEventLogger restoreEventLogger,
-            ModelDelegate modelDelegate) {
-        if (!migrateGridIfNeeded(modelDelegate)) {
+    public void tryMigrateDB(@Nullable LauncherRestoreEventLogger restoreEventLogger) {
+
+        if (!migrateGridIfNeeded()) {
             if (restoreEventLogger != null) {
-                if (mPrefs.get(NO_DB_FILES_RESTORED)) {
-                    restoreEventLogger.logLauncherItemsRestoreFailed(DATA_TYPE_DB_FILE, 1,
-                            RestoreError.DATABASE_FILE_NOT_RESTORED);
-                    mPrefs.put(NO_DB_FILES_RESTORED, false);
-                    FileLog.d(TAG, "There is no data to migrate: resetting launcher database");
-                } else {
-                    restoreEventLogger.logLauncherItemsRestored(DATA_TYPE_DB_FILE, 1);
-                    sendMetricsForFailedMigration(restoreEventLogger, getDb());
-                }
+                sendMetricsForFailedMigration(restoreEventLogger, getDb());
             }
-            FileLog.d(TAG, "tryMigrateDB: Migration failed: resetting launcher database");
+            FileLog.d(TAG, "Migration failed: resetting launcher database");
             createEmptyDB();
-            mPrefs.putSync(getEmptyDbCreatedKey(mOpenHelper.getDatabaseName()).to(true));
+            LauncherPrefs.get(mContext).putSync(
+                    getEmptyDbCreatedKey(mOpenHelper.getDatabaseName()).to(true));
 
             // Write the grid state to avoid another migration
-            new DeviceGridState(mIdp).writeToPrefs(mContext);
-        } else if (restoreEventLogger != null) {
-            restoreEventLogger.logLauncherItemsRestored(DATA_TYPE_DB_FILE, 1);
+            new DeviceGridState(LauncherAppState.getIDP(mContext)).writeToPrefs(mContext);
         }
     }
 
@@ -415,42 +291,35 @@ public class ModelDbController {
      * @return true if migration was success or ignored, false if migration failed
      * and the DB should be reset.
      */
-    private boolean migrateGridIfNeeded(ModelDelegate modelDelegate) {
+    private boolean migrateGridIfNeeded() {
         createDbIfNotExists();
-        if (mPrefs.get(getEmptyDbCreatedKey())) {
+        if (LauncherPrefs.get(mContext).get(getEmptyDbCreatedKey())) {
             // If we have already create a new DB, ignore migration
-            FileLog.d(TAG, "migrateGridIfNeeded: new DB already created, skipping migration");
+            Log.d(TAG, "migrateGridIfNeeded: new DB already created, skipping migration");
             return false;
         }
-        if (!GridSizeMigrationDBController.needsToMigrate(mContext, mIdp)) {
-            FileLog.d(TAG, "migrateGridIfNeeded: no grid migration needed");
+        InvariantDeviceProfile idp = LauncherAppState.getIDP(mContext);
+        if (!GridSizeMigrationUtil.needsToMigrate(mContext, idp)) {
+            Log.d(TAG, "migrateGridIfNeeded: no grid migration needed");
             return true;
         }
-        String targetDbName = new DeviceGridState(mIdp).getDbFile();
+        String targetDbName = new DeviceGridState(idp).getDbFile();
         if (TextUtils.equals(targetDbName, mOpenHelper.getDatabaseName())) {
-            FileLog.e(TAG, "migrateGridIfNeeded: target db is same as current"
-                    + " current db: " + mOpenHelper.getDatabaseName()
-                    + " target db: " + targetDbName);
+            Log.e(TAG, "migrateGridIfNeeded: target db is same as current: " + targetDbName);
             return false;
         }
         DatabaseHelper oldHelper = mOpenHelper;
-        // We save the existing db's before creating the destination db helper so we know what logic
-        // to run in grid migration based on if that grid already existed before migration or not.
-        List<String> existingDBs = LauncherFiles.GRID_DB_FILES.stream()
-                .filter(dbName -> mContext.getDatabasePath(dbName).exists())
-                .collect(Collectors.toList());
-        mOpenHelper = createDatabaseHelper(true /* forMigration */, targetDbName);
+        mOpenHelper = (mContext instanceof SandboxContext) ? oldHelper
+                : createDatabaseHelper(true /* forMigration */);
         try {
             // This is the current grid we have, given by the mContext
             DeviceGridState srcDeviceState = new DeviceGridState(mContext);
             // This is the state we want to migrate to that is given by the idp
-            DeviceGridState destDeviceState = new DeviceGridState(mIdp);
-            boolean isDestNewDb = !existingDBs.contains(destDeviceState.getDbFile());
-            return GridSizeMigrationDBController.migrateGridIfNeeded(mContext, srcDeviceState,
-                    destDeviceState, mOpenHelper, oldHelper.getWritableDatabase(), isDestNewDb,
-                    modelDelegate);
+            DeviceGridState destDeviceState = new DeviceGridState(idp);
+            return GridSizeMigrationUtil.migrateGridIfNeeded(mContext, srcDeviceState,
+                    destDeviceState, mOpenHelper, oldHelper.getWritableDatabase());
         } catch (Exception e) {
-            FileLog.e(TAG, "migrateGridIfNeeded: Failed to migrate grid", e);
+            FileLog.e(TAG, "Failed to migrate grid", e);
             return false;
         } finally {
             if (mOpenHelper != oldHelper) {
@@ -593,7 +462,7 @@ public class ModelDbController {
     }
 
     private void clearFlagEmptyDbCreated() {
-        mPrefs.removeSync(getEmptyDbCreatedKey());
+        LauncherPrefs.get(mContext).removeSync(getEmptyDbCreatedKey());
     }
 
     /**
@@ -607,13 +476,25 @@ public class ModelDbController {
     public synchronized void loadDefaultFavoritesIfNecessary() {
         createDbIfNotExists();
 
-        if (mPrefs.get(getEmptyDbCreatedKey())) {
+        if (LauncherPrefs.get(mContext).get(getEmptyDbCreatedKey())) {
             Log.d(TAG, "loading default workspace");
 
             LauncherWidgetHolder widgetHolder = mOpenHelper.newLauncherWidgetHolder();
             try {
-                AutoInstallsLayout loader =
-                        mLayoutParserFactory.createExternalLayoutParser(widgetHolder, mOpenHelper);
+                AutoInstallsLayout loader = createWorkspaceLoaderFromAppRestriction(widgetHolder);
+                if (loader == null) {
+                    loader = AutoInstallsLayout.get(mContext, widgetHolder, mOpenHelper);
+                }
+                if (loader == null) {
+                    final Partner partner = Partner.get(mContext.getPackageManager());
+                    if (partner != null) {
+                        int workspaceResId = partner.getXmlResId(RES_PARTNER_DEFAULT_LAYOUT);
+                        if (workspaceResId != 0) {
+                            loader = new DefaultLayoutParser(mContext, widgetHolder,
+                                    mOpenHelper, partner.getResources(), workspaceResId);
+                        }
+                    }
+                }
 
                 final boolean usingExternallyProvidedLayout = loader != null;
                 if (loader == null) {
@@ -638,6 +519,62 @@ public class ModelDbController {
         }
     }
 
+    /**
+     * Creates workspace loader from an XML resource listed in the app restrictions.
+     *
+     * @return the loader if the restrictions are set and the resource exists; null otherwise.
+     */
+    private AutoInstallsLayout createWorkspaceLoaderFromAppRestriction(
+            LauncherWidgetHolder widgetHolder) {
+        ContentResolver cr = mContext.getContentResolver();
+        String blobHandlerDigest = Settings.Secure.getString(cr, LAYOUT_DIGEST_KEY);
+        if (!TextUtils.isEmpty(blobHandlerDigest)) {
+            BlobStoreManager blobManager = mContext.getSystemService(BlobStoreManager.class);
+            try (InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(
+                    blobManager.openBlob(BlobHandle.createWithSha256(
+                            Base64.decode(blobHandlerDigest, NO_WRAP | NO_PADDING),
+                            LAYOUT_DIGEST_LABEL, 0, LAYOUT_DIGEST_TAG)))) {
+                return getAutoInstallsLayoutFromIS(in, widgetHolder, new SourceResources() { });
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting layout from blob handle" , e);
+                return null;
+            }
+        }
+
+        String authority = Settings.Secure.getString(cr, "launcher3.layout.provider");
+        if (TextUtils.isEmpty(authority)) {
+            return null;
+        }
+
+        PackageManager pm = mContext.getPackageManager();
+        ProviderInfo pi = pm.resolveContentProvider(authority, 0);
+        if (pi == null) {
+            Log.e(TAG, "No provider found for authority " + authority);
+            return null;
+        }
+        Uri uri = getLayoutUri(authority, mContext);
+        try (InputStream in = cr.openInputStream(uri)) {
+            Log.d(TAG, "Loading layout from " + authority);
+
+            Resources res = pm.getResourcesForApplication(pi.applicationInfo);
+            return getAutoInstallsLayoutFromIS(in, widgetHolder, SourceResources.wrap(res));
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting layout stream from: " + authority , e);
+            return null;
+        }
+    }
+
+    private AutoInstallsLayout getAutoInstallsLayoutFromIS(InputStream in,
+            LauncherWidgetHolder widgetHolder, SourceResources res) throws Exception {
+        // Read the full xml so that we fail early in case of any IO error.
+        String layout = new String(IOUtils.toByteArray(in));
+        XmlPullParser parser = Xml.newPullParser();
+        parser.setInput(new StringReader(layout));
+
+        return new AutoInstallsLayout(mContext, widgetHolder, mOpenHelper, res,
+                () -> parser, AutoInstallsLayout.TAG_WORKSPACE);
+    }
+
     public static Uri getLayoutUri(String authority, Context ctx) {
         InvariantDeviceProfile grid = LauncherAppState.getIDP(ctx);
         return new Uri.Builder().scheme("content").authority(authority).path("launcher_layout")
@@ -649,9 +586,10 @@ public class ModelDbController {
     }
 
     private DefaultLayoutParser getDefaultLayoutParser(LauncherWidgetHolder widgetHolder) {
-        int defaultLayout = mIdp.demoModeLayoutId != 0
+        InvariantDeviceProfile idp = LauncherAppState.getIDP(mContext);
+        int defaultLayout = idp.demoModeLayoutId != 0
                 && mContext.getSystemService(UserManager.class).isDemoUser()
-                ? mIdp.demoModeLayoutId : mIdp.defaultLayoutId;
+                ? idp.demoModeLayoutId : idp.defaultLayoutId;
 
         return new DefaultLayoutParser(mContext, widgetHolder,
                 mOpenHelper, mContext.getResources(), defaultLayout);
@@ -668,6 +606,10 @@ public class ModelDbController {
      * string will be "EMPTY_DATABASE_CREATED@minimal.db".
      */
     private ConstantItem<Boolean> getEmptyDbCreatedKey(String dbName) {
+        if (mContext instanceof SandboxContext) {
+            return LauncherPrefs.nonRestorableItem(EMPTY_DATABASE_CREATED,
+                    false /* default value */, EncryptionType.ENCRYPTED);
+        }
         String key = TextUtils.equals(dbName, LauncherFiles.LAUNCHER_DB)
                 ? EMPTY_DATABASE_CREATED : EMPTY_DATABASE_CREATED + "@" + dbName;
         return LauncherPrefs.backedUpItem(key, false /* default value */, EncryptionType.ENCRYPTED);
@@ -677,6 +619,6 @@ public class ModelDbController {
      * Returns the serial number for the provided user
      */
     public long getSerialNumberForUser(UserHandle user) {
-        return mUserCache.getSerialNumberForUser(user);
+        return UserCache.INSTANCE.get(mContext).getSerialNumberForUser(user);
     }
 }

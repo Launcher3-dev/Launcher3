@@ -18,6 +18,7 @@ package com.android.launcher3.folder;
 
 import static com.android.app.animation.Interpolators.ACCELERATE_DECELERATE;
 import static com.android.app.animation.Interpolators.EMPHASIZED_DECELERATE;
+import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.ICON_OVERLAP_FACTOR;
 import static com.android.launcher3.icons.GraphicsUtils.setColorAlphaBound;
 
 import android.animation.Animator;
@@ -47,8 +48,8 @@ import com.android.launcher3.CellLayout;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.celllayout.DelegatedCellDrawing;
-import com.android.launcher3.graphics.ShapeDelegate;
-import com.android.launcher3.graphics.ThemeManager;
+import com.android.launcher3.graphics.IconShape;
+import com.android.launcher3.graphics.IconShape.ShapeDelegate;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 
@@ -260,7 +261,7 @@ public class PreviewBackground extends DelegatedCellDrawing {
     }
 
     private ShapeDelegate getShape() {
-        return ThemeManager.INSTANCE.get(mContext).getFolderShape();
+        return IconShape.INSTANCE.get(mContext).getShape();
     }
 
     public void drawShadow(Canvas canvas) {
@@ -372,7 +373,7 @@ public class PreviewBackground extends DelegatedCellDrawing {
 
     public Path getClipPath() {
         mPath.reset();
-        float radius = getScaledRadius() * ClippedFolderIconLayoutRule.getIconOverlapFactor();
+        float radius = getScaledRadius() * ICON_OVERLAP_FACTOR;
         // Find the difference in radius so that the clip path remains centered.
         float radiusDifference = radius - getRadius();
         float offsetX = basePreviewOffsetX - radiusDifference;

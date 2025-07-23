@@ -31,7 +31,7 @@ import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 
 import androidx.annotation.ColorInt;
-import androidx.annotation.VisibleForTesting;
+import androidx.core.content.ContextCompat;
 
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
@@ -84,9 +84,10 @@ public class AppsDividerView extends View implements FloatingHeaderRow {
                 getResources().getDimensionPixelSize(R.dimen.all_apps_divider_height)
         };
 
-        mStrokeColor = context.getColor(R.color.materialColorOutlineVariant);
+        mStrokeColor = ContextCompat.getColor(context, R.color.material_color_outline_variant);
 
-        mAllAppsLabelTextColor = context.getColor(R.color.materialColorOnSurfaceVariant);
+        mAllAppsLabelTextColor = ContextCompat.getColor(context,
+                R.color.material_color_on_surface_variant);
 
         mAccessibilityManager = AccessibilityManager.getInstance(context);
         setShowAllAppsLabel(!ALL_APPS_VISITED_COUNT.hasReachedMax(context));
@@ -252,10 +253,5 @@ public class AppsDividerView extends View implements FloatingHeaderRow {
     @Override
     public View getFocusedChild() {
         return null;
-    }
-
-    @VisibleForTesting
-    public DividerType getDividerType() {
-        return mDividerType;
     }
 }

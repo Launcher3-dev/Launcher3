@@ -15,12 +15,16 @@
  */
 package com.android.quickstep;
 
+import static com.android.quickstep.TaskbarModeSwitchRule.Mode.PERSISTENT;
+
 import android.graphics.Rect;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.launcher3.ui.PortraitLandscapeRunner.PortraitLandscape;
 import com.android.quickstep.NavigationModeSwitchRule.NavigationModeSwitch;
+import com.android.quickstep.TaskbarModeSwitchRule.TaskbarModeSwitch;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,6 +35,8 @@ import org.junit.runner.RunWith;
 public class TaplTestsPersistentTaskbar extends AbstractTaplTestsTaskbar {
 
     @Test
+    @TaskbarModeSwitch(mode = PERSISTENT)
+    @PortraitLandscape
     @NavigationModeSwitch
     public void testTaskbarFillsWidth() {
         // Width check is performed inside TAPL whenever getTaskbar() is called.

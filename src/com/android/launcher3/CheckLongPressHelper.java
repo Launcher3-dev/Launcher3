@@ -151,8 +151,6 @@ public class CheckLongPressHelper {
                 handled = mView.performLongClick();
             }
             if (handled) {
-                // Cancel any default long-press action on the view
-                mView.cancelLongPress();
                 mView.setPressed(false);
                 mHasPerformedLongPress = true;
             }

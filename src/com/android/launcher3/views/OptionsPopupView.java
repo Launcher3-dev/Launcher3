@@ -15,11 +15,12 @@
  */
 package com.android.launcher3.views;
 
+import static androidx.core.content.ContextCompat.getColorStateList;
+
 import static com.android.launcher3.BuildConfig.WIDGETS_ENABLED;
 import static com.android.launcher3.LauncherState.EDIT_MODE;
 import static com.android.launcher3.config.FeatureFlags.MULTI_SELECT_EDIT_MODE;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.IGNORE;
-import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALL_APPS_TAP_OR_LONGPRESS;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WIDGETSTRAY_BUTTON_TAP_OR_LONGPRESS;
 
@@ -146,7 +147,8 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
 
     @Override
     public void assignMarginsAndBackgrounds(ViewGroup viewGroup) {
-        assignMarginsAndBackgrounds(viewGroup, mColors[0]);
+        assignMarginsAndBackgrounds(viewGroup,
+                getColorStateList(getContext(), mColorIds[0]).getDefaultColor());
         // last shortcut doesn't need bottom margin
         final int count = viewGroup.getChildCount() - 1;
         for (int i = 0; i < count; i++) {
@@ -220,30 +222,11 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
                     OptionsPopupView::enterHomeGardening));
         }
         options.add(new OptionItem(launcher,
-                R.string.all_apps_button_label,
-                R.drawable.ic_apps,
-                LAUNCHER_ALL_APPS_TAP_OR_LONGPRESS,
-                OptionsPopupView::enterAllApps));
-        options.add(new OptionItem(launcher,
                 R.string.settings_button_text,
                 R.drawable.ic_setting,
                 LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS,
                 OptionsPopupView::startSettings));
         return options;
-    }
-
-    /**
-     * Used by the options to open All Apps, uses an intent as to not tie the implementation of
-     * opening All Apps with OptionsPopup, instead it uses the public API to open All Apps.
-     */
-    public static boolean enterAllApps(View view) {
-        Launcher launcher = Launcher.getLauncher(view.getContext());
-        launcher.startActivity(
-                new Intent(Intent.ACTION_ALL_APPS)
-                .setComponent(launcher.getComponentName())
-                .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        );
-        return true;
     }
 
     private static boolean enterHomeGardening(View view) {
