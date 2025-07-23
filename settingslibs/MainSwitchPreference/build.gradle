@@ -49,4 +49,5 @@ dependencies {
     implementation 'androidx.core:core-animation:1.0.0'
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'androidx.core:core-ktx:1.16.0'
+    implementation project(':settingstheme')
 }

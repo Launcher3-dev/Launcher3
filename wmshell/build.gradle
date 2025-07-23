@@ -33,6 +33,8 @@ android {
 
 dependencies {
     implementation project(':androidx-lib')
+    implementation project(':wmshell-shared')
+    implementation "androidx.animation:animation:1.0.0"
 }
 
 addFrameworkJar('framework-15.jar')

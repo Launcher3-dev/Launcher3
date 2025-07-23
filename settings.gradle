@@ -10,6 +10,9 @@ project(':msdllib').projectDir = new File(rootDir, 'msdllib')
 include ':wmshell'
 project(':wmshell').projectDir = new File(rootDir, 'wmshell')
 
+include ':wmshell-shared'
+project(':wmshell-shared').projectDir = new File(rootDir, 'wmshell/shared')
+
 include ':systemuishared'
 project(':systemuishared').projectDir = new File(rootDir, 'systemui/shared')
 
@@ -42,6 +45,9 @@ project(':animationlib').projectDir = new File(rootDir, 'animationlib')
 
 include ':switchpreference'
 project(':switchpreference').projectDir = new File(rootDir, 'settingslibs/MainSwitchPreference')
+
+include ':settingstheme'
+project(':settingstheme').projectDir = new File(rootDir, 'settingslibs/SettingsTheme')
 
 //include ':SharedLibWrapper'
 //project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')
