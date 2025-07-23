@@ -255,6 +255,7 @@ dependencies {
     implementation project(':msdllib')
     implementation project(':switchpreference')
     withQuickstepImplementation project(':wmshell')
+    withQuickstepImplementation project(':wmshell-shared')
     withQuickstepImplementation project(':flags')
 //    implementation project(':UiTestsLibLauncher')
 //    withQuickstepImplementation project(':SharedLibWrapper')
