@@ -27,54 +27,6 @@
 ## 源码参考
 https://cs.android.com/android/platform/superproject/+/master:packages/apps/Launcher3/
 
-## android.jar
-> 替换https://github.com/Reginer/aosp-android-jar中的对应的android.jar，可以使不能读取的api读取到。
-
-## 依赖库
-### wmshell 
-> // frameworks/base/libs/WindowManager/Shell
-
-### systemui
-> // frameworks/base/libs/systemui
-> aconfig/
-ambientlib/
-animationlib/
-compilelib/
-contextualeducationlib/
-displaylib/
-iconloaderlib/
-mechanics/
-monet/
-motiontoollib/
-msdllib/
-toruslib/
-tracinglib/
-viewcapturelib/
-weathereffects/
-.gitignore
-Android.bp
-PREUPLOAD.cfg
-
-
-### frameworks/base/libs
-> // frameworks/base/libs
->
-> androidfw/
-> appfunctions/
-> dream/
-> hostgraphics/
-> hwui/
-> incident/
-> input/
-> nativehelper_jvm/
-> protoutil/
-> securebox/
-> services/
-> storage/
-> tracingproxy/
-> usb/
-> WindowManager/
-
 ## 教程
 注：本教程是基于Android6.0的Launcher3讲解的，最新版与现在版本差异较大，我尽量在关键位置添加相应的注释，方便大家修改。
 #### 一.[墨香带你学Launcher之（一）-概述](http://www.codemx.cn/2016/07/30/Launcher01/)
