@@ -5,7 +5,7 @@
 * https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/heads/android16-s2-release
 
 ## 说明
-目前只支持withoutQuickstep编译
+目前已支持withQuickstep编译
 
 ## 主要分支
 
