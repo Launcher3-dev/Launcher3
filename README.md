@@ -35,45 +35,46 @@ https://cs.android.com/android/platform/superproject/+/master:packages/apps/Laun
 > // frameworks/base/libs/WindowManager/Shell
 
 ### systemui
-> // frameworks/base/libs/systemui
-> aconfig/
-ambientlib/
-animationlib/
-compilelib/
-contextualeducationlib/
-displaylib/
-iconloaderlib/
-mechanics/
-monet/
-motiontoollib/
-msdllib/
-toruslib/
-tracinglib/
-viewcapturelib/
-weathereffects/
-.gitignore
-Android.bp
-PREUPLOAD.cfg
+// https://android.googlesource.com/platform/frameworks/libs/systemui/+/refs/heads/android16-s2-release
+// frameworks/libs/systemui
+* aconfig/
+* ambientlib/
+* animationlib/
+* compilelib/
+* contextualeducationlib/
+* displaylib/
+* iconloaderlib/
+* mechanics/
+* monet/
+* motiontoollib/
+* msdllib/
+* toruslib/
+* tracinglib/
+* viewcapturelib/
+* weathereffects/
+* .gitignore
+* Android.bp
+* PREUPLOAD.cfg
 
 
 ### frameworks/base/libs
-> // frameworks/base/libs
->
-> androidfw/
-> appfunctions/
-> dream/
-> hostgraphics/
-> hwui/
-> incident/
-> input/
-> nativehelper_jvm/
-> protoutil/
-> securebox/
-> services/
-> storage/
-> tracingproxy/
-> usb/
-> WindowManager/
+// https://android.googlesource.com/platform/frameworks/base/+/refs/heads/android16-s2-release/libs/
+// frameworks/base/libs
+* androidfw/
+* appfunctions/
+* dream/
+* hostgraphics/
+* hwui/
+* incident/
+* input/
+* nativehelper_jvm/
+* protoutil/
+* securebox/
+* services/
+* storage/
+* tracingproxy/
+* usb/
+* WindowManager/
 
 ## 教程
 注：本教程是基于Android6.0的Launcher3讲解的，最新版与现在版本差异较大，我尽量在关键位置添加相应的注释，方便大家修改。
