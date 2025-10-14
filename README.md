@@ -1,11 +1,13 @@
 # Launcher3
 
-## 更新：20250723
+## 更新：20251014
 * android16-s2-release
 * https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/heads/android16-s2-release
 
 ## 说明
-目前已支持withQuickstep编译
+目前支持编译：
+AospWithQuickstep
+L3goWithQuickstep
 
 ## 主要分支
 
