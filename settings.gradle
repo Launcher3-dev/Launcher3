@@ -1,57 +1,20 @@
 include ':IconLoader'
 project(':IconLoader').projectDir = new File(rootDir, 'iconloaderlib')
 
+include ':Animation'
+project(':Animation').projectDir = new File(rootDir, 'animationlib')
+
 include ':Shared'
 project(':Shared').projectDir = new File(rootDir, 'shared')
 
-include ':msdllib'
-project(':msdllib').projectDir = new File(rootDir, 'msdllib')
+include ':WMShared'
+project(':WMShared').projectDir = new File(rootDir, 'wm_shared')
 
-include ':wmshell'
-project(':wmshell').projectDir = new File(rootDir, 'wmshell')
+include ':msdl'
+project(':msdl').projectDir = new File(rootDir, 'msdllib')
 
-include ':wmshell-shared'
-project(':wmshell-shared').projectDir = new File(rootDir, 'wmshell/shared')
-
-include ':systemuishared'
-project(':systemuishared').projectDir = new File(rootDir, 'systemui/shared')
-
-include ':plugin'
-project(':plugin').projectDir = new File(rootDir, 'systemui/plugin')
-
-include ':plugincore'
-project(':plugincore').projectDir = new File(rootDir, 'systemui/plugin_core')
-
-include ':common'
-project(':common').projectDir = new File(rootDir, 'systemui/common')
-
-include ':log'
-project(':log').projectDir = new File(rootDir, 'systemui/log')
-
-include ':anim'
-project(':anim').projectDir = new File(rootDir, 'systemui/animation')
-
-include ':unfold'
-project(':unfold').projectDir = new File(rootDir, 'systemui/unfold')
-
-include ':viewcapture'
-project(':viewcapture').projectDir = new File(rootDir, 'systemui/viewcapturelib')
-
-include ':tracinglib'
-project(':tracinglib').projectDir = new File(rootDir, 'systemui/tracinglib')
-
-include ':animationlib'
-project(':animationlib').projectDir = new File(rootDir, 'animationlib')
-
-include ':switchpreference'
-project(':switchpreference').projectDir = new File(rootDir, 'settingslibs/MainSwitchPreference')
-
-include ':settingstheme'
-project(':settingstheme').projectDir = new File(rootDir, 'settingslibs/SettingsTheme')
-
-//include ':SharedLibWrapper'
-//project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')
+include ':flags'
+project(':flags').projectDir = new File(rootDir, 'flagslib')
 
 include ':systemUIPluginCore'
-include ':flags'
 include ':androidx-lib'

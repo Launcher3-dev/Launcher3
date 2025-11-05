@@ -627,7 +627,8 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
             mLastOriginalText = label;
             mLastModifiedText = mLastOriginalText;
             mBreakPointsIntArray = StringMatcherUtility.getListOfBreakpoints(label, MATCHER);
-            if (Flags.useNewIconForArchivedApps()
+            // TODO(gyc)
+            if (true/*Flags.useNewIconForArchivedApps()*/
                     && info instanceof ItemInfoWithIcon infoWithIcon
                     && infoWithIcon.isInactiveArchive()) {
                 setTextWithArchivingIcon(label);

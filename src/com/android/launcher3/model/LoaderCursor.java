@@ -420,8 +420,9 @@ public class LoaderCursor extends CursorWrapper {
             boolean loadIconFromCache,
             WorkspaceItemInfo info
     ) {
-        boolean isPreArchived = Flags.enableSupportForArchiving()
-                && Flags.restoreArchivedAppIconsFromDb()
+        // TODO(gyc)
+        boolean isPreArchived = true/*Flags.enableSupportForArchiving()*/
+                && true/*Flags.restoreArchivedAppIconsFromDb()*/
                 && info.isInactiveArchive()
                 && LauncherPrefs.get(mContext).get(LauncherPrefs.IS_FIRST_LOAD_AFTER_RESTORE);
         boolean preArchivedIconNotFound = isPreArchived && !loadIconFromDb(info);

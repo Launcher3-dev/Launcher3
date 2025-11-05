@@ -65,8 +65,8 @@ import java.util.function.Consumer;
 public class PageIndicatorDots extends View implements Insettable, PageIndicator {
 
     private static final float SHIFT_PER_ANIMATION = 0.5f;
-    private static final float SHIFT_THRESHOLD = (enableLauncherVisualRefresh() ? 0.5f : 0.2f);
-    private static final long ANIMATION_DURATION = (enableLauncherVisualRefresh() ? 200 : 150);
+    private static final float SHIFT_THRESHOLD = (true/*enableLauncherVisualRefresh()*/ ? 0.5f : 0.2f);
+    private static final long ANIMATION_DURATION = (true/*enableLauncherVisualRefresh()*/ ? 200 : 150);
     private static final int PAGINATION_FADE_DELAY = ViewConfiguration.getScrollDefaultDelay();
     private static final int PAGINATION_FADE_IN_DURATION = 83;
     private static final int PAGINATION_FADE_OUT_DURATION = 167;
@@ -181,7 +181,7 @@ public class PageIndicatorDots extends View implements Insettable, PageIndicator
         mPaginationPaint.setColor(Themes.getAttrColor(context, R.attr.pageIndicatorDotColor));
         mDotRadius = getResources().getDimension(R.dimen.page_indicator_dot_size) / 2;
         mGapWidth = getResources().getDimension(R.dimen.page_indicator_gap_width);
-        mCircleGap = (enableLauncherVisualRefresh())
+        mCircleGap = (true/*enableLauncherVisualRefresh()*/)
                 ? mDotRadius * 2 + mGapWidth
                 : DOT_GAP_FACTOR * mDotRadius;
         setOutlineProvider(new MyOutlineProver());
@@ -727,7 +727,8 @@ public class PageIndicatorDots extends View implements Insettable, PageIndicator
         @Override
         public void getOutline(View view, Outline outline) {
             if (mEntryAnimationRadiusFactors == null) {
-                RectF activeRect = enableLauncherVisualRefresh()
+                // TODO(gyc)
+                RectF activeRect = true/*enableLauncherVisualRefresh()*/
                         ? sLastActiveRect : getActiveRect();
                 outline.setRoundRect(
                         (int) activeRect.left,

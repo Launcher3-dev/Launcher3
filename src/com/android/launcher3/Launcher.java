@@ -791,7 +791,7 @@ public class Launcher extends StatefulActivity<LauncherState>
     }
 
     private void updateFixedLandscape() {
-        if (!com.android.launcher3.Flags.oneGridSpecs()) {
+        if (false/*!com.android.launcher3.Flags.oneGridSpecs()*/) {
             return;
         }
         // When the flag oneGridSpecs is on we want to disable ALLOW_ROTATION which is replaced

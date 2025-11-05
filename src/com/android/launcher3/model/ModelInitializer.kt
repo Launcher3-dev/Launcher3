@@ -94,7 +94,7 @@ constructor(
             launcherApps.setArchiveCompatibility(
                 ArchiveCompatibilityParams().apply {
                     setEnableUnarchivalConfirmation(false)
-                    setEnableIconOverlay(!Flags.useNewIconForArchivedApps())
+                    setEnableIconOverlay(true/*!Flags.useNewIconForArchivedApps()*/)
                 }
             )
         }

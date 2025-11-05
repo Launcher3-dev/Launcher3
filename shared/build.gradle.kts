@@ -28,6 +28,6 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core:1.16.0")
-    implementation("androidx.annotation:annotation:1.9.1")
+    implementation(libs.core)
+    implementation(libs.annotation)
 }

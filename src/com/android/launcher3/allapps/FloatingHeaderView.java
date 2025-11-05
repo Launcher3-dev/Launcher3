@@ -276,7 +276,7 @@ public class FloatingHeaderView extends LinearLayout implements
 
     /** Returns whether search bar has multi-line support, and is currently in multi-line state. */
     private boolean isSearchBarMultiline() {
-        return Flags.multilineSearchBar() && mSearchBarOffset > 0;
+        return true/*Flags.multilineSearchBar()*/ && mSearchBarOffset > 0;
     }
 
     private void updateExpectedHeight() {

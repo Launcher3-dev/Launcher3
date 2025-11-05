@@ -98,10 +98,10 @@ android {
     sourceSets {
         main {
             res.srcDirs = ['res']
-            java.srcDirs = ['src', 'src_plugins', 'tests/shared', 'system_ext', 'tests/multivalentTests/shared', 'systemui_core/shared']
+            java.srcDirs = ['src', 'src_plugins', 'tests/shared', 'system_ext', 'tests/multivalentTests/shared', 'systemui_core/shared', 'shared/src']
             manifest.srcFile 'AndroidManifest-common.xml'
             proto {
-                srcDirs = ['protos/', 'protos_overrides/']
+                srcDirs = ['protos/', 'quickstep/protos_overrides/']
             }
         }
 
@@ -148,7 +148,7 @@ android {
 
         withQuickstep {
             res.srcDirs = ['quickstep/res', 'quickstep/recents_ui_overrides/res']
-            java.srcDirs = ['quickstep/src', 'quickstep/recents_ui_overrides/src', 'quickstep/src_protolog']
+            java.srcDirs = ['quickstep/src', 'quickstep/recents_ui_overrides/src', 'quickstep/src_protolog', 'quickstep/dagger']
             manifest.srcFile "quickstep/AndroidManifest.xml"
         }
     }
@@ -167,7 +167,7 @@ kapt {
     useBuildCache = true
     correctErrorTypes = true
     javacOptions {
-        option("-Xmaxerrs", 1000)
+//        option("-Xmaxerrs", 1000)
     }
 }
 
@@ -208,88 +208,89 @@ allprojects {
             dependencies {
                 compileOnly fileTree(dir: FRAMEWORK_PREBUILTS_DIR, include: 'SystemUI-core.jar')
                 compileOnly fileTree(dir: FRAMEWORK_PREBUILTS_DIR, include: 'SystemUI-statsd.jar')
-                compileOnly fileTree(dir: FRAMEWORK_PREBUILTS_DIR, include: 'WindowManager-Shell-15.jar')
-
-//                compileOnly projects.compatLib
-//                compileOnly projects.compatLib.compatLibVQ
-//                compileOnly projects.compatLib.compatLibVR
-//                compileOnly projects.compatLib.compatLibVS
-//                compileOnly projects.compatLib.compatLibVT
-//                compileOnly projects.compatLib.compatLibVU
-//                compileOnly projects.compatLib.compatLibVV
             }
         }
     }
 }
 
-addFrameworkJar('framework-15.jar')
+dependencies {
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.recyclerview
+    implementation libs.androidx.dynamicanimation
+    implementation libs.androidx.preference
+    implementation libs.androidx.slice.builders
+    implementation libs.androidx.graphics.shapes
+    implementation libs.androidx.window
+    implementation libs.androidx.core.animation
+    implementation libs.androidx.material3
+    implementation libs.material
+    implementation libs.kotlinx.coroutines
+
+    implementation libs.protobuf.javalite
+
+    api libs.lottie
+    implementation libs.dagger
+    kapt libs.dagger.compiler
+
+    testImplementation libs.junit
+    androidTestImplementation libs.mockito.core
+    androidTestImplementation libs.dexmaker
+    androidTestImplementation libs.dexmaker.mockito
+    androidTestImplementation libs.runner
+    androidTestImplementation libs.rules
+    androidTestImplementation libs.uiautomator.v18
+    androidTestImplementation libs.annotation
+}
 
 dependencies {
-    implementation "androidx.dynamicanimation:dynamicanimation:1.1.0"
-    implementation "androidx.recyclerview:recyclerview:1.4.0"
-    implementation "androidx.preference:preference:1.2.1"
-
-//    withQuickstepCompileOnly projects.hiddenApi
-    withQuickstepImplementation project(':systemuishared')
-    withQuickstepImplementation project(':anim')
-    withQuickstepImplementation project(':unfold')
-    withQuickstepImplementation project(':viewcapture')
-    withQuickstepImplementation project(':log')
-    withQuickstepImplementation project(':plugin')
-    withQuickstepImplementation project(':plugincore')
-    withQuickstepImplementation project(':common')
-
-    // QuickSwitch Compat
-//    withQuickstepImplementation projects.compatLib
-//    withQuickstepImplementation projects.compatLib.compatLibVQ
-//    withQuickstepImplementation projects.compatLib.compatLibVR
-//    withQuickstepImplementation projects.compatLib.compatLibVS
-//    withQuickstepImplementation projects.compatLib.compatLibVT
-//    withQuickstepImplementation projects.compatLib.compatLibVU
-//    withQuickstepImplementation projects.compatLib.compatLibVV
-
-    implementation project(':systemUIPluginCore')
     implementation project(':IconLoader')
-    implementation project(':animationlib')
+    implementation project(':Animation')
     implementation project(':Shared')
-    implementation project(':msdllib')
-    implementation project(':switchpreference')
-    withQuickstepImplementation project(':wmshell')
-    withQuickstepImplementation project(':wmshell-shared')
-    withQuickstepImplementation project(':flags')
-//    implementation project(':UiTestsLibLauncher')
-//    withQuickstepImplementation project(':SharedLibWrapper')
-    implementation 'com.google.protobuf:protobuf-javalite:4.26.1'
-    implementation 'androidx.core:core-ktx:1.16.0'
+    implementation project(':msdl')
+    implementation project(':flags')
+    implementation project(':WMShared')
+}
 
+dependencies {
     // Recents lib dependency
     withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}", include: 'sysui_shared.jar')
-
     // Required for AOSP to compile. This is already included in the sysui_shared.jar
     withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}", include: 'plugin_core.jar')
-    implementation fileTree(dir: FRAMEWORK_PREBUILTS_DIR, include: 'WindowManager-Shell-15.jar')
-    compileOnly fileTree(dir: FRAMEWORK_PREBUILTS_DIR, include: 'framework-15.jar')
 
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation "org.mockito:mockito-core:5.18.0"
-    androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
-    androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
-    androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.3'
-    androidTestImplementation "androidx.annotation:annotation:1.9.1"
-
-    api 'com.airbnb.android:lottie:6.6.7'
-    implementation 'com.google.dagger:dagger:2.57'
-    kapt 'com.google.dagger:dagger-compiler:2.57'
-
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.slice:slice-builders:1.0.0'
-    implementation 'androidx.graphics:graphics-shapes:1.1.0-alpha01'
-
-    implementation "androidx.window:window:1.4.0"
-
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
+    l3goImplementation files('prebuilts/libs/libandroid_browser_helper.jar')
+//    withQuickstepImplementation files('prebuilts/libs/SettingsLibCollapsingToolbarBaseActivity.jar')
+    withQuickstepImplementation files('prebuilts/libs/SystemUISharedLib.jar')
+    withQuickstepImplementation files('prebuilts/libs/SystemUISharedLib_kotlin.jar')
+    withQuickstepImplementation files('prebuilts/libs/SystemUI-shared-utils_kotlin.jar')
+    withQuickstepImplementation files('prebuilts/libs/SystemUIUnfoldLib.jar')
+    withQuickstepImplementation files('prebuilts/libs/SystemUIUnfoldLib_kotlin.jar')
+    implementation files('prebuilts/libs/SystemUI-statsd.jar')
+    withQuickstepImplementation files('prebuilts/libs/contextualeducationlib.jar')
+//    withQuickstepImplementation files('prebuilts/libs/com_android_wm_shell_flags.jar')
+    withQuickstepImplementation files('prebuilts/libs/WindowManager-Shell-shared.jar')
+    withQuickstepImplementation files('prebuilts/libs/WindowManager-Shell-shared_kotlin.jar')
+//    withQuickstepImplementation files('prebuilts/libs/com_android_systemui_shared_flags.jar')
+//    withQuickstepImplementation files('prebuilts/libs/com_android_systemui_flags.jar')
+    implementation files('prebuilts/libs/am_flags_lib.jar')
+    implementation files('prebuilts/libs/com_android_window_flags.jar')
+    implementation files('prebuilts/libs/com_android_systemui_flags.jar')
+    implementation files('prebuilts/libs/com_android_systemui_shared_flags.jar')
+    implementation files('prebuilts/libs/com_android_wm_shell_flags.jar')
+    implementation files('prebuilts/libs/PlatformAnimationLib.jar')
+    implementation files('prebuilts/libs/PlatformAnimationLib_kotlin.jar')
+    implementation files('prebuilts/libs/PluginAnnotationLib.jar')
+    implementation files('prebuilts/libs/PluginAnnotationLib_kotlin.jar')
+    implementation files('prebuilts/libs/PluginCoreLib.jar')
+    implementation files('prebuilts/libs/PluginCoreLib_kotlin.jar')
+    withQuickstepImplementation files('prebuilts/libs/com_android_window_flags.jar')
+    implementation files('prebuilts/libs/view_capture_proto.jar')
+//    implementation files('prebuilts/libs/tracinglib-platform.jar')
+    implementation files('prebuilts/libs/tracinglib-platform.jar')
+    implementation files('prebuilts/libs/view_capture.jar')
+    implementation files('prebuilts/libs/view_capture_kotlin.jar')
+    releaseImplementation files('prebuilts/libs/aconfig-annotations-lib.jar')
+    compileOnly files('prebuilts/libs/framework-16.jar')
 }
 
 def protocVersion = '4.26.1'//'3.8.0'

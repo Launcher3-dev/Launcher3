@@ -315,7 +315,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
         mOpeningXInterpolator = AnimationUtils.loadInterpolator(context, R.interpolator.app_open_x);
         mOpeningInterpolator = AnimationUtils.loadInterpolator(context,
-                R.interpolator.emphasized_interpolator);
+                com.android.app.animation.R.interpolator.emphasized_interpolator);
         mCoordinateTransfer = new RemoteAnimationCoordinateTransfer(mLauncher);
     }
 

@@ -245,7 +245,8 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
             return;
         }
 
-        if (Flags.letterFastScroller() && !mScrollbar.isDraggingThumb()) {
+        // TODO(gyc)
+        if (true/*Flags.letterFastScroller()*/ && !mScrollbar.isDraggingThumb()) {
             setLettersToScrollLayout(mApps.getFastScrollerSections());
         }
         // Only show the scrollbar if there is height to be scrolled

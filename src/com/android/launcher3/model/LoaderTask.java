@@ -455,7 +455,7 @@ public class LoaderTask implements Runnable {
         final WidgetInflater widgetInflater = new WidgetInflater(mContext, mIsSafeModeEnabled);
 
         ModelDbController dbController = mModel.getModelDbController();
-        if (Flags.gridMigrationRefactor()) {
+        if (true/*Flags.gridMigrationRefactor()*/) {
             try {
                 dbController.attemptMigrateDb(restoreEventLogger, mModelDelegate);
             } catch (Exception e) {
@@ -834,7 +834,8 @@ public class LoaderTask implements Runnable {
             List<IconRequestInfo<WorkspaceItemInfo>> workspaceRequestInfos,
             boolean isRestoreFromBackup
     ) {
-        if (Flags.restoreArchivedAppIconsFromDb() && isRestoreFromBackup) {
+        // TODO(gyc)
+        if (true/*Flags.restoreArchivedAppIconsFromDb()*/ && isRestoreFromBackup) {
             Optional<IconRequestInfo<WorkspaceItemInfo>> workspaceIconRequest =
                     workspaceRequestInfos.stream()
                             .filter(request -> appInfo.getTargetComponent().equals(

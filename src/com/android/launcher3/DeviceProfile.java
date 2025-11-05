@@ -1535,7 +1535,7 @@ public class DeviceProfile {
 
     /** Whether All Apps should be presented on a bottom sheet. */
     public boolean shouldShowAllAppsOnSheet() {
-        return isTablet || Flags.allAppsSheetForHandheld();
+        return isTablet /*|| Flags.allAppsSheetForHandheld()*/;
     }
 
     private void setupAllAppsStyle(Context context) {

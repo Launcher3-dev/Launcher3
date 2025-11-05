@@ -414,7 +414,8 @@ public class StateManager<S extends BaseState<S>, T extends StatefulContainer<S>
         mState = state;
         mContainer.onStateSetStart(mState);
 
-        if (enableStateManagerProtoLog()) {
+        // TODO(gyc)
+        if (true/*enableStateManagerProtoLog()*/) {
             StateManagerProtoLogProxy.logOnStateTransitionStart(state);
         } else if (DEBUG) {
             Log.d(TAG, "onStateTransitionStart - state: " + state);
@@ -478,7 +479,8 @@ public class StateManager<S extends BaseState<S>, T extends StatefulContainer<S>
      * Cancels the current animation.
      */
     public void cancelAnimation() {
-        if (enableStateManagerProtoLog()) {
+        // TODO(gyc)
+        if (true/*enableStateManagerProtoLog()*/) {
             StateManagerProtoLogProxy.logCancelAnimation(
                     mConfig.currentAnimation != null,
                     getTrimmedStackTrace("StateManager.cancelAnimation"));

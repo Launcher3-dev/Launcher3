@@ -17,7 +17,7 @@
 package com.android.launcher3.shapes
 
 import androidx.annotation.VisibleForTesting
-import com.android.launcher3.Flags
+import com.android.systemui.shared.Flags
 import com.android.launcher3.Flags as LauncherFlags
 
 object ShapesProvider {
@@ -45,7 +45,7 @@ object ShapesProvider {
     @VisibleForTesting const val ARCH_KEY = "arch"
 
     val iconShapes =
-        if (Flags.newCustomizationPickerUi() && LauncherFlags.enableLauncherIconShapes()) {
+        if (/*Flags.newCustomizationPickerUi() &&*/ LauncherFlags.enableLauncherIconShapes()) {
             arrayOf(
                 IconShapeModel(
                     key = CIRCLE_KEY,

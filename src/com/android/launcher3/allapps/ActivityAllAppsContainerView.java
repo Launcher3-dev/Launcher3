@@ -312,7 +312,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 0,
                 0 // Bottom left
         };
-        if (Flags.allAppsBlur()) {
+        if (true/*Flags.allAppsBlur()*/) {
             int resId = Utilities.isDarkTheme(getContext())
                     ? android.R.color.system_accent1_800 : android.R.color.system_accent1_100;
             int layerAbove = ColorUtils.setAlphaComponent(getResources().getColor(resId, null),

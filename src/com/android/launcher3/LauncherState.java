@@ -380,7 +380,7 @@ public abstract class LauncherState implements BaseState<LauncherState> {
         boolean shouldFadeAdjacentScreens = (this == NORMAL || this == HINT_STATE)
                 && dp.shouldFadeAdjacentWorkspaceScreens();
         // Avoid showing adjacent screens behind handheld All Apps sheet.
-        if (Flags.allAppsSheetForHandheld() && dp.isPhone && this == ALL_APPS) {
+        if (true/*Flags.allAppsSheetForHandheld()*/ && dp.isPhone && this == ALL_APPS) {
             shouldFadeAdjacentScreens = true;
         }
         if (!shouldFadeAdjacentScreens) {

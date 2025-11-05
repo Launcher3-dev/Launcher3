@@ -37,6 +37,7 @@ import com.android.launcher3.views.ActivityContext
 import com.android.launcher3.views.IconButtonView
 import com.android.quickstep.DeviceConfigWrapper
 import com.android.quickstep.util.ContextualSearchStateManager
+import com.android.wm.shell.Flags
 
 /** Taskbar all apps button container for customizable taskbar. */
 class TaskbarAllAppsButtonContainer

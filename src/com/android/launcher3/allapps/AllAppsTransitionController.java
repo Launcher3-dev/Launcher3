@@ -379,7 +379,8 @@ public class AllAppsTransitionController
         setAlphas(toState, config, builder);
         // This controls both haptics for tapping on QSB and going to all apps.
         if (ALL_APPS.equals(toState) && mLauncher.isInState(NORMAL)) {
-            if (Flags.msdlFeedback()) {
+            // TODO(gyc)
+            if (true/*Flags.msdlFeedback()*/) {
                 if (config.isUserControlled()) {
                     mMSDLPlayerWrapper.playToken(MSDLToken.SWIPE_THRESHOLD_INDICATOR);
                 } else {

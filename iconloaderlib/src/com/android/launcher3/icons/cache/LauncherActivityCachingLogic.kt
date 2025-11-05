@@ -50,7 +50,8 @@ object LauncherActivityCachingLogic : CachingLogic<LauncherActivityInfo> {
             val iconOptions: IconOptions = IconOptions().setUser(info.user)
             iconOptions
                 .setIsArchived(
-                    useNewIconForArchivedApps() &&
+                    // TODO(gyc)
+                    true/*useNewIconForArchivedApps()*/ &&
                         VERSION.SDK_INT >= 35 &&
                         info.activityInfo.isArchived
                 )

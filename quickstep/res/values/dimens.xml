@@ -541,4 +541,10 @@
 
     <!-- Digital Wellbeing -->
     <dimen name="digital_wellbeing_toast_height">48dp</dimen>
+
+    <dimen name="settingslib_preferred_minimum_touch_target">48dp</dimen>
+    <dimen name="desktop_windowing_freeform_rounded_corner_radius">16dp</dimen>
+
+    <dimen name="drag_zone_bubble_fold">140dp</dimen>
+    <dimen name="drag_zone_bubble_tablet">200dp</dimen>
 </resources>

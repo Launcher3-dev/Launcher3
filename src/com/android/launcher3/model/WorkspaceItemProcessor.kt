@@ -197,8 +197,9 @@ class WorkspaceItemProcessor(
             intent.`package` = targetPkg
         }
 
+        // TODO(gyc)
         val isPreArchivedShortcut =
-            Flags.restoreArchivedShortcuts() &&
+            true/*Flags.restoreArchivedShortcuts()*/ &&
                 appInfoWrapper.isArchived() &&
                 c.itemType == Favorites.ITEM_TYPE_DEEP_SHORTCUT &&
                 c.restoreFlag != 0
