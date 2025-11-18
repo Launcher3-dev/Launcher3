@@ -167,7 +167,7 @@ public final class LauncherActivityInterface extends
     @Override
     public LauncherTaskbarUIController getTaskbarController() {
         QuickstepLauncher launcher = getCreatedContainer();
-        if (launcher == null) {
+        if (launcher == null) {// 三方Launcher为默认Launcher
             return null;
         }
         return launcher.getTaskbarUIController();
@@ -327,10 +327,10 @@ public final class LauncherActivityInterface extends
     @Override
     public boolean deferStartingActivity(RecentsAnimationDeviceState deviceState, MotionEvent ev) {
         LauncherTaskbarUIController uiController = getTaskbarController();
-        if (uiController == null) {
+        if (uiController == null) {// 三方Launcher为默认Launcher
             return super.deferStartingActivity(deviceState, ev);
         }
-        return uiController.isEventOverAnyTaskbarItem(ev)
+        return uiController.isEventOverAnyTaskbarItem(ev)// 手指在Taskbar上面的所有图标范围内或者旋转按钮上
                 || super.deferStartingActivity(deviceState, ev);
     }
 

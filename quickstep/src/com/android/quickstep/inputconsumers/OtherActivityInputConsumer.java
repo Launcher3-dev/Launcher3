@@ -249,7 +249,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                 if (DEBUG) {
                     Log.d(TAG, "ACTION_DOWN: mIsDeferredDownTarget=" + mIsDeferredDownTarget);
                 }
-                if (!mIsDeferredDownTarget) {
+                if (!mIsDeferredDownTarget) {// 非延迟目标，down事件就开始启动动画
                     startTouchTrackingForWindowAnimation(ev.getEventTime());
                 }
 
@@ -285,7 +285,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                     break;
                 }
                 mLastPos.set(ev.getX(pointerIndex), ev.getY(pointerIndex));
-                float displacement = getDisplacement(ev);
+                float displacement = getDisplacement(ev);// 计算位移（垂直方向）
                 float displacementX = mLastPos.x - mDownPos.x;
                 float displacementY = mLastPos.y - mDownPos.y;
 
@@ -302,10 +302,11 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                 }
 
                 float horizontalDist = Math.abs(displacementX);
-                float upDist = -displacement;
+                float upDist = -displacement;// 向上滑动距离
                 boolean isTrackpadGesture = mGestureState.isTrackpadGesture();
                 float squaredHypot = squaredHypot(displacementX, displacementY);
                 boolean isInExtendedSlopRegion = mGestureState.isInExtendedSlopRegion();
+                // 是否越过有效滑动阈值（触控板手势总是true，普通手势需距离足够且不在扩展 slop 区域）。
                 boolean passedSlop = isTrackpadGesture
                         || (squaredHypot >= mSquaredTouchSlop
                         && !isInExtendedSlopRegion);
@@ -324,13 +325,16 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                 // the gesture (in which case mPassedPilferInputSlop starts as true).
                 boolean haveNotPassedSlopOnContinuedGesture =
                         !mPassedSlopOnThisGesture && mPassedPilferInputSlop;
+                // 计算滑动角度
                 double degrees = Math.toDegrees(Math.atan(upDist / horizontalDist));
 
                 // Regarding degrees >= -OVERVIEW_MIN_DEGREES - Trackpad gestures can start anywhere
                 // on the screen, allowing downward swipes. We want to impose the same angle in that
                 // scenario.
+                // 角度在±OVERVIEW_MIN_DEGREES内（接近水平）视为快速切换任务
                 boolean swipeWithinQuickSwitchRange = degrees <= OVERVIEW_MIN_DEGREES
                         && (!mGestureState.isTrackpadGesture() || degrees >= -OVERVIEW_MIN_DEGREES);
+                // 预测是否启动新任务
                 boolean isLikelyToStartNewTask =
                         haveNotPassedSlopOnContinuedGesture || swipeWithinQuickSwitchRange;
 
@@ -358,7 +362,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
 
                         mPassedPilferInputSlop = true;
 
-                        if (mIsDeferredDownTarget) {
+                        if (mIsDeferredDownTarget) {// 延迟目标，此时启动动画
                             // Deferred gesture, start the animation and gesture tracking once
                             // we pass the actual touch slop
                             startTouchTrackingForWindowAnimation(ev.getEventTime());
@@ -367,6 +371,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                             mPassedWindowMoveSlop = true;
                             mStartDisplacement = -mTouchSlop;
                         }
+                        // 通知手势开始
                         notifyGestureStarted(isLikelyToStartNewTask);
                     }
                 }
@@ -384,7 +389,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                         mInteractionHandler.setCanSlowSwipeGoHome(minSwipeMet);
                         mMotionPauseDetector.setDisallowPause(!minSwipeMet
                                 || isLikelyToStartNewTask);
-                        mMotionPauseDetector.addPosition(ev);
+                        mMotionPauseDetector.addPosition(ev);// 检测停顿
                         mInteractionHandler.setIsLikelyToStartNewTask(isLikelyToStartNewTask);
                     }
                 }
@@ -410,6 +415,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
             return;
         }
         TestLogging.recordEvent(TestProtocol.SEQUENCE_PILFER, "pilferPointers");
+        // 关键：拦截后续触摸事件（不再传给其他View，防止Launcher或其他应用干扰。）
         mInputMonitorCompat.pilferPointers();
         // Once we detect the gesture, we can enable batching to reduce further updates
         mInputEventReceiver.setBatchingEnabled(true);

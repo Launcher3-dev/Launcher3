@@ -704,7 +704,7 @@ public class TaskbarStashController implements TaskbarControllers.LoggableTaskba
                 ? 0
                 : (mUnstashedHeight - mStashedHeight);
 
-        if (!supportsVisualStashing()) {
+        if (!supportsVisualStashing()) {// 三键导航
             // Just hide/show the icons and background instead of stashing into a handle.
             mAnimator.play(mIconAlphaForStash.animateToValue(isStashed ? 0 : 1)
                     .setDuration(duration));
@@ -724,7 +724,7 @@ public class TaskbarStashController implements TaskbarControllers.LoggableTaskba
             return;
         }
 
-        if (mActivity.isTransientTaskbar()) {
+        if (mActivity.isTransientTaskbar()) {// 非手机设备，手势模式
             createTransientAnimToIsStashed(mAnimator, isStashed, duration,
                     shouldDelayBackground, animationType);
         } else {

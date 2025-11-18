@@ -792,10 +792,10 @@ object InputConsumerUtils {
         event: MotionEvent,
     ): InputConsumer where T : RecentsViewContainer, T : StatefulContainer<S> {
         val shouldDefer =
-            (!overviewComponentObserver.isHomeAndOverviewSame ||
+            (!overviewComponentObserver.isHomeAndOverviewSame ||// 三方Launcher为默认Launcher
                 gestureState
                     .getContainerInterface<S, T>()
-                    .deferStartingActivity(deviceState, event))
+                    .deferStartingActivity(deviceState, event))// 手指在Taskbar部分区域上
         val disableHorizontalSwipe = deviceState.isInExclusionRegion(event)
         return OtherActivityInputConsumer(
             /* base= */ context,
