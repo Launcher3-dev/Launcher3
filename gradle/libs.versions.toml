@@ -1,36 +1,39 @@
 [versions]
+agp = "8.13.1"
+protobuf = "0.9.5"
 kotlin = "2.2.21"
 appcompat = "1.7.1"
-core = "1.16.0"
+baselineprofile = "1.4.1"
+core = "1.17.0"
 annotation = "1.9.1"
 coreAnimation = "1.0.0"
 dagger = "2.57.2"
 dexmaker = "1.2"
 dexmakerMockito = "1.2"
 dynamicanimation = "1.1.0"
-graphicsShapes = "1.1.0-alpha01"
-junitVersion = "1.2.1"
+graphicsShapes = "1.1.0"
+junitVersion = "1.3.0"
 
 # https://github.com/Kotlin/kotlinx.coroutines
 kotlinx-coroutines = "1.10.2"
 
 # https://github.com/JetBrains/compose-multiplatform
-compose = "1.9.2"
+compose = "1.9.3"
 lifecycle = "2.9.1"
-lottie = "6.6.10"
-material = "1.12.0"
-material3Version = "1.3.0-alpha06"
+lottie = "6.7.1"
+material = "1.13.0"
+material3Version = "1.4.0"
 mockitoCore = "5.20.0"
 navigation = "2.9.1"
 
-coil = "3.0.1"
-kotlinx-serialization = "1.7.3"
-kotlinx-datetime = "0.6.1"
+coil = "3.3.0"
+kotlinx-serialization = "1.9.0"
+kotlinx-datetime = "0.7.1"
 preference = "1.2.1"
-protobufJavalite = "4.33.0"
+protobufJavalite = "4.33.2"
 recyclerview = "1.4.0"
 robolectric = "4.16"
-rulesVersion = "1.6.1"
+rulesVersion = "1.7.0"
 runner = "1.0.2"
 rules = "1.0.2"
 sliceBuilders = "1.0.0"
@@ -48,22 +51,22 @@ commons-io = "2.15.1"
 # https://mvnrepository.com/artifact/org.apache.commons/commons-compress
 commons-compress = "1.26.1"
 # https://mvnrepository.com/artifact/org.json/json
-gson = "2.10.1"
+gson = "2.13.2"
 # https://mvnrepository.com/artifact/org.dom4j/dom4j
 dom4j = "2.1.4"
 # https://mvnrepository.com/artifact/org.json/json
-json = "20231013"
+json = "20250517"
 # https://mvnrepository.com/artifact/org.apache.maven.plugin-tools/maven-plugin-annotations
-maven-plugin-annotations = "3.10.2"
+maven-plugin-annotations = "3.15.2"
 # https://mvnrepository.com/artifact/org.codehaus.plexus/plexus-utils
 plexus-utils = "4.0.0"
 # https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
 jacson-databind = "2.16.1"
 # https://mvnrepository.com/artifact/org.apache.maven/maven-plugin-api
-maven-plugin-api = "3.9.6"
+maven-plugin-api = "3.9.11"
 richeditor-compose = "1.0.0-beta02"
 uiautomatorV18 = "2.1.3"
-window = "1.4.0"
+window = "1.5.1"
 
 
 [libraries]
@@ -116,6 +119,21 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 uiautomator-v18 = { module = "com.android.support.test.uiautomator:uiautomator-v18", version.ref = "uiautomatorV18" }
 
 [plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
+
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+google-ksp = "com.google.devtools.ksp:2.3.3"
+google-protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
+#cash-licensee = { id = "app.cash.licensee", version.ref = "licensee" }
+#rikka-refine = { id = "dev.rikka.tools.refine", version.ref = "refine" }
+#diffplug-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin"}
 jetbrainsComposeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
