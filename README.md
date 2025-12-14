@@ -1,8 +1,8 @@
 # Launcher3
 
-## 更新：20251014
-* android16-s2-release
-* https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/heads/android16-s2-release
+## 更新：20251214
+* android16-qpr2-release
+* https://android.googlesource.com/platform/packages/apps/Launcher3/+/refs/heads/android16-qpr2-release
 
 ## 说明
 目前支持编译：
@@ -11,7 +11,8 @@ L3goWithQuickstep
 
 ## 主要分支
 
-* main (android16-s2-release)--Android-16
+* main (android16-qpr2-release)--Android-16
+* Launcher3-16-s2-release (android16-s2-release)
 * Launcher3-15-qc（高通版本，可以编译Quickstep版本）
 * Launcher3-15-s1-release (android15-s1-release)
 * Launcher3-14-s2-release (android14-s2-release)
