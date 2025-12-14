@@ -35,10 +35,11 @@ https://cs.android.com/android/platform/superproject/+/master:packages/apps/Laun
 
 ## 依赖库
 ### wmshell 
+// https://android.googlesource.com/platform/frameworks/base/
 > // frameworks/base/libs/WindowManager/Shell
 
 ### systemui
-// https://android.googlesource.com/platform/frameworks/libs/systemui/+/refs/heads/android16-s2-release
+// https://android.googlesource.com/platform/frameworks/libs/systemui/
 // frameworks/libs/systemui
 * aconfig/
 * ambientlib/
