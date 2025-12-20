@@ -6,8 +6,7 @@
 
 ## 说明
 目前支持编译：
-AospWithQuickstep
-L3goWithQuickstep
+暂无法编译
 
 ## 主要分支
 
