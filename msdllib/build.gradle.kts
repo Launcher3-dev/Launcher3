@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.library")
-    id("kotlin-android")
+    alias(libs.plugins.android.library)
 }
+
 
 android {
     namespace = "com.google.android.msdl"
@@ -10,7 +10,6 @@ android {
 
     defaultConfig {
         minSdk = 26
-        targetSdk = 36
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

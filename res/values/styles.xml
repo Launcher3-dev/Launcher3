@@ -60,6 +60,7 @@
         <item name="workspaceKeyShadowColor">#89000000</item>
         <item name="widgetsTheme">@style/WidgetContainerTheme</item>
         <item name="pageIndicatorDotColor">@color/page_indicator_dot_color_light</item>
+        <item name="pageIndicatorArrowBgColor">@color/page_indicator_arrow_bg_light</item>
         <item name="focusOutlineColor">@color/materialColorSecondaryFixed</item>
         <item name="focusInnerOutlineColor">@color/materialColorOnSecondaryFixedVariant</item>
         <item name="folderPreviewColor">@color/folder_preview_light</item>

@@ -1,13 +1,12 @@
 [versions]
-agp = "8.13.1"
-protobuf = "0.9.5"
-kotlin = "2.2.21"
+agp = "9.0.0"
+kotlin = "2.3.0"
 appcompat = "1.7.1"
 baselineprofile = "1.4.1"
 core = "1.17.0"
 annotation = "1.9.1"
 coreAnimation = "1.0.0"
-dagger = "2.57.2"
+dagger = "2.59"
 dexmaker = "1.2"
 dexmakerMockito = "1.2"
 dynamicanimation = "1.1.0"
@@ -18,21 +17,23 @@ junitVersion = "1.3.0"
 kotlinx-coroutines = "1.10.2"
 
 # https://github.com/JetBrains/compose-multiplatform
-compose = "1.9.3"
+compose = "1.10.0"
 lifecycle = "2.9.1"
 lottie = "6.7.1"
 material = "1.13.0"
 material3Version = "1.4.0"
-mockitoCore = "5.20.0"
+mockitoCore = "5.21.0"
 navigation = "2.9.1"
 
+protobuf = "4.33.4"
+
 coil = "3.3.0"
-kotlinx-serialization = "1.9.0"
+kotlinx-serialization = "1.10.0"
 kotlinx-datetime = "0.7.1"
 preference = "1.2.1"
-protobufJavalite = "4.33.2"
+protobufJavalite = "4.33.4"
 recyclerview = "1.4.0"
-robolectric = "4.16"
+robolectric = "4.16.1"
 rulesVersion = "1.7.0"
 runner = "1.0.2"
 rules = "1.0.2"
@@ -55,13 +56,13 @@ gson = "2.13.2"
 # https://mvnrepository.com/artifact/org.dom4j/dom4j
 dom4j = "2.1.4"
 # https://mvnrepository.com/artifact/org.json/json
-json = "20250517"
+json = "20251224"
 # https://mvnrepository.com/artifact/org.apache.maven.plugin-tools/maven-plugin-annotations
 maven-plugin-annotations = "3.15.2"
 # https://mvnrepository.com/artifact/org.codehaus.plexus/plexus-utils
 plexus-utils = "4.0.0"
 # https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
-jacson-databind = "2.16.1"
+jacson-databind = "2.21.0"
 # https://mvnrepository.com/artifact/org.apache.maven/maven-plugin-api
 maven-plugin-api = "3.9.11"
 richeditor-compose = "1.0.0-beta02"
@@ -100,7 +101,10 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
-protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
+
+protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
+protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
+
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 rules = { module = "com.android.support.test:rules", version.ref = "rules" }
 runner = { module = "com.android.support.test:runner", version.ref = "runner" }
@@ -128,8 +132,8 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-google-ksp = "com.google.devtools.ksp:2.3.3"
-google-protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
+google-ksp = "com.google.devtools.ksp:2.3.4"
+google-protobuf = "com.google.protobuf:0.9.6"
 #cash-licensee = { id = "app.cash.licensee", version.ref = "licensee" }
 #rikka-refine = { id = "dev.rikka.tools.refine", version.ref = "refine" }
 #diffplug-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

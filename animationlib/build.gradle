@@ -1,5 +1,6 @@
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.library)
+}
 
 android {
     namespace = "com.android.app.animation"
@@ -35,10 +36,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-    }
-    kotlinOptions {
-        jvmTarget = '21'
-        freeCompilerArgs = ["-Xjvm-default=all"]
     }
 }
 

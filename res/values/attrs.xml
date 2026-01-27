@@ -48,6 +48,7 @@
 
 
     <attr name="pageIndicatorDotColor" format="color" />
+    <attr name="pageIndicatorArrowBgColor" format="color" />
     <attr name="folderPreviewColor" format="color" />
     <attr name="folderBackgroundColor" format="color" />
     <attr name="folderIconRadius" format="float" />

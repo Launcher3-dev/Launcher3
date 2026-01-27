@@ -1,17 +1,14 @@
 plugins {
-    id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.android.library)
 }
 
 android {
-    compileSdkVersion COMPILE_SDK
     namespace "com.android.systemui.plugin_core"
+    compileSdkVersion 36
 
     defaultConfig {
         minSdkVersion 26
         targetSdkVersion 36
-        versionCode 1
-        versionName "1.0"
     }
     buildFeatures {
         aidl true
